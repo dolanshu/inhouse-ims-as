@@ -14,13 +14,22 @@
 #
 # 可选：填入官方公布的 sha256 后，bootstrap-infra.sh 会强制校验；留空则只打印警告。
 HELM_VERSION=3.16.4
-HELM_SHA256=
+HELM_SHA256=fc307327959aa38ed8f9f7e66d45492bb022a66c3e5da6063958254b9767d179
 
 KUBECTL_VERSION=1.31.4
-KUBECTL_SHA256=
+# 2026-10-11 填入：官方 dl.k8s.io 的 kubectl.sha256。本次实际安装的 tools/bin/kubectl
+# （同一官方 URL，因单流限速改走并行分段下载）已用该值逐字比对一致。
+KUBECTL_SHA256=298e19e9c6c17199011404278f0ff8168a7eca4217edad9097af577023a5620f
 
 KIND_VERSION=0.24.0
+# 2026-10-11：kind 官方不发布 sha256（发布物只有二进制，无 checksum 清单），故留空。
+# 本次本机二进制是 pinned v0.24.0 的源码构建（go1.22.10 工具链、goproxy.cn 拉取、模块完整性经 sumdb 校验），
+# 非 release 二进制，见 docs/handoff/2026-10-11-local-infra-bootstrap-execution-record.md。
 KIND_SHA256=
 
 PROMETHEUS_VERSION=2.55.1
-PROMETHEUS_SHA256=
+# 2026-10-11 填入：官方 sha256sums.txt 中 prometheus-2.55.1.linux-amd64.tar.gz 的值（release tarball 口径）。
+# 注意：本次本机 tools/bin/promtool 来自官方 quay.io 镜像
+# quay.io/prometheus/prometheus@sha256:2659f4c2ebb718e7695cb9b25ffa7d6be64db013daba13e05c875451cf51b0d3
+# 的提取（当日 GitHub release tarball 不可达），非 tarball 安装；本值供日后 tarball 安装强制校验。
+PROMETHEUS_SHA256=19700bdd42ec31ee162e4079ebda4cd0a44432df4daa637141bdbea4b1cd8927

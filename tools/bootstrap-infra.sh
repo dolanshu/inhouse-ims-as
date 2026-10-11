@@ -335,6 +335,8 @@ fi
 
 # --- install ----------------------------------------------------------------
 
+# inner is the tool path relative to the extraction root AFTER
+# --strip-components is applied, not the full archive-internal path.
 install_from_tarball() {
   local tool="$1" url="$2" strip="$3" inner="$4" expected="${5:-}"
   local tmp extract
@@ -388,13 +390,13 @@ for tool in "${TODO[@]+"${TODO[@]}"}"; do
   case "${tool}" in
     helm)
       install_from_tarball helm "$(url_for helm)" 1 \
-        "${HOST_OS}-${GOARCH}/helm" "$(checksum_for helm)" || true
+        "helm" "$(checksum_for helm)" || true
       ;;
     kubectl) install_single kubectl "$(url_for kubectl)" || true ;;
     kind) install_single kind "$(url_for kind)" || true ;;
     promtool)
       install_from_tarball promtool "$(url_for promtool)" 1 \
-        "prometheus-${PROMETHEUS_VERSION}.${PLAT}/promtool" "$(checksum_for promtool)" || true
+        "promtool" "$(checksum_for promtool)" || true
       ;;
   esac
 done

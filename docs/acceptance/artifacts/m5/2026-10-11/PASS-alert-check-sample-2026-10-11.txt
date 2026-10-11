@@ -1,0 +1,11 @@
+# subject: alert-check-sample
+# command: make alert-check (sample)
+# exit-code: 0
+# verdict: PASS
+# recorded-by: deploy/kind/m5-record-artifacts.sh on 2026-10-11
+# --- transcript begin ---
+promtool check rules deploy/alerts/as-alerts.yaml
+Checking deploy/alerts/as-alerts.yaml
+  SUCCESS: 10 rules found
+
+# --- transcript end ---

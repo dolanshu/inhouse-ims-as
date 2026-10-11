@@ -219,3 +219,86 @@ test: ## every layer below ④ (e2e 用例尚未落地，落地方案见 docs/ac
 
 - 本说明中引用的所有行号均为执行时实测所得，非照抄执行计划文档
 - 未发现执行计划文档中的错误或遗漏
+
+---
+
+## 11. 第二批（收尾批，2026-10-11）
+
+> **授权**：维护者 2026-10-11 授权本批全部内容。
+> **状态**：已落盘，待维护者评审。**本批不签收任何 REQ / 里程碑；未做任何 git 写操作。**
+
+### 11.0 任务表
+
+| 任务 | 结果 | 改动文件 |
+|---|---|---|
+| ① coding 分层边界机器化守卫 | ✅ 完成，**5 测全绿**（要求 4 测；追加 1 个内部依赖无环测试，理由见 11.1） | `tests/test_layer_boundaries.py`（新建） |
+| ② ADR 体系全量复核注记 | ✅ 完成（0001–0027 逐个核对；发现 1 条既有断链，未自行修复，如实登记） | `docs/architecture/adr/README.md` 追加注记 |
+| ③ AGENT.md §4 services 内部依赖澄清 | ✅ 完成（既有原文一字未改，仅追加一段） | `AGENT.md:126` |
+| ④ 登记 / 计划回写 | ✅ 完成 | 本文件 §11、`2026-10-11-open-adjudication-register.md` §4/§5、`docs/plan.md` §0 决策表 |
+
+### 11.1 任务 ① · 新建 `tests/test_layer_boundaries.py`
+
+**风格对齐**：先读 `tests/test_workspace_layout.py`、`tests/test_requirements_registry.py` 与 `platform/tests/test_library_independence.py`；模块 Google docstring 说明「守 AGENT.md §4 哪条边界、违反了怎么修」；`pytestmark = pytest.mark.unit`；断言消息同时给出违反规则与修复方法；全部代码 / docstring / 断言消息英文。
+
+**数据源全部来自仓库文件，无硬编码成员 / root 清单**：成员读根 `pyproject.toml` `[tool.uv.workspace].members`（`pyproject.toml:21-29`）；import root 取各成员 `[tool.hatch.build.targets.wheel].packages[0]` 末段；声明依赖取各成员 `[project].dependencies` 中 `as-` 开头者（`-`→`_` 映射，第三方不管）。只扫各成员 `<member>/src/**/*.py`（排除 `__pycache__`），不扫 tests，不 import 任何产品包。
+
+**交付 5 个测试函数（任务要求 4 个，第 5 个为兑现任务 ③ 文档承诺而加）**：
+
+| # | 测试函数 | 守卫内容 | 现状 |
+|---|---|---|---|
+| 1 | `test_apps_do_not_import_each_other` | 每个 apps 层成员 src 不得 import 其它 app 的 root（AGENT.md §4 app 互斥） | 通过 |
+| 2 | `test_product_packages_never_import_testbed` | apps / services 层成员 src 不得 import 任何 testbed 层 root（§4 testbed 绝不做运行时依赖的产品侧；kernel 侧仍由旧守卫负责） | 通过 |
+| 3 | `test_internal_imports_are_declared_dependencies` | 实际 import 的每个 `as_*` root 必须属于「自身 root」∪「dependencies 中 as-* 映射集合」；只查用了未声明 | 通过 |
+| 4 | `test_every_workspace_member_classifies_into_one_layer` | 成员按路径前缀（`platform` / `apps/*` / `services/*` / `testbed/*`）恰好分入四层；无法分类即失败并提示更新本守卫；四层均不能为空（防空转通过） | 通过 |
+| 5 | `test_internal_dependencies_do_not_form_a_cycle` | 声明的内部依赖图必须无环；**追加理由**：任务 ③ 的 AGENT.md §4 注记写「未声明或成环即违规，由本文件机器化守卫」，原 4 测只守未声明，为不让 AGENT.md 写下不实的强制力声明，补此测试 | 通过（现有边：config-service→console、simulators→platform/translation/load，均无环） |
+
+失败消息均含：成员、违规 import root、命中文件、AGENT.md §4 规则、修复方法（pyproject 声明 or 删除 import；成环时提示删边或下沉 platform）。
+
+**kernel 侧旧守卫未动**：`platform/tests/test_library_independence.py` 一个字节未改。
+
+### 11.2 任务 ② · ADR 全量复核注记
+
+**文件**：`docs/architecture/adr/README.md`，在「注记（2026-10-11，状态漂移修正）」段之后追加「第二次全量复核（2026-10-11，S1 第二批）」段；注册表表格与既有注记一字未动。
+
+**核对范围与结论（逐个打开正文，非抽样）**：
+- 0001–0027（0000 模板除外）：**25 个英文 `- **Status**:` 行 + 0011 / 0019 两个中文「- **状态**：」行，取值与注册表全部一致**（0023 `proposed` 见 `0023-redis-call-state-checkpoint.md:3`；0025 `draft · pending maintainer review` 见 `0025-managed-rule-runtime-bundle.md:3`；0011 `superseded-in-part` 见 `0011-sip-stack-dual-path.md:4`；0019 已接受见 `0019-sip-stack-selection.md:4`；其余 accepted；0024 行尾签核注记不改变取值）。
+- **0011 ↔ 0019 双向可追溯**：0011 第 4 行写「superseded-in-part by ADR-0019」；0019 第 7 行写「取代 ADR-0011 确立的『生产栈 = sippy』前提」。
+- **链接核查**：对 `docs/**` 内全部指向 `adr/00NN-*.md` 的 Markdown 链接按相对路径逐条解析，**共 206 条，205 条有效；无 ADR-0028 及以上越界引用**。
+
+**与摸底结论不符之处（如实上报，未自行修复）**：发现 **1 条既有断链** —— `docs/acceptance/m5-engineering-closure-2026-10-04.md:43` 的链接写作 `architecture/adr/0026-in-cluster-state-stores-proposal.md`，自 `docs/acceptance/` 目录解析应为 `../architecture/adr/0026-in-cluster-state-stores-proposal.md`（缺 `../`）。该文件是 2026-10-04 历史关门文档，按保史约定且不在本批 6 个授权改动路径内，本批**不修链接、不删原文**，仅在 ADR README 注记中登记并给出修正方式，待维护者评审决定。
+
+### 11.3 任务 ③ · AGENT.md §4 追加 services 内部依赖澄清
+
+**位置**：`AGENT.md:126`，紧接「一个 app 绝不能 import 另一个 app……」段之后、「目录结构和成员清单见 docs/plan.md §2」之前；§4 既有原文一字未改。
+
+**要点**：分层图不禁止 services 成员沿「内部 API」方向依赖；现存唯一一例 = `services/config-service`（`as_config_service`）依赖 `services/console`（`as_console`，会话 / 认证内部 API）；该依赖显式声明于 `services/config-service/pyproject.toml`（dependencies 与 `[tool.uv.sources]` 两处），console 侧 dependencies 为空、不反向依赖，故不成环；此类依赖必须显式声明且无环，由 `tests/test_layer_boundaries.py` 机器化守卫；**不放宽 app 互斥与 testbed 禁令**。
+
+**与任务书措辞的一处事实性校正**：任务书称「两包 pyproject.toml 均显式声明」，实测 `services/console/pyproject.toml:18` 为 `dependencies = []`（console 不依赖 config-service，正是无环的证据），故注记按磁盘事实写为「config-service 一侧两处显式声明、console 一侧为空不反向依赖」。
+
+### 11.4 摸底证据摘要（8 成员，结论 + 关键证据）
+
+成员 / import root / 声明的内部依赖均实测自根 `pyproject.toml:21-29` 与各成员 pyproject；ast 扫描（只读，不 import 产品包）结论：
+
+- kernel `platform`（root `as_platform`，无内部依赖）：src 44 个 .py，内部 import 仅自身；kernel 侧由旧守卫守。
+- apps：`apps/translation` 2 个文件用 `as_platform`（`decision.py`、`outbound.py`，后者另有自身包相对引用）；`apps/anti-fraud` 1 个文件用 `as_platform`（`decision.py`）。**两 app 互不 import**。
+- services：`services/config-service` src 22 个 .py，6 文件用 `as_platform`、3 文件用 `as_console`（`api.py`、`audit_store.py`、`auth.py`），与 pyproject 声明（as-platform、as-console）一致；`services/console` src 2 个 .py，**零内部 import**。
+- testbed：`testbed/simulators` 用 `as_platform`（6 文件）、`as_translation`（2 文件）、`as_load`（1 文件），与其 pyproject 声明（as-platform / as-translation / as-load，`:20-24`）一致；`testbed/load` 仅引用自身。
+- **apps / services src 中 0 处 import `as_simulators` / `as_load`**；所有实际内部 import 均有对应声明，无「用了未声明」。
+
+### 11.5 自检实际输出
+
+| # | 检查项 | 实际末行输出 | 结果 |
+|---|---|---|---|
+| 1 | `uv run pytest tests/ -q` | `99 passed in 0.90s`（基线 94 passed + 本批新增 5） | ✅ 全绿 |
+| 2 | `uv run pytest tests/test_layer_boundaries.py -q` | `5 passed in 0.16s`（收集 5 ≥ 要求 4） | ✅ 全绿 |
+| 3 | `uv run ruff check tests/` | `All checks passed!` | ✅ |
+| 4 | `uv run ruff format --check tests/` | `5 files already formatted` | ✅ |
+| 5 | `platform/tests/test_library_independence.py` 字节核对 | 未打开写入，git 无该文件 diff | ✅ 未动 |
+
+### 11.6 边界声明
+
+- **e2e 用例实现属 A4 批次，不属 S1**：本批未新增任何 e2e / integration 用例，未动 Makefile。
+- 本批不签收任何 REQ、不关闭任何里程碑；所有新注记标「已落盘，待维护者评审」。
+- 未做任何 git 写操作（无 add / commit / push / tag / 分支）。
+- 未改产品源码、VERSION、Chart.yaml、deploy/ 下任何文件；未运行 make / docker。
+- 1 条既有断链（m5 关门文档 → ADR-0026）仅登记不修复，待维护者决定。

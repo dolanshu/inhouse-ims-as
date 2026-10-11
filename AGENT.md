@@ -123,6 +123,8 @@ testbed/ ──may use──▶ platform/       研发资产，绝不做运行�
 
 一个 app 绝不能 import 另一个 app。一个用例是一个进程、一个故障域、一个灰度单元。
 
+**services 内部依赖（2026-10-11 追加注记，待维护者评审）**：上方分层图不禁止 services 层成员之间沿「内部 API」方向发生依赖。现存唯一一例：`services/config-service`（import root `as_config_service`）依赖 `services/console`（import root `as_console`，使用其会话 / 认证内部 API）。该依赖在 `services/config-service/pyproject.toml` 中显式声明（`[project].dependencies` 的 `as-console` 与 `[tool.uv.sources]` 的 workspace 源两处）；`services/console/pyproject.toml` 的 dependencies 为空、console 不反向依赖 config-service，因此不构成环。规则：此类依赖**必须**显式声明在依赖方的 `pyproject.toml` 中，且声明出的内部依赖图必须无环；「用了未声明」由 [`tests/test_layer_boundaries.py`](tests/test_layer_boundaries.py) 的 `test_internal_imports_are_declared_dependencies` 机器化守卫，成环由同文件 `test_internal_dependencies_do_not_form_a_cycle` 守卫，未声明或成环即违规。**本段不放宽上方的 app 互斥规则与 testbed 禁令**：app 仍绝不能 import 另一个 app，产品包仍绝不能依赖 testbed。
+
 目录结构和成员清单见 [`docs/plan.md`](docs/plan.md) §2。
 
 ## 5. 编码约定

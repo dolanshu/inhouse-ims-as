@@ -396,7 +396,7 @@ sub-repo / 独立仓库）？
 | testing | **`pytest.mark.e2e` 全仓命中 0 个文件**（仅文档提及）⇒ `-m e2e` 必然收集 0 条 | 全仓检索无测试文件命中 |
 | testing | `make test` 仍依次跑 unit/contract → integration → **e2e** 三层 | `Makefile:41-44` |
 
-**状态：第一批已完成（2026-10-11）；requirements / testing 层第一批已处理；design 重叠已消解；ADR 0023 漂移已修；ADR 体系进一步整理与 coding 边界整理是否启动后续批次，待维护者另行授权。**
+**状态：五层整理已全部完成（2026-10-11，两批）；后续仅 ADR 体系随新 ADR 自然演进，不再设整理批次。**
 
 > **现状更正（2026-10-11 收尾轮追加；上方摸底表与登记日「待维护者裁决」状态句保留为审计链，不删改）：**
 > S1 五层整理的**第一批已完成（2026-10-11）** —— 执行计划
@@ -414,6 +414,24 @@ sub-repo / 独立仓库）？
 > 自检：`uv run pytest tests/ -q` → **76 passed**（2026-10-11 收尾轮复跑）。
 > **S1 不标「全部完成」，也不再是「未启动」**：ADR 体系进一步整理与 coding 边界整理是否启动后续批次，
 > **待维护者另行授权** —— 后续批次是新的授权事项，不是悬空裁决，故 S1 **不计入「待裁决」**。
+
+> **2026-10-11 第二批（收尾批）追加；上方摸底表、第一批「现状更正」与各历史状态句保留为审计链，不删改：**
+> **S1 五层（requirements / ADR / design / coding / testing 门禁口径）整理全部完成。**
+> ① **ADR 体系全量复核一致**：逐个打开 0001–0027 正文核对，25 个英文 `Status` 行 + 0011 / 0019 两个中文状态行
+> 与注册表取值全部一致；0011 ↔ 0019 superseded-in-part 双向可追溯；无 ADR-0028+ 越界引用；
+> `docs/**` 内 206 条 ADR 链接中 205 条有效，**1 条既有断链**
+> （`docs/acceptance/m5-engineering-closure-2026-10-04.md:43` 指向 ADR-0026 时缺 `../` 前缀）
+> 已在 [`../architecture/adr/README.md`](../architecture/adr/README.md)「第二次全量复核」注记登记，
+> 按保史约定本批不修历史文档原文，待维护者评审决定 —— 依据 ADR README 第二次复核注记。
+> ② **coding 分层边界已机器化**：新建 [`../../tests/test_layer_boundaries.py`](../../tests/test_layer_boundaries.py)，
+> ast 只读扫描（数据源为根 workspace 声明与各成员 pyproject，不硬编码成员清单），守四条横向边界 + 成员分类：
+> app 互斥、产品包（apps / services）不依赖 testbed、内部 import 必须在依赖方 pyproject 显式声明、
+> 声明的内部依赖图无环（services 内部依赖澄清同步追加于 `AGENT.md` §4：现存唯一一例 config-service → console，
+> 显式声明且不构成环），外加成员必须恰好分入 kernel / apps / services / testbed 四类的结构支撑测试；
+> 现状实测 **5 个测试全部合规通过**。
+> ③ **AGENT.md §4 已追加 services 内部依赖澄清**（2026-10-11 追加注记，不放宽 app 互斥与 testbed 禁令）。
+> **testing 层的 e2e 用例实现属 A4 批次，不是 S1 缺口**；S1 不签收任何 REQ / 里程碑，本批全部注记待维护者评审。
+> 执行记录见 [`2026-10-11-s1-execution-record.md`](2026-10-11-s1-execution-record.md) §11。
 
 ---
 
@@ -433,7 +451,7 @@ sub-repo / 独立仓库）？
 | **P5** | A4-3 的独立 issue 未创建 | Wave 2 回放用例失去可追溯落点 | **已闭合（2026-10-11）** —— 「独立 issue」以仓内载体替代：[`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)；用例实现本身待 A4 批次；见 §2 P5「现状更正」 |
 | **P6** | 「FM」术语无源头 | G3 / A5 范围是否含 FM；流程载体不明 | **已澄清（2026-10-11），闭合** —— FM 经维护者确认为裁决时有意引入，定位为未来项目 / 未来批次的新 feature；当前项目不立项、不实现、不补文档；G3/A5 裁决句保留；见 §2 P6「现状更正」 |
 | **X1** | 告警抓取接线（annotation vs ServiceMonitor/PodMonitor） | chart 抓取接线（当前不改 chart） | 待维护者裁决（维持待决） |
-| **S1** | requirement / ADR / design / coding / testing 全链路整理 | 五层口径持续混乱 | **第一批已完成（2026-10-11）** —— requirements/testing 层第一批 6 任务已处理、design 重叠已由 `docs/architecture/README.md` §1 消解、ADR 0023 漂移已修；ADR 进一步整理与 coding 边界整理的后续批次待维护者另行授权（不计入待裁决）；见 §4 S1「现状更正」 |
+| **S1** | requirement / ADR / design / coding / testing 全链路整理 | 五层口径持续混乱 | **五层整理已全部完成（2026-10-11，两批）**；后续仅 ADR 体系随新 ADR 自然演进，不再设整理批次；第二批：ADR 0001–0027 全量复核一致（1 条既有断链已登记待维护者处理）、coding 边界由新建 `tests/test_layer_boundaries.py` 机器化（5 测全绿）、`AGENT.md` §4 追加 services 内部依赖澄清；e2e 用例实现属 A4 批次，不是 S1 缺口；见 §4 S1 两批「现状更正」 |
 
 ---
 
@@ -630,6 +648,16 @@ G9-c（门禁归属）、P1、P5、P6、X1、S1。
 
 > **2026-10-11 追加：** **P2 / P3 已从本清单移除**（均**已闭合（2026-10-11）**，闭合依据见 §2 P2 / P3 条目的
 > 「现状更正」段）。上列其余条目一个未动。 **〔2026-10-11 收尾轮追加〕P1 已撤销登记、不再计入待裁决**（依据见 §2 P1 的「登记更正」段：§0-A.6 的 G2 / A4-4 为已生效裁决，§8.1 ④ 为被其覆盖的建议）；**上列清单原文（含 P1）保留不改**。 **〔2026-10-11 本轮追加；上文清单原文（含 G9-b / G9-c / P1）一律保留不改〕G9-b 已消解、G9-c 已降级，二者同样不再计入待裁决**（依据分别见 §1 G9-b / G9-c 的状态列：G9-b 由 `docs/environments.md` + `tools/env-probe.sh` 的现场探测解决，不再需要命名与手工登记；G9-c 与 §0-A.6 G2 / A4-4 重叠（同一议题），同样不计入待裁决）。据此**本清单的现行待裁决 / 待处理口径为 5 项：P4、P5、P6、X1、S1** —— 与 §6.1 第二条的计数同步。**注意本清单 `:567` 起的原文仍只列 7 项且未列 P4**：P4 的计入依据是 §5 表与 §7.5 正文的实际记载（见 §6.1 第三条与两点补充说明 1），该补入口径继续有效，本段不改动它。**
+
+> **〔2026-10-11 本地工具链轮追加更正；上文各段原文（含 P4 的 docker 闭合更正）一律保留不改；待维护者评审〕**
+> 本地 promtool **2.55.1**（`tools/bin/promtool`，与 2026-10-05 历史 alert 证据**同版本**）已于同日在已登记环境
+> **`dev-win03ib7niepf0`**（host `WIN-03IB7NIEPF0`）对 `deploy/alerts/as-alerts.yaml` 完成**本机**校验：
+> `promtool check rules` → **`SUCCESS: 10 rules found`**（as.call-path 5 + as.runtime 3 + as.platform 2，共 3 组 10 条，规则集未变）。
+> 三元组：**(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)**。
+> 本追加**升级 P4 的证据基座** —— 由 docker 容器化 prometheus **v2.45.0** 升级为**与历史证据同版本的本地 promtool 2.55.1**，
+> **不改变、不重开** P4 已闭合的裁决：**状态维持「已关闭」**，本次不做任何重新裁决。
+> 本机二进制溯源为官方 quay.io 镜像提取（当日 GitHub release tarball 不可达，非 release tarball 安装），
+> 安装经过与网络偏差见 [`2026-10-11-local-infra-bootstrap-execution-record.md`](2026-10-11-local-infra-bootstrap-execution-record.md)。
 
 ---
 

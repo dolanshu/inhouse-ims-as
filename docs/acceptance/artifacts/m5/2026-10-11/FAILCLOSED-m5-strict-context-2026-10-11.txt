@@ -1,0 +1,12 @@
+# subject: m5-strict-context
+# command: M5_STRICT=1 m5_require_kind_context (cluster kind-as-m5)
+# exit-code: 0
+# verdict: FAILCLOSED
+# note: records the fail-closed path itself; NOT pass evidence
+# recorded-by: deploy/kind/m5-record-artifacts.sh on 2026-10-11
+# --- transcript begin ---
+M5_STRICT=1 cluster=kind-as-m5
+host has no guarantee of a live kind cluster; this transcript records the fail-closed path.
+Switched to context "kind-as-m5".
+exit=0
+# --- transcript end ---

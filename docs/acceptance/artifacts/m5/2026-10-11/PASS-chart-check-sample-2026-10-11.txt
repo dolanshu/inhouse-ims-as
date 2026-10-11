@@ -1,0 +1,27 @@
+# subject: chart-check-sample
+# command: make chart-check (sample)
+# exit-code: 0
+# verdict: PASS
+# recorded-by: deploy/kind/m5-record-artifacts.sh on 2026-10-11
+# --- transcript begin ---
+deploy/helm/scripts/chart-check.sh
+==> helm lint /home/shudong/project/3rdparty-as/deploy/helm
+engine.go:227: [INFO] Fail: tls.enabled=true requires tls.secretName (customer PKI Secret; ADR-0016)
+engine.go:227: [INFO] Fail: sip.peerAllowlist must be non-empty (ADR-0016 fail-closed)
+engine.go:227: [INFO] Fail: tls.enabled=true requires tls.secretName (customer PKI Secret with tls.crt/tls.key/ca.crt). Set tls.secretName, or tls.enabled=false for plaintext testbed only. See ADR-0016
+engine.go:227: [INFO] Fail: sip.peerAllowlist is empty: fail-closed per ADR-0016 (anything able to impersonate the S-SBC could inject calls). Set sip.peerAllowlist to the operator S-SBC CIDRs, or sip.allowEmptyAllowlistForTest=true for testbed only. See ADR-0016
+==> Linting /home/shudong/project/3rdparty-as/deploy/helm
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+==> helm template default (AS-only, expect 7 objects)
+==> helm template tls.enabled without secretName must fail (H-3)
+==> helm template empty peerAllowlist must fail (H-4)
+==> helm template config-service enabled
+==> helm template config-service ingress (7.2d template path)
+==> autoscaling.enabled without minReplicas must fail
+==> helm template stateStores.enabled (ADR-0026 bundled state)
+==> helm template stateStores + config-migrate Job
+==> helm template onprem profile (H-2: values-onprem.example.yaml renders)
+chart-check: OK
+# --- transcript end ---

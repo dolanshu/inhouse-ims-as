@@ -1,0 +1,77 @@
+# subject: m5-verify-strict
+# command: M5_STRICT=1 bash deploy/kind/m5-verify.sh
+# exit-code: 1
+# verdict: FAIL
+# recorded-by: deploy/kind/m5-record-artifacts.sh on 2026-10-11
+# --- transcript begin ---
+==> make gate
+/home/shudong/.local/bin/uv run ruff format --check .
+525 files already formatted
+/home/shudong/.local/bin/uv run ruff check .
+All checks passed!
+/home/shudong/.local/bin/uv run mypy
+Success: no issues found in 90 source files
+/home/shudong/.local/bin/uv run pytest -m "unit or contract" -q
+........................................................................ [  6%]
+........................................................................ [ 13%]
+..........................sssssss....................................... [ 20%]
+........................................................................ [ 27%]
+..................................................................s..... [ 33%]
+........................................................................ [ 40%]
+........................................................................ [ 47%]
+........................................................................ [ 54%]
+........................................................................ [ 61%]
+........................................................................ [ 67%]
+........................................................................ [ 74%]
+........................................................................ [ 81%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+................................................s.s..                    [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.10/site-packages/fastapi/testclient.py:1
+  /home/shudong/project/3rdparty-as/.venv/lib/python3.10/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+services/config-service/tests/test_api.py: 10 warnings
+  /home/shudong/project/3rdparty-as/.venv/lib/python3.10/site-packages/starlette/testclient.py:463: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+    return super().request(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [7] platform/tests/native_extensions.py:24: platform _resip_runtime extension not built; run make m2-platform-resip-build
+SKIPPED [1] platform/tests/test_sip_recovery.py:69: platform _resip_recovery extension not built
+SKIPPED [1] testbed/simulators/tests/test_derived_baseline.py:245: S1-basic-call constructs no Route header on 03-out-invite-core.txt: the AS sends the second leg straight to its Request-URI instead of through a next hop. A dedicated M2 probe capture is needed before this can be asserted.
+SKIPPED [1] testbed/simulators/tests/test_derived_baseline.py:279: S1-basic-call constructs no Record-Route header in any of its 14 messages; a dedicated M2 probe capture is needed before this can be asserted.
+1051 passed, 10 skipped, 206 deselected, 11 warnings in 9.25s
+==> make chart-check
+deploy/helm/scripts/chart-check.sh
+==> helm lint /home/shudong/project/3rdparty-as/deploy/helm
+engine.go:227: [INFO] Fail: tls.enabled=true requires tls.secretName (customer PKI Secret; ADR-0016)
+engine.go:227: [INFO] Fail: sip.peerAllowlist must be non-empty (ADR-0016 fail-closed)
+engine.go:227: [INFO] Fail: tls.enabled=true requires tls.secretName (customer PKI Secret with tls.crt/tls.key/ca.crt). Set tls.secretName, or tls.enabled=false for plaintext testbed only. See ADR-0016
+engine.go:227: [INFO] Fail: sip.peerAllowlist is empty: fail-closed per ADR-0016 (anything able to impersonate the S-SBC could inject calls). Set sip.peerAllowlist to the operator S-SBC CIDRs, or sip.allowEmptyAllowlistForTest=true for testbed only. See ADR-0016
+==> Linting /home/shudong/project/3rdparty-as/deploy/helm
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+==> helm template default (AS-only, expect 7 objects)
+==> helm template tls.enabled without secretName must fail (H-3)
+==> helm template empty peerAllowlist must fail (H-4)
+==> helm template config-service enabled
+==> helm template config-service ingress (7.2d template path)
+==> autoscaling.enabled without minReplicas must fail
+==> helm template stateStores.enabled (ADR-0026 bundled state)
+==> helm template stateStores + config-migrate Job
+==> helm template onprem profile (H-2: values-onprem.example.yaml renders)
+chart-check: OK
+Switched to context "kind-as-m5".
+==> pods in as-m5
+No resources found in as-m5 namespace.
+error: error executing jsonpath "{.items[0].metadata.name}": Error executing template: array index out of bounds: index 0, length 0. Printing more information for debugging the template:
+	template was:
+		{.items[0].metadata.name}
+	object given to jsonpath engine was:
+		map[string]interface {}{"apiVersion":"v1", "items":[]interface {}{}, "kind":"List", "metadata":map[string]interface {}{"resourceVersion":""}}
+
+
+# --- transcript end ---

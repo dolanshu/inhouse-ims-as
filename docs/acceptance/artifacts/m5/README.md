@@ -35,6 +35,15 @@ Sanitized M5.1 transcripts. Raw kind runs may still land under gitignored `artif
 | `2026-10-05/PASS-alert-check-sample-2026-10-05.txt` | 通过 | 同上运行的内容副本 |
 | `2026-10-05/FAILCLOSED-m5-strict-context-2026-10-05.txt` | **不是通过证据** | `M5_STRICT=1` with no `kind-as-m5`（**exit=1**），fail-closed 路径记录 |
 | `2026-10-11/PASS-alert-check-full-2026-10-11.txt` | 通过 | Docker 运行 `promtool check rules` → `SUCCESS: 10 rules found`（**覆盖全部 3 组 10 条规则**：as.call-path 5 + as.runtime 3 + as.platform 2）；镜像 `prom/prometheus:v2.45.0`，host `WIN-03IB7NIEPF0` |
+| `2026-10-11/PASS-gate-2026-10-11.txt` | 通过 | 本机（`dev-win03ib7niepf0`）`make gate`（ruff format --check / ruff check / mypy / pytest unit+contract）→ `1037 passed, 10 skipped, 206 deselected`。**含 SKIPPED 项**，引用时必须一并说明 skip 构成，见下方第 3 条 |
+| `2026-10-11/PASS-gate-sample-2026-10-11.txt` | 通过 | 同上运行的尾部摘要（同样含 SKIPPED 项） |
+| `2026-10-11/PASS-chart-check-2026-10-11.txt` | 通过 | 本机 `make chart-check`，末行 `chart-check: OK`、`1 chart(s) linted, 0 chart(s) failed`；语义与 2026-10-05 行相同（`[INFO] Fail:` 属预期断言，见下方第 2 条）；helm 3.16.4（`tools/bin/`，infra bootstrap 后首次本机产出） |
+| `2026-10-11/PASS-chart-check-sample-2026-10-11.txt` | 通过 | 同上运行的内容副本 |
+| `2026-10-11/PASS-alert-check-2026-10-11.txt` | 通过 | **本地** promtool **2.55.1**（`tools/bin/`，与 2026-10-05 证据**同版本**）`check rules` → `SUCCESS: 10 rules found`（**覆盖全部 3 组 10 条规则**：as.call-path 5 + as.runtime 3 + as.platform 2）；二进制溯源为官方镜像提取（非 release tarball，安装当日 GitHub 不可达），见 [`../../../handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](../../../handoff/2026-10-11-local-infra-bootstrap-execution-record.md) |
+| `2026-10-11/PASS-alert-check-sample-2026-10-11.txt` | 通过 | 同上运行的内容副本 |
+| `2026-10-11/FAILCLOSED-m5-strict-context-2026-10-11.txt` | **不是通过证据** | `M5_STRICT=1` context 检查：本次 `kind-as-m5` context 在位、检查本身 `exit=0`，但按采集脚本设计该文件**一律**记 `FAILCLOSED`、永不作为通过证据引用（与 2026-10-05 行的 `exit=1` 失败路径不同，二者都不是通过证据） |
+| `2026-10-11/FAIL-m5-verify-strict-2026-10-11.txt` | **不是通过证据** | `M5_STRICT=1 bash deploy/kind/m5-verify.sh` **exit=1**：新建 `as-m5` 集群只有空控制面（`No resources found in as-m5 namespace.`，产品 AS pod 未部署），jsonpath 断言越界。**如实失败** —— 印证「工具与集群就位 ≠ 集群级产品验证通过」 |
+| `2026-10-11/FAIL-m5-verify-strict-sample-2026-10-11.txt` | **不是通过证据** | 同上运行的尾部摘要 |
 | `README.md` | — | this index |
 
 ## 三件容易被误读的事

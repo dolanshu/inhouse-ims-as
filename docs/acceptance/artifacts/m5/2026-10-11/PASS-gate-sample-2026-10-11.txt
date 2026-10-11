@@ -1,0 +1,12 @@
+# subject: gate-sample
+# command: make gate (sample)
+# exit-code: 0
+# verdict: PASS
+# recorded-by: deploy/kind/m5-record-artifacts.sh on 2026-10-11
+# --- transcript begin ---
+SKIPPED [7] platform/tests/native_extensions.py:24: platform _resip_runtime extension not built; run make m2-platform-resip-build
+SKIPPED [1] platform/tests/test_sip_recovery.py:69: platform _resip_recovery extension not built
+SKIPPED [1] testbed/simulators/tests/test_derived_baseline.py:245: S1-basic-call constructs no Route header on 03-out-invite-core.txt: the AS sends the second leg straight to its Request-URI instead of through a next hop. A dedicated M2 probe capture is needed before this can be asserted.
+SKIPPED [1] testbed/simulators/tests/test_derived_baseline.py:279: S1-basic-call constructs no Record-Route header in any of its 14 messages; a dedicated M2 probe capture is needed before this can be asserted.
+1037 passed, 10 skipped, 206 deselected, 11 warnings in 9.35s
+# --- transcript end ---

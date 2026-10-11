@@ -42,7 +42,7 @@
 
 | 环境名 | hostname | 具备工具 | 缺失工具 | 已在此产出的证据 | 备注 |
 |---|---|---|---|---|---|
-| `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | `docker`（`/usr/bin/docker` 29.2.1）、`uv`（`/home/shudong/.local/bin/uv` 0.12.15）、`python3.10`（`/usr/bin/python3.10` 3.10.12）、`make`（`/usr/bin/make` 4.3）、`git`（`/usr/bin/git` 2.34.1） | `helm` / `kubectl` / `kind` / `promtool` —— 四项均由脚本判为「未找到」（`tools/bin/` 与 `PATH` 均无），**无一项落在「⚠ 装了但不可用」**（2026-10-11 实测） | `docs/reviews/product-packaging-execution-record-2026-10-10.md:132`（`preflight.sh --dry-run` 行为与退出码）；`docs/plan.md` §0 记的 config-service PostgreSQL integration（2026-10-03，本地 PG 12.22） | 当前工作站 / 日常开发环境；OS `Ubuntu 22.04.5 LTS`、架构 `x86_64`。`uv` 位于 `/home/shudong/.local/bin/uv`。**不能**运行 `make chart-check` / `make alert-check` / 任何 kind 集群级验证 |
+| `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | `docker`（`/usr/bin/docker` 29.2.1）、`uv`（`/home/shudong/.local/bin/uv` 0.12.15）、`python3.10`（`/usr/bin/python3.10` 3.10.12）、`helm`（`tools/bin/helm` v3.16.4+g7877b45）、`kubectl`（`tools/bin/kubectl` v1.31.4）、`kind`（`tools/bin/kind` v0.24.0 go1.22.10）、`promtool`（`tools/bin/promtool` 2.55.1）、`make`（`/usr/bin/make` 4.3）、`git`（`/usr/bin/git` 2.34.1）—— 后四件于 2026-10-11 由 `tools/bootstrap-infra.sh` 装入 `tools/bin/`（不入库），bootstrap 后 `tools/env-probe.sh` 实测九项全 ✅ | （无）—— ❌ 缺失与 ⚠ 装了但不可用均为（无）（2026-10-11 bootstrap 后实测；此前 helm / kubectl / kind / promtool 四项曾为「未找到」，见 §2.1 旧数据行） | `docs/reviews/product-packaging-execution-record-2026-10-10.md:132`（`preflight.sh --dry-run` 行为与退出码）；`docs/plan.md` §0 记的 config-service PostgreSQL integration（2026-10-03，本地 PG 12.22）；`docs/acceptance/artifacts/m5/2026-10-11/`（2026-10-11 本机复跑 gate / chart-check / alert-check 各 PASS-，另有 FAILCLOSED-m5-strict-context 与如实 FAIL 的 FAIL-m5-verify-strict，采集与判读见 [`acceptance/artifacts/m5/README.md`](acceptance/artifacts/m5/README.md)） | 当前工作站 / 日常开发环境；OS `Ubuntu 22.04.5 LTS`、架构 `x86_64`。`uv` 位于 `/home/shudong/.local/bin/uv`。**2026-10-11 bootstrap 前**不能运行 `make chart-check` / `make alert-check` / 任何 kind 集群级验证（历史结论保留为审计链）；**2026-10-11 bootstrap 后**三项均可本机运行 —— chart-check / alert-check 已当日复跑通过，kind 集群 `as-m5` 已创建、context `kind-as-m5` 校验 OK；**集群级产品验证未做**（m5-verify-strict 如实 FAIL）。工具安装经过与偏差见 [`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md) |
 
 > **本行由 2026-10-11 实测写入；后续请用 `tools/env-probe.sh` 重新生成，不要手工编辑本行。**
 > 本行是本轮实测真值，本次未改动。补齐 helm / kubectl / kind / promtool 的执行计划见
@@ -53,6 +53,15 @@
 > `bash tools/env-probe.sh --markdown`（退出码 0），本行已按**该次真实输出**重贴。
 > 上方「后续请用 `tools/env-probe.sh` 重新生成、不要手工编辑本行」的说明**不变、仍然有效**：
 > 下次工具清单变化就重跑脚本整段粘贴，不要手工编辑。
+
+> **2026-10-11 追加（infra bootstrap 后重贴；上文原样保留，不删改；待维护者评审）：**
+> [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) 已执行完毕，
+> 本行「具备工具 / 缺失工具 / 已在此产出的证据 / 备注」四栏已按 bootstrap 后 fresh `tools/env-probe.sh` 输出**整行重贴**：
+> helm / kubectl / kind / promtool 四项由「未找到」变为 ✅ 具备（路径 `tools/bin/`，不入库），缺失工具栏为（无）。
+> 「已在此产出的证据」与「备注」的历史记载**保留未删，只做追加**。kubectl 的版本号 v1.31.4 来自直跑
+> `tools/bin/kubectl version --client=true`（`Client Version: v1.31.4`）与 `tools/bootstrap-infra.sh` 校验段；
+> env-probe 判定依据列显示 `clientVersion:` 是其 `version --client=true -o yaml` 取首行的显示形式（见 §2.1 注），
+> 非版本缺失。执行记录：[`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md)。
 
 ### 2.1 逐工具实测矩阵（由 `tools/env-probe.sh --markdown` 生成）
 
@@ -68,6 +77,21 @@
 | 环境名 | hostname | OS | 架构 | docker | uv | python3.10 | helm | kubectl | kind | promtool | make | git |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | Ubuntu 22.04.5 LTS | x86_64 | ✅ `/usr/bin/docker` Docker version 29.2.1, build a5c7197 | ✅ `/home/shudong/.local/bin/uv` uv 0.12.15 (x86_64-unknown-linux-gnu) | ✅ `/usr/bin/python3.10` Python 3.10.12 | ❌ — 未找到（tools/bin 与 PATH 均无） | ❌ — 未找到（tools/bin 与 PATH 均无） | ❌ — 未找到（tools/bin 与 PATH 均无） | ❌ — 未找到（tools/bin 与 PATH 均无） | ✅ `/usr/bin/make` GNU Make 4.3 | ✅ `/usr/bin/git` git version 2.34.1 |
+
+**2026-10-11 补记（infra bootstrap 后；上行保留为 bootstrap 前真值，不删改；待维护者评审）：**
+[`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) 已执行完毕，
+四件 infra 工具装入 `tools/bin/`（不入库）。下表数据行 = bootstrap 后 fresh
+`bash tools/env-probe.sh --markdown`（退出码 0）输出**整段粘贴**（表头 + 分隔行 + 数据行），非手工补写：
+
+| 环境名 | hostname | OS | 架构 | docker | uv | python3.10 | helm | kubectl | kind | promtool | make | git |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | Ubuntu 22.04.5 LTS | x86_64 | ✅ `/usr/bin/docker` Docker version 29.2.1, build a5c7197 | ✅ `/home/shudong/.local/bin/uv` uv 0.12.15 (x86_64-unknown-linux-gnu) | ✅ `/usr/bin/python3.10` Python 3.10.12 | ✅ `/home/shudong/project/3rdparty-as/tools/bin/helm` v3.16.4+g7877b45 | ✅ `/home/shudong/project/3rdparty-as/tools/bin/kubectl` clientVersion: | ✅ `/home/shudong/project/3rdparty-as/tools/bin/kind` kind v0.24.0 go1.22.10 linux/amd64 | ✅ `/home/shudong/project/3rdparty-as/tools/bin/promtool` promtool, version 2.55.1 (branch: HEAD, revision: 6d7569 | ✅ `/usr/bin/make` GNU Make 4.3 | ✅ `/usr/bin/git` git version 2.34.1 |
+
+> **kubectl 格说明（`clientVersion:` 是脚本输出原文，非手工补写）：** env-probe 对 kubectl 探测命令为
+> `version --client=true -o yaml`，判定依据列显示的是 YAML 首行 `clientVersion:` 原样输出；锁定版本
+> v1.31.4 由直跑 `tools/bin/kubectl version --client=true`（`Client Version: v1.31.4`）、
+> `tools/bootstrap-infra.sh` 校验段（exit 0）与安装文件 sha256 官方值逐字比对一致三重确认。
+> 本轮 plain 输出末尾：❌ 缺失：（无）；⚠ 装了但不可用：（无）。
 
 **三种状态的读法（脚本按此区分，勿混为一谈）：**
 
@@ -106,6 +130,16 @@
 > [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md)
 > 的其余目标（helm / kubectl / kind 本地就位、chart-check 本机复跑、kind 集群证据）**不受 P4 闭合影响，
 > 仍按该计划待执行 / 待授权**。
+
+> **2026-10-11 追加（infra bootstrap 轮；上方 P4 docker 闭合注原文保留，不删改；待维护者评审）：**
+> 本地 promtool **2.55.1** 现已就位（`tools/bin/promtool`，与 2026-10-05 历史 alert 证据**同版本**；
+> 二进制溯源为官方镜像 `quay.io/prometheus/prometheus@sha256:2659f4c2ebb718e7695cb9b25ffa7d6be64db013daba13e05c875451cf51b0d3`
+> 提取，见执行记录），`make alert-check` 已在本机（环境 `dev-win03ib7niepf0`）复跑：
+> `promtool check rules` → **`SUCCESS: 10 rules found`**（as.call-path 5 + as.runtime 3 + as.platform 2，共 3 组）。
+> 三元组：**(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)**。
+> 本注**升级** P4 的证据基座（docker 容器化 prometheus v2.45.0 → 与历史证据同版本的本地 promtool 2.55.1），
+> **不改变** P4 已闭合的裁决本身；状态维持「已关闭」，本追加待维护者评审。
+> 执行记录：[`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md)。
 
 ## 3. 如何新增 / 更新一行（不需要人工查 hostname）
 

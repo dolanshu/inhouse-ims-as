@@ -49,6 +49,21 @@ ADR 与它所授权的改动**一起**写，不事后、不最后批量补。没
 > 依据：[`../../handoff/2026-10-11-open-adjudication-register.md`](../../handoff/2026-10-11-open-adjudication-register.md)
 > §1 S1 表「注册表与正文漂移」行。**本注记已落盘，待维护者评审。**
 
+> **第二次全量复核（2026-10-11，S1 第二批）**：逐个打开 **0001–0027**（0000 模板除外）正文核对状态行，
+> 结论：**25 个英文 `- **Status**:` 行与 0011 / 0019 两个中文「- **状态**：」行，取值与上方注册表全部一致**
+> （0023=proposed、0025=draft、0011=superseded-in-part，其余 accepted；0024 行尾维护者签核注记不改变 accepted 取值）。
+> **0011 ↔ 0019 双向可追溯**：[0011](0011-sip-stack-dual-path.md) 正文第 4 行写
+> 「superseded-in-part by ADR-0019」，[0019](0019-sip-stack-selection.md) 正文第 7 行写
+> 「取代 ADR-0011 确立的『生产栈 = sippy』前提」。
+> **链接核查**：对 `docs/**` 内全部指向 `adr/00NN-*.md` 的 Markdown 链接做相对路径解析（共 206 条），
+> **205 条有效、无 ADR-0028 及以上的越界引用**；发现 **1 条既有断链**：
+> [`../../acceptance/m5-engineering-closure-2026-10-04.md`](../../acceptance/m5-engineering-closure-2026-10-04.md)
+> 第 43 行链接写作 `architecture/adr/0026-in-cluster-state-stores-proposal.md`，
+> 自 `docs/acceptance/` 解析应为 `../architecture/adr/...`（缺少 `../` 前缀）。
+> 该文件是 2026-10-04 历史关门文档，按保史约定且不在本批授权改动路径内，**本次不修复、不删改其原文**，
+> 仅在此登记，待维护者评审决定（修正方式：把该链接改为 `../architecture/adr/0026-in-cluster-state-stores-proposal.md`）。
+> 本次复核**未改动任何 ADR 正文、未改动上方注册表表格**。**本注记已落盘，待维护者评审。**
+
 ## 规则
 
 - **编号只追加。** 被取代的 ADR 保留编号并标为被新 ADR 取代；编号绝不重用或重排。
