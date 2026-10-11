@@ -15,7 +15,7 @@
 | 层 | pytest 标记 | 现状 |
 |----|-------------|------|
 | ① | `unit or contract` | `make gate`。绝大多数不经 `_resip_runtime`。E1 有 `.so` 时跑真栈；**S1/S4** 用 `accept_all_invites` harness（旁路 `decide()`）；**S2/S3** 走 `decide()`。 |
-| ② | `integration` | 真栈子集：TCP/TLS、FORWARD 双腿、SDP、`test_product_path`（仿真链 + `demo_rules`，**无** accept-all）。CI job `native-contract` 只阻塞其中列出的文件；job ② 全量 integration **不编** native。 |
+| ② | `integration` | 真栈子集：TCP/TLS、FORWARD 双腿、SDP、`test_product_path`（仿真链 + `demo_rules`，**无** accept-all）。门禁层② 全量 integration **不编** native；native 路径另由 `make m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate` 覆盖。 |
 | ③ | `e2e` | **0 条**。完整呼叫 + 控制台不在此标记下。规划见 e2e 计划。 |
 | 容量 | `performance` / `as_load` | M6 产品 runtime 压测对端是 `load_uas_runtime.py`（**accept-all harness**），不是业务判决路径。 |
 
@@ -194,7 +194,7 @@
 
 **M4 浏览器 HTTPS（2026-10-03 关门裁决）**：M4/M4b-8 可在 **compose、自签证书或本地反代** 提供的同源 HTTPS 上执行并收集脱敏证据；这不替代下文 7.2d 的正式生产/集群 preflight。正式 **7.2d** ingress/trusted-proxy 证明归入 **M5** 验收，见 [`reviews/m4-closure-adjudication-2026-10-03.md`](../reviews/m4-closure-adjudication-2026-10-03.md) 与 `plan.md` §4.2。
 
-**M4b-7.2d ingress/TLS preflight (BLOCKED)**：在开始任何 login/browser workflow 前，对实际客户/测试部署完成并记录以下检查：
+**M4b-7.2d ingress/TLS preflight (BLOCKED)**：在开始任何 login/browser 操作流前，对实际客户/测试部署完成并记录以下检查：
 
 - 保留默认 ingress-nginx annotation prefix `nginx.ingress.kubernetes.io`；确认没有自定义 prefix 令 chart 注解失效。
 - 检查外部 ingress-nginx controller 配置，确认 `no-tls-redirect-locations` 不包含 `/`，不会豁免 console/API 路由的 HTTPS redirect。
@@ -316,10 +316,10 @@ chart 固定的 redirect annotations 只作用于 chart Ingress 对象，不能�
 
 ### REQ-NF-15 验收标准
 - [ ] PRD 与 [`req-nf-15-testbed-performance.md`](../requirements/req-nf-15-testbed-performance.md) 存在且 ADR-0014 `回应 REQ` 指向 REQ-NF-15（D8 追溯）
-- [ ] `testbed/load/` harness 经真实 UDP socket 驱动被测栈（`as_load` integration 测试在 CI `integration` 层通过）
+- [ ] `testbed/load/` harness 经真实 UDP socket 驱动被测栈（`as_load` integration 测试在门禁 `integration` 层通过）
 - [ ] 容量研究证据包含 `summary.json`（含 `c6_windows` 1s/100s）与目标侧 `resources.json` 快照；禁止用驱动回调冒充容量测量（ADR-0014）
 - [ ] M6 O1 内部测量报告记录 dev-host 正式批次与局限；**不**将报告数字作为 SLA 或对外营销容量
-- [ ] 生产集群多副本饱和点、HPA 阈值与 `performance` marker 阻塞 CI —— **M8** 或维护者单独裁决前保持 open
+- [ ] 生产集群多副本饱和点、HPA 阈值与 `performance` marker 阻塞门禁 —— **M8** 或维护者单独裁决前保持 open
 
 ---
 
@@ -363,13 +363,13 @@ chart 固定的 redirect annotations 只作用于 chart Ingress 对象，不能�
 - [ ] 代码改动能追溯到 requirement（通过 ADR 或直接引用）
 
 ### REQ-G-3 验收标准
-- [ ] `make gate` 四步（format/check/mypy/pytest）不包含 AST 扫描（AST 扫描属于 CI 前置门禁或 `make gate-strict` 额外目标）
-- [ ] 故意写一行不标注的架构性代码，断言 AST 扫描阻断（通过 `make gate-strict` 或 CI 流水线）
+- [ ] `make gate` 四步（format/check/mypy/pytest）不包含 AST 扫描（AST 扫描由 `make gate-strict` 单独触发）
+- [ ] 故意写一行不标注的架构性代码，断言 AST 扫描阻断（通过 `make gate-strict`）
 - [ ] 扫描覆盖率：所有非 trivial 的架构性代码都有 ADR 标注
 
 ### REQ-G-4 验收标准
 - [ ] `make gate` 退出码为 0
-- [ ] CI 流水线中 `make gate` 失败时阻断后续步骤
+- [ ] `make test` 中层① 失败时阻断后续层
 - [ ] pre-commit hook 在本地提交前运行 `make gate` 的 lint/format 部分
 
 ---

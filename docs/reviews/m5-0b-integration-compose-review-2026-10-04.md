@@ -15,7 +15,7 @@ make test-integration-compose 142/3
 
 ## Findings
 
-CI integration job lacks compose DSN; document maintainer run.
+The blocking integration run lacks compose DSN; document maintainer run.
 
 ## Verdict
 

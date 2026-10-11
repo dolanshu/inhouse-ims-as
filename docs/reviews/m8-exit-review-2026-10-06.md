@@ -13,7 +13,7 @@
 
 | # | 退出条件 | 本 RC 状态 | 结论 |
 |---|---|---|---|
-| 1 | 阶段 A–B 闭合：P1 尾项 + M5.1 / 全链复评达到维护者认可的 REQ 证据门槛 | A：F9 workflow-ready-locally（push 待 PAT）、F8 契约落地、F6 documented limitation、gate-strict + performance 阻塞 + runbook；B：MINIMAL M5.1、B-2 降级、B-3 L1，复评 REQ 级不通过 + 10 defer。**维护者认可待补** | 未闭合（待维护者） |
+| 1 | 阶段 A–B 闭合：P1 尾项 + M5.1 / 全链复评达到维护者认可的 REQ 证据门槛 | A：F9 门禁本地就绪、F8 契约落地、F6 documented limitation、gate-strict + performance 阻塞 + runbook；B：MINIMAL M5.1、B-2 降级、B-3 L1，复评 REQ 级不通过 + 10 defer。**维护者认可待补** | 未闭合（待维护者） |
 | 2 | 阶段 C：test-plan v1 范围内验收项有可追溯证据 | 矩阵 [`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md)：pass 9 / fail 0 / blocked 12 / n-a 4 / open 24；全部 `signed_by` 为维护者待签 | 未闭合（待签收） |
 | 3 | 阶段 D：环境类 true blocker 有记录结论 | D-1/D-2 明确 defer，D-3 裁决 pending（建议 v1.1）；记录见 [`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) | 记录齐备，终态待维护者 |
 | 4 | 阶段 E：`report.md` 升级为 M8 发布候选报告；VERSION + CHANGELOG 与交付一致；`plan.md` §0 / §4 M8 行标记 | report.md §0 已升级（历史保史为附录）；VERSION 维持 `0.2.0`（未 bump，CHANGELOG 首标题一致）；plan.md §0 / §4 M8 行标 **RC就绪、待维护者退出签字**（未标已完成） | 产物就绪，签字待补 |
@@ -27,7 +27,7 @@
 
 | # | Issue | 现状 | 终态要求 |
 |---|---|---|---|
-| 1 | **F9 push pending** | `.github/workflows/ci.yml` 本地就绪（blocking native jobs + chart-check + gate-strict），origin 未推送 | 维护者以 `workflow` scope PAT 推送并确认 origin CI 绿 |
+| 1 | **F9 门禁落地 pending** | 本地门禁配置就绪（blocking native 目标 + chart-check + gate-strict），尚未纳入必跑 | 维护者确认 `make gate-strict` 与 blocking 目标在本机可复现为绿 |
 | 2 | **矩阵 24 open** | F-1/2/3/4/5/6/7/8/9/10/11/12/14/16、NF-2/5/9/10/13/14/15、S-1/S-4、D12/O5-HA；均有工程证据，待 M8 退出评审签收 | 维护者逐项签收或书面接受 |
 | 3 | **矩阵 12 blocked** | F-13、5.4-F-13、F-15、5.4-F-15真AS、NF-1、NF-3、NF-4、NF-7、S-2、S-3、ADR-0008演练、D6；每项已指到 plan §5 / O1 / v1.1 / Phase D | 转终态（证据 / 有条件通过 / defer 授权） |
 | 4 | **D-1 运营商 PKI / 外网 S-SBC** | 明确 defer（本环境无 lab 与对端） | 维护者排期采证或书面接受风险 |
@@ -77,6 +77,6 @@ v1 明确排除重申（不计入全绿）：主叫/正则（v1.1）、PM/AM/UM 
 | 评审结论 | RC就绪，defer项未清，不宣称全绿；维护者签字后方可关门（不是"通过"） |
 | 自决策 | M8 Phase E 由 AI agent 在维护者缺席期间按 RC 计划 §4 Phase E（E-1…E-6）执行；用户指令 self-decision；所有签字均为维护者待签 |
 | 维护者确认 | **待签字**（本栏须由维护者填写；本记录不构成关门结论） |
-| 所需维护者动作 | (1) 以 `workflow` scope PAT 推送 CI workflow 并确认 origin 绿；(2) 排期 D-1/D-2 环境采证或书面接受风险；(3) 裁决 D-3（D6）、O1 目标、NF-3 口径、M5D-1…M5D-6 行落定；(4) 完成 M1/M2/M6/M7/M8 退出签字；(5) 仅由维护者执行 tag（AGENT §10.4） |
+| 所需维护者动作 | (1) 确认 blocking 门禁目标与 `gate-strict` 本机可复现为绿；(2) 排期 D-1/D-2 环境采证或书面接受风险；(3) 裁决 D-3（D6）、O1 目标、NF-3 口径、M5D-1…M5D-6 行落定；(4) 完成 M1/M2/M6/M7/M8 退出签字；(5) 仅由维护者执行 tag（AGENT §10.4） |
 | 输入评审 | [`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md)、[`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md)、[`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)、[`m5-req-acceptance-review-2026-10-06.md`](m5-req-acceptance-review-2026-10-06.md)、[`m8-phase-a-f6-f8-note-2026-10-06.md`](m8-phase-a-f6-f8-note-2026-10-06.md) |
 | 未采信证据 | `artifacts/m8/` 占位目录（待采证，无证据效力）；`make gate` 本地绿仅为工程门禁，不替代 REQ 签收 |

@@ -1,6 +1,6 @@
 # Handoff — SIP native testing gate补齐计划 (2026-10-09)
 
-> **Purpose:** 下一 session 执行：真栈（`_resip_runtime`）测试分层、CI 守门、E1/S1 harness 修复。  
+> **Purpose:** 下一 session 执行：真栈（`_resip_runtime`）测试分层、门禁守门、E1/S1 harness 修复。  
 > **Not:** 本文件本身不签收 REQ / 里程碑；维护者 commit / push 自行完成。  
 > **Prerequisite:** `cur` 分支已删除（内容在 `master` `c2d56e4` 及之后）；`callload` 已删。
 
@@ -13,7 +13,7 @@
 | 产品 SIP | C++ **reSIProcate** → Python 模块 **`_resip_runtime`**（`make m2-platform-resip-build`） |
 | `make gate` | `pytest -m "unit or contract"` ≈1012 条；**绝大多数不经过真栈** |
 | E1 真栈烟测 | `test_e1_contract_resip_runtime*.py` 共 **7** 条（有 `.so` 才跑；无则 **skip**） |
-| CI `fast` job | **不**编 native → E1 **全 skip**，merge 门禁**未验** UDP/TLS 产品栈 |
+| `make gate`（① 层） | **不**编 native → E1 **全 skip**，提交门禁**未验** UDP/TLS 产品栈 |
 | 本机有 `.so` 时 | **2 failed**：S1 + `accept_all_invites` + SDP → 期望 **200**，实际 **400**（harness 应答 SDP / `minimalHarnessAnswer`） |
 | 原则 | **凡 SIP flow 行为验收，应走真栈**；7 条 smoke **不够**（见 `docs/acceptance/test-plan.md` REQ-F-*） |
 
@@ -84,7 +84,7 @@ make gate   # 本机已编扩展时应 0 failed（E1 相关）
 
 ## 2. Phase B — 本地「真栈门禁」命令（短平快）
 
-在 CI 改完前，维护者本地约定：
+在 §3 落地前，维护者本地约定：
 
 ```bash
 make m2-platform-resip-build
@@ -102,9 +102,9 @@ AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m "unit or contract" -q
 
 ---
 
-## 3. Phase C — CI 编扩展并阻塞 merge
+## 3. Phase C — 编扩展并纳入阻塞 merge 的门禁
 
-参考：`docs/handoff/2026-10-07-m8-next-step-plan.md`（规划了 `m2-platform-resip` job）、`docs/reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md` **F9**。
+参考：`docs/reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md` **F9**。
 
 ### C.1 新 job 或扩展现有 job（建议）
 
@@ -134,12 +134,12 @@ AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m "unit or contract" -q
 | 契约目录 | REQ / 含义 | 当前自动化（真栈） | 目标 |
 |----------|------------|-------------------|------|
 | S1-basic-call | REQ-F-1…F-5 基础 | E1：S1 harness 200（**红**）；无 14 条全文回放 | Phase A 修 harness；**D1** 增加 14 消息回放或 derived + 真栈 |
-| S2-no-match-404 | REQ-F-6 | E1 **绿**（有 .so） | 保持；CI 必跑 |
+| S2-no-match-404 | REQ-F-6 | E1 **绿**（有 .so） | 保持；门禁必跑 |
 | S3-policy-reject-603 | REQ-F-7 | E1 **绿** | 保持 |
 | S4-caller-cancel | REQ-F-8 等 | E1 full **487 绿** | 保持 |
 | S5–S11 | F-2/F-4/路由等 | 部分 **integration** / 未覆盖 | **D2** 按优先级加 `test_e1_*` 或 integration |
 
-**`make gate` 外的真栈用例（应在 Phase C/D 纳入 CI integration 或 native job）：**
+**`make gate` 外的真栈用例（应在 Phase C/D 纳入 integration 或 native build 门禁）：**
 
 | 文件 | 标记 | 约条数 |
 |------|------|--------|
@@ -177,7 +177,7 @@ Demo / kind：`docs/handoff/pre-m8-demo-review-plan.md`（`as-m71`）— 人工 
 1. **Phase A** — 修 `minimalHarnessAnswer` / harness 200，三条 pytest 绿。  
 2. **Commit** — C++ + 任何 Python/文档；未提交的 `Makefile`（UV）、`publish_m71_bundle.py`（ruff）一并整理。  
 3. **Phase B** — 本地 `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate` 习惯化；可选 `make gate-native`。  
-4. **Phase C** — `.github/workflows/ci.yml` 增加 native required job。  
+4. **Phase C** — 增加 native required build job。  
 5. **Phase D** — 按矩阵逐场景加测试（先 S1 14 条或子集，再 S5/S7/S8…）。  
 6. **Phase E** — 里程碑/demo 前跑 M2 smoke + demo reset 检查。
 
@@ -208,5 +208,5 @@ Demo / kind：`docs/handoff/pre-m8-demo-review-plan.md`（`as-m71`）— 人工 
 ## Sign-off（本计划）
 
 - [ ] Phase A 完成（3 条 S1/harness pytest 绿）  
-- [ ] Phase C CI job 绿且 required  
+- [ ] Phase C native build job 绿且 required  
 - [ ] Phase D 至少 S1 全链或明确推迟项写入 `test-plan.md` / `plan.md`

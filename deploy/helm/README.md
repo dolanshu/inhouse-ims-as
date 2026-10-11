@@ -1,6 +1,6 @@
 # `deploy/helm/` — 生产交付形态
 
-当前仓库包含 AS workload Helm chart，以及 M4b-7.2c config-service 的代码级 workload 切片（默认关闭）。**Chart 回归**：仓库根目录 `make chart-check`（或 `deploy/helm/scripts/chart-check.sh`）对 AS 默认渲染、config-service 开启、ingress 模板路径与 HPA fail-fast 做断言；CI ① fast 层已纳入。真实集群 HTTPS ingress/trusted-proxy（7.2d）仍属 M5 未验收项。
+当前仓库包含 AS workload Helm chart，以及 M4b-7.2c config-service 的代码级 workload 切片（默认关闭）。**Chart 回归**：仓库根目录 `make chart-check`（或 `deploy/helm/scripts/chart-check.sh`）对 AS 默认渲染、config-service 开启、ingress 模板路径与 HPA fail-fast 做断言；门禁① fast 层已纳入。真实集群 HTTPS ingress/trusted-proxy（7.2d）仍属 M5 未验收项。
 
 历史计划形态：一个 chart `as/`、每个组件一个 subchart 或 values 块
 （`apps.translation`、`apps.antiFraud`、`services.configService`、`services.console`），外加一个
@@ -183,7 +183,7 @@ for login, and console plus API must remain on the same HTTPS origin.
 The standalone Python `http.server` preview is for static `?preview=1` UI work
 only; it does not serve the API and is not a deployment option. These image and
 Helm resources are code-level delivery evidence only, not deployed HTTPS,
-trusted-proxy, browser-workflow, M4b, or REQ acceptance evidence.
+trusted-proxy, browser flow, M4b, or REQ acceptance evidence.
 
 ### M4b-7.2d ingress-nginx deployment prerequisites (BLOCKED)
 

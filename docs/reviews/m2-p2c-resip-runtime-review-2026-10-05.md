@@ -28,7 +28,7 @@ milestone closure remain **open**. Maintainer signoff: **pending**.
 | Product `SipStack` accept path not wired to ingress + `decide()`. | **Fixed:** `_resip_runtime` DUM worker on `127.0.0.1:0`; `onNewSession` builds peer + SIP summary, GIL-safe Python callback. |
 | No platform-native build hook. | **Fixed:** `make m2-platform-resip-build` / `m2-native.sh build-platform-resip`. |
 | No focused integration proof. | **Fixed:** `test_resip_runtime_integration.py` — allowed peer + empty `RuleSet` → `404`; denied peer → `403` before `decide()`. |
-| Extension optional in CI gate. | **Accepted:** `make gate` stays layer-① only; integration test skips with explicit message when `.so` absent. |
+| Extension optional in `make gate`. | **Accepted:** `make gate` stays layer-① only; integration test skips with explicit message when `.so` absent. |
 
 ## Verification
 

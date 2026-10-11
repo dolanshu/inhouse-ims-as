@@ -32,7 +32,7 @@ This is an engineering-slice review only. It is not a formal REQ review, M4b/M4 
 - Distribution unit suite: **51 passed**.
 - Distribution PostgreSQL integration suite: **8 passed** on temporary PostgreSQL **12.22**.
 - Focused config-service run across ChangeOrder, ManagedRule, Distribution unit and PostgreSQL integration, plus activation integration: **156 passed** on temporary PostgreSQL 12.22 (`127.0.0.1:55432`).
-- Local `make gate`: Ruff format **211 files already formatted**; Ruff all passed; mypy **42 source files clean**; pytest `-m "unit or contract"`: **636 passed, 2 skipped, 56 deselected**. One non-failing Starlette/httpx deprecation warning. Local run only; CI was not run.
+- Local `make gate`: Ruff format **211 files already formatted**; Ruff all passed; mypy **42 source files clean**; pytest `-m "unit or contract"`: **636 passed, 2 skipped, 56 deselected**. One non-failing Starlette/httpx deprecation warning. Local run only.
 - PostgreSQL 16 was not tested; this remains a nonblocking follow-up.
 
 Final independent confirmation after repairs: **no remaining concrete findings** in the reviewed scope.

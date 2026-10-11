@@ -34,7 +34,7 @@
 |---|---|---|
 | S9 | `SipAdapter` 无实现，尚无真 socket 的 integration 用例 | M2b 后半（栈绑定）后补 |
 | S10 | 证书热轮换的真实加载（读证书文件、握手）未实现，本 seam 只覆盖策略与版本语义 | M2b 后半 |
-| S11 | `integration` / `e2e` 层仍零用例，CI 层②③ 仍为 `continue-on-error` | 首个该层用例引入的里程碑必须改为阻塞（AGENT.md §9、plan.md §2.4） |
+| S11 | `integration` / `e2e` 层仍零用例，层②③ 仍非阻塞 | 首个该层用例引入的里程碑必须改为阻塞（AGENT.md §9、plan.md §2.4） |
 
 ## 确认签字
 

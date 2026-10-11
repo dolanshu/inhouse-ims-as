@@ -197,7 +197,7 @@ AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest platform/tests/test_e1_contract_res
 AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest platform/tests/test_m7_forward_two_leg_integration.py platform/tests/test_req_f4_sdp_identity_integration.py -m integration -q
 ```
 
-**关键行为（排障时最常误读的一点）**：**缺 native 扩展时用例 fail，而不是 skip**（`AS_REQUIRE_NATIVE_EXTENSIONS=1`；CI 中 `m2-platform-resip` / `m2-native-smoke` / `m7-*` 为阻塞式 job）。因此**忘记 `make m2-platform-resip-build` 会得到一片红**，而这**会被误读为产品缺陷** —— 看到 native 相关用例集体 fail，第一步先确认扩展是否构建过，再谈缺陷。
+**关键行为（排障时最常误读的一点）**：**缺 native 扩展时用例 fail，而不是 skip**（`AS_REQUIRE_NATIVE_EXTENSIONS=1`；`make gate-native` 与 `make m2-native-smoke` 为阻塞目标）。因此**忘记 `make m2-platform-resip-build` 会得到一片红**，而这**会被误读为产品缺陷** —— 看到 native 相关用例集体 fail，第一步先确认扩展是否构建过，再谈缺陷。
 
 > **口径歧义提示**：原件写「随后运行计划 §7 命令」，但 `docs/plan.md` 的 §7 是「风险登记」，`docs/acceptance/test-plan.md` 无 §7 —— 该引用**无法解析到具体章节**。上列两条 `pytest` 命令即原件给出的全部命令，本页按**命令原文**照抄，不代为推断其它用例集。
 

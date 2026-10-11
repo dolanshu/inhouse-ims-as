@@ -27,7 +27,7 @@ This is an engineering-slice review only. It is not a REQ review, M4b/M4 accepta
 
 - Focused API, activation, and distribution PostgreSQL tests: **79 passed**, with one existing Starlette/httpx deprecation warning.
 - Full config-service integration command: **61 passed, 280 deselected** on temporary PostgreSQL **12.22**. PostgreSQL 16 was not tested; this is a nonblocking follow-up.
-- Latest local `make gate`: Ruff format **212 files already formatted**; Ruff clean; mypy **42 source files clean**; pytest `-m "unit or contract"`: **641 passed, 2 skipped, 67 deselected**. One non-failing Starlette/httpx deprecation warning. Local only; CI was not run.
+- Latest local `make gate`: Ruff format **212 files already formatted**; Ruff clean; mypy **42 source files clean**; pytest `-m "unit or contract"`: **641 passed, 2 skipped, 67 deselected**. One non-failing Starlette/httpx deprecation warning. Local only.
 - The API uses an injected `can_approve_change` permission seam, not a real auth provider/session. It accepts reports but has no AS notifier/transport or proof that an AS loaded the reported version, and no real health attestation. Distribution completion and ManagedRule/ChangeOrder `APPLIED` coordination are separate committed PostgreSQL transactions; there is no global/distributed atomicity claim.
 
 Final independent confirmation after repairs: **no actionable findings** in the reviewed engineering slice.

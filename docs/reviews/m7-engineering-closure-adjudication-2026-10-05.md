@@ -42,13 +42,13 @@ Accepting this **engineering closure** means maintainers may treat these artifac
 4. **E1 / E4 / E5** — protocol behavior and restart semantics on the shipping stack.  
 5. **Maintainer signature** — engineering closure recorded **pending**; M7 milestone sign-off **not requested**.
 
-## CI note
+## Optional target note
 
-Optional job **`m7-two-leg`** runs after **`m2-platform-resip`** when the workflow includes it: native two-leg build + `test_resip_two_leg_integration.py`. If job duration or flake rate is unacceptable, maintainers may remove the job and document skip here; gate remains `make gate` + existing M2 platform job.
+Optional target **`m7-two-leg`** runs after **`m2-platform-resip`** when both are invoked: native two-leg build + `test_resip_two_leg_integration.py`. If its duration or flake rate is unacceptable, maintainers may remove it and document skip here; the required gate remains `make gate` + the existing M2 platform target.
 
 ## Limits
 
-Not REQ acceptance, not D10 closure, not K2 release. CI green on `m7-two-leg` (when enabled) certifies the repository repro path for that integration test only.
+Not REQ acceptance, not D10 closure, not K2 release. `m7-two-leg` green (when enabled) certifies the repository repro path for that integration test only.
 
 ## Sign-off
 

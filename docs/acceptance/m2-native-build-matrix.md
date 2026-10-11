@@ -47,5 +47,3 @@ Cache layout (default):
   RPATH, S1 UDP loopback smoke (`probe 退出 OK`).
 - **Out of scope:** product integration, TLS/mTLS REQ-S gates,
   operator PKI or S-SBC evidence.
-- **CI:** GitHub Actions job `m2-native-smoke` on `ubuntu-latest` (22.04 /
-  OpenSSL 3) builds from bundled source only; prebuilt tarball is not used.

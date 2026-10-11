@@ -28,7 +28,7 @@ reSIProcate 绑定与 probes、生产 SIP / control-plane 集成、真实 Kubern
 | `git diff --check -- docs/architecture/hld.md docs/architecture/lld.md` | 通过 |
 | `make gate` | 本地门禁记录：391 passed、2 个已知 skips、15 deselected；ruff format/check 与 mypy 均通过。记录见 [`2026-09-30 handoff`](../handoff/2026-09-30.md)。 |
 
-以上是本地检查证据，不代表 CI 已运行或通过。
+以上是本地检查证据，不代表全量门禁已运行或通过。
 
 ## 修改后确认与签字
 

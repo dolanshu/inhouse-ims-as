@@ -1,4 +1,4 @@
-# kind — M5 集群证据（开发/CI 可选）
+# kind — M5 集群证据（开发/门禁可选）
 
 在本地 Docker 上创建 [kind](https://kind.sigs.k8s.io/) 集群，加载 AS / config-service 镜像，安装 Helm chart，收集 **M5-3a/b** 与 **7.2d** 证据。
 

@@ -45,7 +45,7 @@
 | C4 | US-8 | "呼叫在 2 秒内恢复"引入无来源的时延承诺，与 AGENT.md L38"M6 前不发布数字"精神冲突 | 删除数字或标为待 M6 冻结 | 已修改 |
 | C5 | REQ-NF-9 / REQ-NF-6 | 非目标（单租户 on-prem、不做媒体）被写成 P0 需求，且与 §0 非目标重复三遍 | 移入"边界/非目标"节，不占 REQ-NF 号 | 已修改（部分接受） |
 | C6 | §3.1/§3.2 | 编号乱序（1,2,3,5,9 / 4,6,7,8,10,11,12）；NF-4（ISSU）归入"扩展与治理"，但更像核心连续性能力，且与 NF-1 重叠 | 重排或加注说明 | 已修改（部分接受） |
-| C7 | REQ-G-3 vs REQ-G-4 | G-3 验收要求 `make gate` 含 AST 扫描步骤，G-4/AGENT.md §9 把 `make gate` 定义为四步（format/check/mypy/pytest） | 澄清 AST 扫描属于 gate 还是 CI | 已修改 |
+| C7 | REQ-G-3 vs REQ-G-4 | G-3 验收要求 `make gate` 含 AST 扫描步骤，G-4/AGENT.md §9 把 `make gate` 定义为四步（format/check/mypy/pytest） | 澄清 AST 扫描属于 gate 还是额外步骤 | 已修改 |
 | C8 | 全部 REQ | 27 条 REQ 的验收标准全部外链 test-plan，而 test-plan 自身状态为"占位，具体 test case 待 M2 补" —— v0.1 事实上没有可执行验收 | 在 PRD 头部显式标注此风险 | 已修改 |
 | C9 | REQ-NF-6/7/8 | 其依据 ADR-0004/0016/0017 在注册表里仍是 skeleton（无文件）；§6 的"已有 ADR"只列了有文件的 6 个 | 在对应 REQ 后标注"依据 ADR 尚未落地" | 已修改 |
 | C10 | REQ-F-9 | "路由依据是 Via branch + Route 头 + Call-ID" 不严谨：对话匹配是 Call-ID + local/remote tag（§12），Via branch 属事务匹配（§17.2.3） | 改为对话匹配表述 | 已修改 |
@@ -139,7 +139,7 @@
 | C4 | US-8 | "2 秒内恢复"→"呼叫不中断" + 时延承诺待 M6 冻结 | 待修改 → **已修改** |
 | C5 | §0 非目标 | 末尾加 formalize 说明，指向 REQ-NF-6/7/8 和 REQ-S-* | 待修改 → **已修改** |
 | C6 | §3.1/§3.2 | REQ-NF-4 从 §3.2 扩展与治理 移到 §3.1 核心架构约束 | 待修改 → **已修改** |
-| C7 | REQ-G-3 / AGENT.md §9 | 同步澄清 AST 扫描归属：不在 `make gate` 四步内，属 CI 额外步骤或 `make gate-strict` | 待修改 → **已修改** |
+| C7 | REQ-G-3 / AGENT.md §9 | 同步澄清 AST 扫描归属：不在 `make gate` 四步内，属额外步骤或 `make gate-strict` | 待修改 → **已修改** |
 | C8 | PRD 头部 | 加"验收标准状态"占位声明 | 待修改 → **已修改** |
 | C9 | REQ-NF-6/7/8 | 各末尾加"依据 ADR-0004/0017/0016，当前为 skeleton 状态，M2 补" | 待修改 → **已修改** |
 | C10 | REQ-F-9 | "Via branch + Route + Call-ID"→"Call-ID + local/remote tag（RFC 3261 §12 Dialogs）" | 待修改 → **已修改** |

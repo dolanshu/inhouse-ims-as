@@ -21,7 +21,7 @@ The 2026-10-04 independent review recorded **Pass** for the P0 slice after repro
 
 ## Limits
 
-Not REQ acceptance, not CI certification unless separately recorded, not production PKI/mTLS evidence, not permission to treat parallel M6 harness work as M6 milestone progress.
+Not REQ acceptance, not deployment certification unless separately recorded, not production PKI/mTLS evidence, not permission to treat parallel M6 harness work as M6 milestone progress.
 
 ## Sign-off
 

@@ -106,7 +106,7 @@ PRD v0.1 重写完成后，维护者在 review 时发现 PRD 混入了设计细�
 | REQ-NF-6 | "保留一个 seam（接口定义）" | "保留一个扩展接口定义" |
 | REQ-NF-10 | "配置版本存为 PostgreSQL 中的行...变更路径是：控制台 → 审批 → 写入 PostgreSQL → 灰度分发" | "配置变更必须经过审批流程。变更必须可版本化、可追溯、可灰度发布、可回滚。不要求运维人员为改配置去学 Git" |
 | REQ-NF-11 | "`./VERSION` 文件是产品 release 版本的唯一源头...pyproject.toml 只携带接口语义化版本" | "产品有且只有一个版本号，所有组件声明自己的接口版本。不允许多个组件各有不同的 release 版本" |
-| REQ-NF-12 | "用 `pyproject.toml` 的 `[tool.uv.workspace]` 统一管理依赖。CI 每个 job 不再需要 `git clone ../as_platform`" | "所有组件在一个仓库内。CI 构建和容器构建不应因跨仓依赖而失败" |
+| REQ-NF-12 | "用 `pyproject.toml` 的 `[tool.uv.workspace]` 统一管理依赖。各构建步骤不再需要 `git clone ../as_platform`" | "所有组件在一个仓库内。构建和容器构建不应因跨仓依赖而失败" |
 
 ### 保留的内容
 
@@ -155,7 +155,7 @@ PRD v0.1 发布后，独立协议复核（prd-v0.1-review）发现 24 个 Gap（
 | C4 | P2 一致 | US-8 "2 秒内恢复"无来源 | 接受 | 改为"呼叫不中断" + "时延承诺待 M6 冻结" | 已修改 | prd-v0.2 US-8 |
 | C5 | P2 一致 | §0 非目标与 REQ-NF/S 重复 | 接受 | §0 末尾加 formalize 说明，指向对应 REQ | 已修改 | prd-v0.2 §0 |
 | C6 | P2 一致 | NF-4 ISSU 归属 + 编号乱序 | 接受 | REQ-NF-4 从 §3.2 移到 §3.1 核心架构约束组内 | 已修改 | prd-v0.2 §3.1 |
-| C7 | P2 一致 | AST 扫描归属：make gate vs CI | 接受 | PRD REQ-G-3 + AGENT.md §9 同步澄清：AST 在 gate 外，属 CI 额外步骤 / `make gate-strict` | 已修改 | prd-v0.2 REQ-G-3、AGENT.md §9 |
+| C7 | P2 一致 | AST 扫描归属：`make gate` vs 额外步骤 | 接受 | PRD REQ-G-3 + AGENT.md §9 同步澄清：AST 在 gate 外，属额外步骤 / `make gate-strict` | 已修改 | prd-v0.2 REQ-G-3、AGENT.md §9 |
 | C8 | P2 一致 | PRD 验收标准全外链占位无标识 | 接受 | PRD 头部加"验收标准状态"声明 | 已修改 | prd-v0.2 头部 |
 | C9 | P2 一致 | REQ-NF-6/7/8 依据 ADR skeleton | 接受 | 各 REQ 末尾加 ADR 标注 | 已修改 | prd-v0.2 REQ-NF-6/7/8 |
 | C10 | P2 一致 | F-9 路由依据不严谨（Via branch 是事务匹配） | 接受 | 改为对话匹配表述（Call-ID + tag） | 已修改 | prd-v0.2 REQ-F-9 |

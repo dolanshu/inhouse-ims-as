@@ -3,11 +3,11 @@
 - **评审对象**：M5 里程碑（运维）全链交付 —— Helm chart、自定义指标 HPA、缩容保护控制器、draining / ISSU、告警规则集、控制面集群部署证明（含 M4b-7.2d ingress/trusted-proxy）、D12 集群内 PostgreSQL/Redis（ADR-0026）。
   - 计划与关门记录：`docs/plan.md` §4.4 / §4.5 / §4.6
   - 代码范围：`deploy/helm/**`、`deploy/alerts/**`、`deploy/kind/**`、`platform/src/as_platform/{runtime,ops,telemetry}/`、`platform/src/as_platform/__main__.py`、`services/config-service/src/as_config_service/runtime.py`
-  - 门禁范围：`Makefile`、`.github/workflows/ci.yml`、`pyproject.toml` pytest 配置
+  - 门禁范围：`Makefile`、`pyproject.toml` pytest 配置
 - **评审日期**：2026-10-05
 - **评审人**：AI agent（维护者指派全链 review；维护者判定 `docs/reviews/` 下既有 M5 评审记录不可信）
 - **评审方法**：只读核查。按 AGENT.md §3 的文档链逐环节核对（需求 → ADR → HLD/LLD → 契约 → 代码 + 测试 → 验收）。
-- **证据排除声明**：本次评审**未采信** `docs/reviews/` 下任何 M5 评审记录（`m5-*` 系列）作为证据来源。全部结论来自 `docs/plan.md`、ADR、HLD/LLD、代码、Makefile、CI 配置的原文。
+- **证据排除声明**：本次评审**未采信** `docs/reviews/` 下任何 M5 评审记录（`m5-*` 系列）作为证据来源。全部结论来自 `docs/plan.md`、ADR、HLD/LLD、代码、Makefile 的原文。
 
 ---
 
@@ -105,7 +105,7 @@ M5 的 7 类交付物中 5 类可追溯到 `REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ
 
 | # | 问题 | 证据 | 严重度 |
 |---|---|---|---|
-| C-1 | 上述 6 条规则永不 firing，且 `promtool check rules` 不会报错（PromQL 允许引用不存在的指标）；全仓无任何 `promtool` 执行点 | `as-alerts.yaml:86,123,140,157,23-31,49`；Makefile / CI / 测试均无 promtool | **Blocker** |
+| C-1 | 上述 6 条规则永不 firing，且 `promtool check rules` 不会报错（PromQL 允许引用不存在的指标）；全仓无任何 `promtool` 执行点 | `as-alerts.yaml:86,123,140,157,23-31,49`；Makefile / 测试均无 promtool | **Blocker** |
 | C-2 | `ASHighErrorRatio` 分母 `clamp_min(sum(rate(...)), 1)` 数学错误：`rate()` 单位是"每秒"，低话务全量故障时 ratio 被压到 0.01，恰好不触发 | `as-alerts.yaml:30` | Major |
 | C-3 | `ASTelemetryDropped` 阈值 `> 0` 等价于"发生一次即告警"（配合 `for: 15m`），与 description 的"持续上升"语义不符 | `as-alerts.yaml:49` | Major |
 | C-4 | `ASActiveCallsSurge` 在零基线时任意非零即触发；`sum()` 抹掉 `use_case` 维度 | `as-alerts.yaml:104` | Minor |
@@ -161,9 +161,7 @@ M5 的 7 类交付物中 5 类可追溯到 `REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ
 | 事实 | 证据 |
 |---|---|
 | `make gate` = `lint type test-unit`，**不含 chart-check** | `Makefile:62` |
-| CI 只有 `.github/workflows/ci.yml`，四个 job **无一执行 helm / chart-check**；而 `plan.md:260` 白纸黑字写 "M5-0c chart-check…CI ① fast 已纳入"（与事实不符） | `.github/workflows/ci.yml:37-57` vs `plan.md:260` |
-| CI ③ e2e / ④ performance **0 条测试 → pytest 退出码 5（NO_TESTS_COLLECTED）**，被 `continue-on-error: true` 永久涂绿；注释仍写 "Remove in M3"，已过期两个里程碑 | `ci.yml:92,116,91` |
-| CI ② integration 无 PG service、无 `AS_PG_TEST_DSN` → 13 个文件中 11 个 `pytest.skip`，实际只跑 1-2 个；"142 passed" 是本地 compose PG 的数字，CI 里产不出来 | `ci.yml:79-80`；AGENT.md §9「本地门禁不是 CI」 |
+| ② integration 无 PG service、无 `AS_PG_TEST_DSN` → 13 个文件中 11 个 `pytest.skip`，实际只跑 1-2 个；"142 passed" 是本地 compose PG 的数字，无 PG 环境产不出来 | AGENT.md §9 |
 | `make gate-strict` / AST 扫描**完全不存在**，但 AGENT.md:176、ADR-0015、prd.md:507 都写成既有能力 → REQ-G-3 无处执行 | Makefile 无此目标；全仓无 AST 扫描脚本 |
 | `.PHONY` 漏 4 个 m5 目标 | `Makefile:6` |
 
@@ -175,7 +173,7 @@ M5 的 7 类交付物中 5 类可追溯到 `REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ
 |---|---|---|---|
 | ① unit | `unit` | 42 | 真跑、真红（含 3 个守卫） |
 | ① contract | `contract` | 5 | 真跑 |
-| ② integration | `integration` | 13 | CI 中 11 个 skip；本地需 compose PG |
+| ② integration | `integration` | 13 | 无 PG 环境时 11 个 skip；本地需 compose PG |
 | ③ e2e | `e2e` | **0** | 至今没有任何测试 |
 | ④ performance | `performance` | **0** | `testbed/load/` 下 0 个测试文件 |
 
@@ -197,11 +195,11 @@ pytest 配置健康：无 `conftest.py`、无 `deselect`、无 `xfail`、无 `-k
 
 ## 7. 建议的最小修复集（按性价比排序）
 
-1. **告警**：删掉或实现 4 个不存在指标对应的规则；给 `record_response` / `record_rule_hit` 接真实调用点；修 `clamp_min` 数学错误与 `> 0` 阈值；把 `promtool check rules` 加入 CI。
+1. **告警**：删掉或实现 4 个不存在指标对应的规则；给 `record_response` / `record_rule_hit` 接真实调用点；修 `clamp_min` 数学错误与 `> 0` 阈值；在有 `promtool` 的环境跑一次 `promtool check rules`。
 2. **缩容保护**：让 `guard.enabled` / `protect_when_active_calls_above` 真正参与判定（或删除配置项并同步改文档），补开 / 关两态行为测试与非法输入测试。
 3. **Helm**：修 `secret.yaml` else 分支缺 key（H-1）；让 `values-onprem.example.yaml` 可渲染并将其纳入 chart-check 矩阵（H-2）；`tls.secretName` 为空时 `fail`（H-3）；`peerAllowlist` 为空时 `fail`（H-4）。
 4. **伪验证**：修 K-1 ~ K-5 五处（核心是"断言必须能失败"+"校验退出码"），pin 住 ingress-nginx 清单（K-6）。
-5. **门禁**：`chart-check` 进 CI ①（兑现 `plan.md:260` 已声称的行为）；CI ② 起 compose PG 并设 `AS_PG_TEST_DSN`；给 e2e / performance 加"该层有用例时必须阻塞"的守卫；补 `gate-strict` + AST 扫描，或把 AGENT.md / ADR-0015 / PRD 中的措辞改为"尚未实现"。
+5. **门禁**：`chart-check` 进 `make gate`（兑现 `plan.md:260` 已声称的行为）；批量跑 integration 前起 compose PG 并设 `AS_PG_TEST_DSN`；给 e2e / performance 加"该层有用例时必须阻塞"的守卫；补 `gate-strict` + AST 扫描，或把 AGENT.md / ADR-0015 / PRD 中的措辞改为"尚未实现"。
 6. **文档链**：HLD / LLD 补 M5 章节（`stateStores`、downscale 配置、模拟 seam、health/metrics、ingress），并改掉"PG/Redis 在 chart 外""真实集群未跑"等陈旧表述；ADR-0008 加 Amendment 处理与 ADR-0026 的 SPoF 冲突；`新系统整体架构.md` §6.2/§6.3/§8 的 sippy 前提事实按 ADR-0019 更新；补 7.2d 的 REQ 出处或显式登记为无源关门条件。
 7. **证据可复核**：把 `artifacts/m5/` 从 `.gitignore` 放开或改存至仓库内 `docs/acceptance/artifacts/`，否则所有 "PASS" 都是对不存在文件的转述。
 

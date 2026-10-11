@@ -173,7 +173,7 @@ make alert-check   # promtool check rules（需 promtool）
 
 要求 `uv` 与 Python 3.10 —— 但 **D1（Python 3.10 生命周期）未决**：产品锁 3.10 是因为那是 sippy 验证过的版本（ADR-0001），该版本已到生命周期终点，迁移或在 ADR 中登记为已接受 risk **尚未裁决**（[`docs/plan.md`](docs/plan.md) §5.2 D1）。
 
-CI 跑同样四层：**① 快（unit or contract）→ ② 集成 → ③ e2e → ④ 性能**（`.github/workflows/ci.yml`）。`make gate` 就是第 ① 层，四步固定；AST 扫描（REQ-G-3 ADR 标注）**不在** `make gate` 内，用 `make gate-strict` 触发（= 四步 + ADR 标注扫描），也是 CI 的阻塞步骤。**本地门禁绿不等于 CI 通过**，绝不要把本地重跑冒充 CI 结果。
+本地门禁跑同样四层：**① 快（unit or contract）→ ② 集成 → ③ e2e → ④ 性能**。`make gate` 就是第 ① 层，四步固定；AST 扫描（REQ-G-3 ADR 标注）**不在** `make gate` 内，用 `make gate-strict` 触发（= 四步 + ADR 标注扫描）。**本地门禁的结论只覆盖它实际跑过的东西**，绝不要把本地重跑的结果表述成比它更强的验证通过。
 
 ## 仓库导览
 
@@ -190,7 +190,7 @@ docs/               product/（评审）· operations/（运维）· delivery/�
                     architecture/（含 adr/）· requirements/ · acceptance/ · reviews/
                     migration/ · handoff/ · agents/ + plan.md + product-packaging-plan.md
 tests/              横切结构守卫：布局、版本、依赖方向
-Makefile            make gate = 与 CI 第①层相同的检查，同样顺序
+Makefile            make gate = 门禁第①层（lint → type → unit/contract）
 ```
 
 **分层不靠目录保证，靠测试保证**：monorepo 里任何 import 都能解析成功，所以依赖方向由 `platform/tests/test_library_independence.py` 与 `tests/test_workspace_layout.py` 断言；版本单一源头由 `tests/test_version_consistency.py` 守卫。ADR 台账的状态是 `accepted` / `draft` / `skeleton` 三态，引用前先看各文件头。

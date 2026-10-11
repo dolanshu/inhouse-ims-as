@@ -10,7 +10,7 @@
 | Native runtime | Optional `on_dialog_established` / `on_dialog_terminated`; deferred notify on listener loop |
 | Restore | `CallStateRecovery` starts `RecoveryStackSession` per loaded checkpoint; `NATIVE_ON_PROCESS_START_RESTORE_IMPLEMENTED=True` (scoped to shell restore path) |
 | Harness | `test_d10_req_nf1_harness_integration.py` + `scripts/d10-req-nf1-harness.sh` |
-| CI | `m7-recovery` job runs harness integration test |
+| `m7-recovery` | target runs harness integration test |
 
 ## Test results (2026-10-05)
 

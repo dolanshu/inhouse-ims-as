@@ -1,6 +1,6 @@
 # 3rdparty-as — the local gate.
 #
-# `make gate` is the same set of checks CI layer ① runs, in the same order.
+# `make gate` is layer ① — lint, type, then unit/contract tests, in that order.
 # Nothing is committed unless it is green here first (AGENT.md §Git rules).
 
 .PHONY: help sync fmt lint type test test-unit test-integration test-integration-compose test-e2e test-perf chart-check alert-check gate gate-strict gate-native \
@@ -9,7 +9,7 @@
 # Matches deploy/compose/.env.example POSTGRES_SUPERUSER_PASSWORD on published port 55432.
 COMPOSE_PG_DSN ?= postgresql://postgres:postgres@127.0.0.1:55432/as_config
 
-# Non-login shells often omit ~/.local/bin; resolve uv like CI/docs expect `uv sync`.
+# Non-login shells often omit ~/.local/bin; resolve uv the way docs expect `uv sync`.
 UV := $(shell command -v uv 2>/dev/null)
 ifeq ($(UV),)
   ifneq ($(wildcard $(HOME)/.local/bin/uv),)
@@ -38,10 +38,9 @@ lint: ## ruff format --check + ruff check
 type: ## mypy, strict, src only
 	$(UV) run mypy
 
-test: ## every layer below ④
+test: ## every layer below ④ (e2e 用例尚未落地，落地方案见 docs/acceptance/2026-10-09-e2e-test-plan.md)
 	$(UV) run pytest -m "unit or contract" -q
 	$(UV) run pytest -m integration -q
-	$(UV) run pytest -m e2e -q
 
 test-unit: ## ① unit + contract
 	$(UV) run pytest -m "unit or contract" -q
@@ -133,5 +132,5 @@ gate: lint type test-unit ## the pre-commit gate: lint, type, then layer ① (un
 gate-native: m2-platform-resip-build ## layer ① with _resip_runtime required (builds the extension first)
 	AS_REQUIRE_NATIVE_EXTENSIONS=1 $(MAKE) gate
 
-gate-strict: gate ## gate plus the REQ-G-3 ADR annotation scan (ADR-0015; also a blocking CI step in job ①)
-	$(UV) run python scripts/ci/check_adr_annotations.py
+gate-strict: gate ## gate plus the REQ-G-3 ADR annotation scan (ADR-0015)
+	$(UV) run python scripts/check_adr_annotations.py

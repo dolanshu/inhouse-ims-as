@@ -20,7 +20,7 @@
 - `uv run pytest platform/tests/test_d10_product_recovery_integration.py -q` → **1 passed**。
 - `uv run pytest testbed/simulators/tests/test_derived_baseline.py -m contract -q` → **10 passed, 2 skipped**（同上）。
 - `uv run pytest tests/test_version_consistency.py -q` → **9 passed**；`tests/test_workspace_layout.py` → **32 passed**。
-- `python3 scripts/ci/check_adr_annotations.py` → **checked 69 files, clean**。
+- `python3 scripts/check_adr_annotations.py` → **checked 69 files, clean**。
 - `make chart-check` → **chart-check: OK**（工程形状证据，不作为 REQ pass 依据）。
 - NF-6 grep：`rg -il 'rtp|G.711|G.729|dtmf|transcod' apps/ platform/src/ services/` 唯一命中
   `services/console/web/console.js`，经查为 DOM id `distributionStartPanel` 中 `rtp` 子串误命中（Start**P**anel），
@@ -76,7 +76,8 @@
 | REQ-NF-12 | §2 uv workspace | 横切 | C | `tests/test_workspace_layout.py` 32 passed；`pyproject.toml` `[tool.uv.workspace]` 存在。机制成立 | pass | 维护者待签 |
 | REQ-NF-13 | §2 可观测：指标/追踪/JSON 日志 | M5 | B/C | `test_resip_runtime_log_contract.py` 13 passed（timestamp/level/trace_id/call_id/direction/method 字段契约切片）；decide/遥测内核（5.4）在 gate 内。Prometheus/Grafana live 采集与 span 链验证待环境（Phase D），不签 pass | open | 维护者待签 |
 | REQ-NF-14 | §2 告警规则 | M5 | B/C | `deploy/alerts/as-alerts.yaml` 存在（5xx>1%、active_calls 突增、证书 30 天等）；`make chart-check` OK 为形状证据。Alertmanager 真实触发验证待环境（通知通道 M2 冻结事项延续），不签 pass | open | 维护者待签 |
-| REQ-NF-15 | §2 testbed 性能 harness | M6 | C | PRD + `docs/requirements/req-nf-15-testbed-performance.md` 存在，ADR-0014 回应 REQ 指向 REQ-NF-15（D8 已关闭）；dev-host 批次见 m6-o1 报告（非 SLA）。生产多副本饱和点/HPA 阈值/`performance` 阻塞 CI 在 M8 前保持 open；M6 O1 维护者目标裁决仍 open（plan §5.1 O1） | open | 维护者待签 |
+| REQ-NF-15 | §2 testbed 性能 harness | M6 | C | PRD + `docs/requirements/req-nf-15-testbed-performance.md` 存在，ADR-0014 回应 REQ 指向 REQ-NF-15（D8 已关闭）；dev-host 批次见 m6-o1 报告（非 SLA）。生产多副本饱和点/HPA 阈值/`performance` 阻塞门禁在 M8 前保持 open；M6 O1 维护者目标裁决仍 open（plan §5.1 O1） | open | 维护者待签 |
+| REQ-NF-16 | §2 版本生命周期与 EOL 策略 | 横切 | C | 证据一（技术决策已立）：`docs/architecture/adr/0027-version-lifecycle-and-eol.md` Status: accepted（第3行）与「回应 REQ: REQ-NF-16」（第6行），ADR-0027 已 accepted。证据二（验收证据链未闭合）：`docs/acceptance/test-plan.md` 仅有 REQ-NF-1 到 REQ-NF-15 验收标准（止于第322行），**无 REQ-NF-16 验收标准章节**；`docs/product/version-lifecycle.md` 状态块自述「本文尚未评审」（第10行）且**当前没有 review record**。检索范围：`docs/architecture/adr/0027-version-lifecycle-and-eol.md`（搜 Status / 回应 REQ）、`docs/acceptance/test-plan.md`（搜 REQ-NF-16）、`docs/product/version-lifecycle.md`（搜 评审 / review record）、`docs/reviews/` 目录（搜 version-lifecycle 相关 review 文件，未命中） | open | 维护者待签 |
 
 ## §3 安全签收（REQ-S-*）
 
@@ -93,8 +94,8 @@
 |---|---|---|---|---|---|---|
 | REQ-G-1 | §4 feature 门控两态 | 横切 | C | 内核 5.3 两态单测在 gate 内；`check_adr_annotations.py` 69 files clean（无未标注架构性代码）。记 pass-机制：逐变更的移除条件审查仍需维护者按 PR 执行 | pass | 维护者待签 |
 | REQ-G-2 | §4 PR checklist + REQ 追溯 | 横切 | C | review-record 惯例存在（`docs/reviews/` 内各记录均挂 REQ/ADR 编号，如 d8/m5 系列）；机制成立。逐变更追溯仍需维护者在每次评审中确认，记 pass-机制 | pass | 维护者待签 |
-| REQ-G-3 | §4 ADR 标注扫描阻断 | 横切 | A/C | `check_adr_annotations.py` clean（69 files）；`make gate` 四步不含 AST 扫描符合 test-plan 口径（扫描属 gate-strict/CI 前置）。CI fail-blocking 语义终态归 Phase A（A-5/A-6），机制当前成立记 pass-机制 | pass | 维护者待签 |
-| REQ-G-4 | §4 gate 绿 + CI 阻断 + pre-commit | 横切 | C | `make gate` exit 0（978 passed, 2 skipped，见头注）。CI 失败阻断后续步骤与 pre-commit 语义终态归 Phase A（A-4/A-6）确认；本地门禁本身绿，记 pass（CI 侧待 A 闭合） | pass | 维护者待签 |
+| REQ-G-3 | §4 ADR 标注扫描阻断 | 横切 | A/C | `check_adr_annotations.py` clean（69 files）；`make gate` 四步不含 AST 扫描符合 test-plan 口径（扫描由 `make gate-strict` 单独触发）。机制当前成立记 pass-机制 | pass | 维护者待签 |
+| REQ-G-4 | §4 gate 绿 + 门禁阻断 + pre-commit | 横切 | C | `make gate` exit 0（978 passed, 2 skipped，见头注）。层间阻断与 pre-commit 语义终态归 Phase A（A-4/A-6）确认；本地门禁本身绿，记 pass | pass | 维护者待签 |
 
 ## §5 内核行（test-plan §5，引用 gate，不重证）
 

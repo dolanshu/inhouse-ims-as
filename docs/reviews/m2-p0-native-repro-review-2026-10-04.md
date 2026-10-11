@@ -18,8 +18,8 @@ Independent engineering review of the M2 **P0** slice: offline vendor restore, r
 | Finding | Disposition |
 |---|---|
 | P0 path depended on handoff `/tmp` trees or implicit network clone; not reproducible from a fresh clone. | **Fixed:** checked-in vendor archives + `m2-native.sh restore` / `build-resip` / `build-probe` / `smoke`; default cache under `.cache/m2-resiprocate`; documented in build matrix. |
-| Prebuilt bundle targets Ubuntu 20.04 + OpenSSL 1.1 ABI; OpenSSL 3 hosts cannot load prebuilt `.so` without rebuild. | **Accepted boundary:** default CI/local path builds from bundled source (`AS_RESIP_USE_PREBUILT` optional); matrix documents ABI mismatch. |
-| `make m2-native-smoke` alone does not build; full repro is `make m2-native` or restore + build + smoke. | **Documented** in build matrix and Makefile help; CI job runs restore + build before smoke. |
+| Prebuilt bundle targets Ubuntu 20.04 + OpenSSL 1.1 ABI; OpenSSL 3 hosts cannot load prebuilt `.so` without rebuild. | **Accepted boundary:** default local path builds from bundled source (`AS_RESIP_USE_PREBUILT` optional); matrix documents ABI mismatch. |
+| `make m2-native-smoke` alone does not build; full repro is `make m2-native` or restore + build + smoke. | **Documented** in build matrix and Makefile help; `make m2-native` runs restore + build before smoke. |
 | Integration test `test_m2_native_probe_smoke.py` needs `AS_RESIP_PROBE_BIN` when probe is not at default cache path. | **Fixed:** `m2-native.sh` `build-probe` / `smoke` export and log `AS_RESIP_PROBE_BIN`. |
 | P0 does not implement platform transport adapter, TLS runtime enforcement, DUM→Python product bridge, or `CallController`. | **Out of scope for this review**; see adapter boundary adjudication; M7 owns D9 product integration. |
 
@@ -49,4 +49,4 @@ Expected smoke markers include `reason=RemoteBye` and `probe 退出 OK` / `probe
 
 ## Limits
 
-Not REQ acceptance, not M2 milestone closure, not CI certification unless separately recorded, not production S-SBC/operator PKI evidence.
+Not REQ acceptance, not M2 milestone closure, not deployment certification unless separately recorded, not production S-SBC/operator PKI evidence.

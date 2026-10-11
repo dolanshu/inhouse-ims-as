@@ -135,7 +135,7 @@ python3 -c "import json; [json.load(open(f)) for f in ['docs/operations/grafana-
 4. 全文不含 `histogram_quantile`、不含 Sh 相关面板标题、不含任何容量数字或门限线；
 5. `templating.list` 里 `datasource` 与 `AS_NAMESPACE` 两个变量存在，且所有 PromQL 用变量而非硬编码命名空间。
 
-**建议纳入 CI**：把第1 步的 `python3 -c` 作为最小门槛（与 `promtool check rules` 同级）；第 3、4 步的语义检查目前靠人工 review，若后续需要自动化可加一个只读校验脚本 —— 但**本交付不新增脚本文件**，以免与「只创建 3 个文件」的范围约束冲突。
+**建议纳入门禁**：把第1 步的 `python3 -c` 作为最小门槛（与 `promtool check rules` 同级）；第 3、4 步的语义检查目前靠人工 review，若后续需要自动化可加一个只读校验脚本 —— 但**本交付不新增脚本文件**，以免与「只创建 3 个文件」的范围约束冲突。
 
 **面板 review 纪律**：改面板前先问「这个指标有生产者吗」，答案是「没有」就不建面板（要建就必须写明「预期无数据」及原因）；任何新增面板都要在 `description` 里写清口径、**不是容量指标**的提醒（含量 / 比率的面板）与前置条件（JSON 无注释，说明只能写进 `description` 或本 README）。
 面板口径与 `docs/product/ne-datasheet.md` §5/§6、`docs/product/compliance-matrix.md` §3、`deploy/alerts/README.md` 保持一致；不一致时以代码与上述权威文件为准，看板随之修正。术语纪律：产品名统一 **In-house IMS Application Server（文档暂用名）**；chart / 镜像 / OTel 服务名保持 `3rdparty-as`；`state-*` 指 bundled Redis / PostgreSQL（ADR-0026 Option E），HA 属客户侧（O5 / D3 未决）。

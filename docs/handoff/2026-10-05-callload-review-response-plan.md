@@ -41,7 +41,7 @@
 | **F2** | 恢复 BYE Contact/route_set | **成立** | 用通告地址；BYE 带 checkpoint `route_set`；补 Record-Route 恢复集成测 |
 | **F3** | UAC checkpoint 占位 tag/CSeq | **成立**（`sip_stack_service.py` 硬编码） | native 回调真实 UAC dialog 字段；集成测断言下游接受 BYE，而非仅日志 |
 | **F4** | 非 486 → 502，违 REQ-F-10 | **成立** | C++ + `call_controller` 透传 408/480/486/503/504 等；改 `test_outbound_non486_final_maps_to_502`；补契约 |
-| **F9** | gate/CI 不构建 native → 核心测 skip | **成立** | CI 增加 **native build + 必选 contract/integration**（扩展缺失时 **fail**，非 skip）；本地 `make gate` 策略与 plan 对齐（AGENT.md §9） |
+| **F9** | `make gate` 不构建 native → 核心测 skip | **成立** | 增加 **native build + 必选 contract/integration**（扩展缺失时 **fail**，非 skip）；本地 `make gate` 策略与 plan 对齐（AGENT.md §9） |
 | **F5** | fingerprint 缓存无界 | **成立** | 连接关闭淘汰或 LRU/上限；长跑或单测 |
 | **F6** | connection 只注册不注销 | **成立** | transport 关闭回调 `unregister_connection`；overlap 语义修正 |
 | **F8** | C++ cout/cerr | **成立（M8 前）** | 事件回调 Python 结构化日志，或 C++ 字段契约 + 测试；可排在 P1 末 |
@@ -90,7 +90,7 @@
 
 | 任务 | 依赖 | 验证 |
 |------|------|------|
-| **P1-1 F9** | 无 | CI native job 绿；无扩展时相关测 **fail**；本地文档写清 `make m2-platform-resip-build` 与 gate 关系 |
+| **P1-1 F9** | 无 | native build job 绿；无扩展时相关测 **fail**；本地文档写清 `make m2-platform-resip-build` 与 gate 关系 |
 | **P1-2 F4** | native | 契约测 + 改固化错误行为的单测 |
 | **P1-3 F3+F2** | native + recovery | 真实 checkpoint 字段；恢复 BYE 集成测 |
 | **P1-4 F5+F6** | native | 断连/轮换相关单测或集成测 |
@@ -106,7 +106,7 @@
 ### 阶段 4 — 重新评审与合入准备
 
 - [x] 产出：[`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md)（Adjudication 表状态列）。
-- [x] 合入 `master` 准备：[`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md)（维护者执行 merge；**待** CI 工作区 commit + 显式批准）。
+- [x] 合入 `master` 准备：[`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md)（维护者执行 merge；**待** 工作区 commit + 显式批准）。
 - 输入：§4 跟踪表除 F8/F6 部分/F11 外已闭合；残余风险见 merge handoff §2.4。
 - **仍不**等于 M2/M6/M7 里程碑退出或 REQ 全绿。
 
@@ -119,7 +119,7 @@
 | F1 | P0 | 已修复 | agent | `transport_env` + `runtime_module.cxx` |
 | F7 | P0 | 已修复 | agent | `test_transport_env.py` |
 | F10 | P0 | 已修复 | agent | story-c + pre-m8 §故事 C |
-| F9 | P1 | 部分修复 | agent | `native_extensions.py`；**blocking CI job 未上 origin**（需 PAT `workflow` scope） |
+| F9 | P1 | 部分修复 | agent | `native_extensions.py`；**blocking native-build job 尚未落地** |
 | F4 | P1 | 已修复 | agent | `test_call_controller.py` |
 | F3 | P1 | 已修复 | agent | FORWARD `uac_leg` native 回调 |
 | F2 | P1 | 已修复 | agent | `recovery_module.cxx` |

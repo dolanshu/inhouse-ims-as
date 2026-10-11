@@ -9,7 +9,7 @@
 |---------|-----------|-------------|--------|
 | M5-0a | `make gate` 全绿 | 本地 gate；plan §4.4.4 | [m5-0a-gate-review-2026-10-04.md](m5-0a-gate-review-2026-10-04.md) |
 | M5-0b | `test-integration-compose` | `make test-integration-compose` | [m5-0b-integration-compose-review-2026-10-04.md](m5-0b-integration-compose-review-2026-10-04.md) |
-| M5-0c | `chart-check` / CI | `deploy/helm/scripts/chart-check.sh` | [m5-0c-chart-check-review-2026-10-04.md](m5-0c-chart-check-review-2026-10-04.md) |
+| M5-0c | `chart-check` | `deploy/helm/scripts/chart-check.sh` | [m5-0c-chart-check-review-2026-10-04.md](m5-0c-chart-check-review-2026-10-04.md) |
 
 ## 提前交付（§4.4.2）
 

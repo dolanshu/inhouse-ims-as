@@ -32,14 +32,14 @@
 | G2 | 基线翻译事实（`+8613800138000` → `013800138000`）只标 `translation`，不标 `both` | 接受：同一输入下 translation 改写 target、anti-fraud 明确不改写（target 为 null），语义本就互斥；共享语义已用 `both` 表达（block 优先、无匹配、最长前缀、分隔符无语义） |
 | G3 | 两个重放测试各带"本用例至少命中若干契约例"的守卫，防止筛选器失配导致空绿 | 接受：防的是静默假绿 |
 | G4 | 契约期望值由内核取胜规则 `(action_rank, prefix_length)` 手算后再由重放验证，未为通过而改数据 | 接受 |
-| G5 | 期间同时引入了首个 `integration` 层用例（遥测导出真 socket），并把 CI 层②改为阻塞 | 接受：AGENT.md §9 要求首个引入该层的里程碑同步改阻塞；层③ e2e 与层④ performance 仍无用例，保持原状 |
+| G5 | 期间同时引入了首个 `integration` 层用例（遥测导出真 socket），并把层②改为阻塞 | 接受：AGENT.md §9 要求首个引入该层的里程碑同步改阻塞；层③ e2e 与层④ performance 仍无用例，保持原状 |
 
 ## 遗留（不阻塞 M3）
 
 | # | 遗留 | 去向 |
 |---|---|---|
 | G6 | 速率窗口的计数仍未与 StateStore 接线（滑动窗口、TTL、脑裂幂等） | M3 后续 / 依赖未决 D3 |
-| G7 | `e2e` 层仍零用例 | 首个 e2e 用例的里程碑，并把 CI 层③改阻塞 |
+| G7 | `e2e` 层仍零用例 | 首个 e2e 用例的里程碑，并把层③改阻塞 |
 | G8 | 两个成员下的测试目录结构不对称（`apps/anti-fraud/tests/` 有 `__init__.py`，translation 没有），源于同名 `test_decision.py` 的收集冲突 | 建议后续统一：根 pyproject 设 `importmode = "importlib"`，或成员内改用不重名文件名 |
 
 ## 确认签字

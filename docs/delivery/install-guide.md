@@ -100,7 +100,7 @@ helm upgrade --install as deploy/helm \
 | 2 | `sip.peerAllowlist` | 为空（trim 后） | `sip.peerAllowlist must be non-empty (ADR-0016 fail-closed)` |
 | 3 | `postgres.secretName` | `stateStores.enabled=true` 且 `bootstrapDevCredentials=false` 且为空 | `stateStores.enabled with bootstrapDevCredentials=false requires postgres.secretName (Secret keys: POSTGRES_SUPERUSER_PASSWORD, CONFIG_DB_OWNER_PASSWORD, CONFIG_DB_PASSWORD)` |
 
-值文件里的 `REPLACE_WITH_POSTGRES_SECRET` / `REPLACE_WITH_CONFIG_RUNTIME_SECRET` / `REPLACE_WITH_TLS_SECRET` / `REPLACE_WITH_S_SBC_CIDRS` 四个占位**必须全部替换** —— chart 不会因为值是占位字符串而报错。**本地先验一次渲染**（别把 fail-closed 留到客户集群才发现）：仓库根目录执行 `make chart-check`（等价 `deploy/helm/scripts/chart-check.sh`，对 AS 默认渲染、config-service 开启、ingress 模板路径与 HPA fail-fast 做断言，已纳入 CI ① fast 层）。
+值文件里的 `REPLACE_WITH_POSTGRES_SECRET` / `REPLACE_WITH_CONFIG_RUNTIME_SECRET` / `REPLACE_WITH_TLS_SECRET` / `REPLACE_WITH_S_SBC_CIDRS` 四个占位**必须全部替换** —— chart 不会因为值是占位字符串而报错。**本地先验一次渲染**（别把 fail-closed 留到客户集群才发现）：仓库根目录执行 `make chart-check`（等价 `deploy/helm/scripts/chart-check.sh`，对 AS 默认渲染、config-service 开启、ingress 模板路径与 HPA fail-fast 做断言，属门禁① fast 层）。
 
 ## 6. 安装后步骤
 
@@ -145,7 +145,7 @@ kubectl -n <ns> exec -it deploy/as-3rdparty-as-config-service -- \
 
 | 检查项 | 命令 / 方法 | 期望 | 依据 | 证据等级 |
 |---|---|---|---|---|
-| chart 渲染守卫 | `make chart-check` | 通过（lint + 模板断言） | `Makefile` / `deploy/helm/scripts/chart-check.sh` | **CI ① fast 层，已绿** |
+| chart 渲染守卫 | `make chart-check` | 通过（lint + 模板断言） | `Makefile` / `deploy/helm/scripts/chart-check.sh` | **门禁① fast 层，已绿** |
 | Pod 与 ready | `kubectl -n as-prod get pods -l app.kubernetes.io/part-of=3rdparty-as` | 各用例 Pod `Running`、READY 为真 | NOTES.txt §2 | kind/dev 已验；**生产未验收** |
 | 滚动完成 | `kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdparty-as` | 全部 rollout 完成、无 Pod 长时间 `Progressing` | NOTES.txt §3（ADR-0009 draining） | 模板层已验；**生产未验收** |
 | 版本上报一致 | `kubectl -n <ns> exec deploy/<release>-<use-case> -- printenv CONFIG_VERSION` | 各副本相同且等于控制面生效版本 | NOTES.txt §2（ADR-0006） | kind/dev 已验；**生产未验收** |

@@ -3,7 +3,7 @@
 # In-house IMS Application Server（文档暂用名），Helm-only 生产交付形态（ADR-0013）。
 #
 # 范围（评审 G-P1-7）：只做「镜像 save + 校验和 + helm package」。本脚本
-# 不产生 Helm 之外的第二套安装形态，也不做在线安装器、不走 CI 私有 registry
+# 不产生 Helm 之外的第二套安装形态，也不做在线安装器、不走私有 registry 自动同步
 # 自动同步。离线侧用同目录的 load-images.sh。
 #
 # 用法:
@@ -75,7 +75,7 @@ bundle-images.sh — 离线包制作（联网侧）：镜像同步 + SHA256SUMS 
 
 退出码: 0 成功   1 某一步失败   2 用法错误
 
-范围声明: 仅镜像同步 + 校验和 + helm package。不做在线安装器，不做 CI 私有
+范围声明: 仅镜像同步 + 校验和 + helm package。不做在线安装器，不做私有
 registry 自动同步，不产生 Helm 之外的安装形态（ADR-0013；评审 G-P1-7）。
 EOF
 }

@@ -19,7 +19,7 @@ This review covers the transaction slice that coordinates a typed `CREATE`, `UPD
 
 - The activation integration file contains seven integration cases. Coverage includes CREATE, UPDATE, DELETE, the legacy no-proposal path, the different-connection guard, and a stale ChangeOrder revision after a provisional ManagedRule write, checking that both stores roll back.
 - Latest config-service integration run on PostgreSQL **12.22**: **37 passed, 216 deselected**. PostgreSQL 16 compatibility remains an unverified, nonblocking follow-up.
-- Latest local `make gate`: Ruff format **207 files formatted**, Ruff clean, mypy **41 source files clean**, pytest **577 passed, 2 known skips, 43 deselected**, with one non-failing Starlette warning. Local only; CI was not run.
+- Latest local `make gate`: Ruff format **207 files formatted**, Ruff clean, mypy **41 source files clean**, pytest **577 passed, 2 known skips, 43 deselected**, with one non-failing Starlette warning. Local only.
 - The independent activation reviewer reported no findings after the idle-connection guard was added.
 
 ## Residual gaps and boundaries

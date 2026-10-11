@@ -106,7 +106,7 @@
 | **E3 vendoring** | 可 commit pin + vendoring | 硬约束 |
 | **E4 TLS 与热轮换** | 支持 SIP over TLS，证书轮换不重启、不丢在途呼叫 | 硬约束 |
 | **E5 状态外置** | 状态可序列化/恢复，或栈本身可无状态多副本 | 硬约束 |
-| **E6 构建集成** | 能进 monorepo 构建与 CI（Go module / cmake / autotools） | 中 |
+| **E6 构建集成** | 能进 monorepo 构建与门禁（Go module / cmake / autotools） | 中 |
 | **E7 上游活跃度** | 近 12 个月有提交；issue 有人响应 | 高 |
 | **E8 可维护性** | 按 §4.1 子项加权综合分评估（代码量 / 构建复杂度 / 调试工具链 / 日志与状态导出 / 社区文档 / 技能匹配） | 高 |
 | **E9 与基线同源性** | 与 POC（sippy）行为的可对照程度 —— 决定 M1 基线的复用价值 [^e9] | 高 |
@@ -171,8 +171,8 @@ E8 综合分 = 各子项得分按权重加权求和。§6 步骤 3 的"同分按
 **普通维度（E6/E7/E9/E10）**
 
 - **E6 构建集成**（中权重）：
-  - go-b2bua（5 分）：Go module，单语言，零外部系统依赖，`go build` 即可产出静态二进制，与 monorepo CI 集成最顺滑。
-  - reSIProcate（3 分）：CMake 构建，但含多个子库（resip / dum / recon / rutil 等），外部依赖较多（OpenSSL、popt、c-ares 等），CI 集成需要维护依赖链。
+  - go-b2bua（5 分）：Go module，单语言，零外部系统依赖，`go build` 即可产出静态二进制，与 monorepo 构建集成最顺滑。
+  - reSIProcate（3 分）：CMake 构建，但含多个子库（resip / dum / recon / rutil 等），外部依赖较多（OpenSSL、popt、c-ares 等），构建集成需要维护依赖链。
   - libre（4 分）：CMake 构建，结构相对清晰；依赖 OpenSSL 等基础库；需从 baresip 生态中裁剪出 SIP/SDP 核心部分，略增集成成本。
 - **E7 上游活跃度**（高权重）：
   - go-b2bua（2 分）：近 12 个月约 5 次提交，无 release，3 个 open issue，最旧 issue 2023-09-06；活跃度低，供应链风险高。来源：[GitHub 仓库](https://github.com/sippy/go-b2bua)。
@@ -280,8 +280,8 @@ S12 不属于 S1–S11 的 E1 门槛集；它用于验证 §4 E4 与 §3.1 H4。
    - 通过者按 E7 / E8 / E9 / E11 加权合计最高者入选；E8 按 §4.1 的子项加权综合分计；
    - E10 仅记录，不作决策输入；
    - 同分时由维护者据 E8 团队匹配度裁决；
-   - **E6 的验证方法**：写一个**最小 CI job**，编译候选栈并跑一个最小 probe（S1 即可）；
-     该 job 在 CI 中通过即视为 E6 的证据。它是 **probe 阶段的产出物**。
+   - **E6 的验证方法**：写一个**最小构建 job**，编译候选栈并跑一个最小 probe（S1 即可）；
+     该 job 本地跑通即视为 E6 的证据。它是 **probe 阶段的产出物**。
 4. **回退触发条件**：当且仅当满足下列之一时，才考虑回退至 sippy，并把本 ADR 记为 Rejected：
    - （a）全部正式候选均未通过 E1 门槛；或
    - （b）E8 综合评估（§4.1）显示维护成本高于继续维护 sippy 的成本 ——

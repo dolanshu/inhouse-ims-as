@@ -2,7 +2,7 @@
 
 **日期**：2026-10-09  
 **状态**：计划，**未实现**。`pytest -m e2e` 当前 **0 条**。  
-**关联**：[`test-plan.md`](test-plan.md) 自动化分层；[`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md)（harness / native CI）；[`../handoff/pre-m8-demo-review-plan.md`](../handoff/pre-m8-demo-review-plan.md)（kind `as-m71`）。
+**关联**：[`test-plan.md`](test-plan.md) 自动化分层；[`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md)（harness / native 门禁）；[`../handoff/pre-m8-demo-review-plan.md`](../handoff/pre-m8-demo-review-plan.md)（kind `as-m71`）。
 
 ---
 
@@ -13,7 +13,7 @@
 1. **产品 SIP 栈**是 `_resip_runtime`（reSIProcate），不是纯 Python 拼包、也不是只解析日志。  
 2. **判决走生产缝**：`decide()` / 已激活规则或等价 `RuleSet` + 出腿 hook；**禁止** `accept_all_invites`（及 `early_cancel_harness`）作为被测 AS 的默认模式。  
 3. **路径跨过网元边界**：至少「呼叫源 →（仿真或真实）S-CSCF/S-SBC → AS → 对端 UAS」，并断言 **终态**（结果码、必要时出腿用户号、BYE 不挂死）。  
-4. 标记 **`@pytest.mark.e2e`**，由 `make test-e2e` / CI job ③ 收集；与 `unit` / `contract` / `integration` 分开，避免 `make gate` 被拉长。
+4. 标记 **`@pytest.mark.e2e`**，由 `make test-e2e` / 门禁层③ 收集；与 `unit` / `contract` / `integration` 分开，避免 `make gate` 被拉长。
 
 **不是 e2e：**
 
@@ -36,7 +36,7 @@
 | 契约消息 | `testbed/contracts/sip-baseline/S1-basic-call/` 等 | REQ-F-1 的 14 条 **形状**；尚未对产品栈全文回放 |
 | 现场 demo | `scripts/demo-review/story-*.sh`、kind `as-m71` | 客户路径；控制台在 compose，信令在 kind |
 
-**缺口：** 没有 `e2e` 标记；CI ③ `continue-on-error` 且无用例；REQ-F-1 勾选仍 open。
+**缺口：** 没有 `e2e` 标记；门禁层③ 无用例、不阻塞；REQ-F-1 勾选仍 open。
 
 ---
 
@@ -46,7 +46,7 @@
 
 - 本文件 + `test-plan.md` 分层表（已写）。  
 - `pyproject.toml` 的 `e2e` marker 说明与实现对齐。  
-- CI：在 **至少一条** e2e 稳定前，job ③ 保持 `continue-on-error` **或** 改为 required 但只跑 Wave 1 的 smoke（二选一，见 §6）。
+- 门禁：在 **至少一条** e2e 稳定前，层③ 保持不阻塞 **或** 改为阻塞但只跑 Wave 1 的 smoke（二选一，见 §6）。
 
 ### Wave 1 — 信令 e2e（无控制台）
 
@@ -76,12 +76,12 @@
 ### Wave 3 — 控制面 + 信令（可选，重）
 
 - compose 或 test client：规则变更 → 激活 bundle → **重启或热加载策略以仓库实际能力为准** → 再跑 E2E-SIP-1。  
-- 与 demo story A 对齐；**不**把浏览器手工步骤写进第一版 CI。
+- 与 demo story A 对齐；**不**把浏览器手工步骤写进第一版门禁。
 
-### Wave 4 — kind `as-m71`（发布前证据，默认可选 CI）
+### Wave 4 — kind `as-m71`（发布前证据，默认可选门禁）
 
 - 复用 `kind-up.sh` + `publish-m71-bundle.sh` + 测试页或 `as_load` 打 **产品 Deployment**（非 `load_uas_runtime`）。  
-- 标记 `e2e` + `kind`（需新 marker 或 env `AS_E2E_KIND=1`），**nightly / workflow_dispatch**，不进每次 PR，除非维护者要求。
+- 标记 `e2e` + `kind`（需新 marker 或 env `AS_E2E_KIND=1`），**按需手动运行**，不进每次 PR，除非维护者要求。
 
 **明确排除：**
 
@@ -108,7 +108,7 @@ testbed/simulators/tests/test_product_path.py   # 可保留 integration；或改
 testbed/e2e/test_sip_first_edition.py           # Wave 1 新文件（推荐，避免 integration 语义混淆）
 ```
 
-CI（Wave 1 落地后）：
+门禁（Wave 1 落地后）：
 
 - job `e2e`：`needs: [native-contract]` 或自带 `m2-platform-resip-build`；  
 - `AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m e2e -q`；  
@@ -128,5 +128,5 @@ CI（Wave 1 落地后）：
 ## 7. 验收（计划本身）
 
 - [ ] 维护者确认 §1 定义与 §6 四项决定  
-- [ ] Wave 1 用例进 `master` 且 CI ③ 行为与决定一致  
+- [ ] Wave 1 用例进 `master` 且门禁层③ 行为与决定一致  
 - [ ] `test-plan.md` REQ-F-1 勾选状态与 Wave 2 是否做完一致（未做完不打勾全文）

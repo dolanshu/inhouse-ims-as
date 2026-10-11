@@ -10,7 +10,7 @@ RESIP_HOME="${RESIP_HOME:-/tmp/resiprocate}"
 RESIP_BUILD="${RESIP_BUILD:-${RESIP_HOME}/_build}"
 
 # Dev dependencies (popping up on systems without apt sudo: build from source)
-# If apt-get is available with sudo, use it. Otherwise try apt-get without sudo (works in some CI).
+# If apt-get is available with sudo, use it. Otherwise try apt-get without sudo (works in some container images).
 have_cmd() { command -v "$1" &>/dev/null; }
 
 if have_cmd apt-get; then

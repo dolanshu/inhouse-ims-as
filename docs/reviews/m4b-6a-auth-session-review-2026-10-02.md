@@ -34,7 +34,7 @@ Contract and residual boundaries: auth stores use dedicated injected PostgreSQL 
 
 - Focused API/auth/store command (`test_api.py`, `test_auth.py`, `test_postgres_auth_integration.py`, `test_postgres_auth_api_integration.py`): **116 passed**, with 11 non-failing Starlette/httpx warnings.
 - Full config-service integration command: **85 passed, 319 deselected** against PostgreSQL **12.22**. PostgreSQL 16 was not tested.
-- Current local `make gate`: Ruff format **220 files already formatted**; Ruff clean; mypy **44 source files clean**; pytest `-m "unit or contract"`: **680 passed, 2 skipped, 91 deselected**. Eight non-failing Starlette/httpx deprecations (one base warning and TestClient per-request cookie warnings). Local only; CI was not run.
+- Current local `make gate`: Ruff format **220 files already formatted**; Ruff clean; mypy **44 source files clean**; pytest `-m "unit or contract"`: **680 passed, 2 skipped, 91 deselected**. Eight non-failing Starlette/httpx deprecations (one base warning and TestClient per-request cookie warnings). Local only.
 - Final independent reviewer confirmation after fixes: **no remaining concrete findings**.
 
 Not verified or not implemented by this slice: PostgreSQL 16 compatibility; deployed trusted-proxy/ingress behavior; database runtime-role least privilege; application rate limiting; durable append-only audit; browser login UI and browser acceptance. Login checks the ASGI `request.url.scheme`; this is not proof of production proxy configuration. Since durable audit is absent, authorization decisions and all accesses are not durably audited until M4b-6b. ADR-0024 remains draft; REQ-S-4, M4b, and M4 remain unaccepted.

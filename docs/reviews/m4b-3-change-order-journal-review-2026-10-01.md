@@ -28,7 +28,7 @@ The independent review identified inconsistent handling of blank reject/rollback
 
 ## Validation And Residual Risk
 
-Latest focused unit run: **9 passed**. Latest local `make gate`: Ruff format reported 197 files; Ruff clean; mypy reported 38 source files clean; pytest **463 passed, 2 known skips, 21 deselected**. This is local evidence only; CI was not run.
+Latest focused unit run: **9 passed**. Latest local `make gate`: Ruff format reported 197 files; Ruff clean; mypy reported 38 source files clean; pytest **463 passed, 2 known skips, 21 deselected**. This is local evidence only.
 
 The PostgreSQL integration command `AS_PG_TEST_DSN=postgresql://postgres@127.0.0.1:55432/as_config uv run pytest -q services/config-service/tests/test_postgres_change_order_store_integration.py` passed **6 cases** against a temporary PostgreSQL **12.22** server (two integration test functions, six parametrized cases). The server bound only to loopback; data and logs were under `/tmp/as-m4b-postgres`; it was stopped after use. PostgreSQL packages were extracted under `/tmp` without installing system packages, and no user or production database was touched. PostgreSQL **16 compatibility remains unverified** and is a non-blocking follow-up; this PG12.22 result is not PG16 or deployment acceptance.
 

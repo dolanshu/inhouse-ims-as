@@ -171,7 +171,7 @@
 | # | 项 | 风险 | 建议动作 | 责任方 |
 |---|---|---|---|---|
 | R1 | **告警抓取接线未闭合** | 标准部署下 Prometheus 收不到 `as_*` 序列，所有 `as_*` 规则与面板「无数据」。若在客户材料中把它们描述为「已在生产生效」，属**不实陈述** | 单独一次 chart 改动：Pod 模板加 `prometheus.io/scrape` + `prometheus.io/port`（端口名 `health-http`），或加 `PodMonitor` / `ServiceMonitor`；随后跑 `promtool check rules` 并在真实集群验证 | 维护者批准后由开发执行 |
-| R2 | **`promtool check rules` 从未运行过** | 10 条规则的 PromQL 语法 / 表达式正确性未经工具校验，只有 YAML 层面解析通过 | 在有 `promtool` 的环境跑一次 `promtool check rules`，结果回写本文件 §5 | 开发 / CI |
+| R2 | **`promtool check rules` 从未运行过** | 10 条规则的 PromQL 语法 / 表达式正确性未经工具校验，只有 YAML 层面解析通过 | 在有 `promtool` 的环境跑一次 `promtool check rules`，结果回写本文件 §5 | 开发 |
 | R3 | **`Chart.yaml` 版本与 `VERSION` 不同步** | `VERSION` = `0.2.0`，chart 仍是 `0.0.0-skeleton`。交付给运营商时 chart 版本不代表产品版本 | 维护者裁决：交付时是否要求二者同步；若要求，需一次显式改动并说明与 ADR-0018「一个数字一个家」的关系 | 维护者 |
 | R4 | **chart 无 `kubeVersion` 声明** | 集群过旧时可能在渲染后才失败，失败点晚、难定位。当前由 `preflight.sh` 按模板实际使用的 API 推导下限作为补偿 | 补 `kubeVersion` 声明（需确认模板实际使用的最低 API 版本），或维持脚本推导并写明依据 | 维护者 + 开发 |
 | R5 | **608 / 603 口径差仍在代码库其它位置** | `apps/README.md`、`apps/anti-fraud/README.md`、`apps/anti-fraud/pyproject.toml`、架构文档 POC 现状描述仍写 608，产品路径只发 603。文档链不一致 | 维护者裁决是否实现 608；无论裁决如何，先把这几处描述与代码对齐（属 docs 改动，需单独一次改动） | 维护者裁决 → 开发 / 文档 |

@@ -29,7 +29,7 @@ Pass: four scenarios (30s/60s × cps 10/20) on product `ResipRuntimeListener` UA
 
 - No cluster-scale or TLS/S-SBC-shaped load
 - No O1 numeric **targets** or HPA values
-- `performance` CI layer still non-blocking
+- `performance` layer still non-blocking
 - Maintainer milestone sign-off not requested
 
 ## Recommendation

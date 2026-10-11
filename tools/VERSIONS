@@ -1,0 +1,26 @@
+# tools/VERSIONS — infra 工具版本的**唯一**存放处
+#
+# 维护者 2026-10-11：本文件集中锁定 bootstrap-infra.sh 安装的全部工具版本。
+# 升级 = 只改本文件，不改脚本。改完重跑 `tools/bootstrap-infra.sh` 即生效（幂等）。
+#
+# 版本取值依据（执行前请与官方发布页核对；本文件不联网校验）：
+#   helm     3.16.4  —— chart 为 apiVersion: v2，需 Helm 3.x（docs/delivery/install-guide.md 前置 2）
+#   kubectl  1.31.4  —— 与 kind v0.24.0 默认节点镜像 kindest/node:v1.31.0 同 minor，
+#                        满足 kubectl 与集群 ±1 minor 的版本偏移要求
+#   kind     0.24.0  —— 首个默认提供 1.31 节点镜像的版本；deploy/kind/m5-kind-up.sh 未固定
+#                        节点镜像，故 kind 版本即节点版本来源
+#   prometheus 2.55.1 —— **与 deploy/kind/m5-record-artifacts.sh 的历史 /tmp 兜底路径一致**，
+#                        不升级以免同一份告警规则被两个 promtool 版本校验出不同结果
+#
+# 可选：填入官方公布的 sha256 后，bootstrap-infra.sh 会强制校验；留空则只打印警告。
+HELM_VERSION=3.16.4
+HELM_SHA256=
+
+KUBECTL_VERSION=1.31.4
+KUBECTL_SHA256=
+
+KIND_VERSION=0.24.0
+KIND_SHA256=
+
+PROMETHEUS_VERSION=2.55.1
+PROMETHEUS_SHA256=

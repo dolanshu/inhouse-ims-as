@@ -9,7 +9,7 @@
 | 覆盖工作 | M2 后半（native reSIProcate 产品 runtime / TLS / TCP / 证书轮换 / Sentinel 客户端）、M6（真实 socket 容量 harness + dev-host O1 批次）、M7（E1 契约 / FORWARD 双腿 / D10 checkpoint 恢复 / D11 SDP）、Pre-M8 客户 demo 脚本与计划 |
 | **总体结论** | **有条件复审（Conditional re-review）。** P0/P1 工程修复已落地（见 [`callload-remediation-adjudication-2026-10-05.md`](callload-remediation-adjudication-2026-10-05.md)）；**F8（结构化日志）仍开放**；**F6 仅部分闭合**（无 native transport close 回调）。客户全量 Demo 仍须遵守故事 C M5 对账与 NF-1 边界。 |
 | Gap 状态 | 18 条：**已修复 15**；**部分修复 1**（F6）；**未闭合 1**（F8）；**维护者项 1**（F11，非工程队列）。 |
-| 门禁状态 | 本机实测 `make gate`（修复后）：**964 passed, 2 skipped**（仅剩 derived-baseline 待 M2 probe）；E1/恢复契约在 CI `m2-platform-resip` 下 `AS_REQUIRE_NATIVE_EXTENSIONS=1` 阻塞。 |
+| 门禁状态 | 本机实测 `make gate`（修复后）：**964 passed, 2 skipped**（仅剩 derived-baseline 待 M2 probe）；E1/恢复契约在 `make m2-platform-resip` 下以 `AS_REQUIRE_NATIVE_EXTENSIONS=1` 阻塞。 |
 | 主干分歧 | `master` 领先本分支 1 个提交 `04afc5a`（M5 全链评审，结论「不通过」）；**F10 内容面**已在 pre-m8 / story-c 收窄；merge 前须 `merge master` 拉入该评审文件（见 [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md)）。 |
 | 合入 master | **已完成（2026-10-06）** — `master` @ `139d299`；见 [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md)。**不等于**里程碑签收。 |
 | 维护者签收 | 无。本记录不构成 M2/M6/M7 里程碑退出，也不构成 REQ/test-plan 验收。 |
@@ -126,11 +126,11 @@ flowchart LR
 - **为什么是问题**：无 timestamp/level/trace_id/call_id/direction 字段（REQ-NF-13 要求 JSON 且可与 metrics/trace 关联）；客户日志平台无法解析。
 - **修复建议**：经回调把事件交还 Python 侧统一结构化日志，或封装含级别与 call_id 的 C++ 日志宏并定义字段契约；M8 前补字段断言。
 
-### F9【major】CI 与 make gate 不构建 native 扩展，核心产品 SIP 路径测试静默 skip，门禁不守门
+### F9【major】`make gate` 不构建 native 扩展，核心产品 SIP 路径测试静默 skip，门禁不守门
 
-- **证据**：`.github/workflows/` 全目录 grep 无 resip/native/cmake 步骤；本机 `make gate` 实测 **10 skipped**：`test_e1_contract_resip_runtime.py` 3、`test_e1_contract_resip_runtime_full.py` 4（S1–S4）、`test_sip_recovery.py` 1 均因 `_resip_runtime`/`_resip_recovery` 未构建跳过（跳过语句见 `test_e1_contract_resip_runtime_full.py:44-48`）。
+- **证据**：本机 `make gate` 实测 **10 skipped**：`test_e1_contract_resip_runtime.py` 3、`test_e1_contract_resip_runtime_full.py` 4（S1–S4）、`test_sip_recovery.py` 1 均因 `_resip_runtime`/`_resip_recovery` 未构建跳过（跳过语句见 `test_e1_contract_resip_runtime_full.py:44-48`）。
 - **为什么是问题**：M2 后半/M7 的主要交付（产品栈 S1–S4、TLS、恢复）在没有 .so 时一律 skip，门禁照样全绿——AGENT.md §9 要求首个引入某层测试的里程碑把该层改阻塞；当前等于核心能力无阻塞验证。
-- **修复建议**：CI 增加 native build job（或独立 required check），关键 E1/恢复测试在扩展缺失时按里程碑策略 fail 而非 skip；demo 冒烟前打印扩展版本/sha。
+- **修复建议**：`make gate` 增加 native build 步骤（或独立必跑目标），关键 E1/恢复测试在扩展缺失时按里程碑策略 fail 而非 skip；demo 冒烟前打印扩展版本/sha。
 
 ### F10【major】分支未合入主干 `04afc5a` 的 M5 全链「不通过」评审即继续叠加 M6/M7，客户故事 C 未对账
 
@@ -206,7 +206,7 @@ SKIP 原因分布：
   test_derived_baseline.py                 ×2  Route/Record-Route 待 M2 probe 补
 ```
 
-本结果是本地门禁证据，不是 CI 结果（AGENT.md §9）；未运行 `make m2-platform-resip-build` 后的集成层，未运行 PG/Redis/kind/性能批次。
+本结果只是本地门禁证据（AGENT.md §9）；未运行 `make m2-platform-resip-build` 后的集成层，未运行 PG/Redis/kind/性能批次。
 
 ## Adjudication
 
@@ -220,7 +220,7 @@ SKIP 原因分布：
 | F6 | 本评审；ingress/resip_runtime | connection 只注册不注销 | 采纳 | 上限 + 终止注销 | **部分修复** | 缺 transport close 回调 | major |
 | F7 | 本评审；sip_stack_service | from_env 不加载 TLS/peer | 采纳 | `transport_env.py` | **已修复** | `test_transport_env.py` | major |
 | F8 | 本评审；runtime_module.cxx | cout/cerr 非结构化 | 采纳 | Python JSON 回调或宏 | **未闭合** | M8 前 | major |
-| F9 | 本评审；CI/gate skip | native 不测仍绿 | 采纳 | CI job + `AS_REQUIRE_NATIVE_EXTENSIONS` | **部分修复** | `native_extensions.py`；origin workflow 未变 | major |
+| F9 | 本评审；gate skip | native 不测仍绿 | 采纳 | gate 增加 native build 步骤 + `AS_REQUIRE_NATIVE_EXTENSIONS` | **部分修复** | `native_extensions.py` | major |
 | F10 | 本评审；story-c / M5 评审 | Demo 与 M5 未对账 | 采纳（内容） | 故事 C L1 话术 | **已修复** | pre-m8 + story-c 横幅 | major |
 | F11 | 本评审；提交粒度 | Conventional Commits | 维护者 | 历史不重组 | **维护者** | — | major |
 | F12 | 本评审；as_load | 退出码误导 | 采纳 | `--min-success-rate` 等 | **已修复** | `as_load/__main__.py` | minor |

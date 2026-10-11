@@ -35,12 +35,12 @@ The final integrated pass found no remaining actionable findings after implement
 - Latest local `make gate`: Ruff format **225 files already formatted**; Ruff clean; mypy **45 source files clean**; pytest `-m "unit or contract"`: **767 passed, 2 skipped, 131 deselected**, with 11 non-failing Starlette/httpx deprecation warnings.
 - Config-service integration markers: **122 passed, 3 skipped, 404 deselected** against PostgreSQL **12.22**, with 5 deprecation warnings. Three publication DDL tests were skipped because the server uses `wal_level=replica`; those tests require `logical`.
 - Latest affected workflow matrix: **264 passed, 3 skipped, 15 warnings**. Latest API/audit catchall subset: **89 passed, 15 warnings**.
-- Local verification only; CI was not run. PostgreSQL 16 was not tested.
+- Local verification only. PostgreSQL 16 was not tested.
 - Final independent reviewer confirmation after fixes: **no remaining actionable findings**.
 
 ## Remaining Limits
 
-M4b-7 UI/workflow integration and M4b-8 browser acceptance are open. There is no browser login UI, application rate limiting, MFA/SSO, deployed HTTPS trusted-proxy/ingress proof, CI evidence, or PostgreSQL 16 result. The HMAC key is externally provisioned, and key rotation breaks cross-period correlation. Heuristic secret checks do not replace producer allow-list/redaction. REQ-S-4, M4b, and M4 remain unaccepted.
+M4b-7 UI/workflow integration and M4b-8 browser acceptance are open. There is no browser login UI, application rate limiting, MFA/SSO, deployed HTTPS trusted-proxy/ingress proof, deployed evidence, or PostgreSQL 16 result. The HMAC key is externally provisioned, and key rotation breaks cross-period correlation. Heuristic secret checks do not replace producer allow-list/redaction. REQ-S-4, M4b, and M4 remain unaccepted.
 
 - Independent reviewer confirmation: 2026-10-02
 - Maintainer signoff: **Approved**; recorded by AI agent per maintainer authorization in chat (2026-10-04).

@@ -38,7 +38,7 @@ dev = [
 
 # ---------------------------------------------------------------------------
 # pytest — one collector for the whole repository.
-# Layers are selected by marker, which is what the four CI gates run:
+# Layers are selected by marker, which is what the four test gates run:
 #   ① fast  -m "unit or contract"   ② integration  ③ e2e  ④ performance
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]

@@ -8,9 +8,11 @@
 
 | 文档 | 是什么 |
 |---|---|
+| [`architecture/README.md`](architecture/README.md) | **架构入口。** 文档地图与优先级（**规范文档 = `hld.md` / `lld.md`**）、交付边界、证据分级、当前已知待确认项 |
 | [`architecture/新系统整体架构.md`](architecture/新系统整体架构.md) | **设计基线。** 每一项已确认决策、其理由、未决清单与风险登记 |
 | [`architecture/adr/`](architecture/adr/) | 决策记录；先看它的 README 里的注册表 |
 | [`plan.md`](plan.md) | 交付计划：里程碑、顺序、退出标准 |
+| [`environments.md`](environments.md) | **环境登记表。** 长期事实登记：每台机器的名字、hostname、具备/缺失工具、已产出的证据。引用环境必须用表中的名字。**数据由 `tools/env-probe.sh` 现场探测生成，不手工维护**（见「本机环境与工具」） |
 | [`product-packaging-plan.md`](product-packaging-plan.md) | **产品化包装计划。** 四批交付物、`product/`·`operations/`·`delivery/` 三个新目录的由来与执行顺序 |
 | [`migration/triage.md`](migration/triage.md) | 在采纳任何东西之前，POC 代码如何被甄别 |
 
@@ -18,7 +20,7 @@
 
 | 文档 | 是什么 |
 |---|---|
-| [`../AGENT.md`](../AGENT.md) | **写代码之前先读。** 协作守则、分层、TDD 政策、CI 门禁、git 规则 |
+| [`../AGENT.md`](../AGENT.md) | **写代码之前先读。** 协作守则、分层、TDD 政策、门禁、git 规则 |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | 环境搭建、本地门禁、commit 与评审约定 |
 | [`../README.md`](../README.md) | 定位、仓库导览、快速开始 |
 
@@ -65,6 +67,18 @@
 |---|---|
 | `acceptance/` | 逐条带证据的验收标准与历史 runbook 原件 —— 仍是历史证据的所在地 |
 | [`../deploy/helm/README.md`](../deploy/helm/README.md) | **Helm chart 参数与渲染行为的唯一权威**（交付形态说明） |
+
+## 本机环境与工具
+
+> **环境信息不由人工维护。** 下面的脚本负责探测与安装，登记表 [`environments.md`](environments.md)
+> 的数据行来自它们的输出。项目会部署到不同电脑，**环境差异是常态** —— 不要以任何一台机器的
+> 工具清单去推断项目能力，也不要据「某台机器缺 X」改文档口径。
+
+| 脚本 / 文档 | 是什么 |
+|---|---|
+| [`../tools/env-probe.sh`](../tools/env-probe.sh) | **环境探测（只读）。** 探测 hostname / OS / 架构 与 docker / uv / python3.10 / helm / kubectl / kind / promtool / make / git，区分「✅ 具备 / ❌ 缺失 / ⚠ 装了但不可用」三态。`--markdown` 输出可直接粘进 [`environments.md`](environments.md) 的表格行，`--json` 供机器读。不安装任何东西、不改系统状态、不需要 root，缺工具仍 exit 0 |
+| [`../tools/bootstrap-infra.sh`](../tools/bootstrap-infra.sh) | **infra 工具安装（无 root、幂等）。** 把 helm / kubectl / kind / promtool 解压到 `tools/bin/`，版本锁定在 [`../tools/VERSIONS`](../tools/VERSIONS)；支持 `--dry-run`、`--only <tool>`、`--force`，装完自动调用 `env-probe.sh` 验证。**需要 root 的路径一律显式报错，绝不偷偷 sudo** |
+| [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) | **本机补齐四件工具的执行计划**（前置条件核查、安装清单、版本固定、可证伪的验证步骤、回退、停止线）。执行者请从该文档开始，不要从本文开始 |
 
 ## 参考
 

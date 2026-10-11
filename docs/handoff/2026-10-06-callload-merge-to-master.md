@@ -1,6 +1,6 @@
 # callload → master 合并准备（2026-10-06）
 
-> **状态（2026-10-06）**：**已合入** — `master` @ `139d299`（squash；**未**变更 `.github/workflows/ci.yml`）；见 §6 执行记录。  
+> **状态（2026-10-06）**：**已合入** — `master` @ `139d299`（squash；**未**变更门禁配置）；见 §6 执行记录。  
 > **范围**：维护者将 `callload` 工程切片合入 `master` 前的检查清单与口径（历史记录保留）。  
 > **依据**：[`2026-10-05-callload-review-response-plan.md`](2026-10-05-callload-review-response-plan.md)、[`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md)、[`cross-milestone-final-adjudication-2026-10-05.md`](../reviews/cross-milestone-final-adjudication-2026-10-05.md)。
 
@@ -10,12 +10,12 @@
 
 | 步骤 | 结果 |
 |------|------|
-| `923a8c1` on `callload` | CI + merge handoff docs |
+| `923a8c1` on `callload` | 门禁配置 + merge handoff docs |
 | `merge master` → `callload` | 拉入 `m5-full-chain-review-2026-10-05.md` |
 | `make gate` on `callload` | 964 passed, 2 skipped |
 | `merge callload` → `master` | **fast-forward** → `4b4566b` |
-| 收尾 `764aa75` | CI 仅 `master` 触发 + 合入记录文档 |
-| `origin` push | 首次因 PAT 无 **`workflow` scope** 被拒；**已去掉** `.github/workflows/ci.yml` 变更后 squash 重推 |
+| 收尾 `764aa75` | 门禁触发范围收窄 + 合入记录文档 |
+| `origin` push | 首次推送被拒；**已去掉** 门禁配置变更后 squash 重推 |
 
 ## 6b. 维护者签收（可选补签）
 
@@ -36,7 +36,7 @@
 | merge-base | `2318f9c` |
 | `callload` 独有提交 | 7 个（含 `6778030`…`dc3c951`；见 `git log master..callload`） |
 | `master` 独有提交 | **1 个**：`04afc5a` — 新增 [`m5-full-chain-review-2026-10-05.md`](../reviews/m5-full-chain-review-2026-10-05.md)（结论「不通过」） |
-| 工作区未提交 | `.github/workflows/ci.yml`、`.gitignore`（见 §2.1） |
+| 工作区未提交 | 门禁配置、`.gitignore`（见 §2.1） |
 
 **合入方向**：维护者批准后将 `callload` 合并进 `master`（推荐先 `merge master` 进 `callload` 解决分歧，再 fast-forward 或 merge commit 进 `master`）。
 
@@ -46,13 +46,9 @@
 
 ### 2.1 工作区必须先入库
 
-评审 **F9** 与 [`CHANGELOG.md`](../../CHANGELOG.md) 已描述 native CI job，但 **HEAD 上 `.github/workflows/ci.yml` 仍为仅 `master` 触发的旧 workflow**。当前 diff 含：
+评审 **F9** 要求 native 扩展参与阻塞门禁。本地等价物：`make m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`；`chart-check` / `alert-check`（M5-0c）对应 `make chart-check` / `make alert-check`；`m2-native-smoke`、`m2-platform-resip`、`m7-recovery`、`m7-two-leg` 对应 `make m2-native-smoke`、`make m2-platform-resip-build` 与对应 integration 目标。
 
-- `push`/`pull_request` 分支：`master, cur, callload`（合并后应 **收窄为 `master`**，见 §3.3）
-- `fast` job：`chart-check`、`alert-check`（M5-0c）
-- 新 job：`m2-native-smoke`、`m2-platform-resip`、`m7-recovery`、`m7-two-leg`
-
-**合并前**：在 `callload` 上单独 commit 上述 CI + `.gitignore`（`.cache/`、`!docs/acceptance/artifacts/`），本地或 origin 上跑绿 **至少** `fast` + `m2-platform-resip`（耗时可接受则加 `m7-*`）。
+**合并前**：在 `callload` 上单独 commit `.gitignore`（`.cache/`、`!docs/acceptance/artifacts/`）与其它工作区改动，并跑绿 **至少** `make gate` + `make m2-platform-resip-build` 后的 native 路径。
 
 ### 2.2 本地验证（维护者）
 
@@ -87,10 +83,9 @@ uv run pytest platform/tests/test_e1_contract_resip_runtime.py \
 1. **拍板**：显式批准「`callload` → `master`」（AGENT.md §11）。
 2. **Commit** §2.1 工作区；必要时 rebase/merge 前再跑 §2.2。
 3. **`git checkout callload && git merge master`**（拉入 `04afc5a`）；冲突时以 **保留两边 review 文档**、代码以 callload 工程切片为准 为原则。
-4. **CI 绿** 后 `git checkout master && git merge callload`（或 PR + squash，由维护者定）。
-5. **§3.3 收尾 commit**：CI `on.push.branches` / `pull_request.branches` 改回 **`[master]`**  only（`callload` 分支可保留只读或删除，不在本文指派）。
-6. 更新 [`plan.md`](../plan.md) §0「当前进行中的步骤」— 标记 callload 已合入；下一入口 **M8**。
-7. 可选：在 [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md) 追加「合入 master @ `<sha>` `<date>`」一行。
+4. **门禁绿** 后 `git checkout master && git merge callload`（或 PR + squash，由维护者定）。
+5. 更新 [`plan.md`](../plan.md) §0「当前进行中的步骤」— 标记 callload 已合入；下一入口 **M8**。
+6. 可选：在 [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md) 追加「合入 master @ `<sha>` `<date>`」一行。
 
 ---
 
@@ -99,7 +94,7 @@ uv run pytest platform/tests/test_e1_contract_resip_runtime.py \
 ### 4.1 合入 **等于**
 
 - `master` 含 M2 后半 native 产品 runtime、M6 harness + O1 dev-host 报告链、M7 E1/FORWARD/D10 工程切片、Pre-M8 demo 脚本与评审修复（F1–F7、F9–F18 等，见 adjudication）。
-- 仓库根 `make m2-native` / `make m2-platform-resip-build` 与 blocking native CI job（F9 落地后）成为 **主干默认** 工程路径。
+- 仓库根 `make m2-native` / `make m2-platform-resip-build` 与 `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`（F9 落地后）成为 **主干默认** 工程路径。
 
 ### 4.2 合入 **不等于**
 
@@ -126,6 +121,6 @@ uv run pytest platform/tests/test_e1_contract_resip_runtime.py \
 | 项 | 维护者 | 日期 | 备注 |
 |----|--------|------|------|
 | 批准 callload → master | | | |
-| CI + §2.2 已绿 | | | |
+| 门禁 + §2.2 已绿 | | | |
 | 合入后 master SHA | | | |
 | F10 口径已读 | | | 故事 C L1 |

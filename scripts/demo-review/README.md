@@ -13,7 +13,7 @@ Artifacts: `artifacts/demo-review/<date>/story-{a,b,c,d,e}/`
 | C 平台运维 | `make demo-story-c` | cluster shot is kind `as-m71`; 7.2d stays on `kind-as-m5` |
 | D 恢复/checkpoint | `AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-story-d` | harness unchanged; speech says `as-sut` Redis is not customer-K8s REQ-NF-1 |
 | E 容量研究 | `make demo-story-e` | research method, not an SLA; `as-m71` page counts stay out of the O1 report |
-| All (CI smoke) | `AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-review-all` | ~5–15 min |
+| All (smoke) | `AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-review-all` | ~5–15 min |
 
 ### Story A flags
 

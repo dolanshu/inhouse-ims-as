@@ -14,7 +14,7 @@ This adjudication bundles the **authorized engineering path** for continuing M2 
 | Product runtime binding | P2c `ResipRuntimeListener` + `make m2-platform-resip-build`; UDP DUM→Python ingress + `decide()` integration tests |
 | TLS / ingress policy | P2d TLS listener, certificate fingerprint token, plaintext reject when TLS required; optional `m2-native-smoke-tls-runtime` |
 | Rotation seam | P3 `TlsRotationState`, `TransportIngressGate.install_with_overlap`, native `reload_certificates` hook; `test_tls_rotation.py` |
-| CI / integration gate | P4 blocking jobs `m2-native-smoke` and `m2-platform-resip` (native build + `test_resip_runtime_integration.py` + rotation unit tests) |
+| Blocking integration gate | P4 blocking targets `m2-native-smoke` and `m2-platform-resip` (native build + `test_resip_runtime_integration.py` + rotation unit tests) |
 
 ## Adjudication
 
@@ -24,14 +24,14 @@ This adjudication bundles the **authorized engineering path** for continuing M2 
 | P1 adapter boundary recorded | **Accept** (boundary) — [`m2-adapter-boundary-adjudication-2026-10-04.md`](m2-adapter-boundary-adjudication-2026-10-04.md) |
 | P2 ingress + testbed TCP + product UDP/TLS runtime slices | **Accept** (partial P2; slices P2b–P2d) — linked P2 adjudications 2026-10-05 |
 | P3 overlap policy + reload hook | **Accept** (partial P3) — [`m2-p3-tls-rotation-adjudication-2026-10-05.md`](m2-p3-tls-rotation-adjudication-2026-10-05.md) |
-| P4 focused real-socket CI + platform integration pytest gate | **Accept** (P4 engineering slice) |
+| P4 focused real-socket blocking gate + platform integration pytest gate | **Accept** (P4 engineering slice) |
 | **Full M2 milestone / M2 exit** | **Deny** |
 | REQ-S-2 / REQ-S-3 acceptance | **Deny** — not claimed by this closure |
 | Operator PKI / external S-SBC evidence | **Open** |
 
 ## Rationale
 
-The register and prior slice adjudications show a **coherent stack-binding story**: reproducible native testbed probes, a product `_resip_runtime` extension with integration tests, ingress/TLS policy seams, and rotation policy wired to a native reload hook. Adding CI job `m2-platform-resip` makes the platform integration path **blocking on the same class of environment** as P0 (source build on `ubuntu-latest` / OpenSSL 3).
+The register and prior slice adjudications show a **coherent stack-binding story**: reproducible native testbed probes, a product `_resip_runtime` extension with integration tests, ingress/TLS policy seams, and rotation policy wired to a native reload hook. Adding the blocking target `m2-platform-resip` makes the platform integration path **blocking on the same class of environment** as P0 (source build on `ubuntu-latest` / OpenSSL 3).
 
 Accepting this **engineering closure** means maintainers may treat the listed artifacts as the current **baseline for further M2 work** (D3, REQ-S, operator PKI, product TCP, M7 product CallController). It does **not** substitute for test-plan REQ acceptance or milestone sign-off.
 
@@ -45,7 +45,7 @@ Accepting this **engineering closure** means maintainers may treat the listed ar
 
 ## Limits
 
-Not REQ acceptance, not deployment certification, not M7 D9–D11 product integration. CI green on `m2-platform-resip` certifies the **repository repro path** for the listed tests, not operator production PKI.
+Not REQ acceptance, not deployment certification, not M7 D9–D11 product integration. `make m2-platform-resip` green certifies the **repository repro path** for the listed tests, not operator production PKI.
 
 ## Sign-off
 

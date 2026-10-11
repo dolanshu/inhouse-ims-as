@@ -48,6 +48,6 @@ Repository **`make gate`** (lint, type, unit + contract) is the required pre-mer
 | 2 | `notify_outbound_response` / `notify_leg_terminated` on listener | **Accept** — minimal hooks; native callbacks not yet attached |
 | 3 | `as_platform.sip.recovery.CallStateRecovery` + unit tests | **Accept** — matches testbed `CallStateCheckpointRepository.load`; native restore explicitly **not** implemented |
 | 4 | Engineering closure adjudication | [`m7-engineering-closure-adjudication-2026-10-05.md`](m7-engineering-closure-adjudication-2026-10-05.md) — **not** milestone exit |
-| 5 | CI `m7-two-leg` job (optional) | See closure doc — runs two-leg integration after platform resip job when present |
+| 5 | `m7-two-leg` target (optional) | See closure doc — runs two-leg integration after the platform resip target when both are invoked |
 
 **Unchanged limits:** D10, REQ-NF-1, D9, E1, M7 milestone sign-off remain **open**. Recommendation: **Accept** continuation as M7 engineering only.

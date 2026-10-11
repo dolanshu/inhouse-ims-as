@@ -167,19 +167,19 @@ testbed/ ──may use──▶ platform/       研发资产，绝不做运行�
 - **`<member>/pyproject.toml`** 携带该组件自己的接口版本。
 - **任何成员都不得拥有 `VERSION` 文件。** 一个数字两个家，正是本仓库要消灭的漂移（ADR-0018）。由 [`tests/test_version_consistency.py`](tests/test_version_consistency.py) 守卫。
 - **SIP 协议栈由 ADR-0019 决定。** 在 ADR-0019 接受之前，`platform/` 不绑定任何具体 SIP 栈。POC 使用的 `sippy==2.4.2` 仅作为 `testbed/` 中抓取行为基线的参考工具，不进入产品生产依赖。
-- 每个依赖都走 `uv`，提交 `uv.lock` 并在 CI 中校验。
+- 每个依赖都走 `uv`，提交 `uv.lock` 并校验锁文件一致。
 
 ## 9. 门禁（Gates）
 
 `make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。四步固定，AST 扫描**不在 gate 内**。
 
-**AST 扫描归属**：AST 扫描（检查不显而易见的代码是否标注 ADR，对应 REQ-G-3）属于 CI 流水线**额外步骤**——在 `make gate` 之外。可用 `make gate-strict` 目标触发（`make gate` 四步 + AST 扫描），或在 CI 流水线作为前置门禁执行。make gate 本身四步不变，快速反馈。
+**AST 扫描归属**：AST 扫描（检查不显而易见的代码是否标注 ADR，对应 REQ-G-3）在 `make gate` **之外**单独执行（ADR-0015）。用 `make gate-strict` 目标触发（`make gate` 四步 + AST 扫描）。`make gate` 本身四步不变，保持快速反馈。
 
-CI 跑同样的四层：① 快（`unit or contract`）→ ② 集成 → ③ e2e → ④ 性能（nightly / tag 触发）。AST 扫描可在 CI 的前置阶段或 ① 层之后并行执行。
+本地同样分四层，各自是独立目标：① 快（`make test-unit`，`unit or contract`）→ ② 集成（`make test-integration`）→ ③ e2e（`make test-e2e`）→ ④ 性能（`make test-perf`，不进提交门禁）。AST 扫描不属于这四层，按上一条单独触发。
 
-本地门禁不绿，什么都不能提交。**本地门禁不是 CI**：绝不要把本地重跑冒充成 CI 结果。
+本地门禁不绿，什么都不能提交。**本地门禁的结论只覆盖它实际跑过的东西**：绝不要把本地重跑的结果表述成比它更强的验证通过。
 
-**M0 骨架阶段说明**：当前 integration、e2e、performance 层没有测试。CI 通过 `continue-on-error` 绕过；本地 `make test` 在该阶段会因 pytest 无测试而失败。因此 `make gate` 在 M0 只跑 ① 层。首个引入某层测试的里程碑必须同步把该层改为阻塞。
+**分层现状说明**：`make test` 依次跑 ① → ② → ③。`integration` 层已有测试；`e2e` 层目前还没有测试文件（marker 已在 `pyproject.toml` 声明），因此 `make test` 会在 ③ 因 pytest 收集不到测试而失败。`make gate` 只跑 ① 层。首个引入某层测试的里程碑必须同步确认该层已在对应目标中生效。
 
 ## 10. AI 辅助与 Subagent 协作
 
@@ -235,7 +235,7 @@ CI 跑同样的四层：① 快（`unit or contract`）→ ② 集成 → ③ e2
 1. 读 `AGENT.md`（本文件）
 2. 读 `docs/README.md`
 3. 读 `docs/plan.md` 中当前里程碑章节
-4. 读 `docs/acceptance/criteria.md` 中该里程碑的验收项
+4. 读 `docs/acceptance/m8-test-plan-matrix.md` 中该里程碑的验收项（2026-10-11 更正：原指向 `docs/acceptance/criteria.md`，该文件从未存在；验收矩阵现以 `m8-test-plan-matrix.md` 为准）
 5. 确认当前分支（由维护者命名或批准）
 6. **首任务 subagent 判定**：收到维护者的首个任务时，先判断是否涉及文件改动（新建 / 编辑 / 删除）。是 —— 立即派 writing subagent，再做其他规划或讨论；否 —— 进入只读模式。
 

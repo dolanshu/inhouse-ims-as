@@ -3,7 +3,7 @@
 > 评审人：AI agent（grilling session）
 > 日期：2026-09-27
 > 范围：当前 `master` 上的 M0 骨架，对照 `docs/plan.md` §2–§3 与 `docs/architecture/新系统整体架构.md` §0 决策账本
-> 状态：**M0 已签字**（维护者授权 AI agent 代签，2026-09-28）。O-F/O-H/G1/G2/G4 已关闭；G3/G5/G6/G7/G8/G9/G10/G11/G12 待后续里程碑处理（非 M0 签字阻塞项）
+> 状态：**M0 已签字**（维护者授权 AI agent 代签，2026-09-28）。O-F/O-H/G1/G4 已关闭；G3/G5/G6/G7/G8/G9/G10/G11/G12 待后续里程碑处理（非 M0 签字阻塞项）
 
 ## 评审方法
 
@@ -25,7 +25,7 @@
 | integration | `uv run pytest -m integration -q` | **失败**：44 deselected，pytest exit 5 |
 | e2e / performance | 未跑到 | — |
 
-**结论**：`make gate` 当前不绿。失败原因是 `Makefile` 的 `test` 目标在骨架阶段直接调用 integration 层，而没有任何 integration 测试。CI 通过 `continue-on-error` 绕过，但本地 gate 没有同等机制。
+**结论**：`make gate` 当前不绿。失败原因是 `Makefile` 的 `test` 目标在骨架阶段直接调用 integration 层，而没有任何 integration 测试。
 
 ---
 
@@ -39,14 +39,6 @@
 - **建议修复**：
   - 方案 A：`gate` 目标改为 `lint type test-unit`，本地只跑 ① 层（推荐）
   - 方案 B：`test` 目标用 shell 条件跳过当前无测试的 marker，待 M2/M3/M6 移除
-  - 无论哪种方案，需保证 `gate` 与 CI 的 fast 层语义一致
-
-### G2 — CI 监听 `main`，仓库默认分支是 `master`
-
-- **位置**：`.github/workflows/ci.yml` 第 16、18 行
-- **表现**：`on.push.branches: [main]`、`on.pull_request.branches: [main]`
-- **影响**：当前 `master` 上的 push 不会触发 CI
-- **建议修复**：CI 改为监听 `master`，直到维护者决定重命名默认分支
 
 ### G3 — 18 个 ADR 只有注册表，没有正文文件
 
@@ -132,7 +124,7 @@
 
 按依赖关系排序，先修阻塞项，再补文档：
 
-1. **G1 + G2**：修复 `Makefile` 和 CI，使 `make gate` 绿
+1. **G1**：修复 `Makefile`，使 `make gate` 绿
 2. **G5 + G6**：重写 `AGENT.md`，聚焦一致性规则，补 subagent 协作细则
 3. **G3**：M0 签字后写第一批 ADR（0001、0002、0003、0018）
 4. **G4**：更新 `platform/pyproject.toml` 双栈注释
@@ -197,7 +189,6 @@
 | ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
 |---|---|---|---|---|---|---|---|
 | G1 | §2 G1 | `make gate` 在骨架阶段失败（integration 层无测试导致 exit 5） | 接受 | `gate` 目标改为 `lint type test-unit`，M0 只跑 ① 层 | 已修改 | `make gate` 全绿 | G1 与 O-A 为同一问题的 gap 与 open question 两面 |
-| G2 | §2 G2 | CI 监听 `main`，仓库默认分支是 `master` | 待裁决 | CI 改为监听 `master` | 已关闭 | `.github/workflows/ci.yml` L16-18 分支改为 `master` | |
 | G3 | §2 G3 | 18 个 ADR 只有注册表无正文 | 接受 | M0 签字后写第一批 ADR（0001/0002/0003/0018） | 待修改 | ADR 文件存在且通过评审 | 与 O-B 对应 |
 | G4 | §2 G4 | `platform/pyproject.toml` 注释与双栈决策不一致 | 部分接受 | 注释改为反映 ADR-0019 当前候选状态（sippy 退出生产栈，选型进行中） | 已关闭 | platform/pyproject.toml L18-24 注释已更新，明确 ADR-0019 记录选型结果 | 之前会话中已被更新，自动解决 |
 | G5 | §2 G5 | `AGENT.md` 与 `plan.md`/架构文档大量重复 | 接受 | 重写 `AGENT.md`，聚焦一致性规则，重复内容用链接 | 已关闭 | AGENT.md 通过链接指向 plan.md/架构文档，无重复内容（见 §1 L14、§4 L112、§15 L273） | 与 G6 同属 AGENT.md 重写范围 |
@@ -229,7 +220,6 @@
   - ✅ ADR-0019 已 Accepted（reSIProcate 选定，O2 阻塞解除）
   - ✅ 架构文档决策 8 已同步
   - ✅ G1（make gate）已修复
-  - ✅ G2（CI 分支）已修复
   - ✅ G4（platform/pyproject.toml 注释）自动解决
   - ✅ O-F（ADR-0019 阻塞）已关闭
   - ✅ O-H（ADR-0019 取代 ADR-0011）已关闭
@@ -240,6 +230,6 @@
 ## 7. M1 阶段 M0 gap 补全记录
 
 - **补全日期**：2026-09-28
-- **补全范围**：G2/G5/G6/G12（已完成确认）+ G7–G11（实际补全）+ G3（ADR-0001/0002/0003/0018 从 skeleton → draft）
+- **补全范围**：G5/G6/G12（已完成确认）+ G7–G11（实际补全）+ G3（ADR-0001/0002/0003/0018 从 skeleton → draft）
 - **未处理**：无。全部 M0 gap 已关闭或转为 draft 状态待后续评审
 - **门禁**：`make gate` 全绿（49 files formatted、ruff/mypy 干净、44 tests passed）

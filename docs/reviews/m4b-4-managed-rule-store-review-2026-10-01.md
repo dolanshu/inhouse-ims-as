@@ -31,7 +31,7 @@ The independent review raised findings concerning TRUNCATE protection, Unicode a
 
 The focused `test_managed_rule_store.py` (unit) and `test_postgres_managed_rule_store_integration.py` runs passed **38 tests total**. Only the integration subset (**6 parametrized cases**) ran against temporary PostgreSQL **12.22**; the 38 total must not be read as database-backed tests. Integration coverage includes create/update/delete history and tombstones, CAS/duplicate behavior, rejection of event UPDATE/DELETE/TRUNCATE, deferred-FK rollback, and the PostgreSQL >=12 guard.
 
-Latest main-agent full gate (local; CI was not run): Ruff format **200 files formatted**; Ruff clean; mypy **39 source files clean**; pytest **506 passed, 2 known skips, 36 deselected**. Config-service integration markers on PostgreSQL 12.22 additionally yielded **30 passed, 145 deselected**.
+Latest main-agent full gate (local): Ruff format **200 files formatted**; Ruff clean; mypy **39 source files clean**; pytest **506 passed, 2 known skips, 36 deselected**. Config-service integration markers on PostgreSQL 12.22 additionally yielded **30 passed, 145 deselected**.
 
 The temporary PostgreSQL 12.22 server was extracted from Ubuntu debs under `/tmp/as-m4b-postgres`, bound to loopback only, and stopped after use. No system packages were installed. PostgreSQL **16 compatibility remains unverified** and is a non-blocking follow-up.
 

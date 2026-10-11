@@ -13,7 +13,7 @@ POC 阶段已经发生了 VERSION 漂移：根 `VERSION` 文件声明 `0.2.0`，
 
 本产品的交付形态是**一客户一系统**。交付给运营商的是一个完整系统版本，不是一堆独立组件版本的组合。运营商收到的是一个 Docker 镜像集合 + Helm chart，版本号应该是一个单一的 release 号，而不是每个组件各报一个版本号让运维去对齐。
 
-monorepo + uv workspace（ADR-0001）提供了统一版本治理的技术基础：所有组件在一个仓库，CI 可以在一次流水线中集中校验版本一致性，不需要跨仓脚本。
+monorepo + uv workspace（ADR-0001）提供了统一版本治理的技术基础：所有组件在一个仓库，可以在一次本地门禁中集中校验版本一致性，不需要跨仓脚本。
 
 `AGENT.md` §8 已有明确规则草案：
 - `./VERSION` 是产品 release 版本的**唯一源头**；
@@ -41,7 +41,7 @@ monorepo + uv workspace（ADR-0001）提供了统一版本治理的技术基础�
 
 ### Negative / accepted（负面 / 已接受）
 
-- **版本治理稍复杂。** 同时维护根 VERSION + 各组件 pyproject 接口版本。但 `tests/test_version_consistency.py` 把手动维护负担消为零——CI 每次都自动跑 SemVer 合法性校验和 CHANGELOG 标题对齐检查，违反即阻塞 PR。
+- **版本治理稍复杂。** 同时维护根 VERSION + 各组件 pyproject 接口版本。但 `tests/test_version_consistency.py` 把手动维护负担消为零——`make gate` 每次都自动跑 SemVer 合法性校验和 CHANGELOG 标题对齐检查，违反即阻塞 PR。
 - **需要区分"release 版本"和"接口版本"两个概念。** 产品 release 号描述整个系统的交付版本，组件接口版本描述该组件对外暴露的 API 语义变更。在文档和沟通中需要明确这两个语义的区别。
 
 ## Alternatives considered（考虑过的备选）

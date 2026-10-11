@@ -23,7 +23,7 @@ The initial review identified documentation/OpenAPI exposure, free-form response
 
 - `services/config-service/tests/test_api.py`: **28 passed** in the latest focused run, covering authorization, list/detail, tombstone, 404, path length and Unicode controls, and valid `@` / hyphen IDs.
 - Config-service integration markers on temporary PostgreSQL **12.22**: **30 passed, 145 deselected**, including both durable stores. PostgreSQL 16 compatibility remains a nonblocking follow-up.
-- Latest local `make gate`: Ruff format **203 files formatted**; Ruff clean; mypy **40 source files clean**; pytest **534 passed, 2 known skips, 36 deselected**. Local evidence only; CI was not run.
+- Latest local `make gate`: Ruff format **203 files formatted**; Ruff clean; mypy **40 source files clean**; pytest **534 passed, 2 known skips, 36 deselected**. Local evidence only.
 - One non-failing Starlette TestClient deprecation warning recommends httpx2. Record as a tooling follow-up; no dependency was added in this documentation-only slice.
 
 ## Boundaries and follow-up

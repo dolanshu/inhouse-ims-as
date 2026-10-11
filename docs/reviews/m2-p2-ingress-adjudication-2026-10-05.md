@@ -23,7 +23,7 @@ transport adapter completion or REQ-S acceptance.
 
 ## Limits
 
-Not REQ acceptance, not CI certification unless separately recorded, not production PKI/mTLS evidence.
+Not REQ acceptance, not deployment certification unless separately recorded, not production PKI/mTLS evidence.
 
 ## Sign-off
 

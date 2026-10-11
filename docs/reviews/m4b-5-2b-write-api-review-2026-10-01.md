@@ -22,7 +22,7 @@ The injected identity and authorization callbacks are integration seams, not an 
 
 - Focused write API tests at the M4b-5-2b slice: **48 passed**. These use fake stores; route-level PostgreSQL CAS and concurrent API clients exercising PostgreSQL CAS were not tested. Later API coverage expanded.
 - Config-service integration markers on PostgreSQL **12.22** at this slice: **30 passed, 216 deselected**, including durable stores. PostgreSQL 16 compatibility is a nonblocking, unverified follow-up.
-- Historical local `make gate` snapshot at this slice: Ruff format **204 files**; Ruff clean; mypy **40 source files clean**; pytest **577 passed, 2 known skips, 36 deselected**, with one non-failing warning. Local only; CI was not run. Current gate evidence is captured in the M4b-5-2c review and handoff.
+- Historical local `make gate` snapshot at this slice: Ruff format **204 files**; Ruff clean; mypy **40 source files clean**; pytest **577 passed, 2 known skips, 36 deselected**, with one non-failing warning. Local only. Current gate evidence is captured in the M4b-5-2c review and handoff.
 - The independent final reviewer reported no findings. The TestClient run emitted one non-failing Starlette/httpx deprecation warning.
 
 ## Residual gaps and next step

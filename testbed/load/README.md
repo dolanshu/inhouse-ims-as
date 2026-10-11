@@ -34,7 +34,7 @@ SIPp（GPL）这里可用：仅内部测试使用，绝不随产品分发。
 
 ### 当前限制（需维护者裁决 / 后续补证）
 
-1. REQ-NF-15 全量 test-plan（集群饱和、`performance` CI 阻塞）仍 open —— 见 test-plan §2-REQ-NF-15。
+1. REQ-NF-15 全量 test-plan（集群饱和、`performance` 门禁阻塞）仍 open —— 见 test-plan §2-REQ-NF-15。
 2. 当前证据仅覆盖 loopback socket 行为正确性与统计口径，不构成真实栈容量结论或 REQ 完成证据。
 3. 上述单次 SIPp 3.6.0 UAS smoke 只覆盖基础 INVITE/ACK/BYE 互操作；不得据此推断 CPS、并发会话、建立时延或任何容量上限。
 4. 若未接入目标侧遥测，本 harness 不能泛化给出"首个饱和目标资源"结论；该项必须在正式测量中按目标环境补证。

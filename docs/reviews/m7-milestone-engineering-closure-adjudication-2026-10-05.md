@@ -31,7 +31,7 @@
 4. **D9** — product C++/Python adapter API.  
 5. **D11 / REQ-F-4** — full product SDP wire identity.
 
-## CI / gate
+## Gate
 
 Repository **`make gate`** remains the required pre-merge check. E1 contract test participates in layer ① (`unit or contract`); skips when `_resip_runtime` is not built.
 

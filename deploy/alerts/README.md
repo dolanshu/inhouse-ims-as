@@ -13,7 +13,7 @@ rule_files:
   - /etc/prometheus/rules/as-alerts.yaml   # or a directory glob
 ```
 
-Validate before shipping it, and keep this in CI:
+Validate before shipping it, and keep this in the local gate:
 
 ```sh
 promtool check rules deploy/alerts/as-alerts.yaml
@@ -209,7 +209,7 @@ invented in advance.
    row appears, and both are part of the change.
 7. Run `promtool check rules deploy/alerts/as-alerts.yaml`, or `make
    alert-check`, which does the same thing and fails loudly if `promtool` is
-   missing. Keep it in CI.
+   missing. Keep it in the gate.
 8. Record the new alert in `docs/operations/alert-response-matrix.md` (§2 has a
    per-alert row: trigger, first action, escalation, evidence) and in
    `docs/product/ne-datasheet.md` §6. An alert with no documented first action

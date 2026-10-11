@@ -1,0 +1,5 @@
+docker run --rm --entrypoint=/bin/promtool -v /home/shudong/project/3rdparty-as/deploy/alerts:/alerts prom/prometheus:v2.45.0 check rules /alerts/as-alerts.yaml
+host: WIN-03IB7NIEPF0
+date: 2026-10-11
+Checking /alerts/as-alerts.yaml
+  SUCCESS: 10 rules found

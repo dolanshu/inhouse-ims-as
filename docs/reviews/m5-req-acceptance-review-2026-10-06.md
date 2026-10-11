@@ -22,7 +22,7 @@
 
 ## 3. B-5 — 范围说明
 
-- `chart-check` 进 CI（阻塞式 ① fast job）已在 **Phase A** 完成（`.github/workflows/ci.yml`），本任务不再动 CI。
+- `chart-check` 进入 `make gate`（阻塞式 ① fast 层）已在 **Phase A** 完成，本任务不再动门禁。
 - 本任务的 B-5 落点是 **onprem values 可渲染**：`values-onprem.example.yaml` 置非空占位 secretName + `config-service-deployment.yaml` fail 信息指向示例文件 + chart-check 新增 onprem 矩阵（H-2 验证）。
 
 ## 4. B-6 — REQ 追溯注记

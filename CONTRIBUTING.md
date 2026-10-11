@@ -12,29 +12,26 @@
 
 ```bash
 uv sync            # 解析并锁定整个 workspace
-make gate          # 提交前门禁，顺序同 CI 第①层
+make gate          # 提交前门禁，顺序见下方门禁表 ① 层
 ```
 
 - Python **3.10**，由 `.python-version` 锁定：这是 sippy 已验证过的版本。要改之前先看 `docs/plan.md` D1。
 - `uv` 管一切。workspace 内不要用 pip。
-- `uv.lock` 提交进仓库并在 CI 中校验。如果 `uv sync` 重写了它，连带着引起改动的那个 commit 一起提交。
+- `uv.lock` 提交进仓库。如果 `uv sync` 重写了它，连带着引起改动的那个 commit 一起提交。
 
 ## 门禁（The gate）
 
-`make gate` 四步固定（AGENT.md §9）：`ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。AST 扫描**不在** `make gate` 内；`make gate-strict` = gate 四步 + AST 扫描（`scripts/ci/check_adr_annotations.py`，REQ-G-3，ADR-0015）。
+`make gate` 四步固定（AGENT.md §9）：`ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。AST 扫描**不在** `make gate` 内；`make gate-strict` = gate 四步 + AST 扫描（`scripts/check_adr_annotations.py`，REQ-G-3，ADR-0015）。
 
-| 层 | 命令 | 运行时机 | 是否阻塞 |
-|---|---|---|---|
-| ① fast | `make test-unit` + `chart-check` + `gate-strict` 扫描 | 每次 push 和 PR | 阻塞 |
-| ② integration | `make test-integration` | 在 ① 之后 | 阻塞 |
-| native | CI job `m2-platform-resip` / `m2-native-smoke` / `m7-recovery` / `m7-two-leg` | 在 ① 之后 | 阻塞 |
-| ③ e2e | `make test-e2e` | 在 ② 之后 | 非阻塞（0 用例；首个 e2e 用例的里程碑必须改为阻塞，ADR-0015） |
-| ④ performance | `make test-perf` | 仅 nightly、tag、手动 | 运行即阻塞（M6 起已有用例） |
-
-合并门禁清单：`fast`（含 chart-check 与 gate-strict 扫描）+ `m2-platform-resip` + `m2-native-smoke` + `m7-recovery` + `m7-two-leg` + `integration` 全绿；`e2e` 在首个 e2e 用例落地前保持 `continue-on-error`；`performance` 只在 nightly/tag/手动运行时阻塞。
+| 层 | 命令 | 是否阻塞 |
+|---|---|---|
+| ① fast | `make test-unit` + `chart-check` + `gate-strict` 扫描 | 阻塞 |
+| ② integration | `make test-integration` | 阻塞 |
+| ③ e2e | `make test-e2e` | 非阻塞（0 用例；首个 e2e 用例的里程碑必须改为阻塞，ADR-0015） |
+| ④ performance | `make test-perf` | 运行即阻塞（M6 起已有用例） |
 
 本地门禁不绿，什么都不能提交。
-本地门禁**不是** CI：绝不要把本地重跑冒充成 CI 结果。
+绝不要把本地重跑的结果当作门禁已通过的对外证据。
 
 ## 新增一个 workspace 成员
 

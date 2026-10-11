@@ -26,7 +26,7 @@ ADR-0014 header and Evidence historically pointed at **REQ-NF-13** (OTel), which
 ## Gaps (explicit)
 
 - REQ-NF-15 does not assert operator-facing capacity targets (O1 still a plan open item for **targets**, not harness existence).
-- Full `performance` CI layer blocking and cluster-scale measurement are out of scope for this D8 close.
+- Making the `performance` layer blocking and cluster-scale measurement are out of scope for this D8 close.
 
 ## Recommendation
 

@@ -1,8 +1,8 @@
 """Fail-closed scan for ADR annotations on architectural names.
 
 REQ-G-3 requires non-obvious code to point at its ADR; ADR-0015 places this
-scan outside ``make gate`` and runs it as an extra CI step (``make
-gate-strict``). This script is that scan: it exits 1 with a ``file:line``
+scan outside ``make gate``, to be triggered on demand via ``make
+gate-strict``. This script is that scan: it exits 1 with a ``file:line``
 list on violation and 0 when clean.
 """
 

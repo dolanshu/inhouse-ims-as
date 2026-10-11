@@ -1,8 +1,8 @@
 # M8 下一步（2026-10-07）
 
-> **状态**：**仍搁置（2026-10-07）**。M7.1 已工程关门。剩下的搁置条件是 Close 前不做真实运营商 S-SBC / 客户 K8s 测试，见 [`acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)。搁置期间不执行 N1–N4，不填 M8 总审确认栏。重开之前，发布镜像再带上 SIP 监听。  
+> **状态**：**仍搁置（2026-10-07）**。M7.1 已工程关门。剩下的搁置条件是 Close 前不做真实运营商 S-SBC / 客户 K8s 测试，见 [`acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)。搁置期间不执行 N2–N4，不填 M8 总审确认栏。重开之前，发布镜像再带上 SIP 监听。  
 > **上游**：[`2026-10-06-m8-release-candidate-plan.md`](2026-10-06-m8-release-candidate-plan.md)（阶段 A–E 的总计划，本文不重开）  
-> **事实**：`master` / `origin/master` @ `20e3d07`（`M8 part 1`）。工作区唯一未提交文件是 `.github/workflows/ci.yml`。
+> **事实**：`master` / `origin/master` @ `20e3d07`（`M8 part 1`）。
 
 本文只排 **落地已有产物** 和 **不依赖实验室的维护者裁决**。M8 退出签字、tag、现场采证不在本步。
 
@@ -10,25 +10,17 @@
 
 ## 1. 现在在哪
 
-| 已在 `20e3d07` | 仍在工作区 |
-|---|---|
-| F8 字段契约 + 契约测试 + `emit_native_log_event` JSON 富化 | F9：`.github/workflows/ci.yml`（blocking native / chart-check / gate-strict / m7 recovery / m7 two-leg；`performance` 改为阻塞） |
-| F6：指纹表淘汰处的 ADR 注释（行为未改） | |
-| 最小 M5.1：Helm H-1…H-4 fail-closed、`chart-check` onprem 与退出码断言、kind 脚本 K-1/K-2 | |
-| `make gate-strict`、`scripts/ci/check_adr_annotations.py` | |
-| 签收矩阵、环境证据、M5 REQ 复评、M8 退出评审、Phase A F6/F8 记录、`report.md` §0 | |
-
-F9 上次推 origin 时因 PAT 无 `workflow` scope 被拒，合入时故意拿掉了 workflow。这次同样：**不要把 `ci.yml` 混进其他提交。**
+| 已在 `20e3d07` |
+|---|
+| F8 字段契约 + 契约测试 + `emit_native_log_event` JSON 富化 |
+| F6：指纹表淘汰处的 ADR 注释（行为未改） |
+| 最小 M5.1：Helm H-1…H-4 fail-closed、`chart-check` onprem 与退出码断言、kind 脚本 K-1/K-2 |
+| `make gate-strict`、`scripts/check_adr_annotations.py` |
+| 签收矩阵、环境证据、M5 REQ 复评、M8 退出评审、Phase A F6/F8 记录、`report.md` §0 |
 
 ---
 
 ## 2. 顺序
-
-### N1 — workflow 单独待推
-
-- 维持 `ci.yml` 为工作区改动，直到维护者持有 `workflow` scope PAT（或等效授权）。
-- 届时只提交该文件，推 `master`，确认 origin 上这些 job 为绿且失败即红：`fast`（含 `chart-check`、`gate-strict`）、`m2-platform-resip`、`m2-native-smoke`、`m7-recovery`、`m7-two-leg`；`performance` 在 nightly/tag/手动触发时阻塞。e2e 仍 `continue-on-error`（0 条用例）。
-- 在 origin 变绿之前，adjudication 里 F9 保持「部分修复 / 未 push」。不把 F9 写成已修复。
 
 ### N2 — 维护者书面裁决（不依赖实验室，不关门）
 
@@ -50,7 +42,7 @@ N2 完成后，M5 REQ 级仍是不通过，M8 仍是「RC 就绪、待退出签�
 
 ### N3 — 矩阵里证据已经对齐的行
 
-N2 之后、N1 之前都可以做。签字备注写「工程证据接受」，不把 test-plan 整句标成全绿。
+N2 之后都可以做。签字备注写「工程证据接受」，不把 test-plan 整句标成全绿。
 
 - 已标 pass 的 9 行：NF-6、NF-8、NF-11、NF-12、KERNEL-§5；G-1/G-2/G-3 注明逐次 PR 仍由维护者审；G-4 注明本地 `make gate` 绿、e2e 仍非阻塞。
 - open 里可签的 7 行：F-1、F-2、F-3、F-6、F-7、F-12、F-14。F-12/F-14 范围是被叫+前缀。
@@ -69,11 +61,10 @@ N2 之后、N1 之前都可以做。签字备注写「工程证据接受」，�
 
 ## 3. 本步之后才发生的事
 
-N1 和 D-1/D-2 都闭合，仍然不能签 M8。确认栏只在下面每一行都已是终态（通过 / n-a / 书面 defer 或 v1.1）之后才填；只要还留着 defer，结论是有条件通过，不是全绿。tag 仅在该栏填写之后由维护者执行（AGENT.md §10.4）。
+D-1/D-2 都闭合，仍然不能签 M8。确认栏只在下面每一行都已是终态（通过 / n-a / 书面 defer 或 v1.1）之后才填；只要还留着 defer，结论是有条件通过，不是全绿。tag 仅在该栏填写之后由维护者执行（AGENT.md §10.4）。
 
 | 之后的动作 | 它能闭合的行 | 它闭合不了的行 |
 |---|---|---|
-| N1：origin CI 绿，F9 改为已修复 | F9 | N4 的其余 open / blocked |
 | 排期采证，或书面接受 D-1 / D-2 | S-2、S-3、NF-1 | F-4、F-5、F-8、F-9、F-10、F-11、F-13、F-15、F-16、NF-2、NF-4、NF-5、NF-7、NF-9、NF-10、NF-13、NF-14、NF-15、S-1、S-4、D12/O5-HA、ADR-0008 |
 | 对其余行逐项补证据，或写成 n-a / defer / v1.1 | 上表右列 | — |
 

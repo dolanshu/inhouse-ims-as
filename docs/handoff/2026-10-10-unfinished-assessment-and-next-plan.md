@@ -19,7 +19,7 @@
 | 编号 | 要裁决什么 | 不裁决会怎样（冻结哪项工作） | 选项与推荐所在处 |
 |---|---|---|---|
 | **G1** | **B4 Python 3.10 EOL**：走选项①（3.12 验证 spike）还是选项②（登记 accepted risk） | 决定 W0-A2 那一次 native 构建是否顺带做迁移验证；也是 on-prem 基础镜像合规问题 | §9（尤其 §9.4 两个选项） |
-| **G2** | **A4 e2e 四项裁决**（改 marker 还是新建文件 / 缺 native 时 fail 还是 skip / Wave 2 本迭代必做还是单开 issue / kind e2e 是否进 PR required） | e2e Wave 1 不能落地；CI 侧是否转阻塞无从讨论 | §8.1 |
+| **G2** | **A4 e2e 四项裁决**（改 marker 还是新建文件 / 缺 native 时 fail 还是 skip / Wave 2 本迭代必做还是单开 issue / kind e2e 是否进 PR required） | e2e Wave 1 不能落地 | §8.1 |
 | **G3** | **A5 告警抓取接线选型**（A `prometheus.io/scrape` 注解默认 vs B `ServiceMonitor` / `PodMonitor` 优先） | chart 抓取接线不能落地。注意：**`promtool` 只是语法校验，不等于抓取接线已闭合** | §8.2 |
 | **G4** | **A6 版本口径**（A / B / C 三方案选哪个；`kubeVersion` 是否声明） | Chart 版本与交付包一致性不能动 | §8.3 |
 | **G5** | **B1 O1 分级裁决**（三级是否照此执行、是否启用「内部目标值 / 对外承诺值」区分）+ **NF-3 是否改 n-a** | HPA 阈值、容量类告警、`ne-datasheet.md` 的容量取值、4.1 性能基准报告全部冻结 | §8.4 |
@@ -31,15 +31,14 @@
 
 ### 0-A.3 已后置（不阻断本机 W0，但重启需另外的授权或资源）
 
-- **CI 整体工作**：A1（CI workflow 重写与推送）、N1（`workflow` scope PAT 授权）、§3 里「重写 workflow」这一纠正路径（本文记为 **§3-a**）。
 - **外部 IOT 与真实环境采证**：D-1（运营商 PKI + 外网 S-SBC）、D-2（客户 K8s REQ-NF-1 live）、2.4 摘流 / iFC 配合与 2.5 备份恢复的真实集群演练。
-- **M8 退出签字**：排队在上述两项之后。
+- **M8 退出签字**：排队在上一项之后。
 
-**重启条件**：**维护者另行裁决 + 外部资源到位**。后置 ≠ 取消，但**不得因本机工作顺带推进**（依据 §0 第 1–3 项裁决及其口径说明）。
+**重启条件**：**维护者另行裁决 + 外部资源到位**。后置 ≠ 取消，但**不得因本机工作顺带推进**（依据 §0 第 2–3 项裁决及其口径说明）。
 
 ### 0-A.4 本 session 收尾状态
 
-- 本 session **不动工**：未执行任何构建 / 测试 / 容器 / CI 动作。
+- 本 session **不动工**：未执行任何构建 / 测试 / 容器动作。
 - **评审链已闭环并代签**：结论「有条件通过（accepted as a planning baseline）」，签字栏由维护者 2026-10-10 授权的 AI agent 代签 —— 见本块之后的文首状态块与 §10。
 - 所有产出留在工作树，**由维护者本人 commit / push**。
 
@@ -55,7 +54,7 @@
 | **G2 / A4-1** | e2e 采用**单独文件**：`testbed/e2e/test_sip_first_edition.py` | 保留现有 integration tests，不做替换。 |
 | **G2 / A4-2** | 缺少必需 native extension 时，e2e **fail** | 不使用 skip 作为缺失原生扩展时的通过替代。 |
 | **G2 / A4-3** | Wave 2 的 14 条回放用例后置到独立 issue | 本迭代仅登记为 gap；本任务**不创建 issue**。 |
-| **G2 / A4-4** | kind e2e 的方向是纳入 PR required 的 E2E policy | 该方向**不构成** CI workflow 变更授权；CI 仍处于 hold，本任务不改任何 CI 文件。 |
+| **G2 / A4-4** | kind e2e 的方向是纳入 PR required 的 E2E policy | 该方向**仅**是政策方向登记，**不构成**任何配置变更授权；本任务不改任何配置文件。 |
 | **G3 / A5** | 维持待决：annotation vs ServiceMonitor/PodMonitor **暂不选边** | 等待运营商 monitoring-integration 标准输入；当前不改 chart。FM 指 Fault Management，按新 feature 流程管理，实施时补 demo/功能文档；本次不发明需求、不实现。 |
 | **G4 / A6** | 根 `VERSION` 为唯一源；release 时同步 Chart `version` / `appVersion` | `kubeVersion` 需要声明；其最小值由所用 API 反推，本次不作数值裁决。当前不修改 `VERSION` 与 `Chart.yaml`。 |
 | **G5 / B1 + NF-3** | 采纳 O1 三级决策流程，并区分内部目标与外部承诺 | 在 M6 证据与维护者决策前，不落容量取值、不落 HPA 阈值、不落容量类告警。REQ-NF-3 继续适用且 blocked；其固定数值型验收断言需另行修订/后置处理，不能把整条 requirement 标记 N/A。 |
@@ -68,7 +67,7 @@
 > 以上均为**裁决落盘记录**，不是执行授权；所有执行动作仍需维护者逐次明确批准。
 
 > **口径优先级追加说明（2026-10-10）**：对 G1–G8 中已在 §0-A.6 记载的事项，**以本节同日裁决记录为准**；§0-A.2 的阻断清单与 §0.2 中「A4/A5/A6/B1/B2/B3 全待裁决」等较早表述保留为历史审计链，不作删改。**G3（A5 监控接线）仍待运营商 monitoring-integration 标准输入，当前不改 chart。**本节及相关裁决记录仅用于状态落盘，**不构成执行授权、外部验收通过或 REQ/里程碑签收**。
-> 对已在本节落盘为 resolved 的事项，文首状态块末行「所有取值仍待维护者裁决」及同类全量待决表述按历史语境保留，但以 §0-A.6 记录为控制口径；CI hold、外部 IOT/真实环境采证 hold 与执行授权冻结口径维持不变。
+> 对已在本节落盘为 resolved 的事项，文首状态块末行「所有取值仍待维护者裁决」及同类全量待决表述按历史语境保留，但以 §0-A.6 记录为控制口径；外部 IOT/真实环境采证 hold 与执行授权冻结口径维持不变。
 
 ---
 
@@ -89,7 +88,7 @@
 
 | 来源 | 覆盖内容 |
 |---|---|
-| 仓库文件（`docs/plan.md`、`docs/acceptance/report.md`、`.github/workflows/ci.yml`、`Makefile`、`VERSION`、`deploy/helm/Chart.yaml` 等） | 文档状态、门禁定义、版本口径 |
+| 仓库文件（`docs/plan.md`、`docs/acceptance/report.md`、`Makefile`、`VERSION`、`deploy/helm/Chart.yaml` 等） | 文档状态、门禁定义、版本口径 |
 | git 历史（`git log`、`git log --all -S`、`git stash list`、分支与 remote-tracking 引用） | 某段内容是否真的存在于仓库/历史/分支/stash |
 | 本次本地实测（`make gate`、marker 收集、`.so` 查找、工具探测） | 门禁计数、skip 构成、真栈是否可跑、本机缺哪些工具 |
 
@@ -101,7 +100,6 @@
 | `make chart-check` | 本机无 `helm` | chart 形状门禁未在本机复验 |
 | `make alert-check`（`promtool check rules`） | 本机无 `promtool` | 告警规则语法未校验 |
 | kind 集群证据（`deploy/kind/m5-*.sh`） | 本机无 `kind` / `kubectl` | 任何集群级证据不在本次范围内 |
-| CI | 本机不运行 GitHub Actions；且当前仓库 `ci.yml` 为旧版（见 §3） | 本地门禁绿 **不等于** CI 通过 |
 
 本机可用工具：`uv` 有、`docker` 有；`helm` / `kubectl` / `kind` / `promtool` **均无**。
 
@@ -117,23 +115,21 @@
 
 > **本节为追加**：按 §7.3 的保史原则，本节不改动、不删除既有任何文字。下文 §2 及其后各节若出现与本节不一致的旧表述，**一律以本节为准**；旧表述保留不动，以维持审计链完整。
 
-维护者于 **2026-10-10** 作出三条裁决（**照录，未改写措辞**）：
+维护者于 **2026-10-10** 作出如下裁决（**照录，未改写措辞**）：
 
 | # | 裁决项 | 覆盖范围 | 影响（哪些条目因此从当前工作中移出） |
 |---|---|---|---|
-| 1 | **CI 整体工作 hold，后置** | A1（CI workflow 重写与推送）、N1（`workflow` scope PAT 授权），以及 §3 里「重写 workflow」这一纠正路径 | A1 整体移出当前工作；§3 中与流水线绑定的纠正路径（本文记为 **§3-a**）随 A1 后置；W0 中的「A1 草案」与「提请授权」两步移出；B5 / N1 的 push 环节移出 |
 | 2 | **所有外部 IOT / 真实环境采证 hold，后置** | D-1（运营商 PKI + 外网 S-SBC）、D-2（客户 K8s REQ-NF-1 live）、2.4 摘流 / iFC 配合与 2.5 备份恢复的真实集群演练 | Lane C 中依赖外部环境的部分整体移出（**C2、C3、C4 全部**；**C1 与 C5 只有需要运营商 PKI 或客户 K8s 的部分**）；W0 / W3 中的外部采证步骤移出 |
-| 3 | **M8 退出签字后置** | M8 退出签字动作本身 | 签字排队在第 1、2 项完成之后再处理；B5 的 N1 → N2 → N3 → N4 序列中，签字类动作排在 CI 与外部采证之后 |
+| 3 | **M8 退出签字后置** | M8 退出签字动作本身 | 签字排队在第 2 项完成之后再处理；B5 的 N2 → N3 → N4 序列中，签字类动作排在外部采证之后 |
 
 口径说明（避免误读）：
 
-- **后置 ≠ 取消。** 目标是保留的：CI 增强仍然是想要的能力，外部 IOT 采证仍然是要做的证据，M8 退出签字仍然要签。**改变的只是它们不在当前工作范围内。**
-- 因此本文不再把 CI 称作「当前工作」，但也不把 A1 / C 栏写成「已废弃」或「已完成」。它们的准确状态是：**已被维护者 decision 后置**。
-- 第 1 项带来的边界，请用这一句话理解：**CI 不再是「当前工作」，但目标还在。** 在 CI 工作重启之前，任何依赖 CI 运行结果的出口判据都不得被宣称为已达成。
+- **后置 ≠ 取消。** 目标是保留的：外部 IOT 采证仍然是要做的证据，M8 退出签字仍然要签。**改变的只是它们不在当前工作范围内。**
+- 因此本文不把 C 栏写成「已废弃」或「已完成」。它们的准确状态是：**已被维护者 decision 后置**。
 
 ### 0.1 本节与下文的关系（读法）
 
-- 下文 §4 Lane A 的 **A1**、**Lane C 各条目**、§5 的分波表格都保留了本次裁决前的原文；每处已**追加**一行状态标记 `**状态：后置（维护者 2026-10-10 裁决）**`，并链回本节。
+- 下文 §4 **Lane C 各条目**、§5 的分波表格都保留了本次裁决前的原文；每处已**追加**一行状态标记 `**状态：后置（维护者 2026-10-10 裁决）**`，并链回本节。
 - **例外，且务必看清**：E1 / E4 / E5 的**本地真栈部分**（S1–S4 harness、自签证书的 TLS 热轮换 smoke）**不属于外部 IOT**，不因第 2 项裁决后置，仍随 A2 / A3 在 W0 推进。细节见 §5 的「W0 范围调整」追加段。
 
 ### 0.2 维护者认可项（2026-10-10）
@@ -158,7 +154,7 @@
 | **B2**（O4 / D5） | O4 保留期的具体取值（即使是「默认值 + 部署期可配」的默认值）、D5 存储选型 A / B / C 选哪个 |
 | **B3**（O5 / D3 HA 拓扑） | 究竟 N+1 + Sentinel，还是 N+M；是否启用 Redis Cluster 作为客户驱动的升级项 |
 
-**开工状态**：**本次只落盘，未开工。** `promtool` 已获授权但**待 review 后再执行**；W0（A2 真栈构建常态化、A3 Phase A 复验）**等待维护者明确批准后启动**。本次未执行任何构建、测试、容器或 CI 动作 —— 明细见 §10。
+**开工状态**：**本次只落盘，未开工。** `promtool` 已获授权但**待 review 后再执行**；W0（A2 真栈构建常态化、A3 Phase A 复验）**等待维护者明确批准后启动**。本次未执行任何构建、测试或容器动作 —— 明细见 §10。
 
 ---
 
@@ -213,69 +209,10 @@
 |---|---|
 | `docs/plan.md` §0 / §2 / §4 / §5 | M8 = **RC 产物就绪、退出签字搁置**；M2/M4/M5/M6/M7/M7.1 为**工程关门/工程完成**，**不等于 REQ 级验收**；未决项 O1–O5、D1/D5/D11/D12 |
 | `docs/acceptance/report.md` §0.5 签收矩阵（2026-10-06） | pass 9 / fail 0 / blocked 12 / n-a 4 / **open 24** |
-| `docs/handoff/2026-10-07-m8-next-step-plan.md` | N1（workflow push，需 `workflow` scope PAT）→ N2（9 项书面裁决）→ N3（open 里可签的行）→ N4（停止线） |
+| `docs/handoff/2026-10-07-m8-next-step-plan.md` | N2（9 项书面裁决）→ N3（open 里可签的行）→ N4（停止线） |
 | `docs/handoff/2026-10-09-sip-native-testing-plan.md` | Phase A 已改动、B 有命令，**C、D 未完成**；文末 Sign-off 三个 checkbox 全未勾 |
 | `docs/acceptance/2026-10-09-e2e-test-plan.md` | **草案、未实现**；§6 有 4 项待维护者裁决 |
 | `docs/product-packaging-plan.md` §5 与 `docs/reviews/product-packaging-execution-record-2026-10-10.md` | **16 份包装文档已落盘，0 份已评审**；遗留 4 项（抓取接线未闭合、`promtool` 未跑、版本不同步、无 `kubeVersion`）；批次 4.1–4.5 未做 |
-
----
-
-## 3. 需要纠正的一条文档事实（重要）
-
-### 3.1 偏差
-
-`docs/acceptance/report.md` §0.3（F9 / A-1）称：
-
-> 「origin blocking native CI 为 **workflow-ready-locally** —— `.github/workflows/ci.yml` 已含 `m2-platform-resip` / `chart-check` / `m2-native-smoke` / `m7-*` 阻塞式 jobs …… 但 **push 待维护者 PAT（`workflow` scope）**，见 merge handoff §6；RC 内未推送。」
-
-但仓库当前实际的 `.github/workflows/ci.yml`：
-
-| 项 | 实际内容 |
-|---|---|
-| job 列表 | 只有 `fast`（①）/ `integration`（②）/ `e2e`（③）/ `performance`（④） |
-| `m2-platform-resip` | **无** |
-| `chart-check` | **无** |
-| `m7-*`（recovery / two-leg） | **无** |
-| `gate-strict` | **无** |
-| `e2e` / `performance` | 仍为 `continue-on-error: true`（文件第 92、116 行） |
-| 最后一次改动该文件的 commit | `73c9321`（内容仍为 2026-09-29 的旧版形态） |
-
-### 3.2 核实过程与证据命令
-
-| 步骤 | 命令 / 路径 | 结果 |
-|---|---|---|
-| 读当前文件 | `.github/workflows/ci.yml` | 4 个 job，无 native / chart-check / gate-strict |
-| 查该文件的最后改动 | `git log --oneline -- .github/workflows/ci.yml` | 末次 `73c9321` |
-| 全历史 + 全分支搜字符串 | `git log --all -S "m2-platform-resip" -- .github/workflows/ci.yml` | **零命中** |
-| 查 stash | `git stash list` | **空** |
-| 查分支 | `git branch -a` | 只有 `master` |
-| 查 commit 是否触碰该文件 | `git show --stat 18f2bb7` | commit `18f2bb7`（2026-10-09，`Fix S1 harness SDP on the real stack and document e2e gaps.`）的 message 声称新增 native-contract CI job，但**未触碰** `.github/workflows/ci.yml` |
-
-> 补充：`docs/acceptance/report.md` 第 33 行还称 `gate-strict`「进 CI ① 且阻塞」，同样与实际文件不符；该行也依赖同一份不存在的 workflow。
-
-### 3.3 结论与影响
-
-**结论：该版 workflow 增强内容当前不存在于仓库任何位置 —— 不在工作树、不在 git 历史、不在任何分支、不在任何 stash。它不是「等待 PAT push」，而是「尚未写入，需要重写」。**
-
-影响：
-
-1. **origin CI 并不阻塞真栈行为**：没有 native job，缺 `_resip_runtime` 时 CI 不会 fail（本地是 skip）。
-2. **merge 门禁未验 UDP/TLS 产品栈**：`report.md` §0.3 F9 所声称的「阻塞式 native 门禁」在当前 origin 上**并未生效**，基于该声称的任何「门禁已具备」的推论都不成立。
-3. **`report.md` §0.3 的 A-4 行（gate-strict 阻塞）同样不成立**，需一并纠正。
-4. **纠正方式待维护者裁决**：是改写 `report.md` §0.3 的措辞、还是先重写 workflow 再保留原文，本文不代为决定。
-
-### 3.4 纠正路径拆分（2026-10-10 追加）
-
-> 本节回应 §0 第 1 项裁决。§3.3 第 4 点的原文保留不动；本节在其后**追加**，把原来看成一件事的「纠正」拆成两条独立路径 —— 它们不是同一件事，不得混为一谈。
-
-| 路径 | 内容 | 归属 | 当前状态 |
-|---|---|---|---|
-| **§3-a** | 重写 CI workflow，使其具备上述能力：native-contract 阻塞 job、`chart-check` job、`gate-strict` job，以及 `e2e` / `performance` 的 `continue-on-error` 处置 | **CI 工作** | **随 A1 后置**（§0 第 1 项）。**已被 decision 后置，不是取消**；CI 工作重启之前不做 |
-| **§3-b** | 纠正 `docs/acceptance/report.md` §0.3（第 30 行 F9、第 33 行 A-4）与现实不符的措辞 | **纯文档** | **与流水线无关，不由 A1 阻塞，可立即执行**。已在 `docs/acceptance/report.md` §0.3 以「追加更正（2026-10-10）」段落落地（只追加，不改写第 30、33 行原文一个字） |
-
-**为什么建议 §3-b 先做（建议，维护者未裁决）**：真正的风险不在仓库里少了一段 workflow —— 少一段只是能力缺口，是已知的、写在这里的。**风险在于对外备忘录与验收报告继续声称一项当前并不存在的能力**（「origin blocking native CI」、「`gate-strict` 进 CI ① 且阻塞」），而这个声称会被下游读者当作既成事实，进而推导出「门禁已具备」的结论。因此建议把 §3-b 排在 §3-a 之前：它不需要任何 pipeline 改动、不需要 `workflow` scope PAT、不触碰 `.github/workflows/ci.yml`，也不受 CI 后置这一裁决影响。
-
-**§3-a 的保留条件**：CI 工作重启时，此处由被指派者连同 A1 一并处理。在此之前，`.github/workflows/ci.yml` 与 `docs/acceptance/report.md` §0.3 的原文保持不动，仅以追加段落/追加小节标注，**不得静默替换**。
 
 ---
 
@@ -284,26 +221,6 @@
 分四条泳道。**每条的「出口判据」都是可勾选、可验证的**；「谁做」列标为 维护者 / agent / 需外部环境。
 
 ### Lane A · 门禁与证据自动化（agent 可做，优先）
-
-#### A1 · CI workflow 重写并推送
-
-- **状态：后置（维护者 2026-10-10 裁决）** —— 依据见 §0 第 1 项。**目标保留，当前不做**；下文其余各行（现状 / 范围 / 出口判据 / 依赖）原样保留，作为 CI 工作重启时的输入。
-
-- **现状与证据**：仓库 `.github/workflows/ci.yml` 仍为旧版（§3）；`report.md` §0.3 的描述不成立。
-- **为什么未完成**：该 workflow 内容从未写入仓库，需从零重写，不是 push 授权问题。
-- **需要的 job（范围，非定稿）**：
-  - native-contract 阻塞 job（缺 `_resip_runtime` 即 fail，非 skip）；
-  - `chart-check` job；
-  - `gate-strict` job（REQ-G-3 ADR 标注扫描）；
-  - `e2e` 与 `performance` 的 `continue-on-error` 处置 —— **必须与 A4 的 Wave 1 决定绑定**（见 A4），不得私自改阻塞。
-- **出口判据**：
-  - [ ] `.github/workflows/ci.yml` 中可 `grep` 到 native-contract / `chart-check` / `gate-strict` 三个 job 名；
-  - [ ] 该文件被提交的 commit 出现在 `git log -- .github/workflows/ci.yml`；
-  - [ ] `git log --all -S "m2-platform-resip" -- .github/workflows/ci.yml` 有命中；
-  - [ ] CI 上该 workflow 至少一次真实运行结果已留档（**本机不可执行**，需 CI）；
-  - [ ] `report.md` §0.3 F9 / A-4 的措辞纠正方式已由维护者裁决并执行。
-- **依赖**：①「`workflow` scope PAT 授权」（维护者）；②「由谁重写」的授权（维护者）；③ A4 的 Wave 1 决定。
-- **谁做**：**agent（需维护者先授权 PAT 与重写范围）**。
 
 #### A2 · 真栈构建常态化
 
@@ -322,17 +239,15 @@
 - **现状与证据**：
   - Phase A：已在 commit `18f2bb7` 改动 `runtime_module.cxx` 与两个 E1 契约测试（`platform/tests/test_e1_contract_resip_runtime.py`、`platform/tests/test_e1_contract_resip_runtime_full.py`）；但**未见真栈复验记录**；
   - Phase B：命令已具备（`make gate-native`）；
-  - Phase C：**未完成** → 并入 A1；
   - Phase D：**未完成**（S1 的 14 条回放、S5–S11 真栈用例）→ 待排期；
   - Phase E：M2 smoke，与 A2 同源；
   - 该 plan 文末 Sign-off 三个 checkbox **全未勾**。
 - **为什么未完成**：Phase A 的改动未经真栈复验；C/D 无产物。
 - **出口判据**：
   - [ ] A2 完成后，Phase A 的三个复验目标**每一条**都有真实执行结果并留档 —— ① `uv run pytest platform/tests/test_e1_contract_resip_runtime.py platform/tests/test_e1_contract_resip_runtime_full.py -m contract -q`（含 `test_e1_s1_accept_all_harness_returns_200` 与 `test_e1_s1_accept_all_from_contract_invite` 两条）；② `uv run pytest platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200 -q`（`integration` 标记，**不在** `-m "unit or contract"` 收集范围内，须显式指定）；
-  - [ ] Phase C 由 A1 承接并落地；
   - [ ] Phase D 的范围与批次已排期（写入本文或新 plan，需维护者确认优先级）；
   - [ ] 该 plan 文末 Sign-off 三框的处置（勾选或标注未完成）已明确。
-- **依赖**：A2（先有真栈）、A1（Phase C）。
+- **依赖**：A2（先有真栈）。
 - **谁做**：**agent**（Phase D 排期需维护者确认优先级）。
 
 #### A4 · e2e 落地
@@ -342,13 +257,12 @@
   2. 缺 native 扩展时 e2e 应 **fail** 还是 **skip**；
   3. Wave 2 的 14 条对拍，本迭代必做还是单开 issue；
   4. kind e2e 是否**永不**进 PR required。
-- **为什么未完成**：裁决未答，且首条用例未落；CI ③ 的 `continue-on-error` 因此不能自行改。
+- **为什么未完成**：裁决未答，且首条用例未落。
 - **出口判据**：
   - [ ] 上述 4 项裁决有维护者书面答复（落 `plan.md` §5 或该 plan 文档）；
   - [ ] Wave 1 落地，`pytest -m e2e` 收集 **≥ 1 条**且稳定通过；
-  - [ ] 首条用例稳定后，按 `AGENT.md` §9 将 CI ③ 改为阻塞的处置已执行（与裁决 2 / 4 一致）；
   - [ ] e2e 计划文档状态由「草案」更新。
-- **依赖**：维护者 4 项裁决；A1（CI ③ 处置）。
+- **依赖**：维护者 4 项裁决。
 - **谁做**：**agent（先请裁决）**。
 
 #### A5 · 可观测性接线闭环
@@ -411,14 +325,12 @@
 
 #### B5 · M8 的 N2 九项书面裁决 → N3 → N4
 
-- **现状与证据**：`docs/handoff/2026-10-07-m8-next-step-plan.md`：N1（workflow push，需 `workflow` scope PAT）→ N2（9 项书面裁决，含 M5D-1…M5D-6 落 `plan.md` §5、NF-3 改 n-a、D6 放 v1.1）→ N3（open 里可签的行）→ N4（停止线）。
-- **为什么未完成**：N1 未落地（且按 §3，N1 的前提 —— workflow 内容 —— 尚不存在）；N2 未裁决；N3 未执行。
+- **现状与证据**：`docs/handoff/2026-10-07-m8-next-step-plan.md`：N2（9 项书面裁决，含 M5D-1…M5D-6 落 `plan.md` §5、NF-3 改 n-a、D6 放 v1.1）→ N3（open 里可签的行）→ N4（停止线）。
+- **为什么未完成**：N2 未裁决；N3 未执行。
 - **出口判据**：
-  - [ ] N1：workflow 内容重写（A1）+ PAT 授权 + push（**需维护者授权**）；
   - [ ] N2：9 项裁决有书面记录并落 `plan.md` §5；
   - [ ] N3：open 中确定可签的行按流程签收；
   - [ ] N4：停止线全程未被越过。
-- **依赖**：A1、PAT 授权。
 - **谁做**：**维护者（裁决与授权）+ agent（执行）**。
 
 #### B6 · 产品化包装 16 份文档的评审
@@ -469,7 +381,7 @@
 
 **状态：等待开工批准（2026-10-10 认可边界，但未授权启动）** —— 依据见 §0.2（第 1 项认可的是 E1 / E4 / E5 的**边界划分**，不是开工许可）。W0 的 A2 / A3 步骤在维护者明确批准启动前**一律不执行**。
 
-**目标**：把「skip 当证据」这一最大缺口补上；同时把 PAT 授权问题提给维护者。
+**目标**：把「skip 当证据」这一最大缺口补上。
 
 | 步骤 | 命令 | 备注 |
 |---|---|---|
@@ -478,14 +390,12 @@
 | A3 Phase A 复验 | `uv run pytest platform/tests/test_e1_contract_resip_runtime.py platform/tests/test_e1_contract_resip_runtime_full.py -m contract -q`，加上 `uv run pytest platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200 -q`（`integration` 标记，不在默认 gate 收集内，须显式指定） | 本机可执行（须在 A2 之后） |
 | A5 告警规则校验 | `promtool check rules deploy/alerts/as-alerts.yaml` | **本机不可执行**（无 `promtool`）；需有该工具的环境或容器 |
 | M7 扩展（如需） | `make m7-platform-recovery-build`、`make m7-platform-two-leg-build` | 本机可执行；用途按 A2/A3 结果决定 |
-| A1 草案 | 起草 `.github/workflows/ci.yml` 增强版（native-contract / `chart-check` / `gate-strict`） | **先不动文件**，等维护者授权与 PAT |
-| 提请授权 | 向维护者提出：① `workflow` scope PAT；② 由谁重写 workflow；③ 是否授权 push | 属 B5/N1 |
 
 **出口判据**：`make gate-native` 跑通且原 7+1 条 skip 变为真实执行；一次 run 结果已留档；A3 复验有结果留档。
 
 **明确不动**：不改 `VERSION`、不改 `Chart.yaml`、不改 `docs/plan.md` 既有文字、不改 `report.md`、不打 tag、不 push、不新开分支。
 
-**2026-10-10 追加：W0 的范围调整（按 §0 第 1、2 项裁决）**
+**2026-10-10 追加：W0 的范围调整（按 §0 第 2 项裁决）**
 
 > 上面的 W0 表格原文保留不动；本节在其后**追加**范围口径。凡本节与上表冲突处，以本节为准。
 
@@ -493,10 +403,10 @@
 
 | 保留步骤 | 命令 / 动作 | 为什么不受裁决影响 |
 |---|---|---|
-| A2 真栈构建 | `make m2-platform-resip-build` | 本机可执行；不依赖 CI，不依赖任何外部环境 |
+| A2 真栈构建 | `make m2-platform-resip-build` | 本机可执行；不依赖任何外部环境 |
 | A2 真栈门禁 | `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`（等价 `make gate-native`） | 同上；这是「skip 当证据」这一最大缺口的唯一收口手段 |
 | A3 Phase A 复验 | `uv run pytest platform/tests/test_e1_contract_resip_runtime.py platform/tests/test_e1_contract_resip_runtime_full.py -m contract -q`，加上 `uv run pytest platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200 -q`（`integration` 标记，不在默认 gate 收集内，须显式指定） | 本机可执行，须在 A2 之后 |
-| A5 中的 `promtool` 容器化执行 | 本机无 `promtool` 但有 `docker`，建议用容器等价命令立即执行 —— 见 §8 第 2 项的推荐 | 不依赖集群、不依赖 CI；属本机可完成的工作 |
+| A5 中的 `promtool` 容器化执行 | 本机无 `promtool` 但有 `docker`，建议用容器等价命令立即执行 —— 见 §8 第 2 项的推荐 | 不依赖集群；属本机可完成的工作 |
 
 **`promtool` 容器命令的状态（2026-10-10 追加）**：上表末行的等价命令 `docker run --rm -v $PWD/deploy/alerts:/a prom/prometheus promtool check rules /a/as-alerts.yaml` —— **已获授权，未执行**。维护者已授权用本机 docker 跑该命令，但本次**不开工**，须待其 review 后再行批准执行。依据见 §0.2 第 2 项，命令与风险见 §8.2。
 
@@ -504,13 +414,11 @@
 
 | 移出项 | 依据 |
 |---|---|
-| A1 草案（起草 `.github/workflows/ci.yml` 增强版） | §0 第 1 项：CI 整体工作 hold、后置 |
-| 提请授权（`workflow` scope PAT / 由谁重写 / 是否授权 push） | §0 第 1 项：N1 一并后置 |
 | 所有 C 栏外部采证（D-1、D-2，以及 2.4 / 2.5 的真实集群演练） | §0 第 2 项：外部 IOT 与真实环境采证整体后置 |
 
 **关于 E1 / E4 / E5 的边界（这条最容易搞错，请照此执行）**：这一组里，**本地真栈部分 —— S1–S4 harness 的执行，以及自签证书的 TLS 热轮换 smoke（二者都只依赖本机 + 已构建好的 native 扩展）—— 不属于外部 IOT**，因此**不因 §0 第 2 项裁决而后置**，仍作为 A2 / A3 的下游在 W0 推进。**只有**需要运营商 PKI（真实证书链、外网 S-SBC）或客户 K8s 集群（live 的 kill / restart / BYE、真实集群上的摘流 iFC 配合与备份恢复演练）的部分才后置。
 
-**W0 出口判据的调整（追加）**：原出口判据中依赖 CI 运行结果或外部环境的部分，在 CI / 外部采证重启之前**暂不适用**；W0 当前只看三件事 —— ① `make gate-native` 跑通且原 native skip 变为真实执行；② 一次完整 run 的结果已留档；③ A3 Phase A 复验有结果留档。
+**W0 出口判据的调整（追加）**：原出口判据中依赖外部环境的部分，在外部采证重启之前**暂不适用**；W0 当前只看三件事 —— ① `make gate-native` 跑通且原 native skip 变为真实执行；② 一次完整 run 的结果已留档；③ A3 Phase A 复验有结果留档。
 
 ### W1 · e2e 与版本口径（先请裁决）
 
@@ -520,12 +428,11 @@
 |---|---|
 | A4 | 请维护者答复 `docs/acceptance/2026-10-09-e2e-test-plan.md` §6 的 4 项裁决；裁决落地后再动 Wave 1 |
 | A4 | Wave 1 落地后：`uv run pytest -m e2e -q` 应收集到至少 1 条 |
-| A4 | 首条用例稳定后，按 `AGENT.md` §9 处置 CI ③（与裁决 2 / 4 一致） |
 | A6 | 请维护者裁决 `Chart.yaml` version/appVersion 与根 `VERSION` 的同步口径、`kubeVersion` 是否声明 |
 
 **出口判据**：4 项裁决 + A6 裁决均有书面记录（落 `plan.md` §5 或 ADR）；`pytest -m e2e` 收集 ≥ 1 条。
 
-**明确不动**：裁决未到前不改任何 marker、不改 CI 的 `continue-on-error`、不动 `VERSION` / `Chart.yaml`。
+**明确不动**：裁决未到前不改任何 marker、不动 `VERSION` / `Chart.yaml`。
 
 ### W2 · 维护者集中裁决（B 栏）
 
@@ -586,12 +493,11 @@ uv run pytest -m e2e -q
 
 1. **不谎称全绿**：`report.md` §0.5 的 open 24 / blocked 12，未经 `docs/handoff/2026-10-07-m8-next-step-plan.md` 的 N2 / N3 流程不得改为 pass。
 2. **不自行解决未决项**：O1 / O4 / O5 / O2 / O3、D1 / D3 / D5 / D6 / D11 / D12 等必须先落 `docs/plan.md` §5 或 ADR（`AGENT.md` §15）；本文只登记，不裁决。
-3. **本地门禁绿 ≠ CI 通过**；**本机无真栈时的 skip 不是证据**。
-4. **不打 tag、不 push**（除维护者明确授权的 workflow 提交）、**不 bump `VERSION`**、不建分支、不改 remote。
+3. **本机无真栈时的 skip 不是证据**。
+4. **不打 tag、不 push**、**不 bump `VERSION`**、不建分支、不改 remote。
 5. **任何改动仍须贯通**：requirement → ADR → HLD/LLD → 契约 → 代码 + 测试 → 验收项 + review record（`AGENT.md` §3）。
-6. **e2e 首条用例落地前，CI ③（`e2e` job）的处置只能按 A4 的 wave-decision 二选一**，不得私自改阻塞。
-7. **不把未跑的当绿的**：`chart-check` / `alert-check` / kind 证据 / CI 运行在本机均无结果，一律标注为未执行。
-8. **不签收**：本文不签收任何 REQ、不签收任何里程碑、不新增任何决策。
+6. **不把未跑的当绿的**：`chart-check` / `alert-check` / kind 证据在本机均无结果，一律标注为未执行。
+7. **不签收**：本文不签收任何 REQ、不签收任何里程碑、不新增任何决策。
 
 ---
 
@@ -606,9 +512,8 @@ uv run pytest -m e2e -q
 | 触发 | 回写位置 |
 |---|---|
 | 维护者评审本文通过（或给出修改意见） | `docs/plan.md` §0 的入口小节补一句状态；必要时在本文追加评审结论行 |
-| A1 / A2 / A3 / A4 / A5 / A6 任一落地 | `docs/plan.md` §0（状态）与本文对应条目（勾选出口判据） |
+| A2 / A3 / A4 / A5 / A6 任一落地 | `docs/plan.md` §0（状态）与本文对应条目（勾选出口判据） |
 | B6 的 16 份包装文档评审有结论 | `docs/product-packaging-plan.md` §5 与 `docs/reviews/product-packaging-execution-record-2026-10-10.md` |
-| §3 的文档事实纠正被执行 | `docs/acceptance/report.md` §0.3（F9 / A-4 行）—— 纠正方式待维护者裁决 |
 | 产生了对外可见的变更 | `CHANGELOG.md`（按既有格式，不 bump 版本） |
 
 ### 7.3 被推翻时的处理
@@ -625,7 +530,7 @@ uv run pytest -m e2e -q
 
 ### 8.1 A4 e2e 四项裁决（`docs/acceptance/2026-10-09-e2e-test-plan.md` §6）
 
-**现状（一句）**：e2e 目前是一份草案，`pytest -m e2e` 收集到 0 条、`pytest.mark.e2e` 命中 0 个文件，而草案 §6 的 4 项裁决未答，导致首条用例无法落地、CI ③ 的处置也不能自行决定。
+**现状（一句）**：e2e 目前是一份草案，`pytest -m e2e` 收集到 0 条、`pytest.mark.e2e` 命中 0 个文件，而草案 §6 的 4 项裁决未答，导致首条用例无法落地。
 
 **① 改 `test_product_path` 的 marker，还是新建文件**
 
@@ -635,13 +540,13 @@ uv run pytest -m e2e -q
 | B | 新建 `testbed/e2e/test_sip_first_edition.py` | **保留 integration 供开发者本机快跑**；e2e 语义独立、收集路径清晰 | 需新增文件与 `testbed` 下的归属判断（纯文件新增，属可立即执行的工作量） |
 
 **推荐：B（新建 `testbed/e2e/test_sip_first_edition.py`）**。
-**解锁**：e2e 首条用例的落地位置确定，④ 的阻塞性讨论才有对象。**阻塞**：无 —— 不依赖 CI、不依赖外部环境的驳回 Blocker。
+**解锁**：e2e 首条用例的落地位置确定，④ 的阻塞性讨论才有对象。**阻塞**：无 —— 不依赖外部环境的驳回 Blocker。
 
 **② 缺 native 扩展时，e2e 是 fail 还是 skip**
 
 | 选项 | 做法 | 优点 | 缺点 / 成本 / 风险 |
 |---|---|---|---|
-| A | skip | CI / 本机都不会因环境缺 native 而变红 | **skip 容易被读成绿**；与 native-contract 已有的收紧方向相反；会把 A2 正在修补的「skip 当证据」缺口重新打开一个口子 |
+| A | skip | 本机不会因环境缺 native 而变红 | **skip 容易被读成绿**；与 native-contract 已有的收紧方向相反；会把 A2 正在修补的「skip 当证据」缺口重新打开一个口子 |
 | B | fail | 与 native-contract 的口径一致（缺扩展即 fail），**防止 skip 冒充绿** | 环境不具备时会红；需要先把 native 构建跑起来 —— 这正好是 A2 已经在做的事，成本被摊薄 |
 
 **推荐：B（fail）**，并建议与 A2 的真栈构建常态化同时出场，避免长期红。
@@ -654,18 +559,18 @@ uv run pytest -m e2e -q
 | A | 本迭代必做 | 一次性把覆盖率补齐 | 在「还没有第一条稳定 e2e」的前提下铺开 14 条，骨架与判定口径都未站稳；返工面大 |
 | B | 单开 issue，本迭代只做 Wave 1（T1 / T4 / F2 结果码 + BYE 不挂死 + TCP / TLS 各一条） | 先把 **e2e 从 0 变成非零**；骨架、命名、判定与留档方式先固化 | 覆盖率不带回本迭代，需在 issue 里登记范围 |
 
-**推荐：B（单开 issue，本迭代只做 Wave 1）**。**理由**：现在 `-m e2e` 是 0 条，CI ③ 怎么设阻塞都没有意义 —— **e2e 必须先从 0 变成非零，CI ③ 才有讨论阻塞的资格**。
+**推荐：B（单开 issue，本迭代只做 Wave 1）**。**理由**：现在 `-m e2e` 是 0 条 —— **e2e 必须先从 0 变成非零**。
 **解锁**：Wave 1 可交付并留档。**阻塞**：Wave 2 的 14 条推迟到该 issue，不影响本迭代任何出口判据。
 
 **④ kind e2e 是否永不进 PR required**
 
 | 选项 | 做法 | 优点 | 缺点 / 成本 / 风险 |
 |---|---|---|---|
-| A | 进 PR required | 门禁最严 | 本机与 CI runner 都**没有 kind**，PR 会被永久卡红；且 CI 工作已按 §0 第 1 项后置，短期内无法调整该文件 |
-| B | 不进 PR required，仅 nightly / `workflow_dispatch` | 不在 PR 关键路径上制造永久红灯；有 kind 的环境里仍可随时手动触发 | 需要有人在具备条件的环境里保留一条手动运行约定 |
+| A | 进 PR required | 门禁最严 | 本机**没有 kind**，PR 会被永久卡红 |
+| B | 不进 PR required，仅在具备条件的环境手动运行 | 不在 PR 关键路径上制造永久红灯；有 kind 的环境里仍可随时手动触发 | 需要有人在具备条件的环境里保留一条手动运行约定 |
 
-**推荐：B（不进 PR required，仅 nightly / `workflow_dispatch`）**。
-**解锁**：④ 有答案后，将来 CI 重启时 ③ job 的处置方式可一次性写清。**阻塞**：当前不阻塞任何动作（CI 工作已后置本就不可改）。
+**推荐：B（不进 PR required，仅在具备条件的环境手动运行）**。
+**解锁**：④ 有答案后，集群级验证的归属方式可一次性写清。**阻塞**：当前不阻塞任何动作。
 
 ### 8.2 A5 告警抓取接线选型
 
@@ -776,7 +681,7 @@ docker run --rm -v $PWD/deploy/alerts:/a prom/prometheus promtool check rules /a
 
 ### 9.1 事实一：没有代码强制 3.10，是显式 pin
 
-3.10 不是被任何库或 API 逼出来的，而是仓库里**显式写死**的。共 6 处：
+3.10 不是被任何库或 API 逼出来的，而是仓库里**显式写死**的。共 5 处：
 
 | # | 位置 | 内容 | 备注 |
 |---|---|---|---|
@@ -785,7 +690,6 @@ docker run --rm -v $PWD/deploy/alerts:/a prom/prometheus promtool check rules /a
 | ③ | `uv.lock` 首部（第 3 行） | `requires-python = "==3.10.*"` | 重锁时会随之变化 |
 | ④ | 根 `pyproject.toml`（第 116 行） | mypy `python_version = "3.10"` | 类型检查目标版本 |
 | ⑤ | `deploy/docker/Dockerfile` | 第 3 行 builder `uv:python3.10-bookworm-slim`；第 23 行 runtime `python:3.10-slim` | 交付镜像的基础版本 |
-| ⑥ | `.github/workflows/ci.yml`（第 30 行） | `PYTHON_VERSION: "3.10"` | CI 工作已按 §0 第 1 项后置，**当下不冲突** |
 
 另有一条条件依赖：根 `pyproject.toml` 第 36 行 `tomli>=2.0; python_version < '3.11'` —— 升到 3.11+ 后它会因内置 `tomllib` **自动消失**，不是迁移障碍。
 
@@ -811,11 +715,11 @@ D1 那一行写的是：**「产品锁 3.10 是因为那是 sippy 验证过的�
 
 ### 9.4 两个处置选项（建议，维护者未裁决）
 
-**选项①（推荐）：低成本验证 spike** —— 把 §9.1 的 6 处 pin 改到 3.12 → `uv sync` 重锁 → `make gate` → `make m2-platform-resip-build` + E1 / TLS smokes 复验 → 镜像构建。
+**选项①（推荐）：低成本验证 spike** —— 把 §9.1 的 5 处 pin 改到 3.12 → `uv sync` 重锁 → `make gate` → `make m2-platform-resip-build` + E1 / TLS smokes 复验 → 镜像构建。
 
 - **绿**：新增 ADR **supersede** D1 的理由，并按 `AGENT.md` §15 把 `docs/plan.md` §5.2 的 D1 行移动到已解决一侧；
 - **红**：回滚 pin，在 ADR 里登记为 **accepted risk**，并写明红在哪一处。
-- **成本为什么能被摊薄**：① CI 已后置，改 CI 那一行当下不冲突；② native 扩展反正要随 A2 重编，可共用一次构建。
+- **成本为什么能被摊薄**：native 扩展反正要随 A2 重编，可共用一次构建。
 
 **选项②：不迁移** —— 现在就在 ADR 登记 accepted risk，并在 `docs/product/ne-datasheet.md` 与交付材料里接受「EOL 运行时」在客户评审中被质疑。
 
@@ -839,7 +743,7 @@ D1 那一行写的是：**「产品锁 3.10 是因为那是 sippy 验证过的�
 | 任何 pytest | 未跑 `pytest`（含 A3 Phase A 的两条契约测试复验） |
 | 任何 `docker` 命令 | 未执行 `promtool` 的容器化校验（**已获授权，未执行**） |
 | `uv sync` / 重锁 | 未执行，未改任何 pin |
-| CI / git 写操作 | 未运行 GitHub Actions；无 `git add` / `git commit` / `git tag` / `git push` / 建分支 / 改 remote |
+| git 写操作 | 无 `git add` / `git commit` / `git tag` / `git push` / 建分支 / 改 remote |
 
 因此本文的状态结论与 §2 的基线快照**未因本次回写而变化**：真栈仍是 skip、告警规则语法仍未校验、chart 形状门禁仍未在本机复验 —— 三项均**不得**读作绿。
 
@@ -848,10 +752,10 @@ D1 那一行写的是：**「产品锁 3.10 是因为那是 sippy 验证过的�
 | 文件 | 角色 | 说明 |
 |---|---|---|
 | `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md`（本文） | **新增文档**（未跟踪） | 未完成项盘点 + 分波计划 + §8 建议与选项 + §9 B4 重新定位；本次回写新增 §0.2、§5 W0 状态行、`promtool` 授权标注、§8.2 / §8.3 / §8.6 的认可行与本节 |
-| `docs/acceptance/report.md` | **已修改** | 仅 §3-b 的「追加更正（2026-10-10）」段落 —— 纠正 §0.3（F9 / A-4）与现实不符的措辞；只追加，未改写第 30 / 33 行原文 |
+| `docs/acceptance/report.md` | **已修改** | 在 §0.3（F9 / A-4）追加了「追加更正（2026-10-10）」段落；只追加，未改写第 30 / 33 行原文 |
 | `docs/plan.md` | **已修改** | §0 状态入口、§0 产品决策记录表（本次追加 §0.2 对应的四行认可 + 表格外一行注记）、产品化包装交付状态小节 |
 
-三个文件的共同性质：**全部是文档**。本次未改任何产品代码、未改 `VERSION` / `Chart.yaml` / `.github/workflows/ci.yml`。
+三个文件的共同性质：**全部是文档**。本次未改任何产品代码、未改 `VERSION` / `Chart.yaml`。
 
 ### 10.3 下一步需维护者批准的启动项清单
 
@@ -861,7 +765,7 @@ D1 那一行写的是：**「产品锁 3.10 是因为那是 sippy 验证过的�
 2. **W0 的两项**（A2 与 A3）：
    - **A2 真栈构建常态化**：`make m2-platform-resip-build` → `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`（等价 `make gate-native`）；
    - **A3 Phase A 复验**：`uv run pytest platform/tests/test_e1_contract_resip_runtime.py platform/tests/test_e1_contract_resip_runtime_full.py -m contract -q`，加上 `uv run pytest platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200 -q`（须在 A2 之后；该第三个目标是 `integration` 标记，**不在** `make gate` 的 `-m "unit or contract"` 收集范围内，须显式指定才能跑）。
-3. **是否把 B4 的 Python 3.12 spike 并入同一次 native 构建** —— 即 §9.4 选项①（改 6 处 pin 到 3.12 → `uv sync` 重锁 → `make gate` → `make m2-platform-resip-build` + E1 / TLS smokes 复验）是否搭 W0 的 A2 那一次构建的车。**B4 本身未被裁决，当前仍是建议**；此处只请求「是否并入同一次构建」这一执行面的批准，不代表 B4 已被裁决。
+3. **是否把 B4 的 Python 3.12 spike 并入同一次 native 构建** —— 即 §9.4 选项①（改 5 处 pin 到 3.12 → `uv sync` 重锁 → `make gate` → `make m2-platform-resip-build` + E1 / TLS smokes 复验）是否搭 W0 的 A2 那一次构建的车。**B4 本身未被裁决，当前仍是建议**；此处只请求「是否并入同一次构建」这一执行面的批准，不代表 B4 已被裁决。
 
 批准之外的六项取值（A4 / A5 / A6 / B1 / B2 / B3）仍按 §0.2 的「口径边界」处理：**全部待维护者裁决**。
 

@@ -182,7 +182,7 @@ sippy 自带阻塞 ED2.loop()，天然一进程一用例。进程边界 = 故障
 
 > 从 PRD v0.1 剥离，原位置 REQ-NF-11 "技术注解" 段
 
-由 `tests/test_version_consistency.py` 守卫；CI 阻断任何 VERSION 与 pyproject 漂移的提交。
+由 `tests/test_version_consistency.py` 守卫；门禁阻断任何 VERSION 与 pyproject 漂移的提交。
 
 ---
 
@@ -216,7 +216,7 @@ sippy 自带阻塞 ED2.loop()，天然一进程一用例。进程边界 = 故障
 
 > 从 PRD v0.1 剥离，原位置 REQ-G-3 "技术注解" 段
 
-由 AST 扫描守卫（`tests/` 目录下的扫描脚本）强制——新增"违反 ADR 标注纪律"的代码会被 CI 阻断。
+由 AST 扫描守卫（`tests/` 目录下的扫描脚本）强制——新增"违反 ADR 标注纪律"的代码会被 `make gate-strict` 阻断。
 
 ---
 
@@ -224,4 +224,4 @@ sippy 自带阻塞 ED2.loop()，天然一进程一用例。进程边界 = 故障
 
 > 从 PRD v0.1 剥离，原位置 REQ-G-4 "技术注解" 段
 
-CI 跑同样的四层（快 → 集成 → e2e → 性能）。M0 阶段 integration/e2e/performance 层无测试，用 `continue-on-error` 绕过；首个引入某层测试的里程碑必须同步把该层改为阻塞。
+本地门禁跑同样的四层（快 → 集成 → e2e → 性能）。M0 阶段 integration/e2e/performance 层无测试，不作为阻塞项；首个引入某层测试的里程碑必须同步把该层改为阻塞。

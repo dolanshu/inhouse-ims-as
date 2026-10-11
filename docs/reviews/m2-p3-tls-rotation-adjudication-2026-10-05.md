@@ -24,7 +24,7 @@ REQ-S-3 or close M2.
 
 ## Limits
 
-Not REQ acceptance, not operator PKI/S-SBC evidence, not CI certification unless separately recorded.
+Not REQ acceptance, not operator PKI/S-SBC evidence, not deployment certification unless separately recorded.
 
 ## Sign-off
 

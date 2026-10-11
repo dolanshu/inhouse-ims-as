@@ -72,7 +72,7 @@
 
 ### 实施顺序（accepted 后工程）
 
-1. [x] **values 契约**：`stateStores.*`（默认 `enabled: false` 保 AS-only CI；kind `M5_BUNDLED_STATE=1`）。
+1. [x] **values 契约**：`stateStores.*`（默认 `enabled: false` 保 AS-only 门禁；kind `M5_BUNDLED_STATE=1`）。
 2. [x] **模板**：`state-postgres.yaml`、`state-redis.yaml`、`state-networkpolicy.yaml`、`state-config-runtime-secret.yaml`；`chart-check` bundled 矩阵。
 3. [x] **kind（M5 §4.6 / D12，非 M2）**：`m5-helm-install.sh` / `m5-ingress-evidence.sh` bundled profile。
 4. [x] **生产（工程工件）**：`values-onprem.example.yaml`、`state-migrate-job.yaml`、[`m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) HA/PITR + migrate Job；客户 HA 运维与 D3 Sentinel 替换单实例 Redis 仍 **O5/D3**。

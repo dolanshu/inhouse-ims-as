@@ -187,7 +187,7 @@ Process note:
 
 This supplement preserves the original failed-attempt history in the Verification section. That earlier local `make gate` stop at D103 in `deploy/compose/scripts/m4b-8-seed-users.py` (missing public docstring) was later superseded by a same-day local rerun after the maintainer-authorized docstring fix.
 
-Local rerun result (2026-10-04, non-CI):
+Local rerun result (2026-10-04):
 
 - Ruff format: 256 files already formatted.
 - Ruff check: all checks passed.
@@ -197,7 +197,7 @@ Local rerun result (2026-10-04, non-CI):
 Status impact:
 
 - This improves repository local gate status for the reviewed snapshot.
-- It is a local gate result only and is not a CI claim.
+- It is a local gate result only and is not a full-gate claim.
 - It does not close M2.
 - It does not close REQ-S-2 or REQ-S-3.
 - It does not close D8.

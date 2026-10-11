@@ -8,7 +8,7 @@
 |---|---|---|
 | M2 P0 | Vendor restore + repo-local native build + UDP S1 smoke | `make m2-native`, `docs/acceptance/m2-native-build-matrix.md`, [`m2-p0-native-repro-review-2026-10-04.md`](m2-p0-native-repro-review-2026-10-04.md) |
 | M2 P1 | Adapter boundary (not ADR-0022 acceptance) | [`m2-adapter-boundary-adjudication-2026-10-04.md`](m2-adapter-boundary-adjudication-2026-10-04.md) |
-| M2 P4 (partial) | CI job `m2-native-smoke` in `.github/workflows/ci.yml` | Source build on `ubuntu-latest` |
+| M2 P4 (partial) | blocking target `m2-native-smoke` | Source build on `ubuntu-latest` |
 | M6 | `resip_probe` external UAS + `as_load` smoke | `testbed/load/scripts/m6-resip-probe-smoke.sh`, [`m6-resip-probe-smoke-review-2026-10-04.md`](m6-resip-probe-smoke-review-2026-10-04.md) |
 | M6 | Micro measurement precursor (no O1 publication) | `m6-resip-probe-micro-measure.sh`, [`m6-micro-measure-adjudication-2026-10-04.md`](m6-micro-measure-adjudication-2026-10-04.md) |
 

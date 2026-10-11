@@ -15,7 +15,7 @@ make gate
 
 ## Findings
 
-Makefile gate; CI fast layer; 863+ unit/contract.
+Makefile gate; fast layer; 863+ unit/contract.
 
 ## Verdict
 

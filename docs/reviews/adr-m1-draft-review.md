@@ -18,7 +18,7 @@
 ## 1. ADR-0001：单 monorepo + uv workspace
 
 - **Decides 账本**：决策 3 ✅
-- **Context**：POC 三大硬伤（CI clone、Docker 上下文、版本漂移）描述准确
+- **Context**：POC 三大硬伤（跨仓 clone、Docker 上下文、版本漂移）描述准确
 - **Decision**：uv workspace + AST 扫描守卫，与架构文档一致
 - **Consequences**：正面 4 项、已接受 2 项，非空
 - **证据**：test_workspace_layout.py / test_library_independence.py 存在且通过

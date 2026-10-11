@@ -1,7 +1,7 @@
 """Guard: the workspace declaration and the directory tree must agree.
 
 The monorepo was created to kill three specific failures of the two-repository
-POC: CI cloning a sibling checkout, a Dockerfile whose build context sat outside
+POC: cloning a sibling checkout, a Dockerfile whose build context sat outside
 the repository, and a version that drifted between two homes. All three are
 structural, so all three are guarded by tests rather than by convention.
 

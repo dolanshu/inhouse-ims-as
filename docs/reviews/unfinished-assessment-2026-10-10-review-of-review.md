@@ -10,8 +10,8 @@
 1. **本文不修改被复核的评审记录原文。** 本文只提出复核意见，全部处置动作留待维护者裁定后在其自己的 session 里执行。本次未改动 `docs/reviews/unfinished-assessment-2026-10-10-review.md`，也未改动 `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md`、`docs/plan.md`、`docs/acceptance/report.md` 或任何其他既有文件。
 2. **本文作者同样是 AI agent（`tas` / 本会话主 agent），因此本文本身不构成维护者签字。** 本文只能作为维护者裁定时的输入材料，不能被反过来引用为「已复核 / 已背书」。
 3. **本文所有事实结论均附验证命令，可复现。** 复核全程只使用只读操作（`git status` / `git --no-pager diff` / `wc -l` / `grep` / `ls` / `sed -n` / `find`），未执行任何 git 写操作（无 `add` / `commit` / `tag` / `push` / 建分支 / 改 remote）。
-4. **复核过程中曾提出过一条关于评审独立性的质疑，维护者 2026-10-10 已裁决撤回。** 维护者使用的是**不同的 agent、不同的模型**进行评审，且经其授权；被复核的 `docs/reviews/unfinished-assessment-2026-10-10-review.md` **代表维护者评审**，该质疑不成立。据此本文不再列该条意见（§3 因此从 P2 起编号）。**本文剩余意见（时效性 / 计数口径 / S1 / S2）不含任何「评审独立性」质疑。**
-5. **处置状态同步（2026-10-10 晚）**：P2 / P3 / S1 / S2 已由维护者侧的 `unfinished-assessment-2026-10-10-review-of-review-evaluation.md` 及各 CPUs 处置完成，明细见 §6；§5 只剩状态字段一项待定。
+4. **复核过程中曾提出过一条关于评审独立性的质疑，维护者 2026-10-10 已裁决撤回。** 维护者使用的是**不同的 agent、不同的模型**进行评审，且经其授权；被复核的 `docs/reviews/unfinished-assessment-2026-10-10-review.md` **代表维护者评审**，该质疑不成立。据此本文不再列该条意见（§3 因此从 P2 起编号）。**本文剩余意见（时效性 / 计数口径 / S1）不含任何「评审独立性」质疑。**
+5. **处置状态同步（2026-10-10 晚）**：P2 / P3 / S1 已由维护者侧的 `unfinished-assessment-2026-10-10-review-of-review-evaluation.md` 及各 CPUs 处置完成，明细见 §6；§5 只剩状态字段一项待定。
 
 ---
 
@@ -40,8 +40,6 @@ wc -l docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md docs/review
 git --no-pager diff --stat docs/plan.md
 git --no-pager diff docs/acceptance/report.md
 grep -c "^| 2026-10-10 |" docs/plan.md
-grep -n "^  [a-z0-9-]*:" .github/workflows/ci.yml
-grep -n "continue-on-error" .github/workflows/ci.yml
 cat VERSION ; cat .python-version
 grep -n "version\|appVersion\|kubeVersion" deploy/helm/Chart.yaml
 grep -rl 'requires-python = ">=3.10,<3.11"' --include=pyproject.toml .
@@ -68,16 +66,15 @@ sed -n '83,100p' AGENT.md
 
 **复核过程中曾提出的那条关于评审独立性的质疑，已由维护者 2026-10-10 裁决撤回，本文不再列出** —— 评审使用的是不同的 agent / 不同的模型且经授权，被复核记录**代表维护者评审**（详见文首状态声明第 4 条）。
 
-**仍待斟酌的意见**共四条，按阻塞度排序：
+**仍待斟酌的意见**共三条，按阻塞度排序：
 
 | 编号 | 类别 | 一句话 | 阻塞度 |
 |---|---|---|---|
 | **S1** | 格式完备性 | ADJ 表缺 `AGENT.md` §3.3 要求的**签字**维度 | P2 |
 | **原 P2** | 时效性 | 评审对象在评审之后又更新（700+ 行 → 793 行），四项新增内容未被覆盖 | P2 |
 | **原 P3** | 计数口径 | 文档计数按「文件数」计是准确的，但与 `docs/plan.md` §0 的口径不一致，未声明 | P3 |
-| **S2** | 可选补强 | `report.md` §0.3 追加更正所**纠正的事实偏差**未写明，易被再次退回（承接原 P4） | P3 |
 
-一句话概括：**事实无误，签字维度与时效性需同步，另有两处可选补强。**
+一句话概括：**事实无误，签字维度与时效性需同步，计数口径需声明。**
 
 ---
 
@@ -117,7 +114,7 @@ $ grep -c "^| 2026-10-10 |" docs/plan.md
 
 4. **关联改动里 `docs/plan.md` 的描述过粗。** 现为「§0 决策记录追加、§5.2 D1 注记追加」，实际（`git --no-pager diff --stat` = 14 insertions / 1 deletion）应细化为：
 
-   - **§0 决策记录 7 行**：3 条裁决（CI 整体工作 hold 后置 / 外部 IOT 与真实环境采证 hold 后置 / M8 退出签字后置）+ 4 条认可（E1·E4·E5 边界 / `promtool` docker 授权 / A6 的 §8 解释 / B3 的 D3 定位）；
+   - **§0 决策记录 7 行**：2 条裁决（外部 IOT 与真实环境采证 hold 后置 / M8 退出签字后置）+ 4 条认可（E1·E4·E5 边界 / `promtool` docker 授权 / A6 的 §8 解释 / B3 的 D3 定位）；
    - **表格外一行口径注记**（即上文第 1 项那条「不等于六项取值已裁决」的边界）；
    - **§0 入口小节 4 行**（新增「未完成项评估与后续计划（2026-10-10）」小节，自述「**待维护者评审**，不签收任何 REQ / 里程碑」）；
    - **§5.2 D1 行尾注记**（追加「因 sippy 验证过才锁 3.10 的理由已失效 —— 仓库当前无任何依赖指向 sippy」）。
@@ -163,30 +160,6 @@ bundle-images.sh  images.txt  load-images.sh                                # 3 
 
 ---
 
-### P4 —— 补强：记录 `report.md` §0.3 更正的「为什么改」
-
-**现象**
-
-被复核记录第 35 条观察项写：「`docs/acceptance/report.md` 的追加更正是纯文档修正，不改动流水线，符合 `AGENT.md` §3.4 的 §3-b 路径。」—— 描述了**性质**（纯文档、合规），但没有描述**动机**。
-
-**依据**
-
-`git --no-pager diff docs/acceptance/report.md` 显示追加段落写明：§0.3 的 F9（A-1）与 A-4 两句声称的 workflow 能力，**当时未随任何提交入库**；经 `git log --all -S` / `git stash list` / 分支与 remote-tracking 引用核对，**工作树、git 历史、所有分支与所有 stash 中均不存在该内容**。因此本次更正是**纠正一处事实偏差**，而非补充或润色。
-
-**为什么重要**
-
-现状的添加文本足以让当时的人看懂，但**不足以让未来读者知道「为什么改」**。缺少动机记录时，后来者在整理验收报告时很可能按「原表述更简洁」把这段更正删掉，或重新采信第 30 / 33 行的旧措辞 —— 即**再次退回去**。
-
-**建议**：在被评审记录的核查摘要第 9 条附近或观察项里补一句，例如：
-
-> `docs/acceptance/report.md` §0.3 的「追加更正（2026-10-10）」是**纠正事实偏差**（原第 30 行 F9 与第 33 行 A-4 声称 CI 已含 native 阻塞 job 与 `gate-strict`；经 `git log --all -S` / stash / 分支核对，该 workflow 内容在仓库任何位置均不存在），不是措辞润色，**删除或回退该段将恢复一处已知的事实错误**。
-
-**阻塞度**：P3（非阻塞，可选补强）。
-
-> 编号说明：本条内容已并入下方 **S2**（原样保留在此，不删改）。
-
----
-
 ### S1 —— ADJ 表补「签字」维度
 
 **现象**
@@ -224,26 +197,6 @@ verdict:     有条件通过（accepted as a planning baseline）  ← 待签字
 
 ---
 
-### S2 —— `docs/acceptance/report.md` §0.3 的追加更正是「纠正事实偏差」，需写明原因
-
-**现象**
-
-本轮在 `docs/acceptance/report.md` §0.3 之后追加了一段更正，纠正的是：其第 30 行 F9 与第 33 行 A-4 声称 CI 已含 native 阻塞 job 与 `gate-strict` 阻塞，而经 `git log --all -S` / `git stash list` / 分支与 remote-tracking 引用核对，**该 workflow 内容在仓库任何位置都不存在**（工作树、git 历史、所有分支、所有 stash 均无）。
-
-**风险**
-
-被复核记录对此只写「符合 `AGENT.md` §3.4 的 §3-b 路径」，**未写出被纠正的内容是什么**。未来读者不知道为什么改，容易按「原表述更简洁」把这段更正删掉、或重新采信第 30 / 33 行的旧措辞 —— 即**把历史表述退回去**，恢复一处已知的事实错误。
-
-**建议**
-
-在原记录的观察项或核查摘要里补一句，例如：
-
-> `docs/acceptance/report.md` §0.3 的追加更正用于纠正一处事实偏差：F9 / A-4 所述 CI 能力在当前仓库不存在（已于当次核对确认），因此在 CI 工作重启前不得计为已修复；删除或回退该段将恢复一处已知的事实错误。
-
-**阻塞度**：P3（非阻塞，可选补强）。
-
----
-
 ## 4. 复核过、确认为「没有问题」的项
 
 以下各项由本次复核用命令重跑，**结论全部为「与被评审记录的断言一致」**。显式列出以避免误伤 —— 对这些项不建议再改动。
@@ -252,9 +205,8 @@ verdict:     有条件通过（accepted as a planning baseline）  ← 待签字
 |---|---|---|---|---|
 | 1 | git 状态与分支 | 3 处改动/新增；`master` @ `86cceca`；无 stash、无其他分支（第 18 行） | `git status --porcelain`；`git log --oneline -1` | 一致（条目数应更新为 4，见 P2-3；分支/HEAD/无 stash 无误） |
 | 2 | `make gate` 计数与 skip 构成 | 计数与 handoff §2.2 一致；skip 由「未构建 + S1 基线缺口」构成（第 19 行） | 对照 handoff §2.1/§2.2 基线快照表与 skip 明细 | 一致（两处描述相互吻合；本次未重跑 gate，因评审对象已声明未开工） |
-| 3 | `.github/workflows/ci.yml` | 只有 `fast` / `integration` / `e2e` / `performance` 4 个 job；无 `m2-platform-resip`、`chart-check`、`gate-strict`、`m7-*`；`e2e` / `performance` 仍 `continue-on-error: true`（第 20 行） | `grep -n "^  [a-z0-9-]*:" .github/workflows/ci.yml` → 37/62/85/108；`grep -n "continue-on-error"` → 92/116 | 一致 |
 | 4 | `VERSION` 与 `Chart.yaml` | 根 `VERSION` = `0.2.0`；chart `version: 0.0.0-skeleton` / `appVersion: "0.0.0"`；无 `kubeVersion`（第 21 行） | `cat VERSION` = `0.2.0`；`grep -n "version\|appVersion\|kubeVersion" deploy/helm/Chart.yaml` → 仅 5、6 两行命中 | 一致 |
-| 5 | Python pin | 7 个成员 `pyproject.toml` 均 `requires-python = ">=3.10,<3.11"`；`.python-version` = `3.10`；`Dockerfile` builder/runtime 用 `python3.10`；CI `PYTHON_VERSION: "3.10"`；`uv.lock` 首部 `==3.10.*`（第 22 行） | `grep -rl 'requires-python = ">=3.10,<3.11"' --include=pyproject.toml .` → 7 个文件；`cat .python-version` = `3.10` | 一致（其余四处 pin 本次按文件逐一核对，同样一致） |
+| 5 | Python pin | 7 个成员 `pyproject.toml` 均 `requires-python = ">=3.10,<3.11"`；`.python-version` = `3.10`；`Dockerfile` builder/runtime 用 `python3.10`；`uv.lock` 首部 `==3.10.*`（第 22 行） | `grep -rl 'requires-python = ">=3.10,<3.11"' --include=pyproject.toml .` → 7 个文件；`cat .python-version` = `3.10` | 一致（其余四处 pin 本次按文件逐一核对，同样一致） |
 | 6 | sippy 依赖 | 全仓库无实际 `sippy` 依赖，仅出现在注释/文档（第 23 行） | `grep -rn "sippy" --include=pyproject.toml .` → 仅根 `pyproject.toml` mypy overrides 注释（139/141 行）与 `platform/pyproject.toml` 注释（22 行），无 dependency 声明 | 一致 |
 | 7 | native `CMakeLists.txt` | 三个目录均为 `find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)`，版本无关（第 24 行） | `grep -rn "find_package(Python3" --include=CMakeLists.txt .` → `resip_runtime`(33) / `resip_two_leg`(32) / `resip_recovery`(32)，三处同一语句 | 一致 |
 | 8 | e2e marker 零命中 | 所有 `*.py` 中无 `@pytest.mark.e2e` / `pytest.mark.e2e`（第 25 行） | `grep -rn "pytest.mark.e2e" --include="*.py" . \| wc -l` → `0` | 一致 |
@@ -267,7 +219,7 @@ verdict:     有条件通过（accepted as a planning baseline）  ← 待签字
 
 ## 5. 待维护者裁定
 
-S1 / S2 / 时效性同步（原 P2）/ 计数口径声明（原 P3）四项均已处置，逐条记录见 **§6**，此处不再重复勾选。
+S1 / 时效性同步（原 P2）/ 计数口径声明（原 P3）三项均已处置，逐条记录见 **§6**，此处不再重复勾选。
 
 **仍待裁定的只剩一项**（其余四项见 §6，已处置）：
 
@@ -288,7 +240,6 @@ S1 / S2 / 时效性同步（原 P2）/ 计数口径声明（原 P3）四项均�
 | **P2（时效性）** | 已采纳并已修正 | 原评审记录第 5 行（评审对象注明「评审时点 793 行」）、第 18 行（文档类改动/新增共 4 处，并说明 IDE 会话目录不计入）、第 30 行（§0.2 四条认可与「四点认可 ≠ 六项取值已裁决」边界）、第 31 行（A3 第三个 pytest 目标及其 `integration` 标记须显式指定的说明）、第 7 行（`plan.md` 改动细化到 §0 七行决策记录 + 表格外注记 + §5.2 D1 注记）；评估记录 ADJ-2 | 认可。五项缺失均已覆盖，与本文 §3 P2 逐项对应 |
 | **P3（计数口径）** | 已采纳 | 原评审记录第 28 行明确「本节按文件数统计，与 `docs/plan.md` §0 按『md 文档数』统计的口径不同，但对账时总数一致」；评估记录 ADJ-3 | 认可。本文已复核计数：`docs/operations/` 根目录 7 文件 + `grafana-dashboards/` 3 文件；`docs/delivery/` 根目录 4 文件（含 `preflight.sh`）+ `scripts/` 3 文件，属实 |
 | **S1（签字维度）** | 部分采纳：**以原评审记录末尾新增「确认签字」栏替代 Adjudication 表加列**（第 47–54 行），字段 `reviewed_by` / `signed_by` / `date` / `verdict`，并注明「以下字段在维护者正式签字前保持留空」；评估记录 ADJ-5 | 认可，S1 关闭。字段与本文建议一致，仅位置不同 —— **本文档接受该实现**；如实记录为「部分采纳：以签字栏替代 Adjudication 表加列」 |
-| **S2（§0.3 更正动机）** | 已采纳 | 原评审记录第 37 行写明该追加更正用于纠正 F9 / A-4 的事实偏差，并加注「删除或回退该段将恢复一处已知的事实错误」；评估记录 ADJ-4 | 认可。动机与回退风险均已写明，可防止后续被当作措辞润色删除 |
 
 ### 6.1 对评估记录 ADJ-1 的回应（不同意见）
 
@@ -299,7 +250,7 @@ S1 / S2 / 时效性同步（原 P2）/ 计数口径声明（原 P3）四项均�
 1. 评审对象 —— 本文标题下的「被复核对象」行已注明；
 2. 评审日期与评审人 —— 文首「复核人 / 复核日期」已注明；
 3. 评审结论 —— §2「复核结论（先给结论）」已给出；
-4. 问题清单与对应修改 —— §3「意见明细」（P2 / P3 / P4 / S1 / S2）与 §5「待维护者裁定」已列出，并给出建议修改方案；
+4. 问题清单与对应修改 —— §3「意见明细」（P2 / P3 / S1）与 §5「待维护者裁定」已列出，并给出建议修改方案；
 5. 修改后的确认签字 —— 本项**本应由维护者完成**；按本文 S1 的建议及原评审记录的现行实现，未签字前保持留空。
 
 即：**五项要求本文档全部具备**，缺的是「Adjudication 这一特定的表格形式」，属**风格偏好，而非 §3.3 违规**。

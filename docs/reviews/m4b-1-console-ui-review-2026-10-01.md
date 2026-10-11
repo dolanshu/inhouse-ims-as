@@ -36,7 +36,7 @@ D4 选择纯 HTML/CSS/JavaScript，不引入 bundler、build tool 或前端 runt
 ## 本地验证与限制
 
 - `node --check services/console/web/console.js`：通过（主 agent 执行）。
-- 最新本地 `make gate`：ruff format 190 files formatted；Ruff 全通过；mypy 36 source files clean；pytest **417 passed, 2 known skips, 15 deselected**。未运行 CI。
+- 最新本地 `make gate`：ruff format 190 files formatted；Ruff 全通过；mypy 36 source files clean；pytest **417 passed, 2 known skips, 15 deselected**。
 - 当前无 backend/API、auth/session、persistent audit、database、live telemetry、production routing、persisted trace store 或 workflow connection。预览只包含本地内存状态，不满足 REQ-F-12/13/14/15 与 REQ-S-4 的正式工作流验收。
 
 ## 评审结论

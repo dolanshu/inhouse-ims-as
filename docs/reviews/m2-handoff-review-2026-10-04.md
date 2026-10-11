@@ -45,7 +45,7 @@ signoff remains pending.
 - `git diff --check`: passed.
 - The repository `make gate` was not rerun for documentation/archive-only
   changes; the 2026-10-04 local gate result is recorded in the handoff and is
-  not represented as CI.
+  local-only evidence.
 
 ## Confirmation
 

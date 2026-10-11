@@ -30,7 +30,7 @@ Does **not** claim REQ / `test-plan` acceptance or production cluster sign-off.
 | Task | Review | Plan match | Adjudication | Notes |
 |------|--------|------------|--------------|-------|
 | M5-0a | [m5-0a-gate-review-2026-10-04.md](m5-0a-gate-review-2026-10-04.md) | Yes | **Accept** | |
-| M5-0b | [m5-0b-integration-compose-review-2026-10-04.md](m5-0b-integration-compose-review-2026-10-04.md) | Partial | **Accept** + **Fix** | CI layer ② ≠ `make test-integration-compose`; document maintainer gate |
+| M5-0b | [m5-0b-integration-compose-review-2026-10-04.md](m5-0b-integration-compose-review-2026-10-04.md) | Partial | **Accept** + **Fix** | layer ② ≠ `make test-integration-compose`; document maintainer gate |
 | M5-0c | [m5-0c-chart-check-review-2026-10-04.md](m5-0c-chart-check-review-2026-10-04.md) | Yes | **Accept** | |
 
 ## §4.4.4 — Stage 1 + §217③

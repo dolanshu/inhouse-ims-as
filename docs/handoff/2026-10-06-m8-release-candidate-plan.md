@@ -83,21 +83,21 @@ E 报告、版本、里程碑签字、M8 退出
 
 ### 阶段 A — 门禁与证据基础设施（P1 尾）
 
-**目标**：后续验收不会在「无 native CI / 无结构化日志」下产生不可复核结论。
+**目标**：后续验收不会在「无 native 门禁 / 无结构化日志」下产生不可复核结论。
 
 | ID | 任务 | 交付物 | 验证 |
 |----|------|--------|------|
-| A-1 **F9** | origin **blocking** native CI | `.github/workflows/ci.yml`：`m2-platform-resip`（+ 维护者批准的 `chart-check` / `m2-native-smoke` / `m7-*` 子集） | PR 绿；无 `_resip_runtime` 时相关测 **fail**（`native_extensions.py`）；CONTRIBUTING / AGENT §9 写清 gate vs native |
+| A-1 **F9** | **blocking** native 门禁 | `m2-platform-resip`（+ 维护者批准的 `chart-check` / `m2-native-smoke` / `m7-*` 子集） | 门禁绿；无 `_resip_runtime` 时相关测 **fail**（`native_extensions.py`）；CONTRIBUTING / AGENT §9 写清 gate vs native |
 | A-2 **F8** | 结构化 SIP 运行时日志 | C++→Python JSON 回调或字段契约 + 测 | REQ-NF-13 相关断言可挂证据 |
 | A-3 **F6** | transport close 回调（尾项） | native 行为 + 测或 documented limitation + 裁决 | 更新 adjudication 表 |
-| A-4 | `make gate` 与 CI 关系文档化 | `CONTRIBUTING.md` 或 acceptance 附录 | 维护者确认「合并门禁」清单 |
-| A-5 **REQ-G-3 / G-4** | ADR 标注扫描与 CI 阻断语义 | 实现 `make gate-strict`（或 CI 前置 AST 步）**或** 维护者裁决同步改 PRD/ADR/AGENT 为「未实现」并在矩阵标 N/A | `fast` 失败时后续 job 不跑；对照 [`m5-full-chain-review-2026-10-05.md`](../reviews/m5-full-chain-review-2026-10-05.md) §7 |
-| A-6 **CI ②③④** | e2e / `performance` 层 | 若该层已有用例则去掉 `continue-on-error`（ADR-0015）；**或** M8 总审书面接受风险 | 对照 `ci.yml` 与 `plan.md` §2.3 |
+| A-4 | `make gate` 与门禁分层关系文档化 | `CONTRIBUTING.md` 或 acceptance 附录 | 维护者确认「合并门禁」清单 |
+| A-5 **REQ-G-3 / G-4** | ADR 标注扫描与阻断语义 | 实现 `make gate-strict`（或前置 AST 步）**或** 维护者裁决同步改 PRD/ADR/AGENT 为「未实现」并在矩阵标 N/A | `fast` 失败时后续层不跑；对照 [`m5-full-chain-review-2026-10-05.md`](../reviews/m5-full-chain-review-2026-10-05.md) §7 |
+| A-6 **门禁 ②③④** | e2e / `performance` 层 | 若该层已有用例则改为阻塞（ADR-0015）；**或** M8 总审书面接受风险 | 对照 `plan.md` §2.4 |
 | A-7 | 验收前 native 一致性 | Runbook 一句：签收跑前 `make m2-platform-resip-build`（及 M7 recovery/two-leg 目标） | 与阶段 C 大跑绑定 |
 
 **闭合标准**：adjudication 表 F9/F8 为「已修复」或 F6 为「已修复 / 已裁决接受风险」；A-5/A-6 有终态（实现或 defer 记录）；**方可大规模开阶段 C**。
 
-**阻塞说明**：F9 上 origin 需维护者 PAT **`workflow` scope** 或等效授权推送 workflow（见 merge handoff §6）。
+**阻塞说明**：F9 需维护者批准后才能接入阻塞门禁（见 merge handoff §6）。
 
 ---
 
@@ -112,7 +112,7 @@ E 报告、版本、里程碑签字、M8 退出
 | 任务 | 说明 |
 |------|------|
 | B-4 需求链修补 | 7.2d ↔ PRD 缺口（全链 R-1）— 补 REQ 或 ADR 修正 + test-plan 条目 |
-| B-5 告警 / 缩容 / onprem values | 对齐全链 Major 项；`chart-check` 进 CI |
+| B-5 告警 / 缩容 / onprem values | 对齐全链 Major 项；`chart-check` 进门禁 ① |
 | B-6 验收文档 REQ 追溯 | `m5-*.md`、`report.md` M8 章节挂 REQ-NF-* |
 | B-7 复评 | 新 review record：`m5-req-acceptance-review-*.md` 或更新全链记录状态 |
 
@@ -137,7 +137,7 @@ E 报告、版本、里程碑签字、M8 退出
 | **M3** | 契约重放（已在 gate）；M8 报告引用即可 |
 | **M4/M4b** | REQ-F-12/14、**REQ-NF-10**、REQ-S-4 §1.4；§5.4：**F-13**（BLOCKED→矩阵）、**F-15** 真 AS |
 | **M5** | REQ-NF-3/4/9/13/14 + 7.2d；**D12/O5** HA 有条件范围；依赖阶段 B |
-| **M6** | REQ-NF-15、O1 **维护者目标裁决**（非对外发布）；NF-15 末条 HPA/`performance` CI；M6 维护者退出 |
+| **M6** | REQ-NF-15、O1 **维护者目标裁决**（非对外发布）；NF-15 末条 HPA/`performance` 门禁；M6 维护者退出 |
 | **M7** | REQ-F-1～F-5 / F-6～F-11（含 CANCEL 分支、in-dialog、F-10 透传、竞态）、**REQ-F-16**；E1 S1–S11、D9 forking；D10/D11 **REQ 签收**；**REQ-NF-1** 工程 harness + 阶段 D live |
 | **横切** | REQ-NF-2/5/6/7/8、REQ-NF-11/12、REQ-S-1、REQ-G-1/2、**O4** 轨迹保留期（与 NF-7 清理任务） |
 
@@ -216,7 +216,7 @@ E 报告、版本、里程碑签字、M8 退出
 # 默认合并门禁
 make gate
 
-# Native / M7（阶段 A 后应在 CI 等价覆盖）
+# Native / M7（阶段 A 后应在门禁中等价覆盖）
 make m2-platform-resip-build
 uv run pytest platform/tests/test_e1_contract_resip_runtime_full.py -m contract -q
 uv run pytest platform/tests/test_m7_forward_two_leg_integration.py \
@@ -239,7 +239,7 @@ make m5-kind-verify   # 按需
 
 | 阶段 | 状态 | 目标日期 | 备注 |
 |------|------|----------|------|
-| A P1 尾 + CI 治理 | open | | F9/F8/F6；A-5～A-7 |
+| A P1 尾 + 门禁治理 | open | | F9/F8/F6；A-5～A-7 |
 | B M5 REQ | open | | 待维护者 B-1…B-3 |
 | C test-plan | open | | 矩阵待建 |
 | D 环境 | open | | PKI / NF-1 |

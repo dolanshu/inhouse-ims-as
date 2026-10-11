@@ -6,7 +6,7 @@ Independent engineering review vs [`plan.md`](../plan.md) §4.4 / §4.6 / §217.
 
 ## Spec (plan)
 
-chart-check + CI
+chart-check
 
 ## Evidence
 

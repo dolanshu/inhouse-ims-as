@@ -252,12 +252,12 @@ testbed 仿真结果（含 M7.1 仿真平台、callload）属于研发/演示资
 | 1.4 | 故障定界手册 | `docs/operations/fault-demarcation.md` | 已落盘，待维护者评审 | — |
 | 1.5 | README 重写为产品入口 | 根 `README.md`、`docs/README.md` | 已落盘，待维护者评审 | — |
 | 2.1 | Grafana 看板模板 | `docs/operations/grafana-dashboards/{overview.json,sip-signaling.json,README.md}` | 已落盘；**不含 Sh 面板 / 时延面板 / 容量数字**；抓取接线缺口已显式标注为**未闭合** | 接线闭环属 chart 工作，未做 |
-| 2.2 | 告警规则补强 + 告警-动作对照表 | `docs/operations/alert-response-matrix.md`、`deploy/alerts/as-alerts.yaml`、`deploy/alerts/README.md` | 已落盘；新增 `as.runtime` / `as.platform` 两组共 5 条规则，**`as.call-path` 原 5 条未改**；`promtool check rules` **未执行**（本机无 `promtool`） | 同上（抓取接线） |
+| 2.2 | 告警规则补强 + 告警-动作对照表 | `docs/operations/alert-response-matrix.md`、`deploy/alerts/as-alerts.yaml`、`deploy/alerts/README.md` | 已落盘；新增 `as.runtime` / `as.platform` 两组共 5 条规则，**`as.call-path` 原 5 条未改**；`promtool check rules` **未执行**（执行环境 `dev-win03ib7niepf0` 无 `promtool`，见 [`environments.md`](environments.md)） | 同上（抓取接线） |
 | 2.3 | L1 / L2 Runbook 分册 | `docs/operations/{runbook-l1.md,runbook-l2.md,README.md}` | 已落盘；`docs/acceptance/` 原件**保留不动**，只做归集与索引 | — |
 | 2.4 | 摘流 / 回退 + iFC 配合 | `docs/operations/rollback-playbook.md` | 已落盘（方案与边界）；**真实集群演练未做** | 真实集群（**M8 7.2d blocked**）+ S-CSCF / HSS 侧配合 |
 | 2.5 | 备份恢复方案 + 演练记录 | `docs/operations/backup-restore.md` | 已落盘（方案 + 记录**模板**）；**演练记录为空**；未给 RPO / RTO 数值 | 真实集群；客户侧 HA 未决（O5 / D3） |
-| 3.1 | Preflight 环境校验脚本 | `docs/delivery/preflight.sh` | 已落盘；`bash -n` 通过，`--dry-run` 行为与退出码已验证 | 本机无 `kubectl` / `helm`，真实环境校验未跑 |
-| 3.2 | 离线安装包（air-gapped） | `docs/delivery/airgap-package.md`、`docs/delivery/scripts/{bundle-images.sh,load-images.sh,images.txt}` | 已落盘；范围限定 image save/load + 清单 + 校验和 + `helm package`，不产生第二套安装形态 | `helm package` 未实测（本机无 `helm`） |
+| 3.1 | Preflight 环境校验脚本 | `docs/delivery/preflight.sh` | 已落盘；`bash -n` 通过，`--dry-run` 行为与退出码已验证 | 环境 `dev-win03ib7niepf0` 无 `kubectl` / `helm`，真实环境校验未跑 |
+| 3.2 | 离线安装包（air-gapped） | `docs/delivery/airgap-package.md`、`docs/delivery/scripts/{bundle-images.sh,load-images.sh,images.txt}` | 已落盘；范围限定 image save/load + 清单 + 校验和 + `helm package`，不产生第二套安装形态 | `helm package` 未实测（环境 `dev-win03ib7niepf0` 无 `helm`） |
 | 3.3 | 责任边界矩阵（RACI） | `docs/product/responsibility-matrix.md` | 已落盘，待维护者评审 | — |
 | 3.4 | 安全合规说明（PDPO） | `docs/product/security-privacy.md` | 已落盘；**未写保留天数**，只写留存范围 / 删除机制 / 数据留港原则 | **O4**（保留期）、**D5**（存储选型） |
 | 3.5 | 版本生命周期与 EOL 策略 | `docs/product/version-lifecycle.md` | 已落盘；§3 逐条**转述** ADR-0027 已接受的决定，不新增承诺 | — |

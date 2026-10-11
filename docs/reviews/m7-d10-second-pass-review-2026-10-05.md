@@ -27,7 +27,7 @@ Judgement against [`CONTRIBUTING.md`](../../CONTRIBUTING.md) / [`AGENT.md`](../.
 
 | # | Finding | Severity | Notes |
 |---|---------|----------|-------|
-| S1 | Native recovery build was broken on current reSIProcate `SipStack::addTransport` signature | **Major** (fixed) | Would skip M7.1/M7.6 evidence in CI/job that builds recovery |
+| S1 | Native recovery build was broken on current reSIProcate `SipStack::addTransport` signature | **Major** (fixed) | Would skip M7.1/M7.6 evidence in the target that builds recovery |
 | S2 | `CallCheckpointLifecycle` reads `repository._store` / `_ttl_seconds` (private repository fields) | Minor | Works; prefer a small repository accessor if lifecycle grows |
 | S3 | `ScheduledRestoreHandle.done` is always `False` | Minor | Name suggests completion tracking; harmless for current tests |
 | S4 | `recovery_coordinator` invokes `on_restored` on the worker thread (not main/SIP thread) | Info | Documented; callers must not recurse into blocking SIP from callback |

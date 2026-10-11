@@ -18,7 +18,7 @@
 | 非范围声明 | 原因 / 依据 |
 |---|---|
 | **不产生 Helm 之外的第二套安装形态**（没有在线安装器、没有独立 `install.sh`、没有第二套 manifest 模板） | ADR-0013；评审 G-P1-7。安装形态只有 `helm upgrade --install` 一种 |
-| **不走 CI 私有 registry 自动同步** | 本仓库没有 CI 侧的镜像同步流水线；镜像同步是交付团队在受控联网侧的一次性动作 |
+| **不做私有 registry 自动同步** | 本仓库侧没有镜像自动同步链路；镜像同步是交付团队在受控联网侧的一次性动作 |
 | **不替代客户内网 registry** | 若客户已有内网 registry，正确做法是把镜像推进客户 registry 再让 values 指向它；本包是"没有 registry 时的兜底路径" |
 | **不做配置数据迁移 / 不做数据库初始化** | 配置版本是 PostgreSQL 里的行（ADR-0006），schema 迁移由 `as-config-migrate` 走 owner DSN 完成（见 [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md)） |
 | **不含任何容量 / 性能数字** | O1 未裁决（`AGENT.md` §2）。本包不声明 CPS、并发、时延、资源规格 |

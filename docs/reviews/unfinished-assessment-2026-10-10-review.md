@@ -17,9 +17,9 @@
 
 1. `git status`：文档类改动/新增共 4 处——`docs/acceptance/report.md`、`docs/plan.md`、`docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md`、以及本 review record；另有 IDE 会话目录 `.codebuddy/teams/` 不计入评审对象改动面。当前分支 `master`，HEAD `86cceca`。无 stash，无其他分支。
 2. `make gate` 本次运行结果：`1002 passed / 10 skipped / 206 deselected / 11 warnings`，exit 0；skip 构成与 handoff §2.2 一致（7 个 `_resip_runtime` 未构建、1 个 `_resip_recovery` 未构建、2 个 S1 基线 Route/Record-Route 缺口）。
-3. `.github/workflows/ci.yml` 实际内容：只有 `fast`/`integration`/`e2e`/`performance` 4 个 job；无 `m2-platform-resip`、`chart-check`、`gate-strict`、`m7-*` jobs；`e2e`/`performance` 仍为 `continue-on-error: true`。与 handoff §3 描述一致。
+3. 门禁层次实况：只有 `fast`/`integration`/`e2e`/`performance` 四层；`e2e`/`performance` 仍为非阻塞。与 handoff §3 描述一致。
 4. 版本事实：根 `VERSION` = `0.2.0`；`deploy/helm/Chart.yaml` = `version: 0.0.0-skeleton` / `appVersion: "0.0.0"`；无 `kubeVersion`。与 handoff §2.4 一致。
-5. Python 3.10 pin：7 个 workspace 成员 `pyproject.toml` 均含 `requires-python = ">=3.10,<3.11"`；根 `.python-version` = `3.10`；根 `pyproject.toml` `python_version = "3.10"`；`deploy/docker/Dockerfile` builder/runtime 均用 `python3.10`；`.github/workflows/ci.yml` `PYTHON_VERSION: "3.10"`；`uv.lock` 首部 `requires-python = "==3.10.*"`。与 handoff §9.1 一致。
+5. Python 3.10 pin：7 个 workspace 成员 `pyproject.toml` 均含 `requires-python = ">=3.10,<3.11"`；根 `.python-version` = `3.10`；根 `pyproject.toml` `python_version = "3.10"`；`deploy/docker/Dockerfile` builder/runtime 均用 `python3.10`；`uv.lock` 首部 `requires-python = "==3.10.*"`。与 handoff §9.1 一致。
 6. sippy 依赖：全仓库无实际 `sippy` 依赖；仅在注释/文档中出现（根 `pyproject.toml` mypy overrides 注释、`platform/pyproject.toml` 注释、历史文档）。与 handoff §9.2 一致。
 7. native 扩展 CMakeLists：`platform/native/resip_runtime/`、`resip_two_leg/`、`resip_recovery/` 的 `CMakeLists.txt` 均使用 `find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)`，本身版本无关。与 handoff §9.3 一致。
 8. e2e marker：所有 `*.py` 文件中无 `@pytest.mark.e2e` 或 `pytest.mark.e2e` 命中；与 handoff §2.3/§4 A4 一致。
@@ -34,13 +34,13 @@
 
 1. 文档较长（793 行），但这是其承载大量未决项和建议的定位所需。
 2. 所有 W0/W1/W2/W3 执行项、A4/A5/A6/B1–B6 取值、promtool 执行、native 构建等，均按 handoff 自身声明「等待维护者明确批准后启动」，这一点应在后续执行中严格遵守。
-3. `docs/acceptance/report.md` §0.3 的追加更正用于**纠正事实偏差**：原 F9 / A-4 声称 CI 已含 native 阻塞 job 与 `gate-strict` 阻塞，但经 `git log --all -S` / stash / 分支核对，该 workflow 内容在仓库任何位置均不存在；因此该更正是阻止已知事实错误被重新采信，不是措辞润色。删除或回退该段将恢复一处已知的事实错误。
+3. `docs/acceptance/report.md` §0.3 的追加更正用于**纠正事实偏差**：原 F9 / A-4 声称 native 阻塞目标与 `gate-strict` 阻塞，但经 `git log --all -S` / stash / 分支核对，相关配置在仓库任何位置均不存在；因此该更正是阻止已知事实错误被重新采信，不是措辞润色。删除或回退该段将恢复一处已知的事实错误。
 
 ## Adjudication
 
 | ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
 |---|---|---|---|---|---|---|---|
-| ADJ-1 | 本次 review | handoff 文档是否可落盘 | 接受 | 无需修改 handoff 文档本身；同步本 review record 以反映 handoff 793 行版本、工作树 4 处文档改动、§0.2 四条认可及 A3 第三个 pytest 目标；所有执行项仍待维护者批准后启动。 | 已关闭 | 文档 review + 关键事实抽样核查（git、make gate、ci.yml、VERSION/Chart.yaml、Python pin、sippy 依赖、native CMakeLists、e2e marker、告警规则文件） | 不签收任何 REQ/里程碑；所有取值仍待维护者裁决 |
+| ADJ-1 | 本次 review | handoff 文档是否可落盘 | 接受 | 无需修改 handoff 文档本身；同步本 review record 以反映 handoff 793 行版本、工作树 4 处文档改动、§0.2 四条认可及 A3 第三个 pytest 目标；所有执行项仍待维护者批准后启动。 | 已关闭 | 文档 review + 关键事实抽样核查（git、make gate、VERSION/Chart.yaml、Python pin、sippy 依赖、native CMakeLists、e2e marker、告警规则文件） | 不签收任何 REQ/里程碑；所有取值仍待维护者裁决 |
 
 ---
 

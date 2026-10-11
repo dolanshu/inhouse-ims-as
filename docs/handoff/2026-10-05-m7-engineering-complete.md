@@ -57,7 +57,7 @@ uv run pytest platform/tests/test_resip_runtime_tls_policy_integration.py -m int
 # E1 contract (includes S3 + skipped S4)
 uv run pytest platform/tests/test_e1_contract_resip_runtime.py -m contract -q
 
-# M6 harness (engineering; not CI gate)
+# M6 harness (engineering; not a gate item)
 bash testbed/load/scripts/m6-product-runtime-smoke.sh
 bash testbed/load/scripts/m6-product-runtime-micro-measure.sh
 bash testbed/load/scripts/m6-product-runtime-measure-60s.sh
