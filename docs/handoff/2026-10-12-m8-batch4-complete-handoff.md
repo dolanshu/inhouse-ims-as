@@ -78,3 +78,21 @@
 - 依赖外部环境的行（NF-13 / NF-14 的 live 采集与真实触发、D12/O5-HA 的客户生产拓扑）一律 defer，未强行补测；补测仅限工程层（unit / integration / 结构断言）。
 - 证据文件无凭据 / token / cookie（审计 DSN 口令已遮蔽为 `***`）；环境名一律 `dev-win03ib7niepf0`，未出现匿名的「本机」。
 - 新增 FAILCLOSED 证据已在索引 `docs/acceptance/artifacts/m5/README.md` 标注「不是通过证据」。
+
+---
+
+## 7. 代签执行结果（2026-10-13）
+
+- **授权来源**：维护者 2026-10-13 原话「**接受建议，授权你代签**」。
+- **落地范围**：**三项裁决**（B5-04 = **(b)** M8 总审书面接受风险；S-1 二选一 = **①** 修订矩阵 L86 描述；白名单地址 / 证书 **OR** = **本版接受**）与 **17 行终态** 已**全部落地**；落点 = `docs/acceptance/m8-test-plan-matrix.md` 的「M8 批次4 终态化代签（2026-10-13）」节（追加式，矩阵正文各行与「状态统计」原文未改）。
+- **终态计数**：**pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0**（defer 为本次新增状态词：F-5 / F-8 / F-9 / F-11；三行 restriction 登记为 blocked：NF-13 / NF-14 / D12/O5-HA）。
+- **本批次新增改动文件**（在本文 §3 清单基础上补）：
+  | 文件 | 改动 |
+  | --- | --- |
+  | `docs/acceptance/m8-test-plan-matrix.md` | **追加一节**「M8 批次4 终态化代签（2026-10-13）」，正文与各「状态统计」段未改 |
+  | `docs/handoff/2026-10-12-m8-batch4-complete-handoff.md` | 追加本文 §7 |
+  | `docs/acceptance/m8-matrix-finalization-draft-2026-10-12.md` | 追加 §6「执行状态（2026-10-13）」，原文未改（草案转为存档） |
+  | `docs/reviews/m8-batch4-signoff-review-2026-10-12.md` | 追加「裁决结果（2026-10-13，维护者已决并授权代签）」节，原文未改 |
+- **`docs/acceptance/report.md` §0.5 计数未动**，归批次 6（**E-1**）按上述计数执行；`docs/plan.md` M8 行回写同样归批次 6（**E-3**）。
+- **签字性质**：全部签字栏为「**agent 代签（维护者 2026-10-13 授权）**」，不是维护者亲签；**M8 里程碑仍未签**（内部版本、不签收）。
+- **未执行任何 git 写操作**（无 add / commit / tag / push / branch / stash）；全部改动留工作树，由维护者切分提交。执行环境 `dev-win03ib7niepf0`。

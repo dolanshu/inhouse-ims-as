@@ -251,3 +251,81 @@
 - **blocked：7 → 6**（剩余：F-15、5.4-F-15真AS、NF-1、S-2、S-3、ADR-0008-演练）
 - open 17 / n-a 9 / fail 0 不变
 - 边界：该 pass 仅基于 UDP 实测，不外推 TCP/TLS；不构成零丢失或 SLA 承诺；仿真 S-SBC 不代表运营商 S-SBC 行为；不改 `report.md` 计数；未执行 git 写操作。
+
+---
+
+## M8 批次4 终态化代签（2026-10-13；正文各行与「状态统计」原文保留不改，本节只登记终态与计数变化）
+
+> **授权来源**：维护者 **2026-10-13** 原话「**接受建议，授权你代签**」—— 采纳
+> [`m8-matrix-finalization-draft-2026-10-12.md`](m8-matrix-finalization-draft-2026-10-12.md)
+> §1 的逐行建议值、§2 的 `defer` 状态词、§3 的计数推算，以及该草案 §4 中
+> **D4-01 / D4-02 / D4-05** 三项裁决的建议值。
+>
+> **本节不是维护者亲签**：全部签字栏一律写「**agent 代签（维护者 2026-10-13 授权）**」。
+> **M8 里程碑仍未签**（内部版本、不签收），本批次不签任何里程碑。
+> **执行环境**：`dev-win03ib7niepf0`（已登记于 `docs/environments.md`）。
+>
+> **追加式纪律**：矩阵正文各行、「状态统计」段与既有追加节（N2 / N3 / 重大漏项 / NF-4 裁定）**原文一律保留不改**，本节只在文件末尾登记终态与计数变化。
+
+### 一、本次一并落地的三项裁决（建议值已被采纳）
+
+| 项 | 裁决 | 落地处 / 取证 |
+|---|---|---|
+| **B5-04**（performance 层门禁终态，批次 5 遗留） | **(b) M8 总审书面接受风险**：本版不实现 `make gate` 阻塞层 | `docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-performance-gate-terminal-state-2026-10-12.txt` 登记的待裁决项据此关闭；NF-15 行随之转 pass，范围不含饱和点、不含对外阈值 |
+| **S-1 二选一**（D4-01） | **① 修订矩阵 L86 描述** —— 删去「白名单变更走审批（F-14 联动）」这一无代码支撑的说法；「白名单纳入变更单」另立 **v1.1 feature 候选**，不阻塞本行 | 正文 L86 原文保留不改，本节登记；取证 `docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt`（`ConfigBundle` 无 peer 实体；`ManagedRuleChange` 只管规则；`platform/src` 内 `gate.install` / `install_with_overlap` 无产品调用点） |
+| **白名单地址 / 证书 OR 语义**（D4-02） | **本版接受 OR**（不改代码、不写 ADR）；收紧为 AND 列 **v1.1 安全增强候选**，需先确认 S-SBC 是否必带客户端证书 | 取证 `docs/acceptance/artifacts/m5/2026-10-12/PASS-s1-whitelist-rejection-2026-10-12.txt`（新增 `platform/tests/test_req_s1_whitelist_rejection.py` 第 9 条钉住 OR 语义：地址命中即放行，不要求对端证书） |
+
+### 二、17 行终态（原 status = open）
+
+| req_id | 原状态 | 终态 | 范围 / 去处 | 证据（三元组） | signed_by |
+|---|---|---|---|---|---|
+| **F-4** | open | **pass** | 本版；范围 = testbed corpus（环境 `dev-win03ib7niepf0`）5 例字节恒等；`docs/plan.md` §5.2 **D11** 线上证明独立跟踪 | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s7a-sdp-corpus-expansion-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **F-5** | open | **defer** | → **v1.1 feature**：产品 AS 转发 trunk 侧 Record-Route（`PASS-s8` 自述至今未转发） | `(已验证-仅基线补采, docs/acceptance/artifacts/m5/2026-10-12/PASS-s8-baseline-recapture-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **F-8** | open | **defer** | → **v1.1 工程补测**：三分支真栈对拍 + native C++→Python JSON 回调（N2 #3 已 defer post-RC）；**本版无新证据** | 无本版新证据 —— 不构成三元组；既有指针 `docs/reviews/m8-phase-a-f6-f8-note-2026-10-06.md` N2 #3 | agent 代签（维护者 2026-10-13 授权） |
+| **F-9** | open | **defer** | → **v1.1 feature**：in-dialog re-INVITE / UPDATE；BYE 分支本版已通 | `(已验证-仅 BYE 分支, docs/acceptance/artifacts/m5/2026-10-12/PASS-s9-in-dialog-bye-routing-2026-10-12.txt, 2026-10-12)`；`(未实现, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s9-reinvite-update-not-implemented-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **F-10** | open | **pass** | 本版；486 / 480 / 408 三码透传 | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s10-non-2xx-passthrough-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **F-11** | open | **defer** | → **v1.1 缺陷修复**：CANCEL 先于任何下游响应（native `runtime_module.cxx` L1143-1162 守卫）；分支①本版已通 | `(已验证-仅分支①, docs/acceptance/artifacts/m5/2026-10-12/PASS-s11-cancel-race-branch1-2026-10-12.txt, 2026-10-12)`；`(未实现, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s11-cancel-before-any-downstream-response-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **F-16** | open | **pass** | 本版，**仅非轨迹部分**（decide 翻译用例，与 N3 签 F-6 / F-7 同口径）；轨迹联动随 F-13 归 v1.1 | `(已验证-非轨迹部分, docs/acceptance/artifacts/m5/2026-10-11/PASS-gate-native-2026-10-11.txt, 2026-10-11)`；2026-10-12 本批次收尾 `make gate` 1174 passed 复现 | agent 代签（维护者 2026-10-13 授权） |
+| **NF-2** | open | **pass** | 本版；边界 = 不含节点级 / 网络分区 | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **NF-5** | open | **pass** | 本版；边界 = TLS 为测试 CA，不签 REQ-S-2 / REQ-S-3 | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **NF-9** | open | **pass** | 本版；边界 = 两 namespace 共享同一 kind 节点，不含节点宕机 | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **NF-10** | open | **pass** | 本版；边界 = fleet 为协议 stub，**不证明 AS 进程消费 bundle**；bundled PG / Redis 单副本不覆盖生产 HA | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **NF-13** | open | **blocked** | 工程切片已在 gate；**live 采集随 X1 进下一 release**（维护者 2026-10-12 已裁定，需运营商 monitoring-integration 标准输入） | `(已验证-工程切片, platform/tests/test_resip_runtime_log_contract.py 13 passed（gate 内）, 2026-10-12)`；restriction 指针 `docs/plan.md` §0 X1 行 | agent 代签（维护者 2026-10-13 授权） |
+| **NF-14** | open | **blocked** | 规则语法已过（promtool 3 组 10 条）；**真实触发待 Alertmanager + 通知通道**（客户环境，M2 冻结事项延续）。语法校验 ≠ 真实触发 | `(已验证-仅语法校验, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)` | agent 代签（维护者 2026-10-13 授权） |
+| **NF-15** | open | **pass** | 本版，**条件 = B5-04 裁决 (b) 已落地**；范围 = harness 落地 + 多副本实测，**不含饱和点、不含对外阈值** | `(已验证-非饱和点, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf15-multi-replica-measurement-2026-10-12.txt, 2026-10-12)`；`(已验证-仅限内部, docs/acceptance/artifacts/m5/2026-10-12/PASS-o1-loopback-cps-1280-2026-10-12.txt, 2026-10-12)`；`(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-hpa-threshold-filled-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **S-1** | open | **pass** | 本版，**条件 = S-1 裁决 ① 已落地**（矩阵 L86 描述按事实修订）；范围 = 白名单拒绝 / fail-closed；**OR 语义本版接受** | `(已验证-仅拒绝场景, docs/acceptance/artifacts/m5/2026-10-12/PASS-s1-whitelist-rejection-2026-10-12.txt, 2026-10-12)`；`(能力不存在-已登记, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **S-4** | open | **pass** | 本版；RBAC HTTP 边界矩阵 + 审计 append-only（真 Postgres 实测）；边界 = 结构断言 ≠ 数据库端实测（后者由真 PG integration 覆盖）、每条权限只取一个代表性端点、越权落痕只验 submit×viewer 一格、不含外部 IAM / SSO 与运营商 PKI | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-audit-append-only-2026-10-12.txt, 2026-10-12)`；`(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-rbac-permission-matrix-2026-10-12.txt, 2026-10-12)` | agent 代签（维护者 2026-10-13 授权） |
+| **D12/O5-HA** | open | **blocked** | 表 A **restriction**（客户生产 Redis / PG HA），与 NF-1 / S-2 / S-3 同类；kind bundled state 不是本条；不立 v1.1 项，上线前客户环境验证 | `(restriction, docs/acceptance/m8-environment-evidence.md, 2026-10-07)` | agent 代签（维护者 2026-10-13 授权） |
+
+### 三、状态词 `defer`（本次新增）
+
+| 状态词 | 定义 | 与相邻状态词的区分 | 可否回转为 pass |
+|---|---|---|---|
+| **defer** | 本 release **不验收**，**已定点 v1.1**；启动时走新 feature 流程（requirement → ADR → design → review）；本版**不立项、不实现** | 区别于 `blocked`（restriction，缺的是外部环境）与 `n-a`（永不验收） | 可以 —— feature 落地后由 v1.1 流程验收 |
+| **blocked** | **restriction** —— 无客户环境 / 无运营商输入，不是 feature 缺口 | 本版不能靠工程层努力解除，不进 v1.1 立项 | 环境到位后可验收 |
+| **n-a** | **永不验收、永不记为 pass**（均附理由） | 与 `defer` 相反，不进 v1.1 立项 | 否 |
+
+**本次 4 行 `defer` 与其 v1.1 立项输入**：
+
+| req_id | v1.1 类别 | 立项输入（证据 / 登记文件） |
+|---|---|---|
+| **F-5** | v1.1 feature（产品 AS 转发 trunk 侧 Record-Route） | `docs/acceptance/artifacts/m5/2026-10-12/PASS-s8-baseline-recapture-2026-10-12.txt` 自述（out-of-scope 节：trunk 侧 Record-Route 至今不转发） |
+| **F-8** | v1.1 工程补测（三分支真栈对拍 + native C++→Python JSON 回调） | `docs/reviews/m8-phase-a-f6-f8-note-2026-10-06.md` N2 #3 |
+| **F-9** | v1.1 feature（in-dialog re-INVITE / UPDATE） | `docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s9-reinvite-update-not-implemented-2026-10-12.txt` |
+| **F-11** | v1.1 缺陷修复（CANCEL 先于任何下游响应） | `docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s11-cancel-before-any-downstream-response-2026-10-12.txt` |
+
+### 四、计数口径随本次变更的更新（原计数保留不改，此处只登记新值）
+
+- **pass：17 → 27**（新增 F-4 / F-10 / F-16 / NF-2 / NF-5 / NF-9 / NF-10 / NF-15 / S-1 / S-4）
+- **open：17 → 0**
+- **defer：0 → 4**（F-5 / F-8 / F-9 / F-11）
+- **blocked：6 → 9**（新增 NF-13 / NF-14 / D12/O5-HA；剩余 F-15、5.4-F-15真AS、NF-1、S-2、S-3、ADR-0008-演练）
+- **n-a 9 不变**、**fail 0 不变**
+
+### 五、边界（不得据本节推出过度结论）
+
+1. **`docs/acceptance/report.md` §0.5 计数一字未改** —— 同步归批次 6（E-1），取值以本节「四」为准。
+2. 「工程证据接受」≠ REQ 级验收通过 ≠ 里程碑签收；**M8 里程碑仍未签**（内部版本、不签收），本批次不签任何里程碑。
+3. 4 行 `defer` 定点 v1.1，**本版不立项、不实现**；3 行 `blocked`（NF-13 / NF-14 / D12/O5-HA）属 restriction，**不进 v1.1 立项**。
+4. 本节签字为 **agent 代签（维护者 2026-10-13 授权）**，**不是维护者亲签**。
+5. **未执行任何 git 写操作**（无 add / commit / tag / push / branch / stash）；全部改动留工作树，由维护者切分提交。
