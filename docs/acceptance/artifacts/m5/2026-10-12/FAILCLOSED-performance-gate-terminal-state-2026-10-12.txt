@@ -1,0 +1,32 @@
+== M8 batch5 performance 层门禁终态：拒绝自行处置，登记待维护者裁决（FAILCLOSED） ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (失败已登记-待裁决, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-performance-gate-terminal-state-2026-10-12.txt, 2026-10-12)
+
+-- 待决问题（RC 计划 A-6 / scope §2.5） --
+performance 层门禁终态二选一：(a) 实现为 make gate 阻塞层；(b) M8 总审书面接受风险。
+批次硬纪律：不自作实现、不自行接受风险；本批次内无法决定，按 FAILCLOSED 登记。
+
+-- 现状实测（2026-10-12，本文件为真实记录非空 transcript） --
+1. Makefile:83-84：
+     test-perf: ## ④ capacity baseline (never part of the commit gate)
+              $(UV) run pytest -m performance -q
+   AGENT.md §9：make gate = ruff format --check → ruff check → mypy → pytest(unit/contract)，四步固定；
+   performance 为手动/按需第④层，不进提交门禁。
+2. uv run pytest -m performance -q（2026-10-12 实测输出）：
+     "1 passed, 1368 deselected, 1 warning in 1.96s"，rc=0。
+   唯一 performance 标记用例：testbed/load/tests/test_resip_probe_micro_perf.py
+   （resip_probe 外部 UAS 微负载 smoke；无 native 构建时 skip；文件头自述 "M6 precursor only ...
+   not capacity or O1 evidence"）。
+3. NF-15 kind 多副本测量（PASS-nf15-multi-replica-measurement-2026-10-12.txt）是人工执行的批次，
+   没有、也未被接入任何自动门禁目标。
+4. 结构事实（供裁决参考，非建议结论）：真实 socket 性能用例依赖硬件/集群/独占资源，结果环境相关且易 flaky；
+   AGENT.md §6 规定 performance 层「只用真实 socket」。是否阻塞提交门禁及其判据（阈值/环境/豁免）须维护者书面裁决。
+
+-- agent 已做与未做 --
+- 未做：未把 performance 接入 make gate（未改 Makefile/CI/测试标记），未代维护者书面接受风险。
+- 已做：如实登记当前门禁现状与唯一在用例，供 M8 总审二选一裁决；裁决前维持「手动层、不阻塞」现状。
+
+-- 结论 --
+FAILCLOSED：performance 层门禁终态待维护者裁决（(a) 阻塞层实现 或 (b) M8 总审书面接受风险）。
+本文件不是通过证据；不得计入任何「已完成/已通过」清单。

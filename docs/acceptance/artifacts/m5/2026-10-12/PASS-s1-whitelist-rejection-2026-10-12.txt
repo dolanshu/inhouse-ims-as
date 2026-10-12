@@ -1,0 +1,107 @@
+PASS — M8 批次4 S-1 白名单拒绝场景补测（REQ-S-1 工程层，unit）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+被验项: s1-whitelist-rejection（产品 INVITE 路径对白名单未命中返回 403）
+结论: 通过（新增 9 条 unit 测试全绿；`make gate` exit 0）
+执行人: agent 补测，待维护者评审
+
+三元组
+------
+(通过, docs/acceptance/artifacts/m5/2026-10-12/PASS-s1-whitelist-rejection-2026-10-12.txt, 2026-10-12)
+
+背景：为什么补这一组
+--------------------
+`platform/src/as_platform/sip/resip_runtime.py:39` 定义 `_INGRESS_DENIED_STATUS = 403`，
+`_on_invite`（:330-363）在两个分支返回它：
+  * :334-335 —— plaintext-when-TLS-required（`reject_plaintext_when_tls_required`）
+  * :345-346 —— `gate.check_peer(...)` 未命中
+补测前，全仓对 403 的断言只出现在 **integration** 层
+（`platform/tests/test_resip_runtime_integration.py:151`、
+`platform/tests/test_resip_runtime_tls_policy_integration.py:196`），二者依赖 cmake 构建的
+`_resip_runtime` 扩展，不在 `make gate`（`-m "unit or contract"`）收集范围内；
+且全仓没有一处断言 `_INGRESS_DENIED_STATUS` 这个值本身。即：门禁层 ① 对产品拒绝路径**无 pin**。
+
+新增测试（唯一新增文件）
+------------------------
+platform/tests/test_req_s1_whitelist_rejection.py   （`pytestmark = pytest.mark.unit`）
+
+构造方式（如实说明替身范围与局限）
+----------------------------------
+测试驱动的是**真实的** `ResipRuntimeListener._on_invite` —— 即 native 扩展每通 INVITE 回调的
+那个可调用对象 —— 对象是走真实 `__init__` 构造的（没有 `object.__new__`、没有 monkeypatch gate、
+没有替换 `check_peer`）。被替身的只有它**外围**的东西：
+
+  * 不起 socket、不加载 native 扩展：不 bind、不发包，纯 Python 进程内调用；
+  * `received_at` 注入为探针：`decide()` 是否被执行是**正向断言**（探针为空 = 停在内核之前），
+    而不是由状态码反推；
+  * 断言的是字面量 `403`（线上 SIP 状态码），不是 `_INGRESS_DENIED_STATUS` 这个私有常量 ——
+    改常量必须在这里红。
+
+局限（本证据**不**覆盖）：native 传输层把这个返回值真正编成 SIP `403 Forbidden` 响应帧。
+该 wire 行为仍由上文两个 integration 测试（UDP / TLS）覆盖，不在层 ① 范围内。
+
+新增的 9 个测试与其断言
+------------------------
+1. test_on_invite_returns_403_when_peer_address_is_not_whitelisted
+   白名单 {10.0.0.1}，peer 127.0.0.1 → == 403，decide 探针为空
+2. test_on_invite_returns_403_when_whitelist_is_empty
+   两个维度皆空 → == 403（fail-closed，ADR-0016；transport.py:272-273），探针为空
+3. test_on_invite_returns_403_when_certificate_id_is_not_whitelisted
+   仅证书维度白名单，token 不匹配 → == 403，探针为空
+4. test_on_invite_returns_403_when_peer_port_is_outside_endpoint_whitelist
+   端点令牌 `127.0.0.1:5060`，peer 端口 5061 → == 403，探针为空
+5. test_on_invite_returns_403_when_peer_is_outside_allowed_cidr
+   CIDR `10.0.0.0/8`，peer 127.0.0.1 → == 403，探针为空
+6. test_on_invite_returns_403_for_plaintext_udp_when_tls_is_required
+   tls_only=True、peer **在**白名单、transport=udp → == 403（明文优先于白名单），探针为空
+7. test_on_invite_does_not_deny_a_whitelisted_peer（对照）
+   白名单命中 → == 404（空规则集），探针 == ["received_at"]：证明 403 是拒绝专属，
+   不是「装置一律返回 403」
+8. test_on_invite_accepts_a_matching_certificate_id_without_a_listed_address
+   证书命中、地址未列 → == 404：mTLS 下证书即身份（transport.py:275-278）
+9. test_on_invite_allows_a_listed_address_that_presents_an_unknown_certificate
+   **如实钉住 OR 语义**：`authorize_peer`（transport.py:276-298）两个维度是 **OR** ——
+   地址命中即放行，即使证书 token 未知或缺失（实测 == 404，非 403）。
+   这不是 mTLS 强校验，此处只记录现状，**不构成背书**；是否改为 AND 属维护者策略裁决。
+
+执行与真实输出（含 exit code）
+------------------------------
+$ cd /home/shudong/project/3rdparty-as
+$ uv run pytest platform/tests/test_req_s1_whitelist_rejection.py -q
+.........                                                                [100%]
+9 passed in 0.03s
+EXIT=0
+
+$ make gate      # ruff format --check → ruff check → mypy → pytest -m "unit or contract"
+...（ruff format --check 553 files already formatted / ruff check / mypy 均通过）...
+1159 passed, 227 deselected, 11 warnings in 9.49s
+EXIT=0
+（本次运行 **0 skipped**：deselected 227 为 integration/e2e/performance 层，非 skip）
+
+$ uv run pytest tests/test_evidence_discipline.py -q
+........................................................................ [ 56%]
+.......................................................                  [100%]
+127 passed in 0.40s
+EXIT=0
+
+补测过程中发现并已修正的一处事实（如实记录）
+--------------------------------------------
+首轮我把第 3 条写成「地址命中 + 证书不匹配 → 403」，实测为 **404**：`authorize_peer` 是 OR 语义。
+我没有改产品代码去迎合断言，而是按实测语义修正测试，并新增第 9 条把 OR 语义钉住。
+这一事实对 REQ-S-1 的口径有影响：**地址白名单单独放行，不要求对端证书**，请勿据此声称已做 mTLS 强校验。
+
+边界（本证据不算什么）
+----------------------
+* **本文件不签收 REQ-S-1。** 签收权在维护者；本文件只是层 ① 的补测与取证。
+* 本证据**不是** wire 层证据：没有真 socket、没有真 SIP 报文，403 帧的发出由既有 integration
+  测试覆盖；本机 `platform/native/resip_runtime/build/_resip_runtime*.so` 存在，但本组测试未加载它。
+* 本证据**不覆盖**「白名单变更经审批后生效」—— 该能力经取证**不存在**，
+  见同目录 `FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt`。
+* 本证据**不覆盖**运营商 PKI / 真实 S-SBC（restriction，D-1）；证书一律为测试 token 字符串。
+* 本证据**不覆盖** UDP 静默丢弃路径（`platform/src/as_platform/sip/udp_ingress.py:88-89`，
+  既有 integration 覆盖）。
+* 环境层一处口径差异（非缺陷，供维护者知悉）：`load_transport_seam_from_env`
+  （`platform/src/as_platform/runtime/transport_env.py:90-94`）在两个 env 变量都未设置时会把
+  `advertised_address / bind_address / 127.0.0.1 / ::1` 填进白名单，故「env 未配置」**不等于**
+  「空策略 deny」；fail-closed 是 `PeerPolicy` 层语义（transport.py:272-273），已由第 2 条钉住。
+* 未改动任何产品代码、未改动矩阵 / report / plan，未执行任何 git 写操作。

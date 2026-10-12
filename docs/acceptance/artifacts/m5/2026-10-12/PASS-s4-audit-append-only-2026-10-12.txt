@@ -1,0 +1,126 @@
+PASS — M8 批次4 S-4 审计不可篡改补测（REQ-S-4 工程层：真 PostgreSQL 复跑 + 结构断言 unit）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+被验项: s4-audit-append-only（审计行 append-only：不可 UPDATE / DELETE / TRUNCATE）
+结论: 通过（真 PG 复跑 exit 0；新增 7 条 unit 全绿；`make gate` exit 0）
+执行人: agent 补测，待维护者评审
+
+三元组
+------
+(通过, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-audit-append-only-2026-10-12.txt, 2026-10-12)
+
+背景：既有覆盖与本批补的是什么
+------------------------------
+* 数据库端实测已存在：`services/config-service/tests/test_postgres_audit_store_integration.py:179`
+  `test_runtime_role_can_append_and_read_only_with_effective_grants`
+  —— runtime role 的 UPDATE/DELETE/TRUNCATE → `InsufficientPrivilege`（:336-343），
+  **owner** 同样三条 → `CheckViolation`（:353-360，即 trigger 连 owner 也拦住）。
+* 缺口：该层是 `integration` 标记，**不在 `make gate`（`-m "unit or contract"`）收集范围内**；门禁层 ①
+  对「审计不可篡改」只有一条 `test_audit_store.py:206` 的 `not hasattr(store, "update"/"delete")`。
+  即：守卫本身（trigger / guard 函数）在层 ① **没有 pin**，改掉 trigger 名字或去掉 `FOR EACH ROW`
+  不会让门禁变红。
+* 本批补两件事：(A1) 在真 PostgreSQL 上把既有 integration **复跑取证**；
+  (A2) 在层 ① 新增**结构**断言，把守卫的声明钉住。
+
+A1 真 PostgreSQL 复跑（内部环境，非客户集群）
+----------------------------------------------
+容器：`as-m4b8-dev-postgres-1`（deploy/compose 的 PostgreSQL，host 端口 55432，状态 healthy）。
+所用 DSN（口令已遮蔽）：`postgresql://postgres:***@127.0.0.1:55432/as_config`
+
+$ cd /home/shudong/project/3rdparty-as
+$ AS_PG_TEST_DSN="postgresql://postgres:***@127.0.0.1:55432/as_config" \
+    uv run pytest services/config-service/tests/test_postgres_audit_store_integration.py -q -m integration
+....................sss...................                                   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] services/config-service/tests/test_postgres_audit_store_integration.py:888: CREATE PUBLICATION requires wal_level=logical (current wal_level=replica)
+SKIPPED [2] services/config-service/tests/test_postgres_audit_store_integration.py:937: CREATE PUBLICATION requires wal_level=logical (current wal_level=replica)
+35 passed, 3 skipped in 4.86s
+EXIT=0
+
+其中 3 条 SKIPPED 的构成：全部为 `CREATE PUBLICATION requires wal_level=logical`
+（环境 `dev-win03ib7niepf0` 上该 compose PG 的 `wal_level=replica`），**不是 skip 掉任何不可篡改守卫用例**。
+
+单独复跑本项核心守卫用例：
+
+$ AS_PG_TEST_DSN="postgresql://postgres:***@127.0.0.1:55432/as_config" \
+    uv run pytest "services/config-service/tests/test_postgres_audit_store_integration.py::test_runtime_role_can_append_and_read_only_with_effective_grants" -v -m integration
+services/config-service/tests/test_postgres_audit_store_integration.py::test_runtime_role_can_append_and_read_only_with_effective_grants PASSED [100%]
+============================== 1 passed in 0.19s ===============================
+EXIT=0
+
+A2 新增层 ① 结构断言（唯一新增文件）
+-------------------------------------
+services/config-service/tests/test_req_s4_audit_immutability.py   （`pytestmark = pytest.mark.unit`）
+
+读取方式：`inspect.getsource(PostgresAuditStore.ensure_schema)` → `ast.parse` → 收集其中所有字符串
+字面量与 `expected_triggers` 字面量表（不是对整段源码做子串匹配，避免格式变动就假绿）。
+
+**这是结构断言，不等价于数据库端实测** —— 它证明 `ensure_schema` *声明*了什么，不证明 PostgreSQL
+*执行*了什么。数据库端实测由 A1 与既有 integration 覆盖。
+
+7 个测试与其断言
+----------------
+1. test_bootstrap_declares_a_row_level_update_and_delete_trigger
+   字面量含 `CREATE TRIGGER audit_row_immutable BEFORE UPDATE OR DELETE ON ` 与
+   ` FOR EACH ROW EXECUTE FUNCTION `（行级）。
+2. test_bootstrap_declares_a_statement_level_truncate_trigger
+   字面量含 `CREATE TRIGGER audit_table_immutable BEFORE TRUNCATE ON ` 与
+   ` FOR EACH STATEMENT EXECUTE FUNCTION `（语句级）。
+3. test_declared_trigger_types_are_row_level_and_statement_level
+   按 `pg_trigger.tgtype` 位掩码（row=1 / before=2 / delete=8 / update=16 / truncate=32）在测试内
+   自行算出 27 与 34，再断言 `expected_triggers` 字面量中对
+   `audit_row_immutable` == 27（row+before+delete+update）、`audit_table_immutable` == 34
+   （before+truncate，无 row 位），且两者 `tgenabled == "O"`。
+   即：不是抄数字，而是「位掩码算出来必须等于源码里的数字」。
+4. test_guard_function_bodies_raise_check_violation
+   `_AUDIT_GUARD_FUNCTION_BODIES`（audit_store.py:101-106）两个函数体均含 `RAISE EXCEPTION` 与
+   `USING ERRCODE = '23514'`；row 体含 `audit rows are immutable`，truncate 体含
+   `audit table is append-only`。
+5. test_bootstrap_installs_the_guard_functions_with_the_declared_bodies
+   `ensure_schema` 的 `CREATE FUNCTION` 语句确实携带上述两个函数体，且函数以
+   `() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog AS $audit_guard$` 声明
+   （`SET search_path` 是防 search_path 劫持的既有约束，一并钉住）。
+6. test_bootstrap_takes_an_access_exclusive_lock_before_granting
+   字面量含 ` IN ACCESS EXCLUSIVE MODE`（audit_store.py:1048）：发权限前先锁表。
+7. test_store_exposes_no_mutation_api
+   无 `update/delete/truncate/purge/remove/clear/rewrite/modify` 任一属性；且 `PostgresAuditStore`
+   对外名字的**全集**恰为
+   {append, connection, ensure_schema, list_events, prefix, qualified_sequence, qualified_table,
+   schema, sequence, table, validate_runtime_connection} —— 新增任何公开方法都会在这里红。
+
+执行与真实输出（含 exit code）
+------------------------------
+$ cd /home/shudong/project/3rdparty-as
+$ uv run pytest services/config-service/tests/test_req_s4_audit_immutability.py -q
+.......                                                                  [100%]
+7 passed in 0.08s
+EXIT=0
+
+$ make gate      # ruff format --check → ruff check → mypy → pytest -m "unit or contract"
+（ruff format --check / ruff check / mypy 均通过）
+1174 passed, 249 deselected, 11 warnings in 9.28s
+EXIT=0
+（本次运行 **0 skipped**；deselected 249 为 integration/e2e/performance 层，非 skip）
+
+$ uv run pytest tests/test_evidence_discipline.py -q
+........................................................................ [ 53%]
+...............................................................          [100%]
+135 passed in 0.38s
+EXIT=0
+（同批 S-1 证据记录的基线为 127 passed；差额 8 为本批 2 个新证据文件参与的多组参数化用例）
+
+边界（本证据不算什么）
+----------------------
+* **本文件不签收 REQ-S-4。** 签收权在维护者；本文件只是层 ① + 内部环境 PG 的补测与取证。
+* 本证据的 A2 部分是**结构断言，不是数据库端实测**：没跑 PostgreSQL、没触发 trigger。
+  数据库端实测见 A1（真 PG，DSN 指向内部环境 `as-m4b8-dev-postgres-1`，非客户集群）。
+* 本证据**不覆盖**备份/恢复后的审计连续性、归档与留存期、异地复制下的 append-only；
+  2.5 演练中的「审计 append-only 8 项守卫按拒」另见
+  `2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt`。
+* 本证据**不覆盖** PG 15+：`2026-10-12/FAIL-integration-pg15-2026-10-12.txt` 记录该版本下
+  `-m integration` 有既有失败（`AmbiguousFunction`，与审计无关）；本项复跑用的是 compose 的
+  PG 12.22（仓库标准环境）。
+* 本证据**不覆盖**「审计行不可被应用账号以外的路径篡改」（如 superuser 手工删 trigger、
+  物理文件级修改）；store 侧对 runtime role 的属性与成员资格校验由既有 integration 覆盖
+  （`test_runtime_validation_rejects_altered_role_attributes` 等）。
+* 未改动任何产品代码、未改动矩阵 / report / plan / environments，未执行任何 git 写操作。

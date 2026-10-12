@@ -1,0 +1,45 @@
+== M8 batch5 O1 内部工程目标复测：loopback CPS 1280 无失败（INTERNAL ONLY） ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-o1-loopback-cps-1280-2026-10-12.txt, 2026-10-12)
+
+-- 方法 --
+loopback 模型（与 M6 O1 正式批次、2026-10-12 饱和点探测同模型）：
+- UAS：uv run python platform/tests/fixtures/load_uas_runtime.py
+  （产品 ResipRuntimeListener，accept_all_invites=True，127.0.0.1，native _resip_runtime，reSIProcate 1.14.0-632e215c）
+- 负载：uv run python -m as_load --host 127.0.0.1 --port <udp_port> --cps 1280 --duration 15
+  --hold 0 --workers 256 --timeout 5 --stack as-platform-resip-runtime
+  --stack-version 1.14.0-632e215c --out /tmp/m8b5/o1-loopback/cps1280
+- 实测 udp_port=48565（本次启动）。
+
+-- 原始结果（summary.json counts 逐字） --
+{"datagrams_sent": 57600, "dialog_acks_sent": 19200, "established_sessions": 19200,
+ "final_active_sessions": 0, "invite_datagrams_sent": 19200, "peak_established_sessions": 25,
+ "planned_attempts": 19200, "scheduled_attempts": 19200, "success_rate": 1.0,
+ "unresolved_sessions": 0, "worker_limit_drops": 0}
+建立时延：p50=8.69ms p95=12.79ms p99=15.19ms max=23.71ms（count=19200）。
+
+-- 结论 --
+PASS（仅限内部工程目标）：loopback 模型 CPS 1280、15s、19200/19200 建立，零失败、零 unresolved、零 worker 丢弃。
+内部工程目标下限基线（loopback CPS 1280 无失败）2026-10-12 复测成立。
+
+-- 边界 --
+- INTERNAL ONLY：本数字是 loopback/accept-all/hold=0/单进程模型的下限基线，不是饱和点、不是对外承诺值、不是 SLA；
+  不得写入任何对外材料（AGENT.md §2；scope §2.5/§3）。对外承诺值准入三条件（业务判决路径、饱和点观测、
+  目标环境多副本测量）仍全部未满足。
+- 原始数据：/tmp/m8b5/o1-loopback/cps1280/（summary.json、events.jsonl），不入库。
+- 本文件不签收 REQ-NF-15，不改变矩阵状态与 report.md 计数。
+
+-- 通俗说明（2026-10-13 维护者指示追加：读者不必追问即可看懂本次测量） --
+
+角色分工：as_load 扮演主叫（UAC，发请求的一方）；产品 SIP 运行时 ResipRuntimeListener 扮演被叫（UAS，应答的一方）。两方在同一台机器上，经 127.0.0.1 回环通信，没有真实网络。
+
+一次呼叫在线上共 7 条报文，分两段：
+- 建立阶段 4 条：① INVITE（as_load 发出，开始计时）→ ② 100 Trying → ③ 180 Ringing → ④ 200 OK（as_load 收到，停止计时）。「建立时延」= ① 发出时刻到 ④ 收到时刻之差（中间的 100/180 是路过的临时响应，不单独计时，但属于这 4 条报文）；不是 7 条全部走完。
+- 拆线阶段 3 条：⑤ ACK（确认 200，对话正式建立）→ ⑥ BYE（请求挂断，CSeq 升到 2，同一 Call-ID 与双 tag）→ ⑦ 200 OK（对话结束）。本次 hold=0，⑤ 之后立即 ⑥，通话不保持，因此测的是信令建立速率而非并发会话保持压力。
+
+为什么只有「一条腿」：产品生产模式是 B2BUA——收到北侧 INVITE 后先跑翻译/反诈规则判决，判决为转发（FORWARD）时，AS 再以主叫身份向南侧下游发起一条新的、带新 Call-ID 的出腿 INVITE，两腿由 AS 桥接。本次测量打开了测试开关 accept_all_invites：AS 收到 INVITE 后既不判决也不转发，由本进程直接以被叫身份回 100/180/200（代码位置 platform/src/as_platform/sip/resip_runtime.py 的 accept_all_invites 分支 return 0）。因此南侧下游不存在，出腿根本没有发生。开关来源：loopback 测量由 platform/tests/fixtures/load_uas_runtime.py 构造时写死 True；kind 测量由环境变量 AS_SIP_ACCEPT_ALL_INVITES=1 打开；生产默认关闭。
+
+所以「CPS 1280 无失败」的确切含义是：产品 SIP 栈在真实 UDP socket 上、由本进程直接应答（accept-all）时，每秒完成 1280 次「INVITE→200 OK→ACK→BYE→200」信令收发且全部成功。它没有经过：规则判决链、向南转发（第二条腿）、S-SBC、真实网络、通话保持——这些都是真实容量的组成部分，故本数字只是内部下限基线，不是生产容量、SLA 或饱和点。
+
+下一 release 增强方向（2026-10-13 维护者指示）：关闭 accept_all_invites 开关，搭建真实下游 UAS，对「入腿 + 出腿」完整 B2BUA 两腿路径做真实 socket 压测，使容量测量覆盖业务判决与转发路径。本版不立项实现。

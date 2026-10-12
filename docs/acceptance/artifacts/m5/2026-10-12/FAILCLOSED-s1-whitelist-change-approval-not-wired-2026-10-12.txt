@@ -1,0 +1,133 @@
+FAILCLOSED — M8 批次4 S-1「白名单变更经审批后生效」能力不存在（取证，非通过证据）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+被验项: s1-whitelist-change-approval-not-wired
+结论: 未实现 —— 显式拒绝而非猜测（**不是通过证据**）
+执行人: agent 补测，待维护者评审
+
+三元组
+------
+(未实现/登记为 gap, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt, 2026-10-12)
+
+**本文件不是通过证据**：它记录的是「代码里没有这项能力」这一取证结论，不得计入任何
+「已通过」清单。
+
+结论（一句话）
+--------------
+代码侧不存在「白名单变更」这一可审批实体，也不存在运行期热更新调用点：
+白名单来自 env（Helm 注入），进程构造时读一次，变更白名单当前 = 改 Helm values + Pod 重启。
+因此「白名单变更经审批后生效」本版**无法补测、无法验收**，登记为 gap，提请维护者裁决。
+
+取证一：白名单不在 ConfigBundle（可审批载荷）里
+------------------------------------------------
+$ sed -n '69,92p' platform/src/as_platform/api/contract.py
+69:
+70:@dataclass(frozen=True)
+71:class ConfigBundle:
+...
+87:    """
+88:
+89:    version: str
+90:    rules: tuple[RuleDTO, ...]
+91:    toggles: tuple[ToggleDTO, ...] = ()
+
+→ `ConfigBundle` 只有 `version` / `rules` / `toggles` 三个字段
+  （`platform/src/as_platform/api/contract.py:71`、字段 :89-91），**没有 peer / 白名单实体**。
+  构造点同样只带这三个字段：`platform/src/as_platform/runtime/ruleset_loader.py:77`、
+  `services/config-service/src/as_config_service/runtime_bundle.py:116`、
+  `.../change_order_store.py:608`、`.../postgres_store.py:328`、`.../api.py:909`、`:2034`。
+
+取证二：唯一的审批提案类型只管规则，不管白名单
+----------------------------------------------
+$ grep -n "class ManagedRuleChange\|class ManagedRuleChangeAction\|class ChangeOrder" \
+    services/config-service/src/as_config_service/change_order.py
+59:class ManagedRuleChangeAction(Enum):
+68:class ManagedRuleChange:
+166:class ChangeOrder:
+
+→ `ManagedRuleChange`（`services/config-service/src/as_config_service/change_order.py:68`）
+  字段为 `action` / `rule_id` / `proposed_rule` / `expected_revision`，是**规则**提案；
+  `ChangeOrder:166` 的 `managed_rule_change`（:173、:193）是它唯一的 typed 提案槽位。
+  全仓**没有**「PeerAllowlistChange」之类的类型。
+
+取证三：config-service 与 platform API 层根本没有 peer/白名单概念
+------------------------------------------------------------------
+$ grep -rnw "peer" --include='*.py' services/config-service/src
+（无输出）grep_exit=1
+
+$ grep -rniE "allow[_-]?list|white[_-]?list|白名单" --include='*.py' services/config-service/src
+（无输出）grep_exit=1
+
+$ grep -rniE "allow[_-]?list|white[_-]?list|白名单|peer" --include='*.py' platform/src/as_platform/api
+（无输出）grep_exit=1
+
+（注：首轮用 `grep -rni "peer"` 会误命中 `TypeError` —— `p-e-E-r` 在忽略大小写下等于 `peer`；
+  第二轮改用 `-w` / `-E` 词边界，三次检索均无命中，exit=1。）
+
+取证四：没有产品侧热更新调用点
+--------------------------------
+$ grep -rn "\.install(\|install_with_overlap" --include='*.py' platform/src
+platform/src/as_platform/sip/ingress.py:7:   (docstring)
+platform/src/as_platform/sip/ingress.py:40:  (docstring)
+platform/src/as_platform/sip/ingress.py:70:    def install_with_overlap(self, seam: TransportSeam, overlap_seconds: float) -> TransportSeam:
+platform/src/as_platform/sip/tls_rotation.py:10:  (docstring)
+
+→ `TransportIngressGate.install` / `install_with_overlap` 在 `platform/src` 内**只有定义与文档
+  引用**，**没有任何产品调用点**（唯一实际挂 overlap 钩子的是 TLS 证书轮换：
+  `resip_runtime.py:288-294`、`:406-407`）。
+
+$ grep -rn "load_transport_seam_from_env" --include='*.py' platform/src services apps
+platform/src/as_platform/runtime/transport_env.py:52:def load_transport_seam_from_env() -> TransportSeam:
+platform/src/as_platform/runtime/sip_stack_service.py:21:    load_transport_seam_from_env,
+platform/src/as_platform/runtime/sip_stack_service.py:126:        self._gate = gate or TransportIngressGate(load_transport_seam_from_env())
+platform/src/as_platform/runtime/sip_stack_service.py:156:        gate = TransportIngressGate(load_transport_seam_from_env())
+
+→ 白名单只在**进程构造时**读一次（:126 / :156），运行期无重新加载路径。
+
+取证五：白名单实际怎么变（= 改 Helm values + 重启）
+----------------------------------------------------
+$ grep -rn "ALLOWLIST\|allowlist" deploy/helm | head
+deploy/helm/values.yaml:15:#       allowlist:           # S-SBC allowlist (comma-separated IPs/CIDRs)
+deploy/helm/templates/configmap.yaml:31:  # S-SBC allowlist. Empty is fail-closed on purpose: anything able to
+deploy/helm/templates/configmap.yaml:33:  SIP_PEER_ALLOWLIST: {{ .Values.sip.peerAllowlist | quote }}
+deploy/helm/templates/NOTES.txt:29:    allowlist, anyone able to reach the Service can inject calls (ADR-0016).
+deploy/helm/README.md:81:| `sip.peerAllowlist` | S-SBC allowlist; empty must be treated as fail-closed (ADR-0016) |
+
+$ sed -n '86,103p' platform/src/as_platform/runtime/transport_env.py
+86:    allowed_addresses = _split_csv("AS_PEER_ALLOWED_ADDRESSES")
+87:    if not allowed_addresses:
+88:        allowed_addresses = _split_csv("SIP_PEER_ALLOWLIST")
+89:    allowed_fps = _split_csv("AS_PEER_ALLOWED_CERT_FINGERPRINTS")
+...
+96:    return TransportSeam(...)
+
+→ 来源是 env（Helm configmap 注入），不是配置版本/变更单。
+
+矩阵与代码事实冲突（只记录，未改矩阵）
+--------------------------------------
+docs/acceptance/m8-test-plan-matrix.md:86（REQ-S-1 行）现写：
+「白名单逻辑存在（`platform/src/as_platform/sip/ingress.py` 等含 allowlist/peer 引用的文件，
+gate 978 passed 覆盖）；**白名单变更走审批（F-14 联动）**」
+
+→ 「白名单变更走审批（F-14 联动）」这半句**没有代码支撑**：审批载荷 `ConfigBundle` 不含白名单
+  （取证一），唯一提案类型 `ManagedRuleChange` 只管规则（取证二），且无热更新调用点（取证四）。
+  前半句（白名单逻辑存在）成立，并已由同目录
+  `PASS-s1-whitelist-rejection-2026-10-12.txt` 在层 ① 补 pin。**本 agent 未改矩阵。**
+
+提请维护者裁决（二选一）
+------------------------
+① 把白名单纳入变更单：扩展 `ConfigBundle`（contract.py:71）加 peer 实体 +
+   新的可审批提案类型（对照 change_order.py:68）+ 运行期 `gate.install` 调用点。
+   这是**新 feature**，属 v1.1 流程，本版不立项。
+② 修订矩阵 REQ-S-1 行描述，删掉「白名单变更走审批（F-14 联动）」这一无代码支撑的说法，
+   保留「白名单逻辑存在 + 层 ① 已 pin 拒绝行为」。
+
+边界（本文件不算什么）
+----------------------
+* **本文件不签收 REQ-S-1**，也不构成对 REQ-S-1 的失败判定 —— 它只针对「白名单变更经审批后生效」
+  这一子项登记 gap；REQ-S-1 的拒绝行为补测见同目录 `PASS-s1-whitelist-rejection-2026-10-12.txt`。
+* 本文件**不是通过证据**，不计入通过清单。
+* 本取证**未实现**任何功能：未新增白名单实体、未加审批类型、未加热更新调用点。
+* 检索范围限于 `.py`（`platform/src`、`services/*/src`、`apps`、`deploy/helm`）；
+  未检索非 Python 配置（如 CRD/JSON schema），亦未涉及外部环境（客户集群 / 运营商 PKI）。
+* 未改动矩阵 / report / plan，未改任何产品代码，未执行任何 git 写操作。

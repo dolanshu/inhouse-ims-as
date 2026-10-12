@@ -45,3 +45,40 @@ sip:
 
 tls:
   secretName: "REPLACE_WITH_TLS_SECRET"
+
+# Horizontal Pod Autoscaler thresholds — EXAMPLE profile only. The shipped
+# chart defaults (values.yaml) deliberately keep autoscaling null with
+# enabled: false (fail-closed); this block overrides nothing in that file and
+# the hpa.yaml required/fail guards are unchanged. See ADR-0010.
+#
+# Marking (M8 batch-5, maintainer decision #4, 2026-10-12):
+# 「kind 实测、非对外承诺、上线前须目标环境复测」
+#
+# Source: kind lab on environment dev-win03ib7niepf0 / cluster kind-as-m5,
+# 2-replica accept-all harness model, CPS tiers 20/80/320/640/1280, measured
+# on 2026-10-12. These are symbolic/architectural example thresholds derived
+# from that single lab run.
+#
+# The utilization percentages are relative to each Pod's per-pod
+# useCases[].resources.requests. Requests must be sized from the same
+# target-environment measurement BEFORE enabling the HPA there; without
+# matching requests the percentage has no denominator.
+#
+# CPU was the leading resource: ~50% of a 200m request at ~160 CPS/pod and
+# ~105% at ~320 CPS/pod; 70% interpolates to roughly 220 CPS/pod in that
+# model. Memory never led scaling within the measured range (~59% of 256Mi at
+# the highest tier), so its target is a guard, not a scaling driver.
+#
+# These numbers are NOT external capacity commitments (AGENT.md §2). Do not
+# fill ne-datasheet capacity values, capacity alerts, or the formal 4.1
+# report from them — all of those stay blocked. Re-measure in the target
+# environment before go-live.
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 70
+  customMetric:
+    name: null
+    targetValue: null

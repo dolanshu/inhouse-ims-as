@@ -1,0 +1,80 @@
+== M8 batch5 NF-15 多副本测量（kind，per-pod CPU/内存 + 建立时延） ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0（host WIN-03IB7NIEPF0，Ubuntu 22.04/WSL2，12 CPU / 31 GiB）
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf15-multi-replica-measurement-2026-10-12.txt, 2026-10-12)
+
+-- 环境与拓扑 --
+- kind 集群 kind-as-m5（kind 0.24.0，node kindest/node v1.31.0，单节点；kubectl 1.31.4，helm 3.16.4）。
+- 测量命名空间 nf15-perf，两套被测工作负载（同镜像/同模式）：
+  1. helm release `nf15`（chart 3rdparty-as-0.2.0），仅 anti-fraud use case，replicaCount=2，
+     resources requests cpu=200m/mem=256Mi、limits cpu=1/mem=512Mi；env
+     AS_ENABLE_SIP_RUNTIME=1 / AS_SIP_ACCEPT_ALL_INVITES=1 / AS_SIP_BIND_ADDRESS=0.0.0.0 /
+     AS_SIP_ADVERTISED_ADDRESS=10.96.204.213（Service ClusterIP），SIP_PEER_ALLOWLIST=10.0.0.0/8,172.16.0.0/12，
+     tls 关，bundled PG12/Redis dev 凭据；Service nf15-3rdparty-as-anti-fraud（ClusterIP，5060/UDP）。
+  2. 临时 Deployment `sut-direct`（2→4 副本，清单 /tmp/m8b5/direct-sut.yaml，不入库），同镜像与 accept-all 模式，
+     AS_SIP_ADVERTISED_ADDRESS 用 downward API 注入各自 status.podIP，资源配额同上；用于 per-pod 直连测量。
+- 负载发生器：Pod `as-load-gen`（同产品镜像 python 3.10.22），内置入 testbed/load 的 as_load（真实 UDP socket）。
+- 被测镜像：as-platform:0.2.0-internal-20261012（sha256:babccebb86198346836a5c509b9b7b816f05bf826ad798631611f4417bcb6848）；
+  测量时仓库 commit 004904b3f05ce31cd13b9e263beb8c2586a97c59。
+- 测量模型：accept-all UAS（产品 ResipRuntimeListener 的 testbed harness 模式）+ UDP + hold=0、timeout=5s，
+  每档注入 15s；与 2026-10-12 loopback O1 探测同一代码路径模型，区别是经过 kind Pod 网络与多副本。
+  维护者 2026-10-12 指示：硬件有限，不对容量做要求，数值为象征性意义，架构上做探索。
+
+-- 测量 A：Service（ClusterIP）路径的发现 --
+as_load 从客户端 Pod 经 ClusterIP 发流（200 CPS×12s 探针 + 全档位）。结果全部成功，但话务被钉在单个端点：
+- 640 CPS 档两 Pod UDP InDatagrams 增量：28802 vs 2；1280 CPS 档：57604 vs 4。
+- 2400 次呼叫进行中，节点 conntrack 表中客户端侧仅约 10 个不同 ephemeral 源端口
+  （Linux connected-UDP 隐式绑定的源端口保持：同一客户端短生命周期 socket 关闭后，新 socket 复用同一源端口，
+  conntrack 5 元组命中既有流 → 固定 DNAT 到首次随机选中的端点）。
+- 架构含义：SIP UDP 多副本不能依赖「ClusterIP 对短生命周期流随机分发」获得均衡；真实部署需要每副本独立可达
+  （如每节点 externalTrafficPolicy=Local、headless + 对端注册/逐副本寻址）。该项是架构发现，不计任何失败。
+
+-- 测量 B：per-pod 直连（每副本一个 as_load 进程，各承担一半聚合 CPS）—— 2 副本 --
+资源来自 kubelet stats/summary（每 2s 采样）；UDP 增量来自各 Pod /proc/net/snmp Udp InDatagrams；
+利用率分母 = requests（cpu 200m / mem 256Mi）。每档 15s，两进程同时注入。
+
+| 聚合 CPS | 每副本 CPS | 每副本 UDP 报文 | CPU 均(mC, %request, max) | 内存均(MiB, %request, max) | 建立时延 p50/p95/p99 ms（两 Pod） |
+|---|---|---|---|---|---|
+| 20  | 10  | 450 / 450   | 4.0(2.0%,5.2) / 4.0(2.0%,9.4)     | 19.4(7.6%,19.6) / 17.7(6.9%,18.9)   | 51.7/52.7/52.9, 51.6/52.4/52.6 |
+| 80  | 40  | 1800 / 1800 | 24.8(12.4%,68.4) / 19.5(9.8%,49.8) | 22.4(8.7%,30.2) / 20.8(8.1%,26.3) | 3.4/7.4/8.0, 3.6/8.0/8.6 |
+| 320 | 160 | 7200 / 7200 | 108.4(54.2%,175.1) / 93.3(46.6%,165.8) | 37.6(14.7%,49.9) / 36.2(14.1%,52.5) | 2.8/6.8/7.7, 2.7/6.9/7.7 |
+| 640 | 320 | 14400 / 14400 | 230.4(115.2%,248.8) / 187.3(93.7%,338.3) | 70.4(27.5%,77.2) / 61.0(23.8%,120.5) | 1.5/3.6/4.4, 1.5/3.5/4.3 |
+| 1280 | 640 | 28800 / 28800 | 433.6(216.8%,558.4) / 423.7(211.9%,494.9) | 155.7(60.8%,202.7) / 146.8(57.3%,168.7) | 10.8/35.7/96.0, 10.8/29.2/55.0 |
+
+- 五档 established/planned = 300/300、1200/1200、4800/4800、9600/9600、19200/19200；
+  unresolved=0、worker_limit_drops=0、两进程 exit 0。
+- 空闲基线：0.7-0.8 mC，17.0-18.9 MiB。
+- 20 CPS 档 p50≈52ms 为新进程冷启动首档（native/Python 预热），后续档位即降至个位数 ms；非容量退化。
+- CPU 是主导资源：约 160 CPS/Pod 时达 request 的 ~50%，约 320 CPS/Pod 时 ~105%；
+  内插 70% 约对应 220 CPS/Pod。内存最高档约 request 的 59%，在测量范围内不主导扩容。
+
+-- 测量 C：4 副本 @ 聚合 1280 CPS（每副本 320 CPS，全新 Pod，128 worker/进程） --
+- established 19200/19200，unresolved=0、worker_limit_drops=0，四 Pod UDP 增量均为 14400（完全均衡）。
+- CPU 均 210.9-225.0 mC/Pod（105.5%-112.5% request）；内存均 32.0-35.0 MiB（12.5%-13.7%）；
+  与 2 副本在同等每副本负载（640 档）的 ~187-230 mC 一致 —— 水平扩展资源线性成立。
+- 本档时延 p50 14.5-16.1 / p95 78.6-87.8 / p99 92.7-107.6 ms 高于 2 副本同口径（p95 3.5ms），
+  原因在负载侧：单个 as-load-gen Pod（cpu limit 2 核）内 4 进程共 512 worker 线程竞争；
+  SUT 侧零失败零丢弃。干净时延曲线以测量 B 为准。
+
+-- 结论 --
+PASS（NF-15 多副本测量批次工程目标）：
+1. 在 kind 单节点上完成 2 副本五档（20/80/320/640/1280 CPS）+ 4 副本 1280 CPS 实测，
+   per-pod CPU/内存利用率与建立时延 p50/p95/p99 全部记录，全档零失败。
+2. 水平扩展架构成立：相同每副本负载下每副本资源占用一致，聚合容量随副本数线性增加。
+3. 取得 HPA 阈值填写所需的 per-pod 资源数据（见 PASS-hpa-threshold-filled-2026-10-12.txt）。
+4. 记录 Service UDP 端点钉选这一运维相关架构发现。
+
+-- 边界（不得过度引用） --
+- 模型为 accept-all harness + UDP + hold=0 + 单节点 kind 容器网络：不是业务判决路径、不是 S-SBC 路径、
+  不是生产网络、不是饱和点测量（全档未饱和）；数值为象征性/架构探索用途（维护者 2026-10-12 指示）。
+- 不发布任何对外容量数字（AGENT.md §2）；不填 ne-datasheet 容量取值、不新增容量告警、4.1 正式报告维持阻塞。
+- 原始数据留存执行机 /tmp/m8b5/（nf15-2rep/、nf15-direct-2rep/、nf15-direct-4rep/、values 与清单快照），不入库。
+- 本文件不签收 REQ-NF-15，不改变矩阵状态与 report.md 计数。
+
+-- 通俗说明（2026-10-13 维护者指示追加：读者不必追问即可看懂本测量模型） --
+
+- 角色与报文：as_load-gen Pod 扮演主叫（UAC），每个被测 AS Pod 以 accept-all 测试模式扮演被叫（UAS）。单次呼叫的 7 条报文（INVITE/100/180/200/ACK/BYE/200）与「建立时延=INVITE 发出到 200 OK 收到（4 条报文的窗口）」的口径，与 PASS-o1-loopback-cps-1280-2026-10-12.txt 的通俗说明节完全相同，此处不重复。
+- 为什么是单腿：AS_SIP_ACCEPT_ALL_INVITES=1 使 AS Pod 不判决、不转发、自己直接应答，没有南侧下游、没有出腿；生产 B2BUA 的转发出腿（新 Call-ID）本次不存在。
+- 本批次相对 loopback 多覆盖了什么：多副本 Pod、kind 容器网络、kubelet 视角的 per-pod CPU/内存、Service/直连两种网络路径（并由此发现 ClusterIP UDP 短流端点钉选）。
+- 仍未覆盖（与 loopback 相同）：业务判决链、向南转发第二条腿、S-SBC、真实网络、通话保持。因此 per-pod 资源曲线与 CPS 档位是 accept-all 模型下的象征性架构数据，不是生产容量。
+- 下一 release 增强方向（2026-10-13 维护者指示）：关闭 accept_all_invites，搭建真实下游 UAS，对完整 B2BUA 两腿路径做真实 socket 多副本压测；本版不立项实现。

@@ -1,0 +1,39 @@
+== M8 batch5 HPA 阈值填入 values-onprem.example.yaml（kind 实测派生） ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-hpa-threshold-filled-2026-10-12.txt, 2026-10-12)
+
+-- 动作 --
+仅在 deploy/helm/values-onprem.example.yaml 末尾追加 autoscaling 段（+37 行，文件其余内容未动）：
+  autoscaling.enabled: true
+  minReplicas: 2 / maxReplicas: 4
+  targetCPUUtilizationPercentage: 70 / targetMemoryUtilizationPercentage: 70
+  customMetric.name/targetValue: null
+注释逐字标注：「kind 实测、非对外承诺、上线前须目标环境复测」，并写明利用率以 per-pod resources.requests
+为分母、启用前须先在目标环境测量中配平 requests。
+
+-- 实测依据（详见 PASS-nf15-multi-replica-measurement-2026-10-12.txt 测量 B/C） --
+- CPU 主导：2 副本直连测量中约 160 CPS/Pod → request 200m 的 ~50%，约 320 CPS/Pod → ~105%；
+  70% 内插约 220 CPS/Pod（accept-all/kind 模型，象征性）。
+- 内存最高档（640 CPS/Pod）约 request 256Mi 的 59%，测量范围内不主导扩容，70% 作守卫值而非驱动值。
+- minReplicas=2 为 N+1 多副本水平扩展底座；maxReplicas=4 为单节点 kind 可测的象征性上限。
+
+-- 渲染/守卫验证（helm 3.16.4，tools/bin/helm） --
+- helm template as deploy/helm -f deploy/helm/values-onprem.example.yaml | grep -c 'kind: HorizontalPodAutoscaler'
+  → 2（translation、anti-fraud 各一个；minReplicas:2 maxReplicas:4 averageUtilization:70 ×2 资源）。
+- 默认 values.yaml（不带 -f）渲染 HPA 数量：0（autoscaling 仍 enabled:false/null，fail-closed 未变）。
+- 守卫原样有效（hpa.yaml 未改）：
+  · --set autoscaling.enabled=true（无 min/max）→
+    "minReplicas is required when autoscaling.enabled=true. It is a capacity figure: measure it in M6 (O1), do not guess."
+  · 再给 min/max 但无任何 target →
+    "autoscaling.enabled=true requires at least one target threshold (...). These are capacity figures: measure it in M6 (O1), do not guess."
+- make chart-check → "chart-check: OK"。
+
+-- 结论 --
+PASS：onprem 示例 autoscaling 段已按 kind 实测派生数据填写并渲染通过；默认 values.yaml 与 hpa.yaml fail-fast 守卫
+零改动；示例注释含强制标注「kind 实测、非对外承诺、上线前须目标环境复测」。
+
+-- 边界 --
+- 仅示例 profile；默认 chart 仍 fail-closed 不渲染任何 HPA。
+- 不发布对外容量数字（AGENT.md §2）；ne-datasheet 容量取值、容量类告警、4.1 正式报告维持阻塞。
+- 本文件不签收 REQ-NF-15，不改变矩阵状态与 report.md 计数。

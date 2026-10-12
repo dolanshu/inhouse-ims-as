@@ -1,0 +1,140 @@
+PASS — M8 批次4 S-4 RBAC 权限矩阵补测（REQ-S-4 工程层：HTTP 边界 + 越权审计落痕，真 PostgreSQL）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+被验项: s4-rbac-permission-matrix（角色 × 写操作在 HTTP 边界的 403/放行，及越权落 DENIED 审计行）
+结论: 通过（新增 22 条 integration 全绿；`make gate` exit 0）
+执行人: agent 补测，待维护者评审
+
+三元组
+------
+(通过, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-rbac-permission-matrix-2026-10-12.txt, 2026-10-12)
+
+背景：补的是什么缺口
+--------------------
+* RBAC **内核**已全覆盖：`services/console/tests/test_access.py` 的
+  `test_role_permission_matrix`（role × permission 全参数化）+ `test_the_matrix_covers_every_role_and_every_permission`
+  + `test_the_declared_matrix_is_the_expected_one` + 双人原则 + 审计落痕。
+  但那是**纯函数**：它证明 `authorize()` 返回什么，不证明一次 HTTP 请求真的撞上了这个判定。
+* HTTP 层补测前只有一条：
+  `services/config-service/tests/test_postgres_auth_api_integration.py:825`
+  `test_session_roles_are_current_and_viewer_cannot_submit`（仅 viewer × submit 一条 403）。
+  其余 4 个角色 × 4 个写操作在 HTTP 边界**没有被断言过**。
+* 本批把矩阵从内核纯函数推进到 **HTTP 边界**，并验证「越权尝试落 DENIED 审计行」的端到端路径。
+
+MANAGE_USERS 是否有 HTTP 强制点（先确认，不虚构端点）
+------------------------------------------------------
+**有。** `services/config-service/src/as_config_service/api.py:746` 的 `require_manage_users`
+在三个端点被调用：`GET /internal/v1/auth/users`（:1907，session_router）、
+`POST /internal/v1/auth/users`（:1924）、`PATCH /internal/v1/auth/users/{user_id}`（:1959）。
+因此本项**不需要**标为「无 HTTP 强制点可测」，MATRIX 中管理用户一行按真实端点断言。
+
+新增测试（唯一新增文件）
+------------------------
+services/config-service/tests/test_req_s4_rbac_api_matrix_integration.py
+（`pytestmark = pytest.mark.integration`；app / 会话 / 登录 helper 复用
+`test_postgres_auth_api_integration` 的 `_app` / `_login` / `_bootstrap` / `_audit_events` /
+`_only_new_audit_event`，并复用其真 PostgreSQL harness fixture，故被测 wiring 与既有文件一致）
+
+被测端点 × 权限强制点（每条权限取一个代表性端点）
+--------------------------------------------------
+| 操作 | 端点 | 强制点（api.py） | Permission |
+|---|---|---|---|
+| read | `GET /internal/v1/managed-rules` | router 依赖 `require_config_read`（:649） | READ_CONFIG |
+| submit | `POST /internal/v1/change-orders` | `require_submit_permission`（:722 / :1282） | SUBMIT_CHANGE |
+| approve | `POST /internal/v1/change-orders/{change_id}/approve` | `require_approve_permission`（:730 / :1750） | APPROVE_CHANGE |
+| rollback | `POST /internal/v1/change-orders/{change_id}/distribution/rollback` | `require_rollback_permission`（:738 / :1674） | ROLLBACK_CHANGE |
+| manage_users | `GET /internal/v1/auth/users` | `require_manage_users`（:746 / :1907） | MANAGE_USERS |
+
+参数化矩阵（20 行，`_MATRIX`），实测结果
+----------------------------------------
+| 操作 \ 角色 | viewer | operator | approver | admin |
+|---|---|---|---|---|
+| read | 200 | 200 | 200 | 200 |
+| submit | **403** | 201 | 201 | 201 |
+| approve | **403** | **403** | 200 | 200 |
+| rollback | **403** | **403** | 200 | 200 |
+| manage_users | **403** | **403** | **403** | 200 |
+
+与 `services/console/src/as_console/access.py:60-75` 的 `ROLE_PERMISSIONS` 逐格一致
+（VIEWER={READ}、OPERATOR={READ,SUBMIT}、APPROVER={READ,SUBMIT,APPROVE,ROLLBACK}、ADMIN=全集）。
+
+防假绿的三处设计（如实说明）
+----------------------------
+1. **403 必须来自权限检查**：每行 403 都断言响应体 detail 精确等于
+   `change submission denied` / `change approval denied` / `change rollback denied` /
+   `user management denied`（`_DENIAL_DETAIL`）。CSRF 拒绝（同样是 403，detail 为
+   `CSRF validation failed`）、双人原则（detail 为 `creator may not approve this change`）、
+   资源不存在（404）都无法满足该行。
+2. **双人原则不混进矩阵**：approve 用的变更单由专用 `matrix-submitter`（OPERATOR，
+   永不被测角色）创建并提交，故 operator 行的 403 **只能**来自缺 APPROVE_CHANGE，
+   不可能来自「提交者不可自审」。双人原则本身另立一条
+   `test_creator_may_not_approve_their_own_change` 单独断言（approver 自审 → 403，
+   detail == `creator may not approve this change`，且落 DENIED 审计行）。
+3. 每条 403 都带 CSRF token 与真实会话，避免用「没登录/没 CSRF」冒充越权被拒。
+
+新增的测试函数与断言
+--------------------
+1. test_http_boundary_enforces_the_role_permission_matrix（参数化 20 行）
+   每个角色登录后发真实 HTTP 请求，断言状态码 == 上表；403 行追加断言 detail == 权限拒绝文案。
+2. test_denied_write_at_the_http_boundary_persists_a_denied_audit_row
+   viewer 带 CSRF 提交变更单 → **403** 且 detail == `change submission denied`；
+   审计表**恰好新增一条**（`_only_new_audit_event` 断言 +1）：
+     actor == `matrix-viewer`、outcome == **DENIED**、action == `POST /internal/v1/change-orders`、
+     resource == `/internal/v1/change-orders`、before/after 快照均为 None。
+   再直连数据库复核同一行，写出所查的表与字段：
+     `SELECT actor, action, resource, outcome FROM {pg.audit_store.qualified_table} ORDER BY id`
+     —— 表为 `<audit_schema>.<prefix>_audit_events`（`qualified_table` 属性给出带引号全名），
+     字段 `actor / action / resource / outcome`；断言四元组
+     `("matrix-viewer", "POST /internal/v1/change-orders", "/internal/v1/change-orders", "denied")` 在结果中。
+3. test_creator_may_not_approve_their_own_change
+   approver 自建自提交后自审 → 403 + 双人原则 detail + 一条 DENIED 审计行
+   （action == `POST /internal/v1/change-orders/{change_id}/approve`）。
+
+执行与真实输出（含 exit code）
+------------------------------
+容器：`as-m4b8-dev-postgres-1`（deploy/compose 的 PostgreSQL，host 端口 55432，healthy）。
+所用 DSN（口令已遮蔽）：`postgresql://postgres:***@127.0.0.1:55432/as_config`
+
+$ cd /home/shudong/project/3rdparty-as
+$ AS_PG_TEST_DSN="postgresql://postgres:***@127.0.0.1:55432/as_config" \
+    uv run pytest services/config-service/tests/test_req_s4_rbac_api_matrix_integration.py -q -m integration
+......................                                                   [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.10/site-packages/fastapi/testclient.py:1
+  StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+22 passed, 1 warning in 27.53s
+EXIT=0
+
+$ make gate      # ruff format --check → ruff check → mypy → pytest -m "unit or contract"
+（ruff format --check / ruff check / mypy 均通过；本 integration 文件在此被 deselect，非 skip）
+1174 passed, 249 deselected, 11 warnings in 9.28s
+EXIT=0
+
+$ uv run pytest tests/test_evidence_discipline.py -q
+........................................................................ [ 53%]
+...............................................................          [100%]
+135 passed in 0.38s
+EXIT=0
+
+边界（本证据不算什么）
+----------------------
+* **本文件不签收 REQ-S-4。** 签收权在维护者；本文件只是层 ②（内部环境真 PG）的补测与取证。
+* 本证据**不是**内核层证据（`authorize()` 纯函数矩阵仍由 `services/console/tests/test_access.py`
+  覆盖），也不是「所有端点」的证据：每条权限只取了上表**一个代表性端点**。
+  挂载同一 `require_*` 调用的其余端点**未逐条枚举**，例如
+  `POST|PUT|DELETE /internal/v1/as-instances`（approve，:1043/:1076/:1135）、
+  `POST|PUT /internal/v1/managed-rules`（submit，经 :903 的 `create_managed_rule_draft`）、
+  `POST /internal/v1/change-orders/{id}/submit`（submit，:1319）、
+  `POST .../distribution` 与 `.../reports`、`.../apply`（approve，:1347/:1426/:1586）、
+  `POST /internal/v1/change-orders/{id}/reject`（approve，:1777）、
+  `POST|PATCH /internal/v1/auth/users`（manage_users，:1924/:1959）。
+  它们共用同一个 `require_*_permission`，但「共用实现」不等于「已逐端点验证」。
+* 本证据的会话与登录走的是**测试用 `TestClient` + 自签 TLS 基址**（`base_url="https://testserver"`），
+  不是真实浏览器 / 真实控制台前端；口令为测试口令，与任何真实账号无关。
+* 越权落痕只验证了 **submit × viewer** 一条（外加 approve 的双人原则一条），
+  未对矩阵中每一个 403 格都断言审计行。
+* 本证据**不覆盖** RBAC 与运营商 PKI / 客户集群的交互（restriction）：环境为
+  `dev-win03ib7niepf0` 上的内部 compose PostgreSQL。
+* 未改动任何产品代码、未改动矩阵 / report / plan / environments，未执行任何 git 写操作。
