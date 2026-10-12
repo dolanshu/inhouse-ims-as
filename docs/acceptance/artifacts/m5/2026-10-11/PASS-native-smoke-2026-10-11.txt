@@ -1,0 +1,20 @@
+== make m2-native-smoke ==
+exit=0
+=== 收到退出信号，清理中 ===
+=== probe 退出 OK ===
+[m2-native] smoke passed (S1 UDP)
+== make m2-native-smoke-tcp ==
+exit=0
+=== 收到退出信号，清理中 ===
+=== probe 退出 OK ===
+[m2-native] smoke passed (S1 TCP)
+== make m2-native-smoke-tcp-runtime ==
+exit=0
+.                                                                        [100%]
+1 passed in 0.14s
+[m2-native] smoke passed (TCP resip_runtime integration)
+== make m2-native-smoke-tls-runtime ==
+exit=0
+...                                                                      [100%]
+3 passed in 21.48s
+[m2-native] smoke passed (TLS resip_runtime integration)

@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-_UAS_UDP_RE='RESIP_RUNTIME_LISTENING address=127\.0\.0\.1 udp_port=([0-9]+)'
+_UAS_UDP_RE='RESIP_RUNTIME_LISTENING address=127\.0\.0\.1 (advertised=[^ ]+ )?udp_port=([0-9]+)'
 _LOAD_UAS="${REPO_ROOT}/platform/tests/fixtures/load_uas_runtime.py"
 
 log() {
@@ -28,7 +28,7 @@ require_runtime_extension() {
 extract_uas_port() {
   local log_file="$1"
   local port=""
-  port="$(sed -nE "s/.*${_UAS_UDP_RE}.*/\1/p" "${log_file}" | head -n1)"
+  port="$(sed -nE "s/.*${_UAS_UDP_RE}.*/\2/p" "${log_file}" | head -n1)"
   if [[ -z "${port}" ]]; then
     return 1
   fi

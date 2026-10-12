@@ -32,6 +32,10 @@ captures/
 tmp/
 .tools/
 
+# Infra toolchain installed by tools/bootstrap-infra.sh (versions pinned in
+# tools/VERSIONS; binaries are per-machine, never committed).
+tools/bin/
+
 # M4b-8 compose TLS material (generate via deploy/compose/scripts/gen-certs.sh)
 deploy/compose/certs/*
 !deploy/compose/certs/.gitkeep

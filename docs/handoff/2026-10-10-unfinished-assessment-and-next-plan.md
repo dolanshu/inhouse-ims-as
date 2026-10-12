@@ -103,6 +103,23 @@
 
 本机可用工具：`uv` 有、`docker` 有；`helm` / `kubectl` / `kind` / `promtool` **均无**。
 
+> **2026-10-11 追加：本表四行的执行结果（按 §0-A.1 与 §1.2 的「须以追加方式记录结果，不得改写原行」约定，原表四行与「本机可用工具」一行**一律保留不改**，此处只追加）**
+> 执行环境：已登记环境 **`dev-win03ib7niepf0`**（host `WIN-03IB7NIEPF0`）。执行记录：
+> [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md)。
+>
+> | 原行 | 追加结果（2026-10-11） | 三元组 |
+> |---|---|---|
+> | 真栈（reSIProcate）相关用例 | **已关闭** —— `make m2-platform-resip-build` 成功、`make gate-native` exit 0（`1068 passed / 2 skipped / 206 deselected`）；原 7 条 `native_extensions.py` skip 与 1 条 `_resip_recovery` skip **已消失（真实执行）**，收口运行的 SKIPPED 段只剩 2 条 `test_derived_baseline.py` 的既有缺口 | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-gate-native-2026-10-11.txt, 2026-10-11)` |
+> | `make chart-check` | **已关闭** —— 2026-10-11 infra bootstrap 后 `helm` 3.16.4 就位（`tools/bin/`，不入库），本机复跑 `chart-check: OK`、`1 chart(s) linted, 0 chart(s) failed` | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-chart-check-2026-10-11.txt, 2026-10-11)` |
+> | `make alert-check`（`promtool check rules`） | **已关闭** —— 本机 promtool **2.55.1**（与 2026-10-05 历史证据同版本）校验 `deploy/alerts/as-alerts.yaml` → `SUCCESS: 10 rules found`（3 组 10 条，含 2026-10-10 新增的 `as.runtime` / `as.platform`） | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)` |
+> | kind 集群证据（`deploy/kind/m5-*.sh`） | **仍未关闭** —— 工具已就位（`kind` 0.24.0 / `kubectl` 1.31.4），但**集群级产品验证未做**：`M5_STRICT=1` 的 `m5-verify` 在新建空集群（未部署产品 AS pod）上**如实 FAIL**（exit=1）。**不以工具就位充抵集群级证据** | `(失败, docs/acceptance/artifacts/m5/2026-10-11/FAIL-m5-verify-strict-2026-10-11.txt, 2026-10-11)` |
+>
+> **两点边界，不得据上表夸大**：① 「本机可用工具」一行记录的是**2026-10-10 那一次**的实测，
+> 现已被 2026-10-11 的 infra bootstrap 改变（四件工具已就位）；按保史约定该行保留不改，
+> 当前工具事实以 [`../environments.md`](../environments.md) 的登记行为准。
+> ② `promtool` 通过**只是语法校验**，不等于 A5 的**抓取接线**闭合 —— X1 仍待运营商
+> monitoring-integration 标准输入（见 §0-A.6 G3 与 [`2026-10-11-open-adjudication-register.md`](2026-10-11-open-adjudication-register.md) §3 X1）。
+
 ### 1.3 非承诺
 
 - 本文不解除任何未决项（O1/O2/O3/O4/O5、D1/D3/D5/D6/D11/D12 等）。
@@ -227,12 +244,13 @@
 - **现状与证据**：Makefile 已有 `gate-native`（第 133–134 行）= `m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`；本机无 `.so`，7+1 条真栈用例为 skip。
 - **为什么未完成**：从未在本机跑过一次带真栈的门禁，skip 无法充当证据。
 - **出口判据**：
-  - [ ] `make m2-platform-resip-build` 成功；
-  - [ ] `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`（或直接 `make gate-native`）跑通；
-  - [ ] 原 7 条 `native_extensions.py` skip **消失**（真实执行）；
-  - [ ] 一次完整 run 结果（计数与 exit code）已记录到 handoff 或 review record。
+  - [x] `make m2-platform-resip-build` 成功 —— **2026-10-11 完成**（环境 `dev-win03ib7niepf0`；顺带编出 `_resip_recovery` / `_resip_two_leg`）
+  - [x] `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`（或直接 `make gate-native`）跑通 —— **2026-10-11 完成**，exit 0，**1068 passed / 2 skipped / 206 deselected**
+  - [x] 原 7 条 `native_extensions.py` skip **消失**（真实执行）—— **2026-10-11 完成**；另 1 条 `_resip_recovery` skip 亦消失；收口运行 SKIPPED 段只剩 2 条 `test_derived_baseline.py:245` / `:279` 的既有缺口
+  - [x] 一次完整 run 结果（计数与 exit code）已记录到 handoff 或 review record —— **2026-10-11 完成**：`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-gate-native-2026-10-11.txt, 2026-10-11)`；执行记录 [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md) §3
 - **依赖**：无（不依赖任何裁决）。
 - **谁做**：**agent**。
+- **状态（2026-10-11 追加）**：**已完成，待维护者评审**。本机此前**从未**编出过任何 `_resip_*.so`（`.cache/` 不存在），本次为第一次真栈门禁。
 
 #### A3 · SIP native plan 收尾（`docs/handoff/2026-10-09-sip-native-testing-plan.md`）
 
@@ -244,11 +262,12 @@
   - 该 plan 文末 Sign-off 三个 checkbox **全未勾**。
 - **为什么未完成**：Phase A 的改动未经真栈复验；C/D 无产物。
 - **出口判据**：
-  - [ ] A2 完成后，Phase A 的三个复验目标**每一条**都有真实执行结果并留档 —— ① `uv run pytest platform/tests/test_e1_contract_resip_runtime.py platform/tests/test_e1_contract_resip_runtime_full.py -m contract -q`（含 `test_e1_s1_accept_all_harness_returns_200` 与 `test_e1_s1_accept_all_from_contract_invite` 两条）；② `uv run pytest platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200 -q`（`integration` 标记，**不在** `-m "unit or contract"` 收集范围内，须显式指定）；
-  - [ ] Phase D 的范围与批次已排期（写入本文或新 plan，需维护者确认优先级）；
-  - [ ] 该 plan 文末 Sign-off 三框的处置（勾选或标注未完成）已明确。
+  - [x] A2 完成后，Phase A 的三个复验目标**每一条**都有真实执行结果并留档 —— **2026-10-11 完成**：① `-m contract` 两个 E1 文件 → **7 passed**（含 `test_e1_s1_accept_all_harness_returns_200` 与 `test_e1_s1_accept_all_from_contract_invite`）；② `test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200` → **1 passed**。`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-phase-a-revalidation-2026-10-11.txt, 2026-10-11)`
+  - [ ] Phase D 的范围与批次已排期（写入本文或新 plan，需维护者确认优先级）—— **未完成（2026-10-11 标注）**：S1 的 14 条回放已由仓内载体 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md) 承接，但用例未实现；S5–S11 排期**待维护者确认优先级**
+  - [x] 该 plan 文末 Sign-off 三框的处置（勾选或标注未完成）已明确 —— **2026-10-11 完成**：框 1（Phase A）已勾选；框 2（Phase C CI job）与框 3（Phase D）已标注未完成并写明依据
 - **依赖**：A2（先有真栈）。
 - **谁做**：**agent**（Phase D 排期需维护者确认优先级）。
+- **状态（2026-10-11 追加）**：**除 Phase D 排期外已完成，待维护者评审**。附注：该 plan §0 记载的「本机有 `.so` 时 2 failed」在本次真栈复验中**未复现**；这不构成对任何 REQ 的签收。
 
 #### A4 · e2e 落地
 
@@ -259,11 +278,12 @@
   4. kind e2e 是否**永不**进 PR required。
 - **为什么未完成**：裁决未答，且首条用例未落。
 - **出口判据**：
-  - [ ] 上述 4 项裁决有维护者书面答复（落 `plan.md` §5 或该 plan 文档）；
-  - [ ] Wave 1 落地，`pytest -m e2e` 收集 **≥ 1 条**且稳定通过；
-  - [ ] e2e 计划文档状态由「草案」更新。
+  - [x] 上述 4 项裁决有维护者书面答复（落 `plan.md` §5 或该 plan 文档）—— **2026-10-10 完成**：见本文 §0-A.6 的 **G2 / A4-1…A4-4** 四行，并已同步到 `docs/plan.md` §0 决策记录表
+  - [x] Wave 1 落地，`pytest -m e2e` 收集 **≥ 1 条**且稳定通过 —— **2026-10-11 完成**：新建 `testbed/e2e/test_sip_first_edition.py`，`uv run pytest -m e2e -q` 由 **0 条**变为 **5 条**，连续 3 次全绿；`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-e2e-2026-10-11.txt, 2026-10-11)`
+  - [x] e2e 计划文档状态由「草案」更新 —— **2026-10-11 完成**：[`../acceptance/2026-10-09-e2e-test-plan.md`](../acceptance/2026-10-09-e2e-test-plan.md) 文首状态已**追加**更正行、文末已追加 §8（三框处置）
 - **依赖**：维护者 4 项裁决。
 - **谁做**：**agent（先请裁决）**。
+- **状态（2026-10-11 追加）**：**Wave 1 已完成，待维护者评审**。**A4-4 的门禁配置变更未做**（该裁决明确「不构成任何配置变更授权」）：`make test` 的行为保持 S1 第一批原样，仅在 `Makefile` 注释上追加注记；e2e 仍由 `make test-e2e` 显式运行。**Wave 2 的 14 条对拍未做**，REQ-F-1 全文仍 open。
 
 #### A5 · 可观测性接线闭环
 
@@ -274,13 +294,14 @@
   4. chart 无 `kubeVersion` 声明。
 - **为什么未完成**：无抓取接线 → Grafana 看板与 metrics 序列在标准部署中**收不到数据**；告警规则语法未校验。
 - **出口判据**：
-  - [ ] chart 侧抓取接线（annotations 或 ServiceMonitor/PodMonitor）已实现 —— **具体选型待维护者裁决**；
-  - [ ] `promtool check rules deploy/alerts/as-alerts.yaml` 在有 `promtool` 的环境跑过并留档（**本机不可执行**；等价容器命令亦需维护者确认允许）；
-  - [ ] 版本口径按 A6 裁决执行；
-  - [ ] `kubeVersion` 是否声明按 A6 裁决执行；
-  - [ ] 上述每项留 review record（`AGENT.md` §3）。
+  - [ ] chart 侧抓取接线（annotations 或 ServiceMonitor/PodMonitor）已实现 —— **具体选型待维护者裁决** —— **仍未做（2026-10-11 标注）**：G3 维持待决，等待运营商 monitoring-integration 标准输入，**当前不改 chart**；已登记为 [`2026-10-11-open-adjudication-register.md`](2026-10-11-open-adjudication-register.md) §3 **X1**（该 register 现行唯一待裁决项）。`deploy/helm/` 一个字节未动
+  - [x] `promtool check rules deploy/alerts/as-alerts.yaml` 在有 `promtool` 的环境跑过并留档（**本机不可执行**；等价容器命令亦需维护者确认允许）—— **2026-10-11 完成**：本机（环境 `dev-win03ib7niepf0`）promtool **2.55.1** 校验 → `SUCCESS: 10 rules found`（3 组 10 条）；`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)`。**边界：语法校验通过 ≠ 抓取接线闭合**
+  - [ ] 版本口径按 A6 裁决执行 —— **未完成（2026-10-11 标注）**：G4 裁决为「根 `VERSION` 为唯一源、release 时同步 Chart `version` / `appVersion`」，但该裁决同时写明「**当前不修改** `VERSION` 与 `Chart.yaml`」；同步动作属 release 流程，**本次未执行**
+  - [ ] `kubeVersion` 是否声明按 A6 裁决执行 —— **未完成（2026-10-11 标注）**：裁决只定「需要声明」，其**最小值由所用 API 反推、本次不作数值裁决**，故无法落地
+  - [ ] 上述每项留 review record（`AGENT.md` §3）—— **部分完成（2026-10-11 标注）**：`promtool` 一项已留档于 [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md)；其余各项待裁决 / 待授权后再留
 - **依赖**：A6 裁决（其中两项）、有 `promtool` 的环境、helm（chart 验证）。
 - **谁做**：**agent + 需外部环境（`promtool` / helm / 集群）**。
+- **状态（2026-10-11 追加）**：**5 项中 1 项完成（`promtool` 语法校验）**；抓取接线（X1）与版本口径两项**仍待裁决**，chart 未改。
 
 #### A6 · 版本口径裁决（先裁决，再动）
 
@@ -381,6 +402,16 @@
 
 **状态：等待开工批准（2026-10-10 认可边界，但未授权启动）** —— 依据见 §0.2（第 1 项认可的是 E1 / E4 / E5 的**边界划分**，不是开工许可）。W0 的 A2 / A3 步骤在维护者明确批准启动前**一律不执行**。
 
+> **2026-10-11 追加（上一行原文保留不改）：W0 的本机可执行部分已执行完毕，待维护者评审。**
+> 执行环境 `dev-win03ib7niepf0`；执行记录
+> [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md)。
+> 已执行：A2（`make m2-platform-resip-build` + `make gate-native` → **1068 passed / 2 skipped / 206 deselected**，exit 0）、
+> A3（Phase A 复验 **7 + 1 passed**）、A5 的 `promtool` 与 `chart-check`、
+> A4 Wave 1（`pytest -m e2e` 由 0 条 → **5 条且稳定**）、本机真栈四项 smoke、
+> M7 两个扩展（`_resip_recovery` / `_resip_two_leg`）。
+> **仍未执行**：W1（A6 执行）、W2（B1–B6）、W3（C1–C5，§0 第 2 项 hold 继续有效）、
+> A4 Wave 2 的 14 条对拍、A5 抓取接线（X1）。
+
 **目标**：把「skip 当证据」这一最大缺口补上。
 
 | 步骤 | 命令 | 备注 |
@@ -409,6 +440,16 @@
 | A5 中的 `promtool` 容器化执行 | 本机无 `promtool` 但有 `docker`，建议用容器等价命令立即执行 —— 见 §8 第 2 项的推荐 | 不依赖集群；属本机可完成的工作 |
 
 **`promtool` 容器命令的状态（2026-10-10 追加）**：上表末行的等价命令 `docker run --rm -v $PWD/deploy/alerts:/a prom/prometheus promtool check rules /a/as-alerts.yaml` —— **已获授权，未执行**。维护者已授权用本机 docker 跑该命令，但本次**不开工**，须待其 review 后再行批准执行。依据见 §0.2 第 2 项，命令与风险见 §8.2。
+
+> **2026-10-11 追加（上一段原文保留不改）**：该校验**已在同日以两种基座完成并闭合** ——
+> ① **docker 容器化** prometheus **v2.45.0**（即上段那条已授权命令的同类执行）；
+> ② 2026-10-11 infra bootstrap 后，本机就位了与 2026-10-05 历史证据**同版本**的**本地 promtool 2.55.1**
+> （`tools/bin/`，不入库），`make alert-check` 复跑 → `SUCCESS: 10 rules found`（3 组 10 条）。
+> 三元组：`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)`。
+> 本追加**只闭合「告警规则语法校验」这一项**；**X1（抓取接线）仍待运营商 monitoring-integration 标准输入**，
+> 语法通过 ≠ 接线闭合。细节与边界见
+> [`2026-10-11-open-adjudication-register.md`](2026-10-11-open-adjudication-register.md) §2 P4、§3 X1
+> 与 [`2026-10-11-local-infra-bootstrap-execution-record.md`](2026-10-11-local-infra-bootstrap-execution-record.md)。
 
 **从 W0 移出的步骤（后置，不取消）**：
 
@@ -747,6 +788,18 @@ D1 那一行写的是：**「产品锁 3.10 是因为那是 sippy 验证过的�
 
 因此本文的状态结论与 §2 的基线快照**未因本次回写而变化**：真栈仍是 skip、告警规则语法仍未校验、chart 形状门禁仍未在本机复验 —— 三项均**不得**读作绿。
 
+> **2026-10-11 追加更正（上一段与其上方表格的原文一律保留，不删不改）**：上一段记录的是
+> **2026-10-10 那一次 session** 的边界。2026-10-11 已按 §0-A.1 与 §5 W0 执行了本机可执行的全部步骤，
+> 上段所述「三项」中**前两项已关闭**：① 真栈**不再是 skip**（`make gate-native` exit 0，
+> 原 7 条 native skip 与 1 条 `_resip_recovery` skip 已消失）；② 告警规则语法**已校验**
+> （本地 promtool 2.55.1 → `SUCCESS: 10 rules found`）；③ chart 形状门禁**已在本机复验**
+> （`chart-check: OK`）。**第 4 项（集群级证据）仍未关闭** —— 工具虽已就位，但集群级产品验证**未做**，
+> 见 §1.2 追加表末行。
+> 逐项证据与边界见
+> [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md)
+> 与本文件 §1.2 的追加表、§4 各条目的出口判据、§5 的 W0 追加段。
+> **本次仍不签收任何 REQ / 里程碑；`report.md` §0.5 的 open 24 / blocked 12 一个字未改。**
+
 ### 10.2 工作树当前改动面（三个文件的角色说明）
 
 | 文件 | 角色 | 说明 |
@@ -770,3 +823,136 @@ D1 那一行写的是：**「产品锁 3.10 是因为那是 sippy 验证过的�
 批准之外的六项取值（A4 / A5 / A6 / B1 / B2 / B3）仍按 §0.2 的「口径边界」处理：**全部待维护者裁决**。
 
 上述三项截至 2026-10-10 仍未获批启动；评审通过不等于执行授权。
+
+> **2026-10-11 追加（上一段原文保留不改）：三项启动项的处置**
+>
+> | # | 启动项 | 处置（2026-10-11） |
+> |---|---|---|
+> | 1 | `promtool` 容器化校验 | ✅ **已执行并闭合**。两种基座：docker 容器化 prometheus v2.45.0；以及本机本地 promtool **2.55.1**（与 2026-10-05 历史证据同版本）。均输出 `SUCCESS: 10 rules found`（3 组 10 条）。结果按 §0-A.1 的要求**以追加方式**记录在 §1.2 对应行下，**未改写原行** |
+> | 2 | W0 两项（A2 + A3） | ✅ **已执行**。A2：`make m2-platform-resip-build` → `make gate-native` exit 0（**1068 passed / 2 skipped / 206 deselected**），原 native skip 全部消失；A3：Phase A 复验 **7 + 1 passed**。另有本机真栈四项 smoke 全过、`_resip_recovery` / `_resip_two_leg` 已构建 |
+> | 3 | B4 的 Python 3.12 spike 是否并入同一次 native 构建 | ❌ **未执行，且本次明确不并入**。理由：G1 的裁决只定了「选项①做 spike」这一**处置选择**，并写明「是否与 W0 的 native build 绑定执行**未裁决**」；本次 native 构建是**首次**在本机跑通，把一次 Python minor 版本迁移（涉及 5 处 pin 改写 + `uv sync` 重锁 + 三个 native 扩展重编）绑进首次构建，会让「首次真栈门禁是否成立」与「3.12 是否可用」两个结论**互相污染、无法分别归因**。故按 §9.5「无论如何都不能悄悄换版本」，本次**保持 3.10 不动**，spike 仍待维护者另行裁决与授权 |
+| 3-bis | **B4 排期的补充建议**（2026-10-12 追加） | **先验证 native 可复现性，再单独做 spike** —— 上述「不并入」的理由只说了一半。若 native 首次构建本身就不可重建，那么 spike 后一旦构建失败，无法区分是「3.12 不兼容」还是「首次构建本就不稳」。**该前置动作已于 2026-10-12 执行完毕**：换独立缓存目录从零 `restore` → 构建 → `make gate-native` exit 0，证明 native 构建可重建且产物可用（执行记录 [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md) §3）。据此，**3.12 spike 可以单独一次改动进行**，任何失败都能干净归因。**性质：建议，非裁决；是否启动 spike 仍待维护者授权** |
+>
+> 上述三项之外的六项取值（A4 / A5 / A6 / B1 / B2 / B3）中，**A4 的四项已于 2026-10-10 裁决并已于 2026-10-11 落地**；
+> **A5 抓取接线（X1）与 A6 的 `kubeVersion` 取值仍待裁决**；B1 的**取值**仍 open。
+>
+> **执行记录**：[`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md)。
+
+---
+
+## 11. W0 完成状态总表（2026-10-11 追加）
+
+> 本节只**追加**状态，不改写 §0–§10 任何原文。执行记录：
+> [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md)。
+> 执行环境：已登记环境 **`dev-win03ib7niepf0`**（host `WIN-03IB7NIEPF0`）。
+
+### 11.1 已完成（本机可执行部分）
+
+| 条目 | 结果 | 三元组 |
+|---|---|---|
+| **A2** 真栈构建常态化 | `make gate-native` exit 0，**1068 passed / 2 skipped / 206 deselected**；原 native skip 全部消失 | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-gate-native-2026-10-11.txt, 2026-10-11)` |
+| **A3** Phase A 真栈复验 | 契约 7 passed + integration 1 passed | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-phase-a-revalidation-2026-10-11.txt, 2026-10-11)` |
+| **A4** e2e Wave 1 | `pytest -m e2e` 由 0 条 → **5 条**，连续 3 次全绿；缺 native 时 fail 不 skip（实测） | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-e2e-2026-10-11.txt, 2026-10-11)` |
+| **A5** 告警规则语法校验 | 本地 promtool 2.55.1 → `SUCCESS: 10 rules found`（3 组 10 条） | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)` |
+| **A5** chart 形状门禁 | `make chart-check` → `chart-check: OK` | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-chart-check-2026-10-11.txt, 2026-10-11)` |
+| **E1 / E4 / E5 的本地真栈部分** | 四项 smoke 全过（S1 UDP / S1 TCP / TCP runtime 1 passed / TLS runtime 3 passed，测试 CA） | `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-native-smoke-2026-10-11.txt, 2026-10-11)` |
+| **M7 扩展（W0「如需」项）** | `_resip_recovery`、`_resip_two_leg` 均已构建 | 见执行记录 §3.2 |
+
+### 11.2 未完成（按归属分列，均非本次可自行推进）
+
+| 条目 | 为什么本次未做 | 归属 |
+|---|---|---|
+| **A4 Wave 2**（14 条对拍） | 载体已就位（[`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)），实现属 A4 后续批次；**REQ-F-1 全文仍 open** | A4 后续批次（待授权） |
+| **A4-4 的门禁配置变更** | 裁决明写「不构成任何配置变更授权」；`make test` 行为**一字未改**，只在注释追加注记 | 维护者裁决 |
+| **A5 抓取接线**（annotation vs ServiceMonitor/PodMonitor） | **X1 仍待运营商 monitoring-integration 标准输入**；`deploy/helm/` 一个字节未动 | 外部输入 + 维护者裁决 |
+| **A6 版本口径的执行** | G4 写明「当前不修改 `VERSION` 与 `Chart.yaml`」；`kubeVersion` 最小值「本次不作数值裁决」 | 维护者裁决 + release 流程 |
+| **W2 · B1–B6** | B1 **取值仍 open**；B2 / B3 / B4 取值已裁但实现未落未授权；B5 / B6 属**维护者**动作 | 维护者 |
+| **W3 · C1–C5** | 需外部环境；§0 第 2 项 hold **继续有效**。**不以本机真栈绿充抵任何一项** | 外部环境 + 维护者重启授权 |
+| **Phase C / Phase D** | CI job 属配置变更；S5–S11 排期需维护者确认优先级 | 维护者授权 |
+
+### 11.3 三条不得被误读的边界
+
+1. **真栈绿 ≠ REQ 级验收通过。** 本次所有结论都落在**工程门禁层**；
+   `docs/acceptance/report.md` §0.5 的 open 24 / blocked 12 **未改**，不签收任何 REQ、不签收任何里程碑。
+2. **工具就位 ≠ 集群级验证通过。** `kind` / `kubectl` 已就位、`as-m5` 集群已创建，
+   但集群级产品验证**如实 FAIL**（空集群无产品 pod）；该失败已单独落 `FAIL-` 证据文件，未被改名、未被掩饰。
+3. **`promtool` 通过 ≠ 抓取接线闭合。** 前者是规则**语法**，后者是 chart 的**抓取接线**（X1），两者不同。
+
+### 11.4 一条新的机器能力事实（尚未进环境登记表）
+
+本机 native 构建依赖仓库内 gitignored 的 `.cache/native-deps/`（`libpopt-dev` / `libc-ares-dev`
+用 `apt-get download` + `dpkg-deb -x` 就地解压，无需 root）。换机或清空 `.cache/` 后需重做。
+[`../environments.md`](../environments.md) 的登记行由 `tools/env-probe.sh` 生成、不得手改，
+故本次**未写入该表**；是否把 native 构建依赖纳入探测脚本，**待维护者决定**。
+
+### 11.5 A2 立刻兑现了它的目的：暴露出一个从未被发现的缺陷
+
+`testbed/load/tests/test_product_runtime_smoke.py::test_product_resip_runtime_uas_smoke`
+在真栈就位后**第一次真正运行即失败** —— 它解析 `RESIP_RUNTIME_LISTENING` 的正则**不含** `advertised=` 字段，
+而 C++ 实际输出（及 [`../acceptance/m8-resip-runtime-log-contract.md`](../acceptance/m8-resip-runtime-log-contract.md) §3
+记录的行格式）**含**该字段，故永远匹配不上、必然 60s 超时。
+`git log -S` 显示该用例与 `advertised=` 的打印**同在 commit `139d299`** 落地 ——
+**它从落地那一刻起就没能匹配过**，只是一直因缺 `.so` 而 skip。同一缺陷另在
+`testbed/load/scripts/` 下 4 个 M6 脚本的 `_UAS_UDP_RE` 中存在。
+
+**已修（向后兼容）**并验证：`uv run pytest testbed/load/tests/test_product_runtime_smoke.py -q` → 1 passed；
+`bash testbed/load/scripts/m6-product-runtime-smoke.sh` → exit 0。
+**未产生任何容量或性能数字**，M6 历史测量与 O1 结论不在本次范围。
+详见 [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md) §11。
+
+**这一条正是 §4 A2「为什么未完成：skip 无法充当证据」的实证**：
+skip 掩盖的不只是「没跑」，还掩盖了「跑了会红」。
+
+### 11.6 一项未修的实测事实（环境依赖，与本次改动无关）
+
+`make test` 的 integration 层在本机**跑不全**：`services/config-service` 的 Postgres 集成用例需要
+`127.0.0.1:55432` 的 compose PostgreSQL，本机未起该服务 ⇒ 113 errors + 1 failed（PG 相关）+ 11 skipped，`make test` exit 2。
+启动 compose PG 属容器动作，**本次未做**，如实登记。
+〔**2026-10-12 收尾轮更正：上一段记录的是 2026-10-11 的状态，已由 §11.8 关闭。**〕
+
+### 11.7 Wave 2 已落地（2026-10-12）
+
+**先更正 2026-10-11 轮的一处错误说法**：该轮收尾时我把 A4 Wave 2 描述为「不是 blocker、是我自己划的界」。
+**这个说法是错的** —— Wave 2 的「后置」是 **2026-10-10 已落盘的裁决**（§0-A.6 G2 / A4-3 行：
+「后置到独立 issue；本迭代仅登记为 gap；本任务不创建 issue」），register §2 P5 闭合的只是「载体缺失」这一 gap。
+把已生效的裁决重新描述成 agent 自己的判断，等于把它重新开放为待裁决事项，违反 register §8 元规则。
+
+**准确状态与本次执行**：裁决已就位、载体已就位、**启动前提「Wave 1 完成后启动」已于 2026-10-11 满足**；
+维护者 2026-10-12 授权启动 A4 下一批次后已执行：
+
+| 项 | 结果 |
+|---|---|
+| 用例 | 新建 `testbed/e2e/test_s1_replay_contract.py`（3 条） |
+| 覆盖 | 入腿 / 出腿**归一化**序列对拍（`INVITE → 200 → ACK → BYE → 200`，1xx 丢弃）、**C_in ≠ C_out**（REQ-F-2 子集）、**SDP offer 逐字节恒等**（REQ-F-4，纳入、未单列 follow-up） |
+| 实测 | `uv run pytest -m e2e -q` → **8 passed**（Wave 1 的 5 条 + Wave 2 的 3 条）；Wave 2 单独连续 4 次 3 passed；缺 native 时 **8 failed / 0 skipped** |
+| 回写 | [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md) §6；`test-plan.md` REQ-F-1 → 「自动化子集已覆盖 / 全文仍 open」，**`- [ ]` 一项未打勾** |
+
+**仍 open**：14 条消息的**逐条 header 对拍**（含 100/180 临时响应序列、Via branch 模式、Route 消费）。
+**不签收 REQ-F-1 全文 / REQ-F-2 / REQ-F-4，不签收任何里程碑。**
+
+### 11.8 integration 层补齐、native 可复现性、O1 饱和点探测（2026-10-12）
+
+维护者 2026-10-12 授权后执行（执行记录
+[`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md)）：
+
+| 项 | 结果 |
+|---|---|
+| **integration 层** | 起 `deploy/compose` 的 PG 12.22 后，`make test-integration-compose` 由「2 failed / 113 errors」变为 **196 passed / 5 skipped / exit 0**；补 Redis 后 **198 / 3**；补 `wal_level=logical` 后 **200 / 1**（该 1 条为 PG 版本门槛 ≥15，标准环境为 12.22，非缺陷） |
+| **新发现（未修）** | PG **15.18** 下 integration **1 failed / 76 errors**，根因 `defaclobjtype \|\| ':'` → `AmbiguousFunction: operator is not unique: "char" \|\| unknown`（PG 14+ 类型变更）。**未改任何产品代码**；仓库标准环境为 PG 12.22 故当前不阻塞，但 **PG 12 已 EOL**，与 D1（Python 3.10 EOL）同类。已落 `FAIL-` 证据并登记，是否立项修复待维护者决定 |
+| **native 可复现性**（B4 建议第一步） | 换独立缓存目录从零 `restore` → 构建 → `make gate-native` exit 0。**native 构建可重建且产物可用**，故 3.12 spike 可单独一次改动进行，失败能干净归因 |
+| **O1 饱和点探测**（B1 建议第二步） | 20 → 1280 CPS **全部 100% 成功、零错误**，**未测到饱和点**；唯一退化信号是 `unresolved_sessions` 2 → 13 → 30。**不据此定任何对外容量值**；仅把内部工程目标的**下限基线**抬到「本机 loopback 模型下 CPS 1280 无失败」。**未落任何容量取值 / HPA 阈值 / 容量告警** |
+| **最终门禁** | `make gate` 与 `make gate-native` 均 exit 0（**1100 passed / 2 skipped / 214 deselected**）；`pytest -m e2e` 8 passed；根守卫 131 passed |
+
+**两点更正（本轮发现 2026-10-11 轮的两处措辞错误，一并记在此处）**
+
+1. **不存在「容器动作需授权」这条规矩**：上一轮 infra bootstrap **实际执行了** `docker create` / `docker cp` /
+   `docker pull` / `kind create`；唯一写「须先确认」的是**不可逆动作**（删 kind 集群），且 `AGENT.md` 无相关条款。
+   我把维护者对**一条具体命令**的授权错误泛化成了**一类动作的禁令**。
+2. **Wave 2 是裁决、不是我自行划的界**（见 §11.7）。
+
+---
+
+**本文（含 §11）落盘状态：已执行，待维护者评审。**
+本次**未执行任何 git 写操作**（未 `commit` / `add` / `push` / `tag` / 建分支 / 改 remote）；
+全部改动停留在工作树，commit 拆分由维护者决定。
+

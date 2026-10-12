@@ -1,0 +1,26 @@
+.................................................................s...... [ 35%]
+........................................................................ [ 71%]
+.........................................................                [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.10/site-packages/fastapi/testclient.py:1
+  /home/shudong/project/3rdparty-as/.venv/lib/python3.10/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+platform/tests/test_d10_process_restart_integration.py::test_d10_subprocess_kill_restart_redis_bye_200
+platform/tests/test_d10_req_nf1_redis_integration.py::test_req_nf1_redis_save_reload_recovery_bye
+platform/tests/test_d10_req_nf1_redis_integration.py::test_req_nf1_redis_save_reload_recovery_bye
+platform/tests/test_d10_req_nf1_redis_integration.py::test_req_nf1_redis_save_reload_recovery_bye
+  /home/shudong/project/3rdparty-as/platform/src/as_platform/state/redis_store.py:241: DeprecationWarning: Call to deprecated setex. (Use 'set' instead.) -- Deprecated since version 2.6.12.
+    self._client.setex(key, int(ttl_seconds), value)  # See ADR-0007
+
+services/config-service/tests/test_postgres_auth_api_integration.py::test_api_persists_allowed_and_denied_events_with_redacted_snapshots
+services/config-service/tests/test_postgres_auth_api_integration.py::test_logout_revokes_only_current_session_and_clears_both_cookies
+services/config-service/tests/test_postgres_auth_api_integration.py::test_invalid_and_expired_session_never_fall_back_to_callback
+services/config-service/tests/test_postgres_auth_api_integration.py::test_invalid_and_expired_session_never_fall_back_to_callback
+  /home/shudong/project/3rdparty-as/.venv/lib/python3.10/site-packages/starlette/testclient.py:463: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+    return super().request(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] services/config-service/tests/test_postgres_audit_store_integration.py:947: schema publication coverage requires PostgreSQL 15 or newer (current server_version_num=120022)
+200 passed, 1 skipped, 1100 deselected, 9 warnings in 110.59s (0:01:50)

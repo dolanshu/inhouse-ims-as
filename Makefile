@@ -38,6 +38,13 @@ lint: ## ruff format --check + ruff check
 type: ## mypy, strict, src only
 	$(UV) run mypy
 
+# 2026-10-11 追加（本 target 行为一个字未改，只补注记）：e2e Wave 1 已于同日落地在
+# testbed/e2e/test_sip_first_edition.py，`uv run pytest -m e2e -q` 现收集到 5 条且稳定通过
+# —— 上方注释里「e2e 用例尚未落地」的事实前提已变，按保史约定原文保留、此处说明。
+# e2e 层是否**重新纳入** `make test` 属门禁配置变更，与 A4-4（kind e2e 进 PR required 的 E2E
+# policy）同为维护者裁决事项，而该裁决明确「不构成任何配置变更授权」；故此处保持 S1 第一批的
+# 原样，e2e 仍由 `make test-e2e` 显式运行。执行记录见
+# docs/handoff/2026-10-11-w0-native-and-e2e-execution-record.md §7.3。
 test: ## every layer below ④ (e2e 用例尚未落地，落地方案见 docs/acceptance/2026-10-09-e2e-test-plan.md)
 	$(UV) run pytest -m "unit or contract" -q
 	$(UV) run pytest -m integration -q

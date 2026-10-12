@@ -36,6 +36,28 @@
 - [ ] Via branch 参数符合 z9hG4bK 模式（reSIProcate 会产生不同的 hex 值，模式对即算过）
 - [ ] 不检查 SDP `o=` 时间戳、不检查头域书写顺序
 
+> **REQ-F-1 自动化覆盖状态（2026-10-12 追加；上方所有 `- [ ]` 勾选一律保留不改）**
+>
+> 按 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md) Wave 2 的完成标准
+> （「REQ-F-1 勾选只能改为『**自动化子集已覆盖 / 全文仍 open**』并链到具体用例名；**未对拍 14 条时不得打勾全文**」），
+> 当前状态为：
+>
+> **状态＝「自动化子集已覆盖 / 全文仍 open」。**
+>
+> | 已由自动化覆盖的子集 | 用例 |
+> |---|---|
+> | 双腿**归一化**消息序列与 `S1-basic-call` 基准骨架一致（入腿、出腿各为 `INVITE → 200 → ACK → BYE → 200`，1xx 临时响应按"最终响应码序列"口径丢弃） | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_both_legs_match_the_normalised_baseline` |
+> | **C_in ≠ C_out**（双腿独立 Call-ID，REQ-F-2 子集） | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_second_leg_starts_a_new_call_id` |
+> | **SDP offer 入腿与出腿逐字节恒等**（REQ-F-4） | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_sdp_offer_is_byte_identical_across_legs` |
+>
+> **仍 open、上方勾选因此一项未动**：14 条消息的**逐条 header 对拍**（含 100/180 临时响应序列、
+> Via branch 模式、Route 消费等）。Wave 2 的定义本身即「方法 + **最终**响应码序列」的**归一化**对拍，
+> 不含逐条 header；该子集仍由 [`../acceptance/2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md) 追踪。
+>
+> 运行方式：`uv run pytest -m e2e -q`（需先 `make m2-platform-resip-build`；缺 native 时 **fail 不 skip**，A4-2）。
+> 执行记录：[`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md)。
+> **本追加不签收 REQ-F-1 全文。**
+
 ### REQ-F-2 验收标准
 - [ ] 完成 REQ-F-1 的基本呼叫
 - [ ] 提取入腿（上游）INVITE Call-ID（记为 C_in）

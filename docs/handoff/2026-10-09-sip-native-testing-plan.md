@@ -207,6 +207,15 @@ Demo / kind：`docs/handoff/pre-m8-demo-review-plan.md`（`as-m71`）— 人工 
 
 ## Sign-off（本计划）
 
-- [ ] Phase A 完成（3 条 S1/harness pytest 绿）  
-- [ ] Phase C native build job 绿且 required  
-- [ ] Phase D 至少 S1 全链或明确推迟项写入 `test-plan.md` / `plan.md`
+- [x] Phase A 完成（3 条 S1/harness pytest 绿） —— **2026-10-11 真栈复验通过**：
+  `platform/tests/test_e1_contract_resip_runtime.py` + `test_e1_contract_resip_runtime_full.py` `-m contract` → **7 passed**；
+  `test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200`（`integration` 标记，须显式指定）→ **1 passed**。
+  三元组 `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-phase-a-revalidation-2026-10-11.txt, 2026-10-11)`。
+  注：本计划 §0 记录的「本机有 `.so` 时 **2 failed**」在本次真栈复验中**未复现**；
+  这不构成对任何 REQ 的签收。执行记录 [`2026-10-11-w0-native-and-e2e-execution-record.md`](2026-10-11-w0-native-and-e2e-execution-record.md) §4
+- [ ] Phase C native build job 绿且 required —— **未完成（2026-10-11 标注）**：
+  CI job 未创建，属 CI 配置变更，需维护者授权；本次只在**本机**把 `make gate-native` 跑常态化
+  （`1068 passed / 2 skipped / 206 deselected`，exit 0）
+- [ ] Phase D 至少 S1 全链或明确推迟项写入 `test-plan.md` / `plan.md` —— **未完成（2026-10-11 标注）**：
+  「S1 的 14 条回放」已由 A4-3 的仓内载体 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)
+  承接，但**用例未实现**；S5–S11 真栈用例的排期需维护者确认优先级

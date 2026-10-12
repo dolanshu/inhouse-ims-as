@@ -2,6 +2,26 @@
 
 **日期**：2026-10-09  
 **状态**：计划，**未实现**。`pytest -m e2e` 当前 **0 条**。  
+
+> **状态更正（2026-10-11 追加；上一行原文保留不改）**：**Wave 1 已落地**。
+> 新建 `testbed/e2e/test_sip_first_edition.py`（A4-1 裁决：独立新文件，不动
+> `testbed/simulators/tests/test_product_path.py` 的 `integration` 标记）；
+> `uv run pytest -m e2e -q` 由 **0 条**变为 **5 条**，连续 3 次全绿
+> （`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-e2e-2026-10-11.txt, 2026-10-11)`）。
+> **Wave 2 及以后仍未实现**（14 条 header 对拍、控制面、kind 均未在本次范围）。
+> 执行记录：[`../handoff/2026-10-11-w0-native-and-e2e-execution-record.md`](../handoff/2026-10-11-w0-native-and-e2e-execution-record.md) §7。
+> **仍未签收任何 REQ**，见本文 §8。
+>
+> **再更正（2026-10-12 追加；上一段与本节原文一律保留不改）：Wave 2 亦已落地。**
+> 维护者 2026-10-12 授权启动 A4 下一批次（Wave 2 的启动前提「Wave 1 完成后启动」已于 2026-10-11 满足）。
+> 新建 `testbed/e2e/test_s1_replay_contract.py`（3 条）：入腿与出腿的**归一化**序列对拍、
+> **C_in ≠ C_out**（REQ-F-2 子集）、**SDP offer 逐字节恒等**（REQ-F-4，本次纳入、未单列 follow-up）。
+> `uv run pytest -m e2e -q` → **8 passed**（Wave 1 的 5 条 + Wave 2 的 3 条）；
+> 缺 native 时 **8 failed / 0 skipped**。
+> **仍 open**：14 条消息的**逐条 header 对拍**——Wave 2 的定义本身即归一化骨架对拍，不含该子集；
+> `test-plan.md` REQ-F-1 的 `- [ ]` **一项未打勾**，状态为「自动化子集已覆盖 / 全文仍 open」。
+> 执行记录 [`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md) §5；
+> 回写见 [`../acceptance/2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md) §6。
 **关联**：[`test-plan.md`](test-plan.md) 自动化分层；[`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md)（harness / native 门禁）；[`../handoff/pre-m8-demo-review-plan.md`](../handoff/pre-m8-demo-review-plan.md)（kind `as-m71`）。
 
 ---
@@ -130,3 +150,29 @@ testbed/e2e/test_sip_first_edition.py           # Wave 1 新文件（推荐，�
 - [ ] 维护者确认 §1 定义与 §6 四项决定  
 - [ ] Wave 1 用例进 `master` 且门禁层③ 行为与决定一致  
 - [ ] `test-plan.md` REQ-F-1 勾选状态与 Wave 2 是否做完一致（未做完不打勾全文）
+
+---
+
+## 8. 验收三框的当前处置（2026-10-11 追加；§7 原文保留不改）
+
+> 上文三框按保史约定**原文保留**；本节只**追加**当前处置，便于核对。
+
+| §7 框 | 处置（2026-10-11） |
+|---|---|
+| ① 维护者确认 §1 定义与 §6 四项决定 | ✅ **已确认** —— 四项决定即 `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` §0-A.6 的 **G2 / A4-1…A4-4**，已于 2026-10-10 裁决落盘；本次即按其落地（A4-1 新建文件、A4-2 缺 native 时 fail、A4-3 Wave 2 后置到仓内载体、A4-4 仅登记政策方向**不改配置**） |
+| ② Wave 1 用例进 `master` 且门禁层③ 行为与决定一致 | ⚠️ **一半** —— 用例已落地并在本机稳定通过；**进 `master` 需维护者 commit**（本次未做任何 git 写操作）。「门禁层③ 行为与决定一致」中**可本机验证的部分一致**：缺 native 时 fail 不 skip（实测 5 failed / 0 skipped）。**kind e2e 进 PR required 的门禁配置变更未做** —— A4-4 裁决明确「不构成任何配置变更授权」 |
+| ③ `test-plan.md` REQ-F-1 勾选状态与 Wave 2 是否做完一致 | ❌ **未做** —— Wave 2 的 14 条对拍未实现，载体为 [`2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md)。**REQ-F-1 的 14 条全文仍 open，本次不勾选、不签收** |
+
+**§8 表格第 ③ 框的更新（2026-10-12 追加；上方表格原文保留不改）**：
+
+| §7 框 | 更新后处置（2026-10-12） |
+|---|---|
+| ③ `test-plan.md` REQ-F-1 勾选状态与 Wave 2 是否做完一致 | **已按完成标准落盘** —— Wave 2 已实现（`testbed/e2e/test_s1_replay_contract.py`，3 条），状态改为「**自动化子集已覆盖 / 全文仍 open**」并链到用例名（`test-plan.md` REQ-F-1 段）。**14 条逐条 header 对拍仍 open，`test-plan.md` 的所有 `- [ ]` 一项未打勾** —— 这与完成标准「未对拍 14 条时不得打勾全文」一致 |
+
+**本次的边界（避免据「Wave 1 已落地」推出过度结论）**：
+
+- 落地的 4 个用例（E2E-SIP-1…4）覆盖的是**终态结果码 + 出腿翻译结果 + BYE 不挂死**，
+  **不含** 14 条消息的逐条 header 对拍、**不含**控制面、**不含** kind、**不含**任何容量数字。
+- 被测路径中的 S-CSCF / S-SBC 均为**仿真**（`as_simulators`），TLS 用**测试 CA**；
+  按本文 §3「明确排除」条，**不签收 REQ-S-2 / REQ-S-3**。
+- 真栈绿属**工程门禁层**证据；`docs/acceptance/report.md` §0.5 的 open 24 / blocked 12 **未改**。

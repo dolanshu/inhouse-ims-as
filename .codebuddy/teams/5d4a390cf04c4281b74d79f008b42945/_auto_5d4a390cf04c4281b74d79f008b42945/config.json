@@ -1,0 +1,41 @@
+{
+  "name": "_auto_5d4a390cf04c4281b74d79f008b42945",
+  "mainConversationId": "5d4a390cf04c4281b74d79f008b42945",
+  "workspacePath": "/home/shudong/project/3rdparty-as",
+  "createdAt": "2026-10-11T11:24:25.088Z",
+  "options": {
+    "workspacePath": "/home/shudong/project/3rdparty-as",
+    "isAutoTeam": true
+  },
+  "isAutoTeam": true,
+  "members": [
+    {
+      "memberId": "ci-wipe-1@_auto_5d4a390cf04c4281b74d79f008b42945",
+      "name": "ci-wipe-1",
+      "role": "批次1删CI基础设施与AGENT.md",
+      "sessionId": "06d54d15083e4f829c3d3dded9ef7f2d",
+      "status": "completed"
+    },
+    {
+      "memberId": "ci-wipe-2@_auto_5d4a390cf04c4281b74d79f008b42945",
+      "name": "ci-wipe-2",
+      "role": "批次2删CI于交接与贡献文档",
+      "sessionId": "bbe40f79fb95438a80f48ee3c34bece0",
+      "status": "completed"
+    },
+    {
+      "memberId": "ci-wipe-3@_auto_5d4a390cf04c4281b74d79f008b42945",
+      "name": "ci-wipe-3",
+      "role": "批次3删CI于核心与外围文档",
+      "sessionId": "5cb585174bcb45f19ef5f1f31cbae5a2",
+      "status": "cancelled"
+    },
+    {
+      "memberId": "ci-wipe-4@_auto_5d4a390cf04c4281b74d79f008b42945",
+      "name": "ci-wipe-4",
+      "role": "批次4删CI于评审与剩余文档",
+      "sessionId": "39f291ee34a14d5d94b5bed7be6861d9",
+      "status": "running"
+    }
+  ]
+}

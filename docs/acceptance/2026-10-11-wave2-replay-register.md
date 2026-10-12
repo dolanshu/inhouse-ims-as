@@ -101,3 +101,29 @@ Wave 1 节明写「**明确不做（Wave 1）：14 条逐条 header 对拍**」�
 - **未来实现时的回写约定**：新建 `testbed/e2e/` 测试文件实现对拍后，在本文件**追加**一节登记结果
   （实现日期、用例文件名、对拍范围、SDP 对拍是纳入还是单列 follow-up），并按 e2e 计划完成标准
   把 REQ-F-1 勾选改为「自动化子集已覆盖 / 全文仍 open」；14 条未全部对拍前**不得**勾选全文。
+
+---
+
+## 6. 实现结果回写（2026-10-12 追加；§1–§5 原文一律保留不改）
+
+> 本节按 §5 的「未来实现时的回写约定」追加。启动前提已满足：
+> ① Wave 1 已于 2026-10-11 落地；② 本机已具备必需 native extension。
+
+| 回写项 | 内容 |
+|---|---|
+| **实现日期** | 2026-10-12 |
+| **用例文件** | `testbed/e2e/test_s1_replay_contract.py`（3 条 e2e 用例；与 Wave 1 的 `test_sip_first_edition.py` 并列，互不导入） |
+| **对拍范围** | **归一化**序列对拍 —— 按 e2e 计划 Wave 2 的定义「方法 + **最终**响应码序列」，1xx 临时响应丢弃；入腿与出腿各断言 `INVITE → 200 → ACK → BYE → 200`；另含 **C_in ≠ C_out**（REQ-F-2 子集） |
+| **SDP 对拍** | **纳入，未单列 follow-up** —— 断言入腿 INVITE 的 body 与出腿 INVITE 的 body **逐字节相等**（REQ-F-4） |
+| **REQ-F-1 勾选** | 已按完成标准改为「**自动化子集已覆盖 / 全文仍 open**」并链到上述用例名；`test-plan.md` REQ-F-1 段的所有 `- [ ]` **一项未打勾**（14 条逐条 header 对拍仍 open）；见 [`../acceptance/test-plan.md`](../acceptance/test-plan.md) 「REQ-F-1 自动化覆盖状态（2026-10-12 追加）」段 |
+| **实测结果** | `uv run pytest -m e2e -q` → **8 passed**（Wave 1 的 5 条 + Wave 2 的 3 条）；Wave 2 单独连续 4 次 **3 passed**；临时移走 `_resip_runtime*.so` 后 **8 failed / 0 skipped**（A4-2 成立） |
+| **执行记录** | [`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md) |
+
+**实现方式与代价（如实记录）**：为采集双腿消息序列，本用例用 `monkeypatch` **在测试模块内**包装了
+`TransparentBridge._on_message` 与 `_forward_response` 两个**私有**方法（观测点为 AS 两侧的 bridge hop：
+`north` 看入腿、`south` 看出腿）。**产品代码与 `as_simulators` 一个字节未改**，代价是这份用例依赖私有 API，
+bridge 内部改名会导致本文件失效。
+
+**仍 open（不因本节而闭合）**：14 条消息的**逐条 header 对拍** —— 含 100/180 临时响应序列、Via branch 模式、
+Route 消费等。Wave 2 的定义本身即归一化骨架对拍，不含逐条 header。
+**本节不签收 REQ-F-1 全文，不签收 REQ-F-2 / REQ-F-4，不签收任何里程碑。**

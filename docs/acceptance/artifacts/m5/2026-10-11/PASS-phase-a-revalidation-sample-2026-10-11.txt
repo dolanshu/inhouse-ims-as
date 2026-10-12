@@ -1,0 +1,8 @@
+== uv run pytest platform/tests/test_e1_contract_resip_runtime.py platform/tests/test_e1_contract_resip_runtime_full.py -m contract -q ==
+.......                                                                  [100%]
+7 passed in 0.73s
+exit=0
+== uv run pytest platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200 -q ==
+.                                                                        [100%]
+1 passed in 0.12s
+exit=0
