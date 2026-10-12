@@ -238,16 +238,18 @@ def test_req_f5_ingress_invite_carries_a_route(messages: dict[str, SipMessage]) 
     assert route, f"{INGRESS_INVITE} carries no Route header; the S8 derivation would be vacuous"
 
 
-def test_req_f5_egress_invite_carries_a_route(messages: dict[str, SipMessage]) -> None:
-    """REQ-F-5: the egress INVITE carries a Route header too."""
+def test_req_f5_egress_invite_carries_no_route(messages: dict[str, SipMessage]) -> None:
+    """REQ-F-5: the AS consumes the ingress Route; the egress INVITE carries none.
+
+    The ingress Route header addresses the AS. The B2BUA consumes it and does
+    not forward it to the egress leg (RFC 3261 loose routing; the egress
+    Request-URI already carries the resolved next hop).
+    """
     route = headers_all(_require(messages, EGRESS_INVITE), "Route")
-    if not route:
-        pytest.skip(
-            f"{BASELINE_NAME} constructs no Route header on {EGRESS_INVITE}: the AS sends "
-            "the second leg straight to its Request-URI instead of through a next hop. "
-            "A dedicated M2 probe capture is needed before this can be asserted."
-        )
-    assert route
+    assert not route, (
+        f"{EGRESS_INVITE} still carries a Route header ({route}); the AS must "
+        "consume the ingress Route and not forward it to the egress leg"
+    )
 
 
 def test_req_f5_route_next_hop_becomes_the_egress_target(messages: dict[str, SipMessage]) -> None:

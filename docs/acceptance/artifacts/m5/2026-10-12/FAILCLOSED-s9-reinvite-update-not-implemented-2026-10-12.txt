@@ -1,0 +1,26 @@
+FAILCLOSED — P5 S9 in-dialog re-INVITE / UPDATE 路由未实现（REQ-F-9 子集）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+
+结论: 失败（已登记 gap，非代码缺陷回归）
+证据文件: platform/native/resip_runtime/runtime_module.cxx (AppDialog)
+日期: 2026-10-12
+
+范围:
+- REQ-F-9 要求 re-INVITE、UPDATE、BYE 三种 in-dialog 请求路由到正确下游对端
+- BYE 分支已通过（见 PASS-s9-in-dialog-bye-routing-2026-10-12.txt）
+- re-INVITE / UPDATE 在 native forward 模式下未实现
+
+根因分析 (runtime_module.cxx):
+- onOffer (L1219-1231): 仅在 acceptAllInvites(harness) 模式下处理，forward 模式直接 return
+  => 入站 re-INVITE 携带 SDP offer 时不会转发到下游
+- 无 onUpdate / onUpdateRequested 回调覆写
+  => 入站 UPDATE 不被转发（DUM 默认行为可能拒绝或忽略）
+- onAnswer (L1184-1218) 仅处理下游 200 OK answer 中继，不处理入站 re-INVITE
+
+决策:
+- 本次批次（SIP 对拍）不实现 native C++ in-dialog 转发，登记为已知 gap
+- 实现需在 runtime_module.cxx AppDialog 中增加 onOffer(forward模式转发) 与 onUpdate 处理
+- 需维护者决定是否立项实现（涉及 C++ native 改动 + reSIProcate DUM 语义）
+
+状态: 待裁决（是否在 v1.1 实现）

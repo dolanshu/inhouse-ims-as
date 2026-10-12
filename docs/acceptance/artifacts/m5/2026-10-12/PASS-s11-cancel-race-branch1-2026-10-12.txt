@@ -1,0 +1,18 @@
+PASS — P6 S11 CANCEL 竞态对拍 分支①（REQ-F-11）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+
+结论: 通过
+证据文件: platform/tests/test_req_f11_cancel_race_integration.py
+日期: 2026-10-12
+
+覆盖:
+- REQ-F-11 分支①: 上游 CANCEL 在下下游最终响应之前到达（180 Ringing 已建立 early dialog）
+- AS 将 CANCEL 转发到下游对端（非新建对话、非丢黑洞）
+- 下游回 487 Request Terminated
+- AS 向上游透传 487（Call-ID 与入站一致）
+
+native 日志确认: UAC_INVITE_SENT -> UAC_NEW_SESSION (180 触发) -> OUTBOUND_CANCEL_FORWARD
+
+测试结果: test_cancel_before_downstream_final_is_forwarded PASSED
+回归: test_req_f11 + test_req_f9 + test_req_f6_f7 = 5 passed

@@ -1,0 +1,18 @@
+PASS — P5 S9 in-dialog BYE 路由对拍（REQ-F-9 BYE 分支）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+
+结论: 通过
+证据文件: platform/tests/test_req_f9_in_dialog_bye_integration.py
+日期: 2026-10-12
+
+覆盖:
+- REQ-F-9 (BYE 分支): 对话建立后，上游 BYE 被 AS 转发到下游对端（非新建对话、非丢黑洞）
+- 完整链路: INVITE(offer) -> 下游 INVITE -> 200 OK(answer) -> 上游 200 OK -> ACK -> 上游 BYE -> 下游 BYE -> 200 OK -> 上游 200 OK
+- 下游 Contact 头携带实际端口，BYE 按对话路由到正确对端
+- SDP offer/answer 原样中继（产品不碰媒体，仅透传）
+
+native 日志确认: UAC_INVITE_SENT -> UAC_NEW_SESSION -> UAS_ANSWER_RELAYED -> OUTBOUND_BYE_FORWARD
+
+测试结果: test_in_dialog_bye_is_forwarded_to_peer PASSED
+回归: test_req_f9 + test_req_f6_f7 + test_req_f4 = 9 passed

@@ -6,6 +6,7 @@ Call-ID: 48f64baa94fdfcfdd79af4128905d375-b2b_1
 CSeq: 424324332 INVITE
 Server: 3rd-party AS POC mock S-SBC
 Contact: <sip:127.0.0.1:47288>
+Record-Route: <sip:127.0.0.1:47288;lr>
 Content-Type: application/sdp
 Content-Length: 230
 

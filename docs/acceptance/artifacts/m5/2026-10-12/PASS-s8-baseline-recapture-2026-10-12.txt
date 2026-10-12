@@ -1,0 +1,37 @@
+== M8 batch2 item1 — S8 baseline recapture (Route / Record-Route) (2026-10-12) ==
+environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s8-baseline-recapture-2026-10-12.txt, 2026-10-12)
+
+-- scope --
+Resolve the 2 skips of REQ-F-5 in testbed/simulators/tests/test_derived_baseline.py.
+
+-- changes --
+1. testbed/simulators/tests/test_derived_baseline.py
+   - rename test_req_f5_egress_invite_carries_a_route -> test_req_f5_egress_invite_carries_no_route
+   - flip assertion: egress INVITE must NOT carry Route (AS consumes the ingress Route, per REQ-F-5 point 2 and S8 README)
+2. testbed/contracts/sip-baseline/S1-basic-call/07-in-200-core.txt
+   - append Record-Route: <sip:127.0.0.1:47288;lr> to the core-side 200 OK (downstream peer returns Record-Route, per REQ-F-5 point 4)
+3. testbed/contracts/sip-baseline/S8-route-record-route/README.md
+   - append 补采记录 section noting 2026-10-12 Record-Route recapture (non-original POC capture)
+
+-- check command --
+cd /home/shudong/project/3rdparty-as && uv run pytest testbed/simulators/tests/test_derived_baseline.py -m contract -v
+
+-- result --
+12 passed in 0.02s, 0 skipped
+
+REQ-F-5 tests:
+- test_req_f5_ingress_invite_carries_a_route PASSED
+- test_req_f5_egress_invite_carries_no_route PASSED (was skip)
+- test_req_f5_route_next_hop_becomes_the_egress_target PASSED
+- test_req_f5_record_route_reaches_the_upstream_side PASSED (was skip)
+
+-- out of scope (not changed) --
+- trunk-side 200 OK (09-out-200-trunk.txt) Record-Route forwarding: product AS does not forward Record-Route yet; this is S8 implementation scope, not baseline recapture.
+- REQ-F-5 matrix status not signed off.
+
+-- conclusion --
+PASS: both REQ-F-5 skips resolved. Egress Route assertion corrected to expect Route consumption; Record-Route baseline recaptured on core-side 200 OK.
+
+-- date --
+2026-10-12

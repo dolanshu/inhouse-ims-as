@@ -251,6 +251,39 @@ class _LegRecorder:
             if item.hop == hop and item.method == "INVITE" and item.payload is not None
         )
 
+    def leg_call_id_map(self, hop: str) -> list[dict[str, object]]:
+        """Per-call Call-ID stability evidence at ``hop``.
+
+        For each Call-ID group observed at ``hop``, return the Call-ID seen on
+        the INVITE, the ACK, the BYE, and on every 200 OK response.  A complete
+        leg has all four populated; an incomplete one leaves the missing slots
+        as ``None`` so the caller can tell them apart from a present-but-empty
+        value.
+        """
+        result: list[dict[str, object]] = []
+        for items in self._per_call(hop).values():
+            invite_cid = next(
+                (item.call_id for item in items if item.method == "INVITE"), None
+            )
+            ack_cid = next(
+                (item.call_id for item in items if item.method == "ACK"), None
+            )
+            bye_cid = next(
+                (item.call_id for item in items if item.method == "BYE"), None
+            )
+            response_cids = [
+                item.call_id for item in items if item.status == 200
+            ]
+            result.append(
+                {
+                    "invite": invite_cid,
+                    "ack": ack_cid,
+                    "bye": bye_cid,
+                    "responses": response_cids,
+                }
+            )
+        return result
+
 
 def _require_product_stack() -> object:
     """Return the native runtime, or fail: e2e without the product stack is not e2e."""
@@ -427,3 +460,43 @@ def test_e2e_s1_replay_sdp_offer_is_byte_identical_across_legs(
         "the outbound SDP offer(s) are not byte-identical to the inbound offer(s): "
         f"inbound={sorted(inbound)!r} outbound={sorted(outbound)!r}"
     )
+
+
+def test_e2e_s1_replay_call_id_is_stable_within_each_leg(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """REQ-F-2 items 5-6: within each leg, every message keeps the INVITE's Call-ID.
+
+    RFC 3261 §8.1.1.4 fixes the Call-ID for the whole dialog, so the ACK and
+    BYE of a leg, and the 200 OK responses, must all carry the same Call-ID
+    as that leg's INVITE.  Asserts this for every complete call on both the
+    trunk-facing (north) and core-facing (south) legs.
+    """
+    recorder = _LegRecorder()
+    _drive_recorded_first_edition(tmp_path, monkeypatch, recorder)
+
+    for hop in ("north", "south"):
+        calls = recorder.leg_call_id_map(hop)
+        complete = [
+            call for call in calls
+            if call["invite"] is not None
+            and call["ack"] is not None
+            and call["bye"] is not None
+            and call["responses"]
+        ]
+        assert complete, (
+            f"no complete call (INVITE+ACK+BYE+200 OK) observed at the {hop} hop"
+        )
+        for call in complete:
+            leg_cid = call["invite"]
+            assert call["ack"] == leg_cid, (
+                f"{hop} ACK changed Call-ID: INVITE had {leg_cid}, ACK had {call['ack']}"
+            )
+            assert call["bye"] == leg_cid, (
+                f"{hop} BYE changed Call-ID: INVITE had {leg_cid}, BYE had {call['bye']}"
+            )
+            assert all(cid == leg_cid for cid in call["responses"]), (
+                f"{hop} 200 OK changed Call-ID: INVITE had {leg_cid}, "
+                f"responses had {call['responses']}"
+            )

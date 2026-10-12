@@ -77,6 +77,8 @@ def _message_body(raw: bytes) -> bytes:
         ("offer-230.bin", 230),
         ("offer-143.bin", 143),
         ("offer-233.bin", 233),
+        ("offer-multi-m-line.bin", 318),
+        ("offer-rich-audio.bin", 302),
     ),
 )
 def test_forward_path_preserves_sdp_offer_bytes(fixture_name: str, expected_len: int) -> None:

@@ -39,6 +39,8 @@ class PeerUas:
         tls_private_key: Path | None = None,
         listen_port: int = 0,
         bind_host: str | None = None,
+        invite_status: int = 200,
+        invite_reason: str | None = None,
     ) -> None:
         """Bind the callee.
 
@@ -58,6 +60,13 @@ class PeerUas:
             tls_private_key=tls_private_key,
             port=listen_port,
         )
+        self._invite_status = invite_status
+        self._invite_reason = invite_reason or {
+            200: "OK",
+            486: "Busy Here",
+            480: "Temporarily Unavailable",
+            408: "Request Timeout",
+        }.get(invite_status, "OK")
 
     @property
     def port(self) -> int:
@@ -95,16 +104,24 @@ class PeerUas:
             uri = message.start_line.split(" ", 2)[1]
             with self._lock:
                 self.request_users.append(uri_user(uri))
-            contact = f"<sip:uas@{self.host}:{self.port};transport={self.transport}>"
-            response = simple_response(
-                message,
-                200,
-                "OK",
-                to_tag=self._to_tag,
-                contact=contact,
-                extra=(("Content-Type", "application/sdp"),),
-                body=_ANSWER_SDP,
-            )
+            if self._invite_status == 200:
+                contact = f"<sip:uas@{self.host}:{self.port};transport={self.transport}>"
+                response = simple_response(
+                    message,
+                    200,
+                    "OK",
+                    to_tag=self._to_tag,
+                    contact=contact,
+                    extra=(("Content-Type", "application/sdp"),),
+                    body=_ANSWER_SDP,
+                )
+            else:
+                response = simple_response(
+                    message,
+                    self._invite_status,
+                    self._invite_reason,
+                    to_tag=self._to_tag,
+                )
             server.send(peer, render_message(response), conn)
             return
         if method == "BYE":

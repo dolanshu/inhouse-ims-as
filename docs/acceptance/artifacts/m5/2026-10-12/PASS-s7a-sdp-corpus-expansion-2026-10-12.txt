@@ -1,0 +1,37 @@
+== M8 batch2 item3 — P2 S7a SDP passthrough corpus expansion (2026-10-12) ==
+environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s7a-sdp-corpus-expansion-2026-10-12.txt, 2026-10-12)
+
+-- scope --
+Coverage extension for REQ-F-4 (SDP offer byte-identity passthrough on the
+FORWARD path). Existing corpus had 3 single-m-line audio offers; expanded with
+multi-m-line (audio+video) and rich-attribute variants.
+
+-- changes --
+1. platform/tests/fixtures/d11_sdp_offers/offer-multi-m-line.bin (318 bytes, new)
+   - audio m-line (PCMU/PCMA/telephone-event) + video m-line (H264)
+2. platform/tests/fixtures/d11_sdp_offers/offer-rich-audio.bin (302 bytes, new)
+   - single audio m-line with ptime/maxptime/rtcp/G729/PCMU/PCMA/telephone-event
+3. platform/tests/test_req_f4_sdp_identity_integration.py
+   - parametrize list += 2 entries (offer-multi-m-line.bin/318, offer-rich-audio.bin/302)
+
+-- check command --
+cd /home/shudong/project/3rdparty-as && uv run pytest platform/tests/test_req_f4_sdp_identity_integration.py -v
+
+-- result --
+5 passed in 0.56s (offer-230, offer-143, offer-233, offer-multi-m-line, offer-rich-audio)
+
+reSIProcate accepted both new SDP variants without modification; the downstream
+INVITE body was byte-identical to the upstream offer in all cases.
+
+-- out of scope (not changed) --
+- REQ-F-4 matrix status not signed off (this is coverage extension only).
+- No contract / matrix / report changes.
+
+-- conclusion --
+PASS: SDP passthrough corpus expanded from 3 to 5 fixtures, covering multi-m-line
+(audio+video) and rich-attribute SDP. All variants pass byte-identity assertion
+on the real-stack FORWARD path.
+
+-- date --
+2026-10-12

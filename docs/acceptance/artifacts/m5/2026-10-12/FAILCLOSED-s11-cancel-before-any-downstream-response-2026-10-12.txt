@@ -1,0 +1,27 @@
+FAILCLOSED — P6 S11 CANCEL 在任何下游响应前到达时不被转发（native gap）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+
+结论: 失败（已登记 gap，非代码缺陷回归）
+证据文件: platform/native/resip_runtime/runtime_module.cxx (AppDialog::onTerminated)
+日期: 2026-10-12
+
+范围:
+- REQ-F-11 分支① 的极端子场景: CANCEL 在下游任何 1xx 响应之前到达
+- 当前实现: onTerminated(RemoteCancel) 中 CANCEL 转发依赖 mOutboundDialogSet != nullptr
+- mOutboundDialogSet 仅在 onNewSession(ClientInviteSessionHandle) 中赋值
+- reSIProcate ClientInviteSession 仅对 statusCode > 100 的响应调用 onNewSession
+- 100 Trying 不触发 onNewSession，故 mOutboundDialogSet 为 nullptr，CANCEL 被静默丢弃
+
+根因:
+- runtime_module.cxx L1143-1162: CANCEL 转发守卫 mOutboundDialogSet != nullptr
+- L1065: mOutboundDialogSet 仅在 onNewSession 中赋值
+- reSIProcate ClientInviteSession.cxx: onNewSession 需 statusCode > 100
+
+决策:
+- 本次批次（SIP 对拍）不修改 native C++，登记为已知 gap
+- 可行的测试路径: 下游先发 180 Ringing 建立 early dialog 再发 CANCEL（见 PASS-s11-cancel-race-branch1）
+- 修复需在 onTerminated(RemoteCancel) 中，当 mOutboundDialogSet 为空时通过 outbound Call-ID 查找 mOutboundByInboundCallId 的 dialog set id 来转发 CANCEL
+- 需维护者决定是否立项修复
+
+状态: 待裁决（是否在 v1.1 修复）

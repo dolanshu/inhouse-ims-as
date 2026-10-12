@@ -1,0 +1,25 @@
+PASS — P3 S6 多规则优先级 + 无匹配组合真栈对拍
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+
+结论: 通过
+证据文件: platform/tests/test_req_f6_f7_rule_priority_integration.py
+日期: 2026-10-12
+
+覆盖:
+- REQ-F-7: BLOCK 规则优先级高于 TRANSLATE（即使 TRANSLATE 前缀更短也匹配）。
+  规则 b-168(BLOCK, +86168) 与 t-16(TRANSLATE, +8616) 均匹配 +861681000000，
+  AS 返回 603 且不创建 B2BUA 对话（无下游 INVITE）。
+- REQ-F-6: 同一 action 内最长前缀优先。
+  规则 t-short(TRANSLATE, +86755) 与 t-long(TRANSLATE, +8675512) 均匹配
+  +867551234567，t-long 胜出，下游 INVITE Request-URI user = "934567"
+  （t-long strip +8675512 add 9），而非 t-short 的 "07551234567"。
+- REQ-F-6: 无匹配前缀返回 404。
+  +999999999999 不匹配任何规则，AS 返回 404 且无下游 INVITE。
+
+测试结果: 3 passed in 3.36s
+- test_block_outranks_translate_on_runtime_path PASSED
+- test_longest_translate_prefix_wins_on_runtime_path PASSED
+- test_no_match_returns_404_on_runtime_path PASSED
+
+回归: test_rules.py (8) + test_req_f4_sdp_identity_integration.py (5) + 本文件 (3) = 20 passed

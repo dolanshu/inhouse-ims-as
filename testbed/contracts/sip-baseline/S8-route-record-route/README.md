@@ -15,3 +15,7 @@
 - `../S1-basic-call/03-out-invite-core.txt`：出腿 INVITE 正确送达 core 端口
 
 ## 抓取日期：2026-09-28
+
+## 补采记录
+
+- **2026-10-12**：对 `../S1-basic-call/07-in-200-core.txt` 补采 `Record-Route: <sip:127.0.0.1:47288;lr>` 头。非原始 POC 抓取，依据 REQ-F-5 point 4（下游对端返回带 Record-Route 的 200 OK）。其余字段保持原始抓取不变。

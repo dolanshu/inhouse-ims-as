@@ -1,0 +1,45 @@
+== M8 batch2 item2 — P1 S5 two-leg Call-ID stability e2e (2026-10-12) ==
+environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s5-call-id-stability-2026-10-12.txt, 2026-10-12)
+
+-- scope --
+Coverage extension for REQ-F-2 (two-leg independent Call-IDs). F-2 was already
+signed pass on 2026-10-12 N3; this extends e2e (real-stack) coverage for the
+explicit within-leg Call-ID stability assertions (REQ-F-2 acceptance items 5-6),
+which previously had only implicit coverage.
+
+-- changes --
+1. testbed/e2e/test_s1_replay_contract.py
+   - add _LegRecorder.leg_call_id_map(hop): returns per-call Call-ID of INVITE,
+     ACK, BYE, and all 200 OK responses at a hop
+   - add test_e2e_s1_replay_call_id_is_stable_within_each_leg: for every complete
+     call on north (trunk) and south (core) legs, asserts ACK, BYE, and all
+     200 OK responses carry the same Call-ID as that leg's INVITE
+     (RFC 3261 §8.1.1.4 Call-ID fixed for the whole dialog)
+
+-- check command --
+cd /home/shudong/project/3rdparty-as && uv run pytest testbed/e2e/test_s1_replay_contract.py -v
+
+-- result --
+4 passed in 3.93s
+
+REQ-F-2 e2e tests:
+- test_e2e_s1_replay_second_leg_starts_a_new_call_id PASSED (C_in != C_out)
+- test_e2e_s1_replay_call_id_is_stable_within_each_leg PASSED (new: Call-ID
+  stable within each leg, REQ-F-2 items 5-6)
+- (also: normalised sequence + SDP byte-identity, unrelated to F-2)
+
+Full e2e suite: 9 passed (Wave 1 x5 + Wave 2 x4), no regression.
+
+-- out of scope (not changed) --
+- REQ-F-2 matrix status not re-signed (already pass per N3; this is coverage
+  extension only).
+- No contract / matrix / report changes.
+
+-- conclusion --
+PASS: REQ-F-2 within-leg Call-ID stability now explicitly asserted at the e2e
+(real-stack) layer for both legs, in addition to the existing C_in != C_out
+assertion.
+
+-- date --
+2026-10-12

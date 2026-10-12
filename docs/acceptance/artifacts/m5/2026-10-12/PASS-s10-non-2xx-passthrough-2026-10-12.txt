@@ -1,0 +1,26 @@
+PASS — P4 S10 非 2xx 透传对拍（REQ-F-10）
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+
+结论: 通过
+证据文件: testbed/e2e/test_sip_first_edition.py (test_e2e_sip_5_udp_non_2xx_passthrough)
+日期: 2026-10-12
+
+覆盖:
+- REQ-F-10: 下游对端返回 486 Busy Here，AS 向上游透传 486（不改成 404/502/200）
+- REQ-F-10: 下游对端返回 480 Temporarily Unavailable，AS 向上游透传 480
+- REQ-F-10: 下游对端返回 408 Request Timeout，AS 向上游透传 408
+- 非 2xx 终态不建立对话，peer 侧无 BYE
+- 无未决会话（unresolved_sessions == 0），无 BYE 错误
+
+实现:
+- PeerUas 新增 invite_status / invite_reason 参数（默认 200 OK 带 SDP）
+- _drive_first_edition 新增 peer_invite_status 关键字参数
+- 参数化 e2e 测试覆盖 486/480/408，使用 T5（FORWARD）场景
+
+测试结果:
+- test_e2e_sip_5_udp_non_2xx_passthrough[486] PASSED
+- test_e2e_sip_5_udp_non_2xx_passthrough[480] PASSED
+- test_e2e_sip_5_udp_non_2xx_passthrough[408] PASSED
+
+回归: test_sip_first_edition.py (8) + test_product_path.py (4) = 12 passed

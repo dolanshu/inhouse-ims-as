@@ -77,6 +77,8 @@ def _drive_first_edition(
     monkeypatch: pytest.MonkeyPatch,
     transport: str,
     scenarios: tuple[str, ...],
+    *,
+    peer_invite_status: int = 200,
 ) -> tuple[dict[str, Any], PeerUas]:
     """Run ``scenarios`` through S-CSCF → S-SBC → AS → peer UAS and return the outcome.
 
@@ -90,7 +92,13 @@ def _drive_first_edition(
     key = None if material is None else material.private_key
     ca_file = None if material is None else material.ca_certificate
     rules, _translations = demo_rules()
-    uas = PeerUas(_HOST, transport, tls_certificate=cert, tls_private_key=key)
+    uas = PeerUas(
+        _HOST,
+        transport,
+        tls_certificate=cert,
+        tls_private_key=key,
+        invite_status=peer_invite_status,
+    )
     south = TransparentBridge(
         advertised_host=_HOST,
         next_hop=(_HOST, uas.port),
@@ -286,3 +294,34 @@ def test_e2e_sip_4_stream_transport_t1_completes(
     assert _bye_errors(summary) == {}
     assert summary["counts"]["unresolved_sessions"] == 0
     assert uas.request_methods.count("BYE") == sum(answered.values())
+
+
+@pytest.mark.parametrize("status", [486, 480, 408])
+def test_e2e_sip_5_udp_non_2xx_passthrough(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    status: int,
+) -> None:
+    """E2E-SIP-5 (REQ-F-10): downstream 486/480/408 is forwarded upstream unchanged.
+
+    The peer UAS answers the outbound INVITE with a non-2xx final response. The
+    AS must propagate that exact code to the inbound leg (not rewrite to 404 or
+    502) and must not establish a dialog, so no BYE reaches the peer.
+    """
+    summary, uas = _drive_first_edition(
+        tmp_path,
+        monkeypatch,
+        "udp",
+        ("T5",),
+        peer_invite_status=status,
+    )
+
+    buckets = summary["by_scenario"]
+    assert isinstance(buckets, dict)
+    rejected = _terminal_codes(buckets, "T5")
+    assert set(rejected) == {str(status)}
+    assert sum(rejected.values()) >= 1
+    assert _bye_errors(summary) == {}
+    assert summary["counts"]["unresolved_sessions"] == 0
+    # A non-2xx final response does not establish a dialog: no BYE on the peer.
+    assert uas.request_methods.count("BYE") == 0
