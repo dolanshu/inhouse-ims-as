@@ -1,0 +1,35 @@
+== M8 batch3 NF-2 双 Deployment 隔离：删除 translation Pod 期间 anti-fraud 不受影响 ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt, 2026-10-12)
+
+-- 环境与方法 --
+kind-as-m5 / namespace as-m5 / release `as`。对 anti-fraud Pod 直连 port-forward 8080，每 1s 探一次 /health/live 与 /health/ready（HTTP 200 为准）；探测中途 kubectl delete translation Pod，由 Deployment 重建，再对比两个 Pod 的身份（UID / startTime / restartCount）。
+
+-- 原始记录（逐字摘录） --
+== before ==
+anti-fraud pod: as-3rdparty-as-anti-fraud-79c8c7db89-n5jps
+uid=cc4f0268-a88e-47df-897f-13146370a0ca start=2026-10-12T11:11:25Z restarts=0
+translation pod: as-3rdparty-as-translation-6d948bcdc-tk8x5
+uid=e93121b0-093c-481d-a59c-325dc971a86d start=2026-10-12T12:57:21Z restarts=0
+probes pre-kill:
+200/200 count: 12/12
+== deleting translation pod as-3rdparty-as-translation-6d948bcdc-tk8x5 at 20:58:11.384 ==
+pod "as-3rdparty-as-translation-6d948bcdc-tk8x5" deleted
+probes post-kill:
+200/200 count: 30/30
+deployment "as-3rdparty-as-translation" successfully rolled out
+== after ==
+anti-fraud pod: as-3rdparty-as-anti-fraud-79c8c7db89-n5jps (unchanged=yes)
+uid=cc4f0268-a88e-47df-897f-13146370a0ca start=2026-10-12T11:11:25Z restarts=0
+translation pod: as-3rdparty-as-translation-6d948bcdc-6hnx4
+uid=f16fcd25-8ed6-4c15-b8b3-573057915199 start=2026-10-12T12:58:11Z restarts=0
+
+（42 次逐条探测全部 live=200 ready=200，无一次非 200。）
+
+-- 结论 --
+PASS（NF-2）：translation Pod 被删除并由 Deployment 重建（新 UID、新 startTime）的整个窗口内，anti-fraud Pod 的 /health/live 与 /health/ready 42/42 为 200，且 anti-fraud Pod 名字、UID、startTime、restartCount 全程不变。两个用例是独立 Deployment/进程，故障不跨用例传播。
+
+-- 边界 --
+- 覆盖的是控制面/部署隔离（Pod 级故障），不覆盖节点级或网络分区故障。
+- 本文件不签收 REQ-NF-2，不改变矩阵状态。

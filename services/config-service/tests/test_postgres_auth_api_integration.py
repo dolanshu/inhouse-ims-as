@@ -26,7 +26,9 @@ from as_config_service.api import ApiIdentity, create_app
 from as_config_service.audit_store import PostgresAuditStore
 from as_config_service.auth import LastEnabledConsoleAdminError, PostgresConsoleAuthStore
 from as_config_service.change_order_store import PostgresChangeOrderStore
+from as_config_service.distribution_store import PostgresDistributionStore
 from as_config_service.managed_rule_store import PostgresManagedRuleStore
+from as_config_service.postgres_store import PostgresVersionStore
 from as_console.access import AuditOutcome, Role
 
 pytestmark = pytest.mark.integration
@@ -58,6 +60,8 @@ class PgHarness:
     audit_store: PostgresAuditStore
     change_order_store: PostgresChangeOrderStore
     managed_rule_store: PostgresManagedRuleStore
+    distribution_store: PostgresDistributionStore
+    version_store: PostgresVersionStore
     clock: list[float]
 
 
@@ -79,6 +83,7 @@ def pg() -> Iterator[PgHarness]:
     audit_schema = f"{schema}_audit"
     prefix = f"auth_api_{uuid.uuid4().hex[:10]}"
     runtime_role = f"auth_api_runtime_{uuid.uuid4().hex[:10]}"
+    version_table = f"{prefix}_config_versions"
     role_created = False
     try:
         try:
@@ -107,9 +112,15 @@ def pg() -> Iterator[PgHarness]:
         managed_rules = PostgresManagedRuleStore(
             connection, prefix=f"{prefix}_rules", schema=schema
         )
+        distribution = PostgresDistributionStore(
+            connection, prefix=f"{prefix}_distribution", schema=schema
+        )
+        versions = PostgresVersionStore(connection, table=version_table)
         auth_store.ensure_schema()
         change_orders.ensure_schema()
         managed_rules.ensure_schema()
+        distribution.ensure_schema()
+        versions.ensure_schema()
         audit_store = PostgresAuditStore(connection, prefix=f"{prefix}_audit", schema=audit_schema)
         audit_store.ensure_schema(runtime_role=runtime_role)
 
@@ -125,12 +136,19 @@ def pg() -> Iterator[PgHarness]:
             change_orders.events_table,
             managed_rules.heads_table,
             managed_rules.events_table,
+            distribution.heads_table,
+            distribution.events_table,
         ):
             cursor.execute(
                 sql.SQL("GRANT SELECT, INSERT, UPDATE ON TABLE {} TO {}").format(
                     sql.SQL(table), sql.Identifier(runtime_role)
                 )
             )
+        cursor.execute(
+            sql.SQL("GRANT SELECT, INSERT ON TABLE {} TO {}").format(
+                sql.Identifier(version_table), sql.Identifier(runtime_role)
+            )
+        )
         cursor.execute(
             sql.SQL("GRANT SELECT, UPDATE ON TABLE {} TO {}").format(
                 sql.SQL(auth_store.bootstrap_table), sql.Identifier(runtime_role)
@@ -149,6 +167,10 @@ def pg() -> Iterator[PgHarness]:
         managed_rules = PostgresManagedRuleStore(
             connection, prefix=f"{prefix}_rules", schema=schema
         )
+        distribution = PostgresDistributionStore(
+            connection, prefix=f"{prefix}_distribution", schema=schema
+        )
+        versions = PostgresVersionStore(connection, table=version_table)
         audit_store = PostgresAuditStore(connection, prefix=f"{prefix}_audit", schema=audit_schema)
         yield PgHarness(
             connection,
@@ -160,6 +182,8 @@ def pg() -> Iterator[PgHarness]:
             audit_store,
             change_orders,
             managed_rules,
+            distribution,
+            versions,
             [_NOW],
         )
     finally:
@@ -176,6 +200,9 @@ def pg() -> Iterator[PgHarness]:
                 )
                 cursor.execute(
                     sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(audit_schema))
+                )
+                cursor.execute(
+                    sql.SQL("DROP TABLE IF EXISTS {} CASCADE").format(sql.Identifier(version_table))
                 )
                 if role_created:
                     cursor.execute(
@@ -208,6 +235,8 @@ def _app(pg: PgHarness, resolver: Any = None) -> Any:
         resolve_identity=resolver,
         can_read_config=lambda _: False,
         now=lambda: pg.clock[0],
+        distribution_store=pg.distribution_store,
+        version_store=pg.version_store,
         auth_store=pg.auth_store,
         audit_store=pg.audit_store,
         audit_resource_hmac_key=_AUDIT_RESOURCE_HMAC_KEY,
@@ -1015,3 +1044,186 @@ def test_concurrent_admin_demotion_leaves_one_enabled_admin(pg: PgHarness) -> No
     assert (
         sum(user.enabled and Role.ADMIN in user.roles for user in pg.auth_store.list_users()) == 1
     )
+
+
+_DISTRIBUTION_OPERATOR_ID = "dist-operator"
+_DISTRIBUTION_APPROVER_ID = "dist-approver"
+_DISTRIBUTION_OPERATOR_PASSWORD = "dist-operator-password-long"
+_DISTRIBUTION_APPROVER_PASSWORD = "dist-approver-password-long"
+
+
+def _proposal_change_order_payload(rule_id: str) -> dict[str, object]:
+    return {
+        "bundle": {"version": "v1", "rules": [], "toggles": []},
+        "managed_rule_change": {
+            "action": "create",
+            "rule_id": rule_id,
+            "proposed_rule": {
+                "rule_id": rule_id,
+                "name": "Distribution regression rule",
+                "match_field": "called",
+                "match_mode": "prefix",
+                "match_value": "+8613",
+                "target_service": "translation",
+                "enabled": True,
+                "target_detail": "return-uas",
+            },
+        },
+    }
+
+
+def _create_submit_and_approve_change_order(
+    pg: PgHarness, rule_id: str
+) -> tuple[str, int, TestClient, str]:
+    operator = TestClient(_app(pg), base_url="https://testserver")
+    operator_csrf = _login(operator, _DISTRIBUTION_OPERATOR_ID, _DISTRIBUTION_OPERATOR_PASSWORD)
+    approver = TestClient(_app(pg), base_url="https://testserver")
+    approver_csrf = _login(approver, _DISTRIBUTION_APPROVER_ID, _DISTRIBUTION_APPROVER_PASSWORD)
+
+    created = operator.post(
+        "/internal/v1/change-orders",
+        json=_proposal_change_order_payload(rule_id),
+        headers={"X-CSRF-Token": operator_csrf},
+    )
+    assert created.status_code == 201, created.text
+    change_id = created.json()["record"]["order"]["change_id"]
+
+    submitted = operator.post(
+        f"/internal/v1/change-orders/{change_id}/submit",
+        headers={"X-CSRF-Token": operator_csrf},
+    )
+    assert submitted.status_code == 200, submitted.text
+
+    approved = approver.post(
+        f"/internal/v1/change-orders/{change_id}/approve",
+        headers={"X-CSRF-Token": approver_csrf},
+    )
+    assert approved.status_code == 200, approved.text
+    return change_id, approved.json()["revision"], approver, approver_csrf
+
+
+def test_authenticated_distribution_start_reports_and_apply_succeeds(
+    pg: PgHarness,
+) -> None:
+    _bootstrap(pg)
+    pg.auth_store.create_user(
+        _DISTRIBUTION_OPERATOR_ID,
+        _DISTRIBUTION_OPERATOR_PASSWORD,
+        {Role.OPERATOR},
+        pg.clock[0],
+    )
+    pg.auth_store.create_user(
+        _DISTRIBUTION_APPROVER_ID,
+        _DISTRIBUTION_APPROVER_PASSWORD,
+        {Role.APPROVER},
+        pg.clock[0],
+    )
+
+    change_id, approved_revision, approver, approver_csrf = _create_submit_and_approve_change_order(
+        pg, "rule-distribution-1"
+    )
+    path = f"/internal/v1/change-orders/{change_id}/distribution"
+
+    started = approver.post(
+        path,
+        json={
+            "version": 12,
+            "batches": [["as-1"], ["as-2"]],
+            "expected_change_order_revision": approved_revision,
+        },
+        headers={"X-CSRF-Token": approver_csrf},
+    )
+    assert started.status_code == 201, started.text
+    started_payload = started.json()
+    assert started_payload["distribution"]["state"] == "in_progress"
+    assert started_payload["change_order"]["record"]["order"]["state"] == "distributing"
+    distribution_revision = started_payload["distribution"]["revision"]
+    distributing_revision = started_payload["change_order"]["revision"]
+
+    partial = approver.post(
+        f"{path}/reports",
+        json={
+            "expected_distribution_revision": distribution_revision,
+            "reports": {"as-1": True},
+        },
+        headers={"X-CSRF-Token": approver_csrf},
+    )
+    assert partial.status_code == 200, partial.text
+    assert partial.json()["distribution"]["state"] == "in_progress"
+
+    completed = approver.post(
+        f"{path}/reports",
+        json={
+            "expected_distribution_revision": partial.json()["distribution"]["revision"],
+            "reports": {"as-2": True},
+        },
+        headers={"X-CSRF-Token": approver_csrf},
+    )
+    assert completed.status_code == 200, completed.text
+    completed_payload = completed.json()
+    assert completed_payload["distribution"]["state"] == "completed"
+    applied_order = completed_payload["change_order"]
+    assert applied_order is not None
+    assert applied_order["record"]["order"]["state"] == "applied"
+    assert applied_order["revision"] == distributing_revision + 1
+
+    applied = approver.post(
+        f"{path}/apply",
+        json={"expected_change_order_revision": distributing_revision},
+        headers={"X-CSRF-Token": approver_csrf},
+    )
+    assert applied.status_code == 200, applied.text
+    applied_payload = applied.json()
+    assert applied_payload["distribution"]["state"] == "completed"
+    assert applied_payload["change_order"]["record"]["order"]["state"] == "applied"
+    assert applied_payload["change_order"]["revision"] == applied_order["revision"]
+
+
+def test_authenticated_distribution_manual_rollback_succeeds(pg: PgHarness) -> None:
+    _bootstrap(pg)
+    pg.auth_store.create_user(
+        _DISTRIBUTION_OPERATOR_ID,
+        _DISTRIBUTION_OPERATOR_PASSWORD,
+        {Role.OPERATOR},
+        pg.clock[0],
+    )
+    pg.auth_store.create_user(
+        _DISTRIBUTION_APPROVER_ID,
+        _DISTRIBUTION_APPROVER_PASSWORD,
+        {Role.APPROVER},
+        pg.clock[0],
+    )
+
+    change_id, approved_revision, approver, approver_csrf = _create_submit_and_approve_change_order(
+        pg, "rule-distribution-2"
+    )
+    path = f"/internal/v1/change-orders/{change_id}/distribution"
+
+    started = approver.post(
+        path,
+        json={
+            "version": 13,
+            "batches": [["as-1"]],
+            "expected_change_order_revision": approved_revision,
+        },
+        headers={"X-CSRF-Token": approver_csrf},
+    )
+    assert started.status_code == 201, started.text
+    started_payload = started.json()
+    assert started_payload["distribution"]["state"] == "in_progress"
+    distribution_revision = started_payload["distribution"]["revision"]
+    distributing_revision = started_payload["change_order"]["revision"]
+
+    rolled_back = approver.post(
+        f"{path}/rollback",
+        json={
+            "expected_distribution_revision": distribution_revision,
+            "expected_change_order_revision": distributing_revision,
+            "reason": "operator requested rollback",
+        },
+        headers={"X-CSRF-Token": approver_csrf},
+    )
+    assert rolled_back.status_code == 200, rolled_back.text
+    rolled_back_payload = rolled_back.json()
+    assert rolled_back_payload["distribution"]["state"] == "rolled_back"
+    assert rolled_back_payload["change_order"]["record"]["order"]["state"] == "rolled_back"

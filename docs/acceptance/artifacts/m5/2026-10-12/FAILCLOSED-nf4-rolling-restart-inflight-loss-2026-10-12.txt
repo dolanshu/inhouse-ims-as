@@ -1,0 +1,37 @@
+FAILCLOSED — NF-4 滚动升级零丢失：持续真实 SIP 话务下 rollout restart 观测到在途呼叫损失
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (失败已登记 gap（FAILCLOSED，不是通过证据）, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt, 2026-10-12)
+
+-- 范围 --
+矩阵 REQ-NF-4「滚动升级零丢失：持续 SIP 话务下 helm rollout restart，验证不中断」。
+kind-as-m71 / as-sut：产品 AS as-sut-translation 单副本（values-product-as.yaml 中 translation replicaCount: null => chart 默认 1；文件注释说明第二进程会绑定同一组 SIP 端口，anti-fraud 在该 lab 关闭）；Deployment 策略 RollingUpdate maxSurge=25%/maxUnavailable=25%；Service 为 headless；chart 有 preStop sleep 5 + terminationGracePeriodSeconds=300。
+话务：call-load UI，UDP，全成功场景 T1/T5/F1（期望全部 200），5cps × 70s = 350 呼，hold 2s，timeout 6s，workers 40；第 12s 执行 kubectl -n as-sut rollout restart deploy/as-sut-translation。跑两轮取复现样本。
+
+-- 原始记录（逐字摘录） --
+第 1 轮，rollout restart at 20:47:37：
+old pod: as-sut-translation-7995597595-b9wst -> new pod: as-sut-translation-59d894f4f-94q9k (changed=True)
+{"established": 347, "failed": 3, "invites_sent": 350, "peak_established": 21, "response_code_distribution": {"200": 347}, "unresolved": 10, "error_distribution": {"bye_sip_481": 6, "timeout_bye": 4, "timeout_invite": 3}}
+分场景：F1 115/116（200x115），T1 116/117（200x116），T5 116/117（200x116）。
+
+第 2 轮，rollout restart at 20:51:15（独立复现）：
+new ReplicaSet as-sut-translation-86cb7685f8（pod as-sut-translation-86cb7685f8-6gvqx，ReplicaSet 创建时间 12:51:15Z 与 restart 时刻一致）
+{"established": 346, "failed": 4, "invites_sent": 350, "peak_established": 21, "response_code_distribution": {"200": 346}, "unresolved": 10, "error_distribution": {"bye_sip_481": 7, "timeout_bye": 3, "timeout_invite": 4}}
+分场景：F1 115/116，T1 115/117，T5 116/117。
+
+-- 损失形态与根因分析 --
+1. timeout_invite（第 1 轮 3、第 2 轮 4）：切换窗口内发出的 INVITE 在客户端 6s 超时内未得到终态。headless Service 下对端按 Pod IP 寻址，旧 Pod 进入终止/新 Pod 就绪的交接窗口存在无应答路径；preStop/terminationGracePeriod 保护的是优雅退出时长，不保证切换瞬间每个 INVITE 被另一进程承接。
+2. bye_sip_481（6 / 7）+ timeout_bye（4 / 3），合计每轮 10 个 unresolved：在旧进程内已建立的对话，其 BYE 在切换后被路由到新进程；reSIProcate DUM 对话状态只存在于进程内存（无 serialize/deserialize API），新进程不持有该 dialog，返回 481 Call/Transaction Does Not Exist，或 BYE 无应答超时。这与项目已登记的 native gap（M2 拟以 S-SBC 透明桥 + StateStore 抽象层弥补）同源；本 lab 路径没有跨进程对话状态迁移。
+两轮均复现，非偶发。
+
+-- 决策 --
+- 本批次不修改产品代码，不改 chart 默认值，登记 FAILCLOSED：单副本 + headless + 进程内对话状态的实测拓扑下，「滚动零丢失」不成立（在途 INVITE 与在途对话 teardown 均有可观测损失，两轮分别 13 / 14 个异常桶、unresolved 各 10）。
+- 是否立项（StateStore/S-SBC 透明桥落地、多副本与对话归属、维护窗口操作口径）由维护者裁决。
+- 矩阵 REQ-NF-4 维持 blocked，本次不改矩阵、不签收。
+
+-- 状态：待裁决
+-- 边界：测试 CA、kind 单节点、lab values；呼数为运行值非容量承诺。
+
+-- 裁决更新（2026-10-12，维护者） --
+上述两轮实测事实保持不变。维护者 2026-10-12 裁决：当前 release 接受该呼损级别，REQ-NF-4 按「实测行为已验证 + 损失范围已接受」判 **pass**（非「零丢失已达成」）；严格「滚动零呼损」列入今后 release 的增强 feature（本版不立项，启动走 requirement → ADR → design → review 流程）。裁决证据与完整机理分析：PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt。
+状态：已裁决（接受，NF-4 签收 pass，2026-10-12）

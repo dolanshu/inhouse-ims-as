@@ -1,0 +1,41 @@
+== M8 batch3 2.5 备份恢复演练：kind bundled PostgreSQL 真删除后 pg_dump/pg_restore 恢复 + 审计链校验（实测耗时为量级，非承诺） ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证（演练通过；耗时为本次实测量级，非 RTO/RPO 承诺）, docs/acceptance/artifacts/m5/2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt, 2026-10-12)
+
+-- 范围 --
+docs/operations/backup-restore.md §2/§4 的 kind 实练：kind-as-m5 / as-m5 的 bundled PostgreSQL 12.22 单副本（as-3rdparty-as-postgres-0，库 as_config）。pg_dump -Fc -> 真 DROP DATABASE（先 pg_terminate_backend，PG12 不支持 DROP WITH FORCE）-> CREATE -> pg_restore -> 计数/角色/schema 比对 -> 审计 append-only 权限守卫 -> 控制台登录与规则读取恢复 -> 审计续写。dump 文件保留在临时目录，不入库、不含凭据。
+
+-- 实测耗时（量级，非承诺；数据集为 lab 小库） --
+pg_dump -Fc：0.259s
+kubectl cp 到宿主机：0.143s（dump 59,475 字节以下量级；本次文件 sha256 前缀 7e5596b2）
+terminate+drop+create：1.123s（DROP 后查 information_schema：tables_fresh_db=0）
+pg_restore：0.704s，rc=0，stderr 0 字节
+config-service 重启到 rollout 完成：5.252s（恢复后登录实测 200）
+
+-- 恢复前后计数（12 项逐项一致 + 角色/schema） --
+as_instances=2 / audit_events=91 / audit_max_id=93 / change_orders_events=36 / change_orders_heads=10 / config_versions=2 / console_auth_sessions_active=20 / console_auth_users=3 / distributions_events=18 / distributions_heads=6 / managed_rules_events=2 / managed_rules_heads=2
+roles: as_config_owner, as_config_runtime, as_config_web（两轮一致）
+恢复后：schemas: as_config,console_audit；12 项计数 diff 无差异。
+
+-- 审计链守卫（SET ROLE as_config_web 实测，8 项） --
+G1 UPDATE console_audit_events WHERE false：permission denied
+G2 DELETE 真实行（id=max）：permission denied
+G3 TRUNCATE console_audit_events：permission denied
+G4 UPDATE as_config.change_orders_events：permission denied
+G5 DELETE as_config.change_orders_events WHERE false：permission denied
+G6 outcome 大写 'ALLOWED' 插入：违反 audit_event_outcome_check（约束只接受小写 allowed/denied）
+G7 指定 id 列插入：permission denied（列级 GRANT，id 不可由 runtime 写）
+G8 合法小写 INSERT 在事务内可见（runtime_insert_rows_in_txn=1），随后 UPDATE permission denied -> ROLLBACK；最终 audit_events_final=91，行数不变。
+
+-- 控制台恢复 --
+DROP/恢复期间 config-service 单条共享连接失效：恢复后未重启前登录实测 HTTP 500（观察项，见 NF-9 证据与 review record）。
+rollout restart config-service（5.252s）后：HTTPS 登录（经可信代理头）HTTP 200；GET managed-rules HTTP 200，rows=2；审计链续写：成功登录周期后 audit max id 由 93 增长到 108（多次登录尝试，其中每个成功登录周期可见 +2 行，actor=ops-b3 的审计行 28 -> 30 -> 继续增长）。序列在失败/回滚的演练 INSERT 上消耗的 id 空洞为 PostgreSQL 序列正常行为。
+
+-- 结论 --
+PASS（本次演练）：dump 可恢复到被真删除后重建的库，12 项计数与三角色完全一致，两个 schema 均恢复；runtime 角色对审计表/变更事件表的 UPDATE/DELETE/TRUNCATE 与 id 列写入被拒、大写 outcome 被 CHECK 拒绝、列级 INSERT 后篡改被回滚保证 append-only；控制台登录与规则读取恢复、审计链续写不中断。
+
+-- 边界（重要） --
+- 所有耗时仅描述本次 lab 小数据集，不预设、不承诺客户环境 RPO/RTO；客户演练记录仍以 docs/operations/backup-restore.md §5 模板为准，由演练方填写。
+- bundled PG/Redis 是单副本非 HA；本演练不覆盖生产 HA/PITR、不覆盖客户备份工具链（Velero/WAL 归档）。
+- 本文件不替代 §5 要求的独立演练记录与 review 链，不签收任何 REQ。

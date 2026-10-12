@@ -1,0 +1,57 @@
+== M8 batch3 F-15 真 AS 全栈：灰度分发 -> 健康上报 -> 末批自动 apply -> 自动回滚 -> 手动回滚（含 NF-10） ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt, 2026-10-12)
+
+-- 环境 --
+kind 集群 kind-as-m5；namespace as-m5；helm release `as`（chart 3rdparty-as-0.2.0 / appVersion 0.2.0，revision 4）。
+工作负载：as-3rdparty-as-translation、as-3rdparty-as-anti-fraud、as-3rdparty-as-config-service、as-3rdparty-as-postgres-0（bundled PostgreSQL 12.22 单副本）、as-3rdparty-as-redis（bundled Redis 7 单副本）、config-migrate Job Completed。
+镜像：as-platform:0.2.0-internal-20261012、as-config-service:0.2.0-internal-20261012（kind load 进入节点）。
+驱动：变更单经真实 HTTPS 登录 + CSRF 调 config-service 内部 API；managed-rule create 提案必须可编译（called/prefix/translation/target_detail 非空）；apply 的 bundle 从 managed-rule 登记处编译，不从变更单草稿编译。
+
+-- 原始记录（驱动输出，逐字摘录） --
+run: c60788b2
+login ops: 200 | login mgr: 200
+register fleet-a: HTTP 409 (409=already present, OK)
+register fleet-b: HTTP 409 (409=already present, OK)
+
+=== CO-1 HEALTHY CANARY -> COMPLETED -> AUTO APPLY ===
+CO v1: create/submit/approve OK (9869020c-f860-431a-893f-b88d397bd7f3, rev 3)
+v1 distribution START (batch1 notified): HTTP 201 dist_state=in_progress dist_rev=1 completed_batches=0 rolled_back_to=None reason=None order_state=distributing order_rev=4
+v1 report batch1 healthy: HTTP 200 dist_state=in_progress dist_rev=2 completed_batches=1 rolled_back_to=None reason=None order_state=None order_rev=None
+v1 report batch2 healthy (batch2 notified): HTTP 200 dist_state=completed dist_rev=3 completed_batches=2 rolled_back_to=None reason=None order_state=applied order_rev=5
+v1 AUTO-APPLIED on final healthy report: order_rev 5
+v1 explicit APPLY idempotent replay: HTTP 200 dist_state=completed dist_rev=3 completed_batches=2 rolled_back_to=None reason=None order_state=applied order_rev=5
+
+=== CO-2 UNHEALTHY FINAL BATCH -> AUTOMATIC ROLLBACK ===
+CO v2: create/submit/approve OK (88132833-2e3b-4661-a1c8-cc82ecf18bbd, rev 3)
+v2 distribution START (batch1 notified): HTTP 201 dist_state=in_progress dist_rev=1 completed_batches=0 rolled_back_to=None reason=None order_state=distributing order_rev=4
+v2 report batch1 healthy: HTTP 200 dist_state=in_progress dist_rev=2 completed_batches=1 rolled_back_to=None reason=None order_state=None order_rev=None
+fleet-b /health now: {"healthy": false}
+v2 report batch2 UNHEALTHY -> expect AUTO ROLLED_BACK: HTTP 200 dist_state=rolled_back dist_rev=3 completed_batches=1 rolled_back_to=1 reason=health check failed order_state=rolled_back order_rev=5
+v2 distribution GET (persisted): HTTP 200 order_state=None order_rev=3 detail=None
+
+=== CO-3 MANUAL ROLLBACK AFTER FIRST BATCH ===
+CO v3: create/submit/approve OK (1a4235ab-058c-474e-8a8b-671b8b5cd756, rev 3)
+v3 distribution START (batch1 notified): HTTP 201 dist_state=in_progress dist_rev=1 completed_batches=0 rolled_back_to=None reason=None order_state=distributing order_rev=4
+v3 report batch1 healthy: HTTP 200 dist_state=in_progress dist_rev=2 completed_batches=1 rolled_back_to=None reason=None order_state=None order_rev=None
+v3 MANUAL ROLLBACK -> ROLLED_BACK: HTTP 200 dist_state=rolled_back dist_rev=3 completed_batches=1 rolled_back_to=2 reason=batch3 manual evidence drill order_state=rolled_back order_rev=5
+
+=== FLEET NOTIFY LOGS (in-cluster POST receipts from real config-service) ===
+-- fleet-a --
+[{"change_id": "selftest", "version": 0, "bundle_version": "0"}, {"bundle_version": "1", "change_id": "968b885e-890a-4039-b6be-b987cf28bd2b", "version": 1}, {"bundle_version": "9", "change_id": "64ba4aea-5fec-4602-900e-3c24be01c425", "version": 9}, {"bundle_version": "1", "change_id": "338b6457-42dc-4a33-a262-b96217f3145a", "version": 1}, {"bundle_version": "1", "change_id": "9869020c-f860-431a-893f-b88d397bd7f3", "version": 1}, {"bundle_version": "2", "change_id": "88132833-2e3b-4661-a1c8-cc82ecf18bbd", "version": 2}, {"bundle_version": "3", "change_id": "1a4235ab-058c-474e-8a8b-671b8b5cd756", "version": 3}]
+-- fleet-b --
+[{"change_id": "selftest", "version": 0, "bundle_version": "0"}]
+
+-- 结论 --
+PASS（F-15 与 NF-10 的控制面行为）：
+- 两批全部健康：末批健康上报后 distribution 自动 completed 且变更单自动 applied（order_rev=5）；显式 apply 以 expected_change_order_revision=r1-1 幂等重放返回 200。
+- 末批不健康：distribution 自动 rolled_back（rolled_back_to=1, reason="health check failed"），变更单同步 rolled_back，状态持久化可读。
+- 首批后手动回滚：显式 rollback 返回 rolled_back（rolled_back_to=2, reason="batch3 manual evidence drill"）。
+- fleet-a 在集群内真实收到 notify（change_id/version/bundle_version 与 API 状态一致）；fleet-b 只收到 selftest —— 「只通知首批」是设计行为，由 test_fleet_api 测试钉死，非缺陷。
+
+-- 边界（不是什么） --
+- 产品 AS 本身没有 notify/bundle 接收端（lld 事实）；fleet-a/fleet-b 是协议 stub（独立 Deployment + Service + ConfigMap 扮演实例角色），证据证明的是 config-service 的分发/通知/回滚控制面，不证明 AS 进程消费 bundle。
+- bundled PG/Redis 为单副本，本证据不覆盖生产 HA（D12/O5）。
+- 取证过程中发现并修复一个 P0 产品缺陷（auth 开启时分发端点必 409），见 PASS-config-service-auth-distribution-409-fix-2026-10-12.txt。
+- 本文件不签收任何 REQ，不改变 m8-test-plan-matrix.md 状态，不构成容量/SLA 承诺。

@@ -262,18 +262,10 @@ class _LegRecorder:
         """
         result: list[dict[str, object]] = []
         for items in self._per_call(hop).values():
-            invite_cid = next(
-                (item.call_id for item in items if item.method == "INVITE"), None
-            )
-            ack_cid = next(
-                (item.call_id for item in items if item.method == "ACK"), None
-            )
-            bye_cid = next(
-                (item.call_id for item in items if item.method == "BYE"), None
-            )
-            response_cids = [
-                item.call_id for item in items if item.status == 200
-            ]
+            invite_cid = next((item.call_id for item in items if item.method == "INVITE"), None)
+            ack_cid = next((item.call_id for item in items if item.method == "ACK"), None)
+            bye_cid = next((item.call_id for item in items if item.method == "BYE"), None)
+            response_cids = [item.call_id for item in items if item.status == 200]
             result.append(
                 {
                     "invite": invite_cid,
@@ -479,15 +471,14 @@ def test_e2e_s1_replay_call_id_is_stable_within_each_leg(
     for hop in ("north", "south"):
         calls = recorder.leg_call_id_map(hop)
         complete = [
-            call for call in calls
+            call
+            for call in calls
             if call["invite"] is not None
             and call["ack"] is not None
             and call["bye"] is not None
             and call["responses"]
         ]
-        assert complete, (
-            f"no complete call (INVITE+ACK+BYE+200 OK) observed at the {hop} hop"
-        )
+        assert complete, f"no complete call (INVITE+ACK+BYE+200 OK) observed at the {hop} hop"
         for call in complete:
             leg_cid = call["invite"]
             assert call["ack"] == leg_cid, (

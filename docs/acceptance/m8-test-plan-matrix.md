@@ -65,7 +65,7 @@
 | REQ-NF-1 | §2 kill 重启状态不丢 | M7 | C/D | 工程 harness 见 `test_d10_product_recovery_integration.py`（1 passed）等。客户 K8s live 为 **restriction**（2026-10-07，Close 前不测客户集群）：[`m8-environment-evidence.md`](m8-environment-evidence.md) D-2。不能签 pass | blocked | 维护者待签 |
 | REQ-NF-2 | §2 双 Deployment 隔离 | 横切 | C | 架构 ADR-0002（每用例独立进程/Deployment）；`make chart-check` OK（模板形状）。live kill translation 不影响 anti-fraud 验证待 K8s 环境（Phase D），不签 pass | open | 维护者待签 |
 | REQ-NF-3 | §2 HPA 扩缩 + 容量数字 | M5 | B/C | **Blocked**：test-plan 带固定容量数字（500 active_calls 阈值、1000 并发、3→≥5 副本）与 AGENT §2"M6 前不发布容量数字"冲突。指到 plan §5.1 **O1**：维护者目标裁决仍 open，M6 O1 报告为非 SLA 实测。待维护者改写验收口径或标 N/A | blocked | 维护者待签 |
-| REQ-NF-4 | §2 滚动升级零丢失 | M5 | C/D | 内核 5.5 draining 单测在 gate 978 passed 内；M7 进程壳 harness 为工程切片。**带真实 SIP 话务**的滚动验证需 live 环境，归 Phase D（待填）；未验证前不签 pass | blocked | 维护者待签 |
+| REQ-NF-4 | §2 滚动升级零丢失 | M5 | C/D | 内核 5.5 draining 单测在 gate 978 passed 内；M7 进程壳 harness 为工程切片。**M8 批次3 live 已验证**（kind-as-m71，UDP 5cps×70s=350 呼/轮 ×2 轮，第 12s rollout restart：200 OK 347/346；timeout_invite 3/4、bye_sip_481 6/7、timeout_bye 4/3，unresolved 各 10；机理=headless 单副本切换窗口 + DUM 对话态仅进程内存）。**维护者 2026-10-12 裁决：当前 release 接受该呼损级别，按「实测行为已验证 + 损失范围接受」签收 pass（非「零丢失已达成」）；严格零呼损滚动列今后 release 增强 feature，本版不立项**。证据：artifacts/m5/2026-10-12/PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt；原始记录 FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt | pass | 维护者 2026-10-12 签收 |
 | REQ-NF-5 | §2 仿真器中立 | 横切 | C | `rg 'is_intranet\|is_extranet\|network_mode' apps/` 无命中（代码无内外网分支）；换仿真器（Kamailio）行为一致验证待 sim 环境，REQ 签收待 M8 评审 | open | 维护者待签 |
 | REQ-NF-6 | §2 无媒体面实现 | 横切 | C | 生产代码 grep 见头注：无 RTP/G.711/G.729/DTMF/转码实现（唯一命中为 console.js DOM id 子串误报）；seam 仅注释。非目标项以"缺席"为通过依据 | pass | 维护者待签 |
 | REQ-NF-7 | §2 轨迹保留 + 无计费 | 横切 | C | 无 CDR/批价/计费实现（grep 无命中）一半成立；但轨迹查询依赖 F-13（plan §5.4 BLOCKED），保留期天数待 O4 冻结、清理任务验证待定。指到 plan §5.4 + §5.1 **O4**，归 Phase C（口径）/D（live） | blocked | 维护者待签 |
@@ -234,3 +234,20 @@
 3. 本裁定**不签收任何其他行、不改 `report.md` 计数**。
 4. 根因记录（POC `observability/tracing.py` 甄别为产品能力存活但实现为零；M4 起误入「补测」框架）已写入 [`../plan.md`](../plan.md) §5.4 与 §0 决策记录。
 5. **未执行任何 git 写操作**。
+
+---
+
+## 2026-10-12 追加裁定：REQ-NF-4 按「接受实测呼损」签收 pass（M8 批次3）
+
+**维护者 2026-10-12 裁决（原话要点）**：当前 release 可以接受这种程度的损失；把分析落盘；NF-4 mark pass；呼损在今后的 release 通过 feature 做 enhancement。
+
+- REQ-NF-4 正文行已由 `blocked` 更新为 `pass`（维护者签收）。验收口径 = **滚动升级实测行为已验证 + 在途呼损的实测范围被明确接受**；**不是**「零丢失已达成」。
+- 实测范围（两轮独立复现，kind-as-m71，UDP，350 呼/轮）：受影响 13/14 呼（3.7%/4.0%）= INVITE 超时 3/4 + 在途对话 teardown unresolved 10/10（bye_sip_481 6/7、timeout_bye 4/3）。机理：单副本 headless 切换窗口（UDP 无应答黑洞）+ reSIProcate DUM 对话态仅在进程内存（无 serialize/deserialize API，在途 BYE 到新进程得 481/超时）。
+- **「滚动升级零呼损」登记为今后 release 的增强 feature**：本版不立项、不定义需求、不实现；启动时走新 feature 流程（requirement → ADR → design → review，与 FM（P6）、呼叫轨迹（F-13/NF-7）同模式）。候选方向（进程级 drain、S-SBC 透明桥+StateStore、实例粘性、维护窗口口径）见 PASS 证据与批次3 review record B3-02。
+
+### 计数口径随本次裁定的更新（原计数保留不改，此处只登记新值）
+
+- **pass：16 → 17**（REQ-NF-4）
+- **blocked：7 → 6**（剩余：F-15、5.4-F-15真AS、NF-1、S-2、S-3、ADR-0008-演练）
+- open 17 / n-a 9 / fail 0 不变
+- 边界：该 pass 仅基于 UDP 实测，不外推 TCP/TLS；不构成零丢失或 SLA 承诺；仿真 S-SBC 不代表运营商 S-SBC 行为；不改 `report.md` 计数；未执行 git 写操作。

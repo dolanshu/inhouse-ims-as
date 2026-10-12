@@ -1,0 +1,44 @@
+== M8 batch3 NF-9 命名空间隔离：ns-A 停 PostgreSQL + 删除 AS Deployment 期间 ns-B 全栈不受影响 ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt, 2026-10-12)
+
+-- 环境与方法 --
+同一 kind 集群 kind-as-m5 内两个独立 helm 全栈：
+- ns-A：namespace as-m5，release `as`（as-3rdparty-as-*，含 bundled PG/Redis、migrate Job、fleet stub 除外的产品全栈）
+- ns-B：namespace as-m5b，release `asb`（asb-3rdparty-as-*，6 个工作负载 + 独立 bundled PG/Redis + migrate Job）
+对 ns-B anti-fraud Pod 直连 port-forward 8080，每 1s 探 /health/live 与 /health/ready；中途对 ns-A 执行：pg_ctl fast 停掉 as-3rdparty-as-postgres-0 内 PostgreSQL 进程 + 删除 as-3rdparty-as-translation / as-3rdparty-as-anti-fraud 两个 Deployment。随后恢复 ns-A（等 PG 容器自愈、helm upgrade 重建 Deployment、重启 config-service）。演练前后对比 ns-B 全部 Pod 的 UID/startTime/restartCount。
+
+-- 原始记录（逐字摘录） --
+== BLAST ns-A (as-m5) at 21:13:10.620: stop PG + delete AS deployments ==
+waiting for server to shut down....command terminated with exit code 137
+deployment.apps "as-3rdparty-as-translation" deleted
+deployment.apps "as-3rdparty-as-anti-fraud" deleted
+== post-blast probes (ns-B must stay 200) ==
+200/200 count: 50/50
+（blast 前另探 8/8，合计 58/58 全部 live=200 ready=200。）
+== ns-A restore ==
+pod/as-3rdparty-as-postgres-0 condition met
+helm upgrade rc=0
+deployment "as-3rdparty-as-translation" successfully rolled out
+deployment "as-3rdparty-as-anti-fraud" successfully rolled out
+deployment.apps/as-3rdparty-as-config-service restarted
+deployment "as-3rdparty-as-config-service" successfully rolled out
+
+ns-B 7 个 Pod 演练前后逐行一致（UID/startTime/restartCount 均未变），例如：
+asb-3rdparty-as-anti-fraud-ff47fdfb8-gjnl6  uid=42e16a58-a8c3-47fd-94f9-3dcc5df9ef2b  restarts=0  start=2026-10-12T11:07:23Z
+asb-3rdparty-as-postgres-0                  uid=baadc439-5aa7-466d-b62c-4c425c74afa9  restarts=0  start=2026-10-12T11:07:23Z
+asb-3rdparty-as-translation-747797cf44-2mm2t uid=9b02fe2a-fa4f-4595-8f19-ae399db41a11 restarts=0 start=2026-10-12T11:07:23Z
+asb-3rdparty-as-config-service-6db6bb7c95-vc62v uid=dc35c77e-a767-4d64-986e-cf1e061a9190 restarts=3 start=2026-10-12T11:07:23Z
+（before/after 两份快照 7 行完全相同；config-service 的 restarts=3 是演练前历史值，演练中未增加。）
+
+-- 结论 --
+PASS（NF-9）：ns-A 治理库进程被停、两个 AS Deployment 被删并随后恢复的整个窗口内，ns-B 独立全栈 58/58 健康探测为 200，ns-B 7 个 Pod 身份（UID/startTime/restartCount）演练前后逐项不变。namespace + 独立 release + 独立 bundled state store 的隔离在 Pod/进程级故障下成立。ns-A 经 helm upgrade 完整恢复。
+
+-- 观察项（非本批修复，详见 review record） --
+- ns-A PostgreSQL 进程恢复后，config-service 的单条共享 psycopg 连接不会自动重连，接口返回 500；重启 config-service Deployment 后恢复（本次实测重启后 rollout 完成秒级）。登记为运维观察项。
+- exit code 137 是 pg_ctl fast shutdown 终止客户端会话的表现，PostgreSQL 容器由 kubelet 按 restartPolicy 重新拉起。
+
+-- 边界 --
+- 覆盖 namespace/Deployment/StatefulSet 级故障隔离；两 namespace 共享同一 kind 节点，不覆盖节点宕机。
+- 本文件不签收 REQ-NF-9，不改变矩阵状态。

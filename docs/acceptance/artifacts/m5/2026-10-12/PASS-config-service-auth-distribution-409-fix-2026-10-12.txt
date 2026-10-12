@@ -1,0 +1,30 @@
+== M8 batch3 P0 缺陷修复：auth 开启时 config-service 分发生命周期端点必返 409 "distribution connection is not idle" ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证（缺陷修复 + 回归测试）, docs/acceptance/artifacts/m5/2026-10-12/PASS-config-service-auth-distribution-409-fix-2026-10-12.txt, 2026-10-12)
+
+-- 缺陷现象（F-15 取证时在真集群 auth 模式下实测） --
+真实 HTTPS 登录 + CSRF 后调用分发生命周期端点，distribution start 稳定返回 HTTP 409 "distribution connection is not idle"；reports / apply / rollback 同样受影响。无 auth 的测试路径不触发，故单测与此前集成测试未暴露。
+
+-- 根因 --
+config-service 运行时为单条共享 psycopg 连接（非 autocommit）。auth 开启时，路由依赖 resolve_session / verify_csrf 在请求处理早期执行 SELECT，使共享连接进入 INTRANS；内部函数 require_idle_distribution_connection 在此后检查连接状态必然失败 -> 409。而入口中间件 serialize_api_request 已在请求入口检查 IDLE、在出口 rollback 兜底；该内部检查重复且位于错误层级。
+
+-- 修复（最小改动） --
+services/config-service/src/as_config_service/api.py：删除内部函数 require_idle_distribution_connection 及其 4 处调用（distribution start / reports / apply / rollback 端点），净删 10 行；中间件、auth.py、事务边界逻辑不动。
+services/config-service/tests/test_postgres_auth_api_integration.py：新增 2 个真实 PostgreSQL + HTTPS 登录 + CSRF 的端到端回归测试（PgHarness 增加 distribution_store / version_store 的 schema、授权与清理）：
+- test_authenticated_distribution_start_reports_and_apply_succeeds（managed-rule create 提案走通 start -> reports -> 末批自动 applied -> 显式幂等 apply）
+- test_authenticated_distribution_manual_rollback_succeeds（首批健康后手动 rollback）
+修复前两测试在同一 409 上失败，修复后通过（先红后绿）。
+
+-- 检查命令与结果（2026-10-12 本机，compose PostgreSQL 12.22 :55432，AS_PG_TEST_DSN 指向该库；凭据不在本文件中） --
+uv run pytest services/config-service/tests/test_postgres_auth_api_integration.py -q
+=> 19 passed（含上述 2 个新测试，-v 下两条均 PASSED）
+uv run pytest services/config-service -q
+=> 629 passed, 3 skipped（3 条 skip 为 compose PG12.22 / wal_level=replica 的环境限制，与本次改动无关）
+
+-- 结论 --
+PASS：生产 auth 模式下分发生命周期必 409 的 P0 缺陷已修复，修复由真实 PG + HTTPS + CSRF 端到端测试钉死，config-service 全量 629 passed 无回归。
+
+-- 边界 --
+- 不处理 config-service 单连接在 PostgreSQL 重启后不自动重连的观察项（本批仅记录，见 NF-9 证据与 review record）。
+- 本文件不签收 REQ，不改变矩阵状态。

@@ -61,6 +61,14 @@ Sanitized M5.1 transcripts. Raw kind runs may still land under gitignored `artif
 | `2026-10-12/FAIL-integration-pg15-2026-10-12.txt` | **不是通过证据** | **如实失败**：PG **15.18**（自定义 DSN `:55434`）下 `-m integration` → `1 failed, 124 passed, 76 errors`，exit 1。根因：`SELECT defaclobjtype \|\| ':' \|\| ...` → `AmbiguousFunction: operator is not unique: "char" \|\| unknown`（PG 14+ 将该列类型由 `char` 改为 `"char"`，需显式类型转换）。**未改任何产品代码**；仓库标准环境（compose）为 PG 12.22，故当前不阻塞，但 PG 12 已 EOL，升级时会踩到 |
 | `2026-10-12/FAIL-integration-pg15-sample-2026-10-12.txt` | **不是通过证据** | 同上运行的尾部摘要 |
 | `2026-10-12/PASS-chart-version-sync-2026-10-12.txt` | 通过 | **A6 首次 chart 同步**（维护者 2026-10-12 指令「何时同步成什么由 agent 定」）：同步前 `--check` 如实 DRIFT（`version: 0.0.0-skeleton` / `appVersion: "0.0.0"` vs 根 `VERSION` `0.2.0`，exit 1）；动作 = 落入裁决的 `kubeVersion: ">=1.23.0-0"` + `sync-chart-version.sh --apply`；同步后 `--check` exit 0（`version: 0.2.0` / `appVersion: "0.2.0"`），`make chart-check`（helm 3.16.4，`tools/bin/helm` 经 `HELM_BIN` 解析）→ `chart-check: OK`。环境 `dev-win03ib7niepf0` |
+| `2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt` | 通过 | M8 批次3 F-15 真 AS 全栈（kind-as-m5/ns as-m5/release `as`）：两批健康自动 applied+幂等 apply、末批不健康自动 rolled_back、首批后手动 rollback，fleet 集群内真实收到 notify；含 NF-10。fleet 为协议 stub（AS 无 notify 接收端），不签 REQ |
+| `2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt` | 通过 | NF-2：删除 translation Pod 并重建窗口内 anti-fraud /health/live+/ready 42/42 为 200，Pod UID/startTime/restartCount 全程不变 |
+| `2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt` | 通过 | NF-9：ns-A 停 bundled PG+删两个 AS Deployment 期间，独立 ns-B（release `asb`）58/58 为 200，7 个 Pod 身份前后逐项不变；ns-A 经 helm upgrade 恢复（另记录 config-service 单连接不自动重连观察项） |
+| `2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt` | 通过 | NF-5：M7.1 仿真 S-SBC 上产品 AS 对 T1/T4/T5/F1/F2 在 UDP/TCP/TLS 三轮判决分布逐桶相同（15 呼：200x9/404x3/603x3，unresolved=0）；TLS 为测试 CA，非运营商 PKI |
+| `2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt` | **不是通过证据** | NF-4 滚动零丢失**未达成**：持续 UDP 话务（350 呼/轮）中 rollout restart 单副本，两轮复现 timeout_invite 3/4、bye_sip_481 6/7、timeout_bye 4/3、unresolved 各 10；根因 headless 单副本切换窗口 + DUM 对话态仅在进程内存。**2026-10-12 维护者裁决接受该损失、NF-4 已按接受口径签 pass（见下一行）；本文件仍是原始失败记录，不是通过证据** |
+| `2026-10-12/PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt` | 通过（维护者签收，接受实测呼损；非零丢失） | NF-4 裁决证据：两轮实测（350 呼/轮，受影响 13/14，unresolved 各 10）+ 完整机理分析；当前 release 接受该呼损级别，滚动零呼损列今后 release 增强 feature（本版不立项） |
+| `2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt` | 通过 | 2.5 演练：bundled PG12 真 DROP 后 pg_restore rc=0（dump 0.259s/restore 0.704s 为本机实测量级非承诺），12 项计数+三角色一致，审计 append-only 8 项守卫按拒，控制台恢复、审计续写 |
+| `2026-10-12/PASS-config-service-auth-distribution-409-fix-2026-10-12.txt` | 通过 | P0 修复：auth 模式分发端点必 409（共享连接被 auth SELECT 污染 + 冗余 idle 检查），删检查净 -10 行 + 2 个真实 PG/HTTPS/CSRF 回归测试；文件 19 passed、config-service 全量 629 passed/3 skipped |
 | `README.md` | — | this index |
 
 ## 三件容易被误读的事

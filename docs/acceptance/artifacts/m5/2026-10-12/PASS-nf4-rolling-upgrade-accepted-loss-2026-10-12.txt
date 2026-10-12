@@ -1,0 +1,56 @@
+== M8 batch3 NF-4 滚动升级：维护者裁决 PASS（实测行为已验证 + 在途呼损范围被当前 release 接受；零呼损滚动列今后 release 增强 feature） ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证（维护者签收：接受实测呼损；非「零丢失已达成」）, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt, 2026-10-12)
+
+-- 维护者裁决（2026-10-12） --
+原话要点：「当前 release，可以接受这种程度的损失。把分析落盘。NF-4 mark pass。呼损在今后的 release 通过 feature 做 enhancement。」
+签收口径：滚动升级在真实 SIP 话务下的行为已经实测验证，观测到的在途呼损范围明确、可复现、被当前 release 接受 => REQ-NF-4 判 pass。
+这不等于「零丢失已达成」：严格意义的滚动零呼损（在途 INVITE 不丢、在途对话 teardown 不中断）是今后 release 的增强 feature，本版不立项、不定义需求、不实现。
+原始失败演练记录保留为 FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt（事实不变，不是通过证据）。
+
+-- 实测拓扑与话务 --
+kind 集群 kind-as-m71：ims-sim（scscf/ssbc-north/ssbc-south/uas/call-load）+ as-sut（deploy/helm 产品 AS，release as-sut，native reSIProcate DUM）。
+call-load 经 S-CSCF/S-SBC 发 UDP 话务；ssbc-north 启动实参（实测）：--next-host as-sut-translation.as-sut.svc.cluster.local（headless Service，serviceHeadless: true），每转发一条消息都 socket.getaddrinfo 一次，无应用层 DNS 缓存。
+产品 AS：replicas=1（lab values 注释：第二进程会绑定同一组 SIP 端口），RollingUpdate maxSurge=25%/maxUnavailable=25%，preStop sleep 5（draining.preStopSleepSeconds），terminationGracePeriodSeconds=300，readiness initialDelay 3s / period 10s。
+话务：场景 T1/T5/F1（全期望 200），5cps × 70s = 350 呼/轮，hold 2s，timeout 6s，workers 40；第 12s kubectl rollout restart deploy/as-sut-translation。两轮独立复现。
+
+-- 两轮原始结果 --
+第 1 轮（20:47:37，old pod ...-7995597595-b9wst -> new ...-59d894f4f-94q9k）：
+invites_sent=350，200 OK=347，failed=3（timeout_invite=3），unresolved=10（bye_sip_481=6 + timeout_bye=4），peak_established=21。受影响 13/350 = 3.7%。
+第 2 轮（20:51:15，新 ReplicaSet ...-86cb7685f8）：
+invites_sent=350，200 OK=346，failed=4（timeout_invite=4），unresolved=10（bye_sip_481=7 + timeout_bye=3），peak_established=21。受影响 14/350 = 4.0%。
+计数说明：unresolved 的 10 与 error_distribution 的 481+timeout_bye 是同一批 10 个对话的两种计数视角，不重复相加。
+
+-- 切换窗口时序（k8s 事件实测为 surge 顺序） --
+t≈0s   rollout restart；新 Pod 创建，旧 Pod 仍 Ready、仍在 headless 端点中。
+t≈1-3s 新进程启动，native UDP/TCP/TLS 监听就绪，约 3s 首次 readiness 通过；此期间 headless DNS 同时返回旧+新两个 A 记录，S-SBC 逐消息解析，INVITE 被分到旧或新 Pod（这段时间接到旧 Pod 的呼叫成为后续受害者）。
+t≈3s   新 Ready 后旧 Pod 进入 Terminating：立即从 EndpointSlice/headless DNS 摘除（与 preStop 并行、无先后保证）；preStop sleep 5 开始，但这是不透明 sleep，进程不知情、不置 not-ready、不做 drain，仍正常服务手中对话。
+t≈3-8s 旧进程存活、持有在途对话，但已不在 DNS 中。
+t≈8s+  SIGTERM，旧进程退出。
+
+-- 两类损失的机理 --
+① timeout_invite（3/4 个）：切换瞬间的无应答黑洞（UDP）。INVITE 在旧 Pod 已摘端点而 CoreDNS/S-SBC 仍解析到旧 IP 的传播窗口内发出（headless A 记录有缓存 TTL）；旧进程退出后 UDP 包到死 IP 无 ICMP 反馈，harness 6s 无终态 => timeout_invite。新 Pod 对 INVITE 来者不拒（建新对话不需历史状态），故没有 5xx，INVITE 损失全部表现为静默超时。
+② bye_sip_481（6/7）+ timeout_bye（4/3）：在途对话随旧进程消失。这些呼叫已在旧进程拿到 200，DUM dialog/mapping 只存在旧进程内存（reSIProcate DUM 无 serialize/deserialize API，项目早已登记的 native gap）。hold 结束发 BYE 时 headless 名字只解析到新 Pod => 新进程无该 dialog => 481 Call/Transaction Does Not Exist；或解析仍命中旧 IP（缓存/竞态）而旧进程已退出 => timeout_bye。注意：很多 BYE 失败时旧进程仍活着（5s preStop 内），但它已被移出 DNS，而 S-SBC 按服务名逐请求路由、不把在途对话粘到实例——draining 期间存活的旧进程接不到自己名下对话的 BYE。
+
+-- 结构性佐证 --
+5cps × hold 2s ≈ 稳态 10 个并发对话（peak 21 含切换瞬间堆积）；两轮 unresolved 恰好各 10，等于「切换时刻在途的一窗对话」整体受损，而非随机丢包率。损失是结构性的整窗受损，重复运行预期仍为同量级。
+
+-- 为什么现有保护不足 --
+preStop sleep 5 只保证「端点摘除消息先传播、进程晚 5s 退出」；本拓扑 BYE 按名重路由而非按对话粘实例，旧进程晚退出也接不到自己的 BYE；sleep 期间进程不知 drain，surge 重叠窗仍可能往旧 Pod 接新对话；grace 300 只防 SIGKILL，不迁移对话态。ADR-0009 的 ISSU 模型是「draining，不是状态迁移」，要真正成立需 t0 即停止接单（进程级 drain/not-ready）+ sleep 不短于最长呼叫时长 + 在途对话路由粘回旧实例；当前 lab 缺前两个环节。
+
+-- 当前 release 接受的范围与边界 --
+接受范围：上述量级的切换窗口呼损（本轮 UDP、5cps、2s hold 实测 3.7%-4.0% 受影响，无一例数据面/媒体影响——项目不处理媒体，SDP 透传）。
+边界：① 仅 UDP 实测，TCP/TLS 失败形态不同（连接 RST）未覆盖，不外推；② kind 单节点、测试 CA（非运营商 PKI）、呼数为运行值，不是容量数字/SLA；③ 仿真 S-SBC 按名逐请求路由，不代表真实运营商 S-SBC 的对话粘滞/失败重路由行为；④ 本 pass 不改变「零丢失」作为今后 release 增强目标的性质。
+
+-- 今后 release 的增强 feature（本版不立项；启动时走 requirement → ADR → design → review 新 feature 流程，与 FM(P6)、呼叫轨迹(F-13/NF-7) 同模式） --
+候选方向（启动时评估，不在本版预选）：
+A. 进程级 drain 修正：preStop 先通知进程置 not-ready/拒新对话，再 sleep（≥最长呼叫时长）——可消除 INVITE 黑洞与短呼叫 teardown 损失；长呼叫不可行。
+B. M2 既定路线：S-SBC 透明桥 + StateStore 抽象，对话态外部化/可迁移——可覆盖长呼叫滚动存活，工程量最大，是 reSIProcate gap 的正解。
+C. 实例粘性：Contact/Record-Route 带实例标识，在途请求直达 terminating 实例直至退出——覆盖 drain 窗内 teardown；实例退出后仍无状态。
+D. 运维口径：升级走维护窗口/先静默话务——操作层规避，需文档化。
+
+-- 相关文件 --
+原始演练记录：FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt（同目录）
+评审与裁决：../../../../reviews/m8-batch3-kind-sim-evidence-review-2026-10-12.md（B3-02）
+矩阵：../../../../acceptance/m8-test-plan-matrix.md（REQ-NF-4 行 + 2026-10-12 NF-4 追加裁定节）

@@ -1,0 +1,25 @@
+== M8 batch3 NF-5 换仿真器一致性：M7.1 仿真 S-SBC 上 UDP/TCP/TLS 三传输行为一致 ==
+Date: 2026-10-12
+Environment: dev-win03ib7niepf0
+triple: (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt, 2026-10-12)
+
+-- 环境与方法 --
+kind 集群 kind-as-m71：ims-sim namespace 内 M7.1 仿真平台（scscf / ssbc-north / ssbc-south / uas / call-load UI），as-sut namespace 内部署 deploy/helm 的产品 AS（release as-sut，镜像 as-sut:dev，native reSIProcate 运行时 UDP 5060 / TCP 5060 / TLS 5061 均监听）。
+经 call-load UI API 发起 5 场景 × 每种传输一轮（T1/T4/T5/F1/F2，5cps × 3s = 每轮 15 呼，hold 2s，timeout 6s）。
+期望（场景语义）：T1/T5/F1 成功（200，各 3 呼），T4 无匹配前缀（404，3 呼），F2 反诈拦截（603，3 呼）=> 200x9 / 404x3 / 603x3。
+说明：harness 把每个非 2xx 终态同时记入 error_distribution 的 sip_404/sip_603 桶（as_load/harness.py 记录错误分类，不是传输故障）；真正的传输故障表现为 unresolved>0 或出现 timeout/transport 桶。
+
+-- 原始记录（三轮 verdict 字段逐字摘录） --
+[nf5-udp] {"error_distribution": {"sip_404": 3, "sip_603": 3}, "established": 9, "failed": 6, "invites_sent": 15, "response_code_distribution": {"200": 9, "404": 3, "603": 3}, "unresolved": 0}
+[nf5-tcp] {"error_distribution": {"sip_404": 3, "sip_603": 3}, "established": 9, "failed": 6, "invites_sent": 15, "response_code_distribution": {"200": 9, "404": 3, "603": 3}, "unresolved": 0}
+[nf5-tls] {"error_distribution": {"sip_404": 3, "sip_603": 3}, "established": 9, "failed": 6, "invites_sent": 15, "response_code_distribution": {"200": 9, "404": 3, "603": 3}, "unresolved": 0}
+[nf5] UDP/TCP/TLS distributions identical: {"error_distribution": {"sip_404": 3, "sip_603": 3}, "established": 9, "failed": 6, "invites_sent": 15, "response_code_distribution": {"200": 9, "404": 3, "603": 3}, "unresolved": 0}
+（每轮 5.0-6.8s 完成；分场景 by_scenario 三轮均为 F1=200x3、T1=200x3、T5=200x3、T4=404x3、F2=603x3。）
+
+-- 结论 --
+PASS（NF-5）：产品 AS 经 M7.1 仿真 S-SBC，在 UDP/TCP/TLS 三种传输上对同一组 5 个场景给出逐桶相同的判决分布（15 呼：200x9、404x3、603x3），unresolved=0，无传输级错误；换仿真器未引入内外网分支或行为差异。
+
+-- 边界 --
+- TLS 证书为测试 CA（test-ca，自签），UI 自述「非运营商 PKI」；本证据不签收 REQ-S-2 / REQ-S-3。
+- 呼数与时延是本轮运行值（200 建立时延 p50 约 57-62ms 量级），不是容量目标、SLA 或对外承诺。
+- 本文件不签收 REQ-NF-5，不改变矩阵状态。

@@ -87,7 +87,7 @@ def _cancel(server_port: int, caller_port: int, call_id: str, branch: str) -> by
         f"From: <sip:+15551230001@{_HOST}>;tag=cancel-test",
         f"To: <sip:+15558675309@{_HOST}>",
         f"Call-ID: {call_id}",
-        f"CSeq: 1 CANCEL",
+        "CSeq: 1 CANCEL",
         "Content-Length: 0",
         "",
         "",

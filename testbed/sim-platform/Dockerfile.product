@@ -1,12 +1,15 @@
 # Product process for the M7.1 kind lab. The native SIP extension is built on the
 # host (make m2-platform-resip-build) and staged into .image-native by kind-up.sh,
 # because the published product image does not yet carry _resip_runtime.
-# bullseye matches the host libssl 1.1 the extension was linked against.
-FROM python:3.10-slim-bullseye
+# bookworm matches the OpenSSL 3 (libssl.so.3 / libcrypto.so.3) the extension
+# is currently linked against after the 2026-10-12 native rebuild; bullseye
+# only has libssl1.1 and the extension fails to load there.
+FROM python:3.10-slim-bookworm
 
-# The base image already ships libssl1.1. libc-ares2 is the extra the host-built
-# reSIProcate libraries need. Leave security.debian.org alone; rewriting it to
-# a generic mirror 404s bullseye-security.
+# The base image already ships the OpenSSL 3 libssl/libcrypto. libc-ares2 is
+# the extra the host-built reSIProcate libraries need. Leave
+# security.debian.org alone; rewriting it to a generic mirror 404s
+# bookworm-security.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libc-ares2 \
     && rm -rf /var/lib/apt/lists/* \

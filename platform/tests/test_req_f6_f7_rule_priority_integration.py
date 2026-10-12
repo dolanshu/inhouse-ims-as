@@ -128,7 +128,7 @@ def _recv_with_timeout(sock: socket.socket, timeout: float) -> bytes | None:
     try:
         data, _ = sock.recvfrom(65535)
         return data
-    except socket.timeout:
+    except TimeoutError:
         return None
 
 

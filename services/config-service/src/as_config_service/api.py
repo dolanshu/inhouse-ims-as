@@ -928,12 +928,6 @@ def create_app(
         set_audit_context(request, after_value=response)
         return response
 
-    def require_idle_distribution_connection(store: PostgresDistributionStore) -> None:
-        from psycopg.pq import TransactionStatus
-
-        if store.connection.info.transaction_status is not TransactionStatus.IDLE:
-            raise HTTPException(status_code=409, detail="distribution connection is not idle")
-
     def distribution_response(stored: StoredDistribution) -> dict[str, object]:
         distribution = stored.distribution
         return {
@@ -1352,7 +1346,6 @@ def create_app(
     ) -> dict[str, object]:
         require_approve_permission(identity)
         store = require_distribution_store()
-        require_idle_distribution_connection(store)
         validated_id = _validate_path_id(change_id)
         connection = store.connection
         try:
@@ -1432,7 +1425,6 @@ def create_app(
     ) -> dict[str, object]:
         require_approve_permission(identity)
         store = require_distribution_store()
-        require_idle_distribution_connection(store)
         validated_id = _validate_path_id(change_id)
         connection = store.connection
         try:
@@ -1594,7 +1586,6 @@ def create_app(
         require_approve_permission(identity)
         store = require_distribution_store()
         activation_orders, activation_rules, activation_versions = require_activation_stores()
-        require_idle_distribution_connection(store)
         validated_id = _validate_path_id(change_id)
         try:
             distribution = get_distribution(store, validated_id)
@@ -1682,7 +1673,6 @@ def create_app(
     ) -> dict[str, object]:
         require_rollback_permission(identity)
         store = require_distribution_store()
-        require_idle_distribution_connection(store)
         validated_id = _validate_path_id(change_id)
         if not body.reason.strip():
             raise HTTPException(status_code=422, detail="rollback reason must not be blank")
