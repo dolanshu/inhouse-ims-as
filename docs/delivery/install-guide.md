@@ -1,10 +1,14 @@
-# In-house IMS Application Server（文档暂用名）—— 安装部署指南
+# In-house IMS Application Server —— 安装部署指南
 
 > **交付物**：交付形态第三批的**安装指南**（[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 **3.1 / 3.2** 同批次）。目录归属 [`docs/delivery/`](./README.md)。
 > **本文边界（硬边界）**：**只讲交付清单、镜像获取与同步、`helm install` 命令序列。Helm 参数、values 语义与渲染行为的唯一权威是 [`../../deploy/helm/README.md`](../../deploy/helm/README.md)** —— 本文**不复制**它的参数表、不逐项解释 `--set` 语义，只给"交付什么、拿什么、按什么顺序敲哪几条命令"（评审 **G-P2-4** 即此边界）。
 > **生产形态**：**Helm-only** —— Helm + 标准 K8s 资源是唯一生产形态，不写 Operator，不产生第二套安装器（ADR-0013；评审 G-P1-7）。
 > **零容量数字**：O1 容量目标未裁决（`AGENT.md` §2；[`../plan.md`](../plan.md) §5.1）。本文**不给** CPS / 并发 / 时延 / 资源规格推荐值；`useCases[].resources` 默认空，本文不替它填。
 > **未在真实集群验证**：M4b-7.2d / M8 7.2d 真实集群证据 **仍 blocked**（[`../plan.md`](../plan.md) §5.4）；**M8 RC 产物就绪 ≠ 退出签字完成**，退出签字仍搁置。本文给的是**可执行动作**，不是"已在生产验证"的结论。**air-gapped 场景**（客户机房无外网）走 [`airgap-package.md`](./airgap-package.md)。
+>
+> **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；非商标 / 非品牌宣称；3GPP Third-Party AS role）；git repo 名已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅仓库名与 remote URL）。命名边界：chart name / 镜像名 / OTel 服务名保持 `3rdparty-as` 不变。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ## 1. 适用范围与前置条件
 
@@ -15,7 +19,7 @@
 | 1 | K8s 集群 | 最低 minor 由 [`preflight.sh`](./preflight.sh) 推导校验（默认 1.23，`--min-k8s` 可覆盖）。**chart 本身没有 `kubeVersion` 声明**，Helm 不会替你挡住太老的集群（§10） |
 | 2 | Helm 3.x（chart `apiVersion: v2`）+ `kubectl` | 版本下限由 `preflight.sh` 检查 |
 | 3 | 产品镜像可获得 | 客户内网 registry，或用本目录离线包导入节点。`registry.example.com` 是占位地址，**不可拉取** |
-| 4 | Redis（运行态）与 PostgreSQL（治理态）**决策** | 二选一：外部实例，或启用 chart 内建 `stateStores.enabled=true`（ADR-0026）。**内建单副本不是 HA**：Sentinel HA 仍是 O5 / D3 未决 |
+| 4 | Redis（运行态）与 PostgreSQL（治理态）**决策** | 二选一：外部实例，或启用 chart 内建 `stateStores.enabled=true`（ADR-0026）。**内建单副本不是 HA**：Redis HA 拓扑取值已裁（O5 / D3，G7：primary/replica + Sentinel，ADR-0008，不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据；RPO / RTO 数值仍未裁） |
 | 5 | 客户 PKI 签发的 TLS Secret | 键 `tls.crt` / `tls.key` / `ca.crt`。**证书由客户侧 PKI 出**，chart 只引用 `tls.secretName`（ADR-0016）。仓库内 [`../../deploy/kind/m5-gen-certs.sh`](../../deploy/kind/m5-gen-certs.sh) 只是 kind 自签先例，**不是交付物** |
 | 6 | 目标命名空间 + 安装账号权限 | 示例命名空间 `as-prod`；chart **不创建** Role/RoleBinding，权限须由客户 K8s 管理员授予 |
 
@@ -36,13 +40,14 @@ docs/delivery/preflight.sh -n as-prod -f deploy/helm/values-onprem.example.yaml
 
 | 交付项 | 形式 | 位置 / 来源 | 校验方式 |
 |---|---|---|---|
-| Helm chart 包 | `3rdparty-as-<version>.tgz` | `bundle-images.sh` 产出／`deploy/helm/`（仓库内直装） | 含于 `SHA256SUMS`；`make chart-check` 渲染通过 |
+| Helm chart 包 | `3rdparty-as-0.0.0-skeleton.tgz`（当前实际产物名；`helm package` 按 Chart.yaml 的 name/version 命名，与根 `VERSION` 0.2.0 未同步） | `bundle-images.sh` 产出／`deploy/helm/`（仓库内直装） | 含于 `SHA256SUMS`；`make chart-check` 渲染通过；版本一致性用 [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check` 校验（只读，drift 即 exit 1），首次 `--apply` 待维护者决定 |
 | 生产值文件样例 | 文本 | [`../../deploy/helm/values-onprem.example.yaml`](../../deploy/helm/values-onprem.example.yaml) | 其中 `REPLACE_WITH_*` 占位必须全部替换（§5） |
 | 产品镜像 | 容器镜像 | `3rdparty-as` + **`3rdparty-as-config-service`**（启用控制面时必需）；清单模板 [`scripts/images.txt`](./scripts/images.txt) | `MANIFEST.txt` 的 tag / digest；Pod 无 `ImagePullBackOff` |
 | TLS Secret | K8s Secret | **客户 PKI 出**（键 `tls.crt` / `tls.key` / `ca.crt`） | `kubectl -n <ns> get secret <tls-secret>` 存在；密钥**不入仓库** |
 | PostgreSQL 凭据 Secret | K8s Secret | 客户提供（`CONFIG_DB_USER`、`CONFIG_DB_PASSWORD`、`CONFIG_DB_OWNER_PASSWORD`、`POSTGRES_SUPERUSER_PASSWORD`、`REDIS_PASSWORD`） | `stateStores.enabled=true` + `bootstrapDevCredentials=false` 时**必需**（§5 第 3 项） |
 | config-service 运行时 Secret | K8s Secret | 客户提供（`AS_CONFIG_DSN`（**`as_config_web` 登录**）、`AS_AUDIT_RESOURCE_HMAC_KEY_B64`） | `services.configService.enabled=true` 时**必需**；`AS_CONFIG_DSN` 的登录须能 `SET ROLE` 到预置 `NOLOGIN` 运行时角色 |
 | 迁移 Job | K8s Job（一次性） | `stateStores.migrateJob.enabled=true` + `migrateJob.ownerSecretName`（键 `AS_CONFIG_OWNER_DSN`） | `kubectl -n <ns> wait --for=condition=complete job/...`（§6.1） |
+| 告警规则 | YAML + Markdown | [`../../deploy/alerts/as-alerts.yaml`](../../deploy/alerts/as-alerts.yaml)（3 组 10 条）+ [`../../deploy/alerts/README.md`](../../deploy/alerts/README.md) | G9-a 判定为交付产品；`promtool check rules` 2026-10-11 通过（(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)，`SUCCESS: 10 rules found`）；**抓取接线未闭合（X1）需向客户说明** —— 标准部署下 `as_*` 序列不会被 Prometheus 采集 |
 | 文档包 | Markdown | 本目录（`README.md` / 本文 / `airgap-package.md` / `preflight.sh`）+ [`../operations/`](../operations/README.md) + [`../product/`](../product/one-pager.md) | — |
 
 chart **只引用**客户凭据、**不创建也不填充**它们；chart 自带的 credentials Secret 是**空字符串占位**（`AGENT.md` §13）。
@@ -100,6 +105,8 @@ helm upgrade --install as deploy/helm \
 | 2 | `sip.peerAllowlist` | 为空（trim 后） | `sip.peerAllowlist must be non-empty (ADR-0016 fail-closed)` |
 | 3 | `postgres.secretName` | `stateStores.enabled=true` 且 `bootstrapDevCredentials=false` 且为空 | `stateStores.enabled with bootstrapDevCredentials=false requires postgres.secretName (Secret keys: POSTGRES_SUPERUSER_PASSWORD, CONFIG_DB_OWNER_PASSWORD, CONFIG_DB_PASSWORD)` |
 
+**同义 fail 文案不止一处**：[`../../deploy/helm/templates/deployment.yaml`](../../deploy/helm/templates/deployment.yaml) 中另有两条**同义** fail 文案（`tls.secretName` 与 `sip.peerAllowlist`，与 `validate-install.yaml` 语义一致）—— 2026-10-11 chart-check 工件实证一次 lint 输出 4 条 Fail（(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-chart-check-2026-10-11.txt, 2026-10-11)）。**`sip.allowEmptyAllowlistForTest`（[`../../deploy/helm/values.yaml`](../../deploy/helm/values.yaml)，默认 `false`）生产必须为 `false`** —— 仅 testbed 可开；生产开启等于放弃 fail-closed（对端白名单不再强制）。
+
 值文件里的 `REPLACE_WITH_POSTGRES_SECRET` / `REPLACE_WITH_CONFIG_RUNTIME_SECRET` / `REPLACE_WITH_TLS_SECRET` / `REPLACE_WITH_S_SBC_CIDRS` 四个占位**必须全部替换** —— chart 不会因为值是占位字符串而报错。**本地先验一次渲染**（别把 fail-closed 留到客户集群才发现）：仓库根目录执行 `make chart-check`（等价 `deploy/helm/scripts/chart-check.sh`，对 AS 默认渲染、config-service 开启、ingress 模板路径与 HPA fail-fast 做断言，属门禁① fast 层）。
 
 ## 6. 安装后步骤
@@ -145,7 +152,7 @@ kubectl -n <ns> exec -it deploy/as-3rdparty-as-config-service -- \
 
 | 检查项 | 命令 / 方法 | 期望 | 依据 | 证据等级 |
 |---|---|---|---|---|
-| chart 渲染守卫 | `make chart-check` | 通过（lint + 模板断言） | `Makefile` / `deploy/helm/scripts/chart-check.sh` | **门禁① fast 层，已绿** |
+| chart 渲染守卫 | `make chart-check` | 通过（lint + 模板断言） | `Makefile` / `deploy/helm/scripts/chart-check.sh` | **门禁① fast 层，已绿**（(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-chart-check-2026-10-11.txt, 2026-10-11)：`chart-check: OK`、`1 chart(s) linted, 0 chart(s) failed`（helm 3.16.4）） |
 | Pod 与 ready | `kubectl -n as-prod get pods -l app.kubernetes.io/part-of=3rdparty-as` | 各用例 Pod `Running`、READY 为真 | NOTES.txt §2 | kind/dev 已验；**生产未验收** |
 | 滚动完成 | `kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdparty-as` | 全部 rollout 完成、无 Pod 长时间 `Progressing` | NOTES.txt §3（ADR-0009 draining） | 模板层已验；**生产未验收** |
 | 版本上报一致 | `kubectl -n <ns> exec deploy/<release>-<use-case> -- printenv CONFIG_VERSION` | 各副本相同且等于控制面生效版本 | NOTES.txt §2（ADR-0006） | kind/dev 已验；**生产未验收** |
@@ -192,13 +199,13 @@ kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdpa
 | 项 | 状态 | 阻塞源 |
 |---|---|---|
 | chart 无 `kubeVersion` 声明 | 缺口 —— Helm 不拦太老的集群 | [`../../deploy/helm/Chart.yaml`](../../deploy/helm/Chart.yaml) 无该字段；`preflight.sh` 按模板实际使用的 API 推导下限兜底 |
-| Chart `version` / `appVersion` 与根 `VERSION` 不同步 | 缺口 —— 仍是骨架值（`0.0.0-skeleton` / `0.0.0`） | ADR-0018；打包时人工核对三者 |
+| Chart `version` / `appVersion` 与根 `VERSION` 不同步 | 缺口 —— 仍是骨架值（`0.0.0-skeleton` / `0.0.0`） | ADR-0018；打包前跑 [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check`（只读，drift 即 exit 1），首次 `--apply` 留待维护者决定 |
 | `useCases[].resources` 默认空 | **刻意留空** —— chart 不渲染 requests/limits，**本文不给推荐值** | 与 O1 同源；sizing 待 O1 裁决后由 NE datasheet 给出 |
 | Pod 无 `prometheus.io/scrape` 注解、无 ServiceMonitor | 缺口 —— **所有依赖 `as_*` 的看板与告警在标准部署中不会被采集**；OTLP exporter 当前为 `NoOp` | 抓取接线未闭环（§7 指标行） |
 | 7.2d 生产 ingress / trusted-proxy | **blocked** —— 生产 ingress、真实 HTTPS 与浏览器证据缺失 | [`../plan.md`](../plan.md) §5.4；§6.6 |
 | M8 退出签字 | **仍搁置** —— RC 产物就绪 ≠ 关门 | 维护者退出签字未完成 |
-| E1 / E4 / E5 未验收；e2e = 0 | reSIProcate 生产路径行为、TLS 热轮换、状态外置与恢复均未验收；完整呼叫 + 控制台端到端路径无自动化证据 | O2 / O3；`pytest e2e` marker 数量为 0 |
-| D1 Python 3.10 EOL；O5 / D3 Redis HA；PG HA / PITR | **未决** / 客户侧责任 —— 内建 Redis 单副本**不是 HA**，`redis.sentinel.masters` / `.addresses` 故意留空；chart 交付单副本 PG StatefulSet，**不交付备份 Job** | D1 生命周期终点；客户 SLA 未定（ADR-0008）；恢复演练待真实集群（[`../operations/backup-restore.md`](../operations/backup-restore.md)） |
+| E1 / E4 / E5 未验收；`pytest -m e2e` 8 条稳定通过 | reSIProcate 生产路径行为、TLS 热轮换、状态外置与恢复均未验收；完整呼叫 + 控制台端到端路径无自动化证据 | O2 / O3；`pytest -m e2e` 现有 8 条稳定通过（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open |
+| D1 Python 3.10 EOL；O5 / D3 Redis HA；PG HA / PITR | D1 **未决**；O5 / D3 **取值已裁（G7）**；PG HA / PITR **客户侧责任** —— 内建 Redis 单副本**不是 HA**（拓扑已裁为 primary/replica + Sentinel，ADR-0008，不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据；RPO / RTO 数值仍未裁），`redis.sentinel.masters` / `.addresses` 故意留空；chart 交付单副本 PG StatefulSet，**不交付备份 Job** | D1 生命周期终点；客户 SLA 未定（ADR-0008）；恢复演练待真实集群（[`../operations/backup-restore.md`](../operations/backup-restore.md)） |
 
 ## 11. 追溯
 

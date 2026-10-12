@@ -80,3 +80,31 @@ v1 明确排除重申（不计入全绿）：主叫/正则（v1.1）、PM/AM/UM 
 | 所需维护者动作 | (1) 确认 blocking 门禁目标与 `gate-strict` 本机可复现为绿；(2) 排期 D-1/D-2 环境采证或书面接受风险；(3) 裁决 D-3（D6）、O1 目标、NF-3 口径、M5D-1…M5D-6 行落定；(4) 完成 M1/M2/M6/M7/M8 退出签字；(5) 仅由维护者执行 tag（AGENT §10.4） |
 | 输入评审 | [`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md)、[`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md)、[`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)、[`m5-req-acceptance-review-2026-10-06.md`](m5-req-acceptance-review-2026-10-06.md)、[`m8-phase-a-f6-f8-note-2026-10-06.md`](m8-phase-a-f6-f8-note-2026-10-06.md) |
 | 未采信证据 | `artifacts/m8/` 占位目录（待采证，无证据效力）；`make gate` 本地绿仅为工程门禁，不替代 REQ 签收 |
+
+---
+
+## 3.1 里程碑签字栏代签填写（2026-10-12；§3 表原文保留不改，本节在其后追加填写结果）
+
+> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决
+> （N2 第 9 项 = M1 / M2 / M6 / M7 签**工程完成**；代签总记录见
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)）。
+> **本节不是维护者亲签**，每行标注「agent 代签」并附依据。
+
+| 对象 | 代签填写 | 日期 | 依据（不新造结论，只正式化既有结论） |
+|---|---|---|---|
+| **M1** 甄别与行为基线 | 结论维持「**门禁达成（有条件通过）**」；签字：**agent 代签（维护者 2026-10-12 授权）** | 2026-10-12 | [`m1-exit-review.md`](m1-exit-review.md) 文首评审结论「有条件通过，条件为 HLD/LLD 补建，已列入 M2 前置，**不回退 M1 结论**」；§6 历史签字项 |
+| **M2** 内核 / transport-runtime | 结论维持「**工程完成（2026-10-05）**，REQ-S-* 验收未签」；签字：同上 | 2026-10-12 | `m2-engineering-closure-adjudication-2026-10-05.md`；REQ-S-2/S-3 尾项 D-1 defer |
+| **M6** 容量研究 | 结论维持「**工程完成（2026-10-05）**，O1 目标未发布」；签字：同上 | 2026-10-12 | `m6-engineering-complete-adjudication-2026-10-05.md`；O1 裁决 open（2026-10-12 仅落「内部工程目标下限基线」，非目标值） |
+| **M7** 生产 SIP 集成 | 结论维持「**工程完成（2026-10-05）**，REQ-NF-1/E1 全量未签收」；签字：同上 | 2026-10-12 | `m7-final-engineering-adjudication-2026-10-05.md`；D10 / REQ-NF-1 待 D-2 |
+| **M8** | **未签** —— 本节不填 | — | M8 退出签字属收尾动作，**不在 N2 九项授权范围内** |
+
+**边界（不得据本节推出过度结论）**
+
+1. **「工程完成」≠「里程碑签收」≠「REQ 全绿」。** 四行签的都是**工程完成**这一层；
+   `plan.md` §「M6 状态更新」所载「维护者 **M6 里程碑签收**仍 open」**原样保留**，
+   `report.md` 的 open / blocked 计数**未改**。
+2. M1 签的是「门禁达成（有条件通过）」，其条件（HLD/LLD 补建）原记录为「已列入 M2 前置」；
+   本节**不重新判定**该条件是否已闭合。
+3. §3 表原「以下签字栏全部为维护者待签」一句，因本节而部分失效（M1/M2/M6/M7 已由代签填）；
+   该句**保留为历史**。**M8 行仍为维护者待签**。
+4. 本文档文首「维护者会签 PENDING」与结论「RC就绪，defer项未清，不宣称全绿」**均不变**。

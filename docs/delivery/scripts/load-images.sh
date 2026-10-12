@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # load-images.sh — 交付物 3.2 的离线侧脚本：校验和验证 + 镜像导入 + 离线安装前置检查
-# In-house IMS Application Server（文档暂用名），Helm-only 生产交付形态（ADR-0013）。
+# In-house IMS Application Server（已正式采用为产品/文档描述名，G8-2；非商标 / 非品牌宣称），Helm-only 生产交付形态（ADR-0013）。
 #
 # 用法:
 #   ./load-images.sh --bundle ./airgap-in --verify-only
@@ -22,6 +22,13 @@
 #       参数值一律占位符，口径见 docs/delivery/install-guide.md 与
 #       deploy/helm/README.md。
 set -euo pipefail
+
+# bash 版本底线：要求 bash >= 4.4（三脚本统一底线）。依据：load-images.sh 使用
+# mapfile、preflight.sh 使用 bash 4.4 数组展开，故统一按 4.4 声明；不满足即退出。
+if [[ "${BASH_VERSINFO[0]:-0}" -lt 4 ]] || [[ "${BASH_VERSINFO[0]:-0}" -eq 4 && "${BASH_VERSINFO[1]:-0}" -lt 4 ]]; then
+  printf 'ERROR: 需要 bash >= 4.4（当前: %s）\n' "${BASH_VERSION:-未知}" >&2
+  exit 1
+fi
 
 SCRIPT_NAME="$(basename "$0")"
 BUNDLE_DIR="./airgap-in"
@@ -51,7 +58,7 @@ load-images.sh — 离线包安装（离线侧）：校验和验证 + 镜像导�
       --verify-only          只做校验和与前置检查，不导入镜像（默认行为）
       --load                 把 images/*.tar 导入本机 docker（需要 docker）
       --namespace <ns>       目标命名空间（默认 as-prod）
-      --values <file>        客户值文件（用于推断必需的 Secret 名；不在此硬编码）
+      --values <file>        客户值文件（仅登记备用；本脚本不解析 values、不推断 Secret 名）
       --context <name>       期望的 kubeconfig context；与当前 context 不一致即失败
       --release <name>       Helm release 名（默认 as）
       --chart-tgz <file>     指定 chart 包（默认取 bundle 目录下唯一 .tgz）
@@ -256,7 +263,7 @@ else
   # 3.4 必需 Secret：只查存在性，绝不读取内容（-o name）
   check_secret() {
     local label="$1" name="$2"
-    [[ -z "${name}" ]] && { skip "${label}" "未提供名称（可用对应 --*-secret 参数或 --values 推断）"; return 0; }
+    [[ -z "${name}" ]] && { skip "${label}" "未提供名称（必需 Secret 名请用 --tls-secret / --postgres-secret / --config-runtime-secret / --migrate-owner-secret 显式提供；--values 仅登记备用，本脚本不解析、不推断）"; return 0; }
     SECRET_CHECKED=1
     if "${KUBECTL_BIN}" get secret "${name}" -n "${NAMESPACE}" -o name >/dev/null 2>&1; then
       pass "${label}" "Secret ${name} 存在于 namespace ${NAMESPACE}（只查存在性，不读取内容）"

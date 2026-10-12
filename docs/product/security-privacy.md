@@ -1,18 +1,18 @@
-# In-house IMS Application Server（文档暂用名）—— 安全与隐私合规说明（PDPO）
+# In-house IMS Application Server —— 安全与隐私合规说明（PDPO）
 
 > **状态块（阅读本文前先看这里）**
 >
-> - **产品名**：**In-house IMS Application Server（文档暂用名）**，首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。该名称**不是已正式批准的产品名**（`../plan.md` §0「产品决策记录」；`../product-packaging-plan.md` §4.3）。git repo 名拟改为 `inhouse-ims-as`，**仅涉及 git 仓库名与 remote URL**；chart name（`3rdparty-as`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
+> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。git repo 名：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**（`../plan.md` §0「产品决策记录」G8 行）。
 >   - **2026-10-10 追加（G8，已同步；上文原文保留不改）**：描述名 `In-house IMS Application Server` 已**正式采用为描述名**（非商标 / 非品牌），「文档暂用名」这一限定**已过时**；repo rename `inhouse-ims-as` 维护者报告**已完成**，故「拟改为」这一未决措辞同样过时。**边界**：chart name / 镜像名 / OTel 服务名仍为 `3rdparty-as`，**本次未改 remote 与本地路径**。落地见 `../plan.md` §0 决策记录 G8 行与 [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7。**「本文不是法律意见」的定位不变。**
 > - **本文件归属**：`../product-packaging-plan.md` §1 第三批交付物 **3.4（安全合规说明 / PDPO）**。按该计划 §3.2 属 **B 类**：**保留期限部分被 O4 / D5 阻塞**。
 >   - **2026-10-10 追加（G6，已同步；上文原文保留不改）**：O4 / D5 的**取值已裁** —— 保留期**默认 10 天、部署可配**；存储选型 **in-cluster PostgreSQL**。因此本行「阻塞」的含义已从「等裁决」变为「等实现」：**轨迹存储 / 查询 / 删除能力本次不实现**，本文**不得**表述成「系统已按 10 天清理」。落地见 `../plan.md` §0 决策记录 G6 / B2 + D5 行与 register §7。
 > - **⚠️ 本文不是法律意见。** 本文是工程与交付侧的合规**说明材料**，供客户安全与合规部门评审用；PDPO 的适用性判定、角色界定（data processor / data controller）与最终合规结论**由客户与其法务作出**。
-> - **⚠️ 本文不写任何保留天数或时间期限**（评审 **G-P1-8**、**G-P1-5**）：**呼叫轨迹保留期由 O4 裁决、轨迹存储选型由 D5 裁决**，二者均未裁决（`../plan.md` §5.1 O4、§5.2 D5）。ADR-0017 决策 ④ 明确「机制先落地、数值不落地」—— 写一个默认值出来，等于替客户回答了一个合规问题。因此 §2 的保留期列一律写「**待 O4 裁决后填入**」，存储列写「**待 D5 裁决**」。
+> - **⚠️ 本文不写任何保留天数或时间期限**（评审 **G-P1-8**、**G-P1-5**）：**呼叫轨迹保留期（O4）与轨迹存储选型（D5）的取值均已裁（G6，2026-10-10）—— 默认 10 天、部署可配；in-cluster PostgreSQL**（`../plan.md` §0 决策记录 G6 行；§5.1 O4、§5.2 D5）；**实现未落**，本文**不得**表述成「系统已按 10 天清理」。ADR-0017 决策 ④ 明确「机制先落地、数值不落地」—— 写一个默认值出来，等于替客户回答了一个合规问题；且轨迹存储 / 查询 / 删除能力当前不存在。因此 §2 的保留期列一律写「**待 O4 裁决后填入**」，存储列写「**待 D5 裁决**」。
 >   - **2026-10-10 追加（G6，已同步；上文原文保留不改）**：上句的前提「二者均未裁决」**已被推翻** —— 裁决给出的默认值为 **10 天且部署可配**。但**本文 §2 的保留期列与 §3.1 的「待 O4 裁决后填入」仍保持原样**：因为轨迹存储 / 查询 / 删除**当前无实现**，写下一个天数会让客户误以为系统已具备该清理行为。**待填入的是「实现落地后的口径」，不是「裁决取值」**；待 OP-SEC 与客户确认的具体范围亦**未**因此闭合。
 > - **⚠️ 渗透测试尚未执行**：仓库内**无任何渗透测试产物**（核查方式见 §7）。§7 只写**建议范围、前置条件、期望交付物与出口标准**。
 > - **⚠️ 依赖漏洞扫描：仓库内无现成扫描产物**（核查方式见 §6）。四层测试门禁中**没有** SCA / 镜像扫描 / SBOM 步骤。§6 写现状与计划，不虚构结果。
 > - **本文不含任何容量 / 性能数字**：O1 未裁决（`../plan.md` §5.1），`AGENT.md` §2 在实测裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延数字。
-> - **本文尚未评审**：按 `AGENT.md` §3.3，评审必须留下独立 review record；本文当前**没有** review record，待维护者评审。
+> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ---
 
@@ -36,7 +36,7 @@
 | **用途限制**（Purpose limitation） | 号码 / 轨迹**只用于**投诉追溯与反诈举证；**不做计费、不批价、不做网间结算**；呼叫轨迹**明确不是话单** | ADR-0017 决策 ②③（无投递通道、不批价，声明的目的是防止它被下游当成计费数据源） | 客户若提出新的用途（如向第三方披露），需新 ADR + 文档链，不得在实现里加一条导出（ADR-0017 consequences） |
 | **保安**（Data security） | 对端白名单 + 端到端 mTLS + 控制台角色/密码/可撤销会话 + append-only 审计 + 非 root 容器 + NetworkPolicy + 凭据走 Secret / 客户 PKI + fail-closed 渲染 | §5 全表（每项均有 `file:line`） | 证书热轮换 **E4 未验收**、运营商 PKI **无实验室证据**；控制台仅**工程切片**，**REQ-S-4 未验收**；无渗透测试（§7）；无漏洞扫描产物（§6） |
 | **保留**（Retention） | 清理机制已formalize 为功能（可配），**数值不落地** | ADR-0017 决策 ④；REQ-NF-7（清理任务已 formalize 为功能，但默认值未定） | **O4（保留期）未裁决** → **本文不写任何天数**；**D5（存储选型）未裁决** 。<br>**2026-10-10 追加（G6，已同步；同行原文保留不改）**：O4 取值已裁为**默认 10 天、部署可配**，D5 选型已裁为 **in-cluster PostgreSQL**；但轨迹存储 / 查询 / 删除**本次不实现**，故「本文不写任何天数」**继续有效** —— 它现在的依据是「无实现可写」，不再是「无裁决可写」。**不得**据本行推断系统已按 10 天清理。 |
-| **透明度**（Transparency） | 本文与 [`one-pager.md`](one-pager.md) / [`ne-datasheet.md`](ne-datasheet.md) / [`compliance-matrix.md`](compliance-matrix.md) 构成对客户的数据说明包；产品文档暂用名 + 状态标注 + 未验收项如实披露 | 本文 §2 资产清单；同批三份文档的状态块 | 面向最终用户的**隐私告知文本**（用户侧告知 / 号码使用告知）**不在本交付物范围**，需客户按其用户告知义务另行提供 |
+| **透明度**（Transparency） | 本文与 [`one-pager.md`](one-pager.md) / [`ne-datasheet.md`](ne-datasheet.md) / [`compliance-matrix.md`](compliance-matrix.md) 构成对客户的数据说明包；产品描述名已正式采用（G8-2，非商标 / 非品牌宣称）+ 状态标注 + 未验收项如实披露 | 本文 §2 资产清单；同批三份文档的状态块 | 面向最终用户的**隐私告知文本**（用户侧告知 / 号码使用告知）**不在本交付物范围**，需客户按其用户告知义务另行提供 |
 | **查閱与更正**（Data access & correction） | 数据更正 = 改配置（号段 / 规则 / 号码段），走变更单 → 审批 → 写 PG → 灰度分发；控制台支持角色鉴权 + 全量审计 | ADR-0006 变更流水线；`services/console/src/as_console/access.py:26-74` | **呼叫轨迹是逐消息记录，本产品不提供事后改写能力**（轨迹不可变）；见 §3.3 |
 
 ### 1.3 角色界定（**待客户与法务确认，本文不得自行断言**）
@@ -256,12 +256,12 @@ flowchart LR
 
 | 项 | 阻塞源 | 影响 | 何时可闭合 |
 |---|---|---|---|
-| **O4 呼叫轨迹保留期** | 客户合规要求（`../plan.md` §5.1） | §2 保留期列、§3.1 清理行为、存储容量、备份策略全部无法定稿 → **本文不写天数**（G-P1-8） | **OP-SEC** 裁决后填入 |
-| **D5 轨迹存储选型**（PostgreSQL 或独立短保留存储） | 与 O4 相关（`../plan.md` §5.2）；ADR-0017 不裁决 | §2 存储列、§4 备份位置无法定稿 | O4 裁决后 |
+| **O4 呼叫轨迹保留期** | 取值**已裁（G6）**：默认 10 天、部署可配；**实现未落**（`../plan.md` §0 决策记录 G6 行） | §2 保留期列、§3.1 清理行为、存储容量、备份策略的**落地**依赖轨迹存储 / 查询 / 删除实现 → **本文仍不写天数**（G-P1-8；无实现可写，且不得表述成「系统已按 10 天清理」） | 轨迹存储落地 + OP-SEC 与客户确认适用范围后填入 |
+| **D5 轨迹存储选型** | 取值**已裁（G6）**：in-cluster PostgreSQL（不再是二选一）；**实现未落** | §2 存储列、§4 备份位置的**落地**随轨迹存储实现 | 轨迹存储落地后 |
 | **data processor / data controller 角色界定** | 客户与其法务 | §1.3、§3 的请求受理路径、§4 跨境安排、合同条款 | 客户法务确认 |
 | **审计与治理数据保留期** | REQ-S-4 写「M4 冻结」→ **未冻结** | §3.1 删除机制无法定稿 | 客户与 OP-SEC 确认 |
 | **备份介质与 WAL 归档位置** | 客户基础设施决策 | §4 留港论证链的一个支点待补 | 客户确认（需 O5 容灾等级一并裁决） |
-| **O5 容灾等级**（N+1 节点 / N+M 机架或 AZ） | 客户 SLA | 影响 Redis 是否跨 AZ、Sentinel 拓扑、PG HA，以及**备站是否在港内** | 客户 SLA 裁决 |
+| **O5 容灾等级** | 取值**已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby（沿用 ADR-0008 拓扑；D3 选 Redis primary/replica + Sentinel，不选 Cluster）；**不承诺机架 / AZ 级容错**；RPO / RTO 数值未裁 | 影响 Redis 是否跨 AZ、Sentinel 拓扑、PG HA，以及**备站是否在港内**；chart 仍单副本渲染，failover 实测行为无证据 | 客户确认备站位置与参数 |
 | **D1 Python 3.10 生命周期终点** | `../plan.md` §5.2 D1 | 该日期之后的任何交付需先完成迁移验证或在 ADR 登记为已接受风险；直接影响镜像扫描基线（§6） | 维护者裁决 |
 | **E4 TLS 证书热轮换** | M8 验收 + 运营商 PKI（REQ-S-2 / REQ-S-3） | §5 该行状态为 open；渗透测试范围 2 无法完整执行 | M8 验收 |
 | **REQ-S-4 正式验收** | 仅为工程切片 | §5 控制台相关行的验收状态 | M8 或维护者单独签收 |
@@ -271,6 +271,8 @@ flowchart LR
 | **用户侧隐私告知文本** | 客户的用户告知义务 | 不在本交付物范围 | 客户自行提供 |
 
 **本表的 2026-10-10 裁决同步注记（2026-10-11 追加，上表各行原文保留不改）**：上表 **O4 / D5 / O5 三行**的「未裁决」措辞已过期 —— G6 裁 O4（默认 10 天、部署可配）与 D5（in-cluster PostgreSQL），G7 裁 O5（站点内 N+1 + 跨站 1+1 warm standby）。**但三行均不因此闭合**：轨迹存储 / 查询 / 删除**本次不实现**；RPO / RTO 数值**未裁决**；备站位置仍待客户确认。上表「何时可闭合」列保持原样有效。落地见 `../plan.md` §0 决策记录 G6 / G7 行与 [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7。**本文仍不是法律意见，不构成客户验收。**
+
+**2026-10-12 追加（B6 闭环）**：上表 O4 / D5 / O5 三行主单元格已按 G6 / G7 口径就地更新（读者不再先读到「未裁决」措辞）；本注记保留为审计链。
 
 ---
 
@@ -286,4 +288,4 @@ flowchart LR
 | **关键代码依据** | 见 §5 每行的 `file:line`（对端准入 `transport.py:249-298`；空策略 `:272-273`；mTLS 默认 `:86-93`；明文拒 `ingress.py:178-194`；双证书重叠 `:70-100`；env `transport_env.py:52-103`；fail-closed `deployment.yaml:11-16`、`validate-install.yaml:6,9,12`；凭据 `secret.yaml:16-50`；挂载 `deployment.yaml:176-181`；SA `serviceaccount.yaml:16`；NetworkPolicy `state-networkpolicy.yaml:1-29`；securityContext `deployment.yaml:169-194`；载荷日志 `values.yaml:319` / `configmap.yaml:65`；NoOp `telemetry/__init__.py:77,89-95,129`；三角色 `01-dev-roles.sh:9-14`、`state-postgres.yaml:18-22`；角色矩阵 `access.py:26-74,152-185`；密码/会话 `auth.py:166-232`；审计 `audit_store.py:1,102-104,493-494,1064-1110`） |
 | **同批交付物** | [`one-pager.md`](one-pager.md)（1.1）、[`compliance-matrix.md`](compliance-matrix.md)（1.2）、[`ne-datasheet.md`](ne-datasheet.md)（1.3）、[`responsibility-matrix.md`](responsibility-matrix.md)（3.3）、[`version-lifecycle.md`](version-lifecycle.md)（3.5）及 `docs/operations/` 目录**均已落盘** |
 | **已落盘的互链文档** | [`version-lifecycle.md`](version-lifecycle.md)（§9 生命周期与 EOL）。本文**不链接** `docs/operations/` 下的文件（本文不依赖它们；责任边界与故障定界入口在 [`responsibility-matrix.md`](responsibility-matrix.md)） |
-| **状态纪律** | 本文**不是法律意见**，**不构成合规结论**。本文只登记**事实、机制与缺口**：M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；REQ-S-4 仅为工程切片；e2e marker 为 0；O1 / O4 / O5 / D1 / D3 / D5 未决；**无渗透测试产物、无依赖漏洞扫描产物**。本文**尚未评审**，按 `AGENT.md` §3.3 待维护者评审并留独立 review record |
+| **状态纪律** | 本文**不是法律意见**，**不构成合规结论**。本文只登记**事实、机制与缺口**：M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；REQ-S-4 仅为工程切片；e2e：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open；O1 / D1 **未决**，O4 / D5 **已裁（G6，实现未落）**，O5 / D3 **已裁（G7，chart 仍单副本）**；**无渗透测试产物、无依赖漏洞扫描产物**。**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3） |

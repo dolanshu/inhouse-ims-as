@@ -1,8 +1,10 @@
-# L2 运维手册（深度排障与信令分析）— In-house IMS Application Server（文档暂用名）
+# L2 运维手册（深度排障与信令分析）— In-house IMS Application Server
 
 > **读者**：L2 / 二线工程。日常巡检与告警首响应见 [`runbook-l1.md`](runbook-l1.md)。
 >
-> **证据口径（必读）**：**E1 / E4 / E5 未验收**（reSIProcate 生产路径行为 / TLS 热轮换 / 状态外置仍 open，[`../plan.md`](../plan.md) §5.1 O2/O3）；**e2e marker = 0**，performance 仅 accept-all harness、**非业务判决路径**；**M4b-7.2d / M8 7.2d 仍 blocked**；**零容量数字**（O1 未裁决；文中 1% / 30% / 3 次每分钟是**既有告警阈值，不是容量指标**）；kind / compose 抓包**不是现网证据**（ADR-0014：testbed 非 v1 交付物）；测试 CA 不签 REQ-S-2 / S-3。
+> **证据口径（必读）**：**E1 / E4 / E5 未验收**（reSIProcate 生产路径行为 / TLS 热轮换 / 状态外置仍 open，[`../plan.md`](../plan.md) §5.1 O2/O3）；**e2e 现状**：`pytest -m e2e` **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 **fail 不 skip**），REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**（已覆盖双腿归一化消息序列对拍、C_in ≠ C_out、SDP offer 逐字节恒等；**14 条消息的逐条 header 对拍仍未覆盖**）；performance 仅 accept-all harness、**非业务判决路径**；**M4b-7.2d / M8 7.2d 仍 blocked**；**零容量数字**（O1 未裁决；文中 1% / 30% / 3 次每分钟是**既有告警阈值，不是容量指标**）；kind / compose 抓包**不是现网证据**（ADR-0014：testbed 非 v1 交付物）；测试 CA 不签 REQ-S-2 / S-3。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 >
 > **原件保留**：本页归集自 [`../acceptance/`](../acceptance/) 既有 runbook 与字段契约，原件**不删除、不移动、不改写**。逐节来源见 §10。
 
@@ -18,7 +20,7 @@
 
 **「5 分钟自证不是你的锅」—— AS 侧能自证**：进程 ready 状态（`/health/live`、`/health/ready`）；收到 / 发出过哪些 SIP 消息（按 Call-ID 的运行时日志，§2）；各副本 `CONFIG_VERSION` 是否一致；`as_state_store_available` / `as_downscale_removable` 等 `as_*` 序列；判决路径（纯函数，可重放）。
 
-**AS 侧不能自证**：S-CSCF → S-SBC 段的 iFC 触发上下文与结果（该段**完全不经过 AS**）；S-SBC → AS trunk 段**对端**侧的信令落地结果（对端**各自抓本侧**）；出腿信令在下游网元侧收到了什么；**容量边界**（O1 未裁决，任何容量数字都不成立，`AGENT.md` §2）；呼叫轨迹的长期保留与查询（O4 / D5 未裁决）。**AS 侧证据不足时不得先行定界** —— 先与 OP-NOC 拉双方时间线联合对齐（[`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §4）。
+**AS 侧不能自证**：S-CSCF → S-SBC 段的 iFC 触发上下文与结果（该段**完全不经过 AS**）；S-SBC → AS trunk 段**对端**侧的信令落地结果（对端**各自抓本侧**）；出腿信令在下游网元侧收到了什么；**容量边界**（O1 未裁决，任何容量数字都不成立，`AGENT.md` §2）；呼叫轨迹的长期保留与查询（O4 / D5 **取值已裁（G6，2026-10-10）**：保留期默认 10 天、部署可配；存储选型 in-cluster PostgreSQL —— **实现未落**，轨迹存储 / 查询 / 删除能力当前不存在）。**AS 侧证据不足时不得先行定界** —— 先与 OP-NOC 拉双方时间线联合对齐（[`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §4）。
 
 ## 2. 日志取证
 
@@ -95,7 +97,7 @@ RESIP_RUNTIME_UAS_ANSWER_RELAYED outgoing_call_id=out-1@127.0.0.1
 
 ### 4.5 状态存储不可用
 
-`as_state_store_available{use_case}` 为 `0` 持续 `2m` → `ASCallStateStoreUnavailable`（critical），归属 **AS 侧**；在途呼叫状态（会话 / dialog / 反诈速率窗口）都在 Redis（ADR-0002 / ADR-0007），**Redis 不可用 = 在途呼叫无法维持**。注意 `REDIS_URL` 未配置时**该序列不存在（不是 0）**，规则永不触发 —— 别把「没数据」读成「故障」。Sentinel 拓扑与脑裂窗口判定属未决 **O5 / D3** → 需裁决时升级维护者。
+`as_state_store_available{use_case}` 为 `0` 持续 `2m` → `ASCallStateStoreUnavailable`（critical），归属 **AS 侧**；在途呼叫状态（会话 / dialog / 反诈速率窗口）都在 Redis（ADR-0002 / ADR-0007），**Redis 不可用 = 在途呼叫无法维持**。注意 `REDIS_URL` 未配置时**该序列不存在（不是 0）**，规则永不触发 —— 别把「没数据」读成「故障」。Redis HA 拓扑取值已裁（**O5 / D3，G7**）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（沿用 ADR-0008 拓扑，不选 Redis Cluster）；chart 当前仍单副本渲染，failover 实测行为无证据；脑裂窗口幂等契约仍未实现 → 需动执行面或推翻裁决时升级维护者。
 
 ### 4.6 config-service CrashLoop / Ingress 不 Ready
 
@@ -177,7 +179,7 @@ kubectl -n <ns> exec -it deploy/as-3rdparty-as-config-service -- \
 
 **排障对照**：① config-service CrashLoop → DSN 是否占位 `postgres:5432`、runtime Secret 是否被塞 owner DSN（§4.6）；② 迁移 Job 秒失败 → Secret `as-config-migrate-owner` 是否存在且键名正确、库是否可达；③ `as-config-migrate` 报权限错 → 你用的是 owner DSN 还是 runtime DSN；④ audit 写不进去 → audit 表 append-only（`BEFORE UPDATE OR DELETE` / `BEFORE TRUNCATE` 触发器），写入路径须用正确角色。
 
-**PG HA / PITR 与 restore drill**：chart 只发**单副本** StatefulSet，生产 HA 由客户拥有（Patroni / 云 RDS，或外部 `postgres.host` + `stateStores.enabled=false`）；客户须记录 **RPO / RTO**，用 `pg_dump -Fc`（命令见 [`runbook-l1.md`](runbook-l1.md) §3.5）或 WAL 归档到集群外；restore drill = 恢复到新实例 → 若 schema 版本变了重跑 `as-config-migrate` → runtime Secret 指向新主机。**演练记录属交付物 2.5，见 [`backup-restore.md`](backup-restore.md)（已落盘；真实集群 restore drill 记录仍 blocked，依赖真实集群，M8 7.2d）**。Redis HA 仍是 **O5 / D3**，chart 单 Redis 非 HA。
+**PG HA / PITR 与 restore drill**：chart 只发**单副本** StatefulSet，生产 HA 由客户拥有（Patroni / 云 RDS，或外部 `postgres.host` + `stateStores.enabled=false`）；客户须记录 **RPO / RTO**，用 `pg_dump -Fc`（命令见 [`runbook-l1.md`](runbook-l1.md) §3.5）或 WAL 归档到集群外；restore drill = 恢复到新实例 → 若 schema 版本变了重跑 `as-config-migrate` → runtime Secret 指向新主机。**演练记录属交付物 2.5，见 [`backup-restore.md`](backup-restore.md)（已落盘；真实集群 restore drill 记录仍 blocked，依赖真实集群，M8 7.2d）**。Redis HA 拓扑取值已裁（**O5 / D3，G7**：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel，沿用 ADR-0008 拓扑、不选 Redis Cluster），chart 单 Redis 仍非 HA（单副本渲染，failover 实测行为无证据）。
 
 ## 7. 测试与签收环境准备
 
@@ -219,7 +221,7 @@ AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest platform/tests/test_m7_forward_two_
 
 ## 9. 升级边界
 
-**L2 自己的边界**：**不能**自行修改未决项、不能推翻既有裁决、不能把未验收项说成已验收（`AGENT.md` §15）。**升级到维护者**：① 需要裁决产品口径（如某状态码是否算缺陷）；② 需要动未决项（O1 / O4 / O5、D3 / D5）；③ 需要推翻 M5 工程关门或 M8 RC 的任何结论；④ 需要在**真实集群 / 真实对端**取证（依赖 S-CSCF / HSS 侧配合与客户环境，G-P1-10，AS 侧无法单方完成）；⑤ 涉及 Sh / 计费 / CDR / 媒体（**不在范围内**，改提对应范围的方案）。
+**L2 自己的边界**：**不能**自行修改未决项、不能推翻既有裁决、不能把未验收项说成已验收（`AGENT.md` §15）。**升级到维护者**：① 需要裁决产品口径（如某状态码是否算缺陷）；② 需要动未决项（**O1 仍未裁决**）或改动已裁事项的执行面（**O4 / O5 / D3 / D5 取值已裁（G6 / G7）**，相关实现未落，执行面改动仍需维护者授权）；③ 需要推翻 M5 工程关门或 M8 RC 的任何结论；④ 需要在**真实集群 / 真实对端**取证（依赖 S-CSCF / HSS 侧配合与客户环境，G-P1-10，AS 侧无法单方完成）；⑤ 涉及 Sh / 计费 / CDR / 媒体（**不在范围内**，改提对应范围的方案）。
 
 **明确 N/A（出现即按 N/A 处理并给理由）**：Diameter Sh（数据来自自有数据面）；CDR / 话单 / 计费（以按 Call-ID 的呼叫轨迹替代，轨迹**不是**话单，ADR-0017）；媒体 / RTP / 转码 / DTMF / MRF（ADR-0004）；LI / IRI（属网内网元职能，ADR-0016）。
 

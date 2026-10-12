@@ -1,4 +1,4 @@
-# 故障定界手册（Fault Demarcation）— In-house IMS Application Server（文档暂用名）
+# 故障定界手册（Fault Demarcation）— In-house IMS Application Server
 
 > **交付物归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第一批 **1.4 故障定界手册**。按该计划 §3.2，本交付物属 **A 类**（文档本身不依赖未决项）；但**真实集群 / 真实对端证据仍 blocked**（见 §8）。
 >
@@ -12,11 +12,13 @@
 >
 > **testbed 仿真不是现网证据**。`testbed/` 是研发 / 演示资产，ADR-0014 明确 v1 不把 testbed 作为交付物；kind / compose 上的抓包与日志**不得**充当运营商 IOT 或现网证据。
 >
-> **证据口径**：M8 RC 产物就绪但**退出签字仍搁置**（RC 就绪 ≠ 通过）；**E1 / E4 / E5 未验收**；**e2e marker = 0**；**7.2d（M4b-7.2d / M8-7.2d）仍 blocked**；签收矩阵 pass 9 / fail 0 / **blocked 12** / n-a 4 / **open 24**（[`../acceptance/report.md`](../acceptance/report.md) §0.5）。
+> **证据口径**：M8 RC 产物就绪但**退出签字仍搁置**（RC 就绪 ≠ 通过）；**E1 / E4 / E5 未验收**；**e2e**：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**；**7.2d（M4b-7.2d / M8-7.2d）仍 blocked**；签收矩阵 pass 9 / fail 0 / **blocked 12** / n-a 4 / **open 24**（[`../acceptance/report.md`](../acceptance/report.md) §0.5）。
 >
 > **零容量数字**：本文无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 百分比容量，也不引用 M6 dev-host 数字。O1 容量目标**未裁决**（`AGENT.md` §2）。**不得用容量数字定界** —— 任何「到某个量级就应该是对方的问题」的推断在本文口径下**不成立**。
 >
 > **计费域全程 N/A**：不做 CDR、不投递、不归档、不批价（ADR-0017）；以按 Call-ID 的呼叫轨迹替代话单，且**呼叫轨迹不是话单**。Diameter Sh 不做（数据来自自有数据面）；媒体不做（ADR-0004）。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ---
 
@@ -35,7 +37,7 @@
 | 哪些实例允许摘除 | `as_downscale_removable{use_case,pod}` |
 | 判决路径本身 | `decide()` 是纯函数（无 socket / 无时钟 / 无全局状态），可重放 |
 
-**AS 侧不能自证的（必须向对方取证，见 §6）**：① S-CSCF → S-SBC 段的 **iFC 触发上下文与结果**（该段**完全不经过 AS**）；② S-SBC → AS trunk 段**对端**侧的信令落地结果（双方**各自抓本侧**）；③ 出腿信令在**下游网元**侧收到了什么；④ **容量边界**（O1 未裁决，任何容量数字都不成立）；⑤ 呼叫轨迹的长期保留与查询（O4 / D5 未裁决）。
+**AS 侧不能自证的（必须向对方取证，见 §6）**：① S-CSCF → S-SBC 段的 **iFC 触发上下文与结果**（该段**完全不经过 AS**）；② S-SBC → AS trunk 段**对端**侧的信令落地结果（双方**各自抓本侧**）；③ 出腿信令在**下游网元**侧收到了什么；④ **容量边界**（O1 未裁决，任何容量数字都不成立）；⑤ 呼叫轨迹的长期保留与查询（O4 / D5 **取值已裁（G6，2026-10-10）**：保留期默认 10 天、部署可配；存储选型 in-cluster PostgreSQL —— **实现未落**，轨迹存储 / 查询 / 删除能力当前不存在）。
 
 **三条纪律**：① **AS 侧证据不足时不得先行定界** —— 先与 OP-NOC 拉双方时间线联合对齐（RACI §4，⑧ 行的 A角是 OP-NOC）；② **404 / 603 不是故障**，是判决结果（§3、§5.3、§5.4）；③ **「没查过」不等于「已排除」**，求助与升级时必须写明已做过什么、结果如何（[`runbook-l1.md`](runbook-l1.md) §4 证据清单）。
 
@@ -114,7 +116,7 @@ flowchart TD
 | 5 | **下游失败码透传** | 入腿回了 `408/480/486/503/504`，与下游一致 | **下游网元**（AS 只做透传） | 用 `RESIP_RUNTIME_UAC_FAILURE` 的 `status` 与 `RESIP_RUNTIME_UAS_FAILURE_MAPPED` 对照证明「AS 未改码」 | 下游拒绝/失败原因。⚠️ native 产品路径**只对 `486` 有端到端测试**，其余四码在产品路径上**无证据**，先不要当已验证行为上报缺陷 |
 | 6 | **呼叫建立后中断** | 三种BYE 来源：入腿远端 BYE / 下游 BYE / 本地主动 end；`RESIP_RUNTIME_OUTBOUND_CANCEL_FORWARD` 只覆盖 CANCEL 转发 | **按 BYE 来源三分**，不得默认归AS | 以 §4.1 的两腿关联法把入腿 `inbound_call_id` 与出腿 `outgoing_call_id` 对上，再判断谁先发 BYE | 入腿远端 BYE → S-SBC / 主叫侧；下游 BYE → 下游网元 |
 | 7 | **CANCEL / 487 分支异常** | `RESIP_RUNTIME_OUTBOUND_CANCEL_FORWARD inbound_call_id=...`（`direction=inbound`, `method=CANCEL`）；487 通常是**主叫放弃** | **先当预期行为**；异常计数才升级 | 与契约场景 S4 对齐。⚠️ native DUM 语义仍在 **E1 未验收**范围内，不得据此下产品结论 | 主叫放弃的发起侧记录 |
-| 8 | **状态存储不可用** | `as_state_store_available{use_case}` 持续 `0` → `ASCallStateStoreUnavailable`（critical）。在途呼叫状态全在 Redis | **AS（状态存储层）** | 会话 / dialog / 反诈速率窗口都在 Redis，**Redis 不可用 = 在途呼叫无法维持**。⚠️ 未配置 `REDIS_URL` 时**序列不存在（不是 0）**，规则永不触发 | Redis 若为客户自建，需客户提供其侧可达性与拓扑（**Sentinel 拓扑仍是 O5 / D3 未决**） |
+| 8 | **状态存储不可用** | `as_state_store_available{use_case}` 持续 `0` → `ASCallStateStoreUnavailable`（critical）。在途呼叫状态全在 Redis | **AS（状态存储层）** | 会话 / dialog / 反诈速率窗口都在 Redis，**Redis 不可用 = 在途呼叫无法维持**。⚠️ 未配置 `REDIS_URL` 时**序列不存在（不是 0）**，规则永不触发 | Redis 若为客户自建，需客户提供其侧可达性与拓扑（**Redis HA 拓扑取值已裁 —— O5 / D3（G7）**：primary/replica + Sentinel，沿用 ADR-0008 拓扑、不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据） |
 | 9 | **config-service CrashLoop / Ingress 不 Ready** | DSN 主机名是占位 `postgres:5432`；Ingress 注解 prefix 被改写；`empty reply`（curl 52）；admission webhook Job WARN | **AS（部署层）**，但**真实集群证据 blocked** | 按 [`runbook-l2.md`](runbook-l2.md) §4.6 的对照表逐条排；**empty reply 视为未过关**，不得在 plan 里勾 7.2d 关门 | 客户 ingress 规范与 LB 侧采证配合（**7.2d 当前 blocked**） |
 | 10 | **控制台登录失败 / 审计缺失** | 角色矩阵 `viewer`/`approver`/`admin`；审计表 append-only（`BEFORE UPDATE OR DELETE` / `BEFORE TRUNCATE` 触发器） | **AS（控制面层）** | 越权与审计完整性事件**同时通知 OP-SEC** | 无 |
 | 11 | **缩容或升级期间掉话（draining 不收敛）** | `as_active_calls` 不降；`as_downscale_removable` 长期为 `0`；readiness 不是 `503` | **AS（draining / 编排）**，机制见 ADR-0009 / ADR-0010 | 按 [`runbook-l1.md`](runbook-l1.md) §3.1 四步；**不得 SIGKILL**；检查 `preStop sleep` + SIGTERM 路径 | 无。⚠️ 现有 draining 证据来自 `AS_M5_SIMULATED_ACTIVE_CALLS` **模拟**在途呼叫（G-P1-1），**真实 SIP 负载下不掉呼叫未验收**，**不得**用模拟证据向对方承诺「生产不掉话」 |
@@ -295,8 +297,8 @@ kubectl -n <ns> port-forward deploy/<release>-<use-case> 8080:8080
 | E5 / REQ-NF-1（状态外置与恢复） | REQ-NF-1 签收归 M8（D-2 defer） | §3 第 8 行的恢复侧结论无客户集群证据 | AS-Vendor |
 | REQ-F-13 live trace | 无live trace source / API（**BLOCKED**） | §5.3 / §5.4 只能用替代字段判命中，**拿不出 live 轨迹** | AS-Vendor |
 | O1（容量目标） | 维护者裁决仍 open | §1明确：**不得用容量数字定界** | 维护者 + OP-NET |
-| O5 / D3（容灾等级 / Redis Sentinel 拓扑） | 客户 SLA | §3 第 8 行只能到「AS 侧可达性」，拓扑判定需升级维护者 | OP-NET + 维护者 |
-| O4 / D5（轨迹保留期 / 存储选型） | 客户合规 | 本文**不含任何保留期**；轨迹相关取证范围待裁决 | OP-SEC |
+| O5 / D3（容灾等级 / Redis Sentinel 拓扑） | 客户 SLA | 取值已裁（G7）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（ADR-0008）；**实现未落**（chart 仍单副本渲染，failover 实测行为无证据），§3 第 8 行只能到「AS 侧可达性」，failover 窗口判定仍需实测取证 | OP-NET + 维护者 |
+| O4 / D5（轨迹保留期 / 存储选型） | 客户合规 | 取值已裁（G6）：保留期默认 10 天、部署可配；存储选型 in-cluster PostgreSQL；**实现未落**（轨迹存储 / 查询 / 删除当前不存在），本文**不含任何保留期**；轨迹相关取证范围随实现落地确认 | OP-SEC |
 | ADR-0008 冗余演练 | **blocked** | 跨站点 1+1 温备切换的定界剧本**未编写** | OP-NOC + OP-NET |
 | M8 退出签字 | 搁置 | 本文全篇不得读作「已验收」 | 维护者 |
-| 本文评审状态 | 按 `AGENT.md` §3.3 需独立 review record | **本文尚无 review record**，待维护者评审 | 维护者 |
+| 本文评审状态 | 按 `AGENT.md` §3.3 需独立 review record | 已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据 | 维护者 |

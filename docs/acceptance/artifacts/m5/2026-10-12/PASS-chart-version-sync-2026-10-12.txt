@@ -1,0 +1,27 @@
+== A6 first chart version sync (2026-10-12) ==
+environment: dev-win03ib7niepf0 (host WIN-03IB7NIEPF0)
+
+-- BEFORE (drift) --
+VERSION: 0.2.0
+Chart.yaml version: 0.0.0-skeleton / appVersion: "0.0.0" / no kubeVersion
+bash scripts/sync-chart-version.sh --check
+[sync-chart-version] DRIFT version:     Chart.yaml='0.0.0-skeleton'  VERSION='0.2.0'
+[sync-chart-version] DRIFT appVersion:  Chart.yaml='0.0.0'          VERSION='0.2.0'
+[sync-chart-version] chart is out of step with the root VERSION; run with --apply to synchronise
+exit 1
+
+-- ACTION --
+1) added kubeVersion: ">=1.23.0-0" to deploy/helm/Chart.yaml (adjudicated minimum, 2026-10-12)
+2) bash scripts/sync-chart-version.sh --apply
+[sync-chart-version] applied: Chart.yaml version/appVersion -> '0.2.0'
+
+-- AFTER --
+Chart.yaml: version: 0.2.0 / appVersion: "0.2.0" / kubeVersion: ">=1.23.0-0"
+bash scripts/sync-chart-version.sh --check
+[sync-chart-version] OK: Chart.yaml version/appVersion both = '0.2.0'
+exit 0
+
+-- chart-check (helm 3.16.4, tools/bin/helm via HELM_BIN) --
+helm lint deploy/helm -> 1 chart(s) linted, 0 chart(s) failed
+all render guards (7 kinds default / H-3 / H-4 / config-service / ingress / autoscaling fail / stateStores / onprem) -> OK
+chart-check: OK (exit 0)

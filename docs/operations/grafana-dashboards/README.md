@@ -1,4 +1,4 @@
-# Grafana 看板模板 — In-house IMS Application Server（文档暂用名）
+# Grafana 看板模板 — In-house IMS Application Server
 
 > **状态**：交付物 **2.1 Grafana 看板模板**（[`docs/product-packaging-plan.md`](../../product-packaging-plan.md) §1 第二批 #2.1；评审意见 **G-P0-4** 已落实：不含 Diameter Sh 面板，且**未创建** `sh-interface.json`（**G-P2-3**）。本目录含 `overview.json` 与 `sip-signaling.json` 两份看板。
 >
@@ -6,7 +6,9 @@
 >
 > **零容量数字 / 不含时延面板**：本目录**不含任何容量数字**（无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 资源配额）；O1 容量目标**未裁决**，`AGENT.md` §2 禁止在 M6 真实 socket 实测前发布任何此类数字，本目录**不引用** M6 dev-host 测量。**时延面板同样不存在**：本仓库没有 histogram / summary —— `MetricKind` 只有 `COUNTER` 与 `GAUGE`（`platform/src/as_platform/telemetry/metrics.py`），注册表里没有任何时延或吞吐序列；计划文档 2.1 原文的「时延 P50/P95/P99」因此**无法交付**，建了就是假面板（§4）。
 >
-> **不含 Sh 面板 / 术语纪律**：`AGENT.md` §2 明确**不做 Diameter Sh**，属范围外的非目标（N/A，非 defer），连占位面板都不建。「v1」「v1.1」**不是发行版本**；本目录任何内容**不构成验收结论** —— M5 工程关门 ≠ REQ 验收，**M8 RC 就绪 ≠ 关门**，E1/E4/E5 仍未验收，e2e = 0（performance 仅 accept-all harness，非业务判决路径）。
+> **不含 Sh 面板 / 术语纪律**：`AGENT.md` §2 明确**不做 Diameter Sh**，属范围外的非目标（N/A，非 defer），连占位面板都不建。「v1」「v1.1」**不是发行版本**；本目录任何内容**不构成验收结论** —— M5 工程关门 ≠ REQ 验收，**M8 RC 就绪 ≠ 关门**，E1/E4/E5 仍未验收，e2e：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open（performance 仅 accept-all harness，非业务判决路径）。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../../reviews/product-packaging-review-checklist-2026-10-12.md`](../../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ---
 
@@ -23,7 +25,7 @@
 | 2 | Pod Ready 状态（当前值） | `max by (pod) (kube_pod_status_ready{namespace=~"$AS_NAMESPACE", condition="true"})` | kube-state-metrics | 集群装了 kube-state-metrics | draining 时 `/health/ready` 返回 503（ADR-0009） |
 | 3 | Deployment 副本：期望 / 可用 | `kube_deployment_spec_replicas` / `..._status_replicas_available` | kube-state-metrics | 同上 | 只反映已公布的整数，**不说系统该有几个副本**（O1） |
 | 4 | 各用例在途呼叫数 | `sum by (use_case) (as_active_calls)` | AS `/metrics` | 抓取接线 | 每 15s 无条件写入；数量观测，无上限阈值 |
-| 5 | 每 Pod 在途呼叫数 | `as_active_calls`（保留 `pod`+`use_case`） | AS `/metrics` | 抓取接线 | 缩容守卫需要**每实例**值（ADR-0010），聚合均值会掩盖单点 |
+| 5 | 每 Pod 在途呼叫数 | 单 target：`as_active_calls`（不聚合；图例 `{{pod}} / {{use_case}}`，refId `A`） | AS `/metrics` | 抓取接线 | 缩容守卫需要**每实例**值（ADR-0010），聚合均值会掩盖单点 |
 | 6 | 缩容守卫状态 | `max by (pod, use_case) (as_downscale_removable)` | AS `/metrics` | 抓取接线 | 1 = 可摘除，0 = 承载呼叫**或** draining；无阈值（「大于 0 即保护」是实现口径，不是容量结论） |
 | 7 | SIP 响应速率 | `sum by (use_case, status_class) (rate(as_sip_responses_total[5m]))` | AS `/metrics` | 抓取接线 + **生产无生产者** | 速率观测，非吞吐能力 |
 | 8 | 失败响应占比 | 与 `ASHighErrorRatio` 同口径的比率表达式 | AS `/metrics` | 同上 | **比率不是容量指标**；面板不画阈值线，阈值唯一维护点在 `as-alerts.yaml` |
@@ -138,4 +140,4 @@ python3 -c "import json; [json.load(open(f)) for f in ['docs/operations/grafana-
 **建议纳入门禁**：把第1 步的 `python3 -c` 作为最小门槛（与 `promtool check rules` 同级）；第 3、4 步的语义检查目前靠人工 review，若后续需要自动化可加一个只读校验脚本 —— 但**本交付不新增脚本文件**，以免与「只创建 3 个文件」的范围约束冲突。
 
 **面板 review 纪律**：改面板前先问「这个指标有生产者吗」，答案是「没有」就不建面板（要建就必须写明「预期无数据」及原因）；任何新增面板都要在 `description` 里写清口径、**不是容量指标**的提醒（含量 / 比率的面板）与前置条件（JSON 无注释，说明只能写进 `description` 或本 README）。
-面板口径与 `docs/product/ne-datasheet.md` §5/§6、`docs/product/compliance-matrix.md` §3、`deploy/alerts/README.md` 保持一致；不一致时以代码与上述权威文件为准，看板随之修正。术语纪律：产品名统一 **In-house IMS Application Server（文档暂用名）**；chart / 镜像 / OTel 服务名保持 `3rdparty-as`；`state-*` 指 bundled Redis / PostgreSQL（ADR-0026 Option E），HA 属客户侧（O5 / D3 未决）。
+面板口径与 `docs/product/ne-datasheet.md` §5/§6、`docs/product/compliance-matrix.md` §3、`deploy/alerts/README.md` 保持一致；不一致时以代码与上述权威文件为准，看板随之修正。术语纪律：产品名统一 **In-house IMS Application Server**（已正式采用为产品/文档描述名，G8-2；非商标 / 非品牌宣称）；chart / 镜像 / OTel 服务名保持 `3rdparty-as`；`state-*` 指 bundled Redis / PostgreSQL（ADR-0026 Option E），HA 属客户侧（O5 / D3 取值已裁（G7）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel；chart 仍单副本渲染，failover 实测行为无证据）。

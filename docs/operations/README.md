@@ -1,4 +1,4 @@
-# 运维文档（Operations）— In-house IMS Application Server（文档暂用名）
+# 运维文档（Operations）— In-house IMS Application Server
 
 > **状态**：本目录为**新增**运维文档目录（2026-10-09 创建，对应 `docs/product-packaging-plan.md` §2 与评审意见 **G-P2-1**）。目录内容是**归集与重组** —— 把原先散在 `docs/acceptance/` 的验收态 runbook 重新组织为面向值班的操作正文。
 >
@@ -18,11 +18,12 @@
 |---|---|---|---|
 | [`runbook-l1.md`](runbook-l1.md) | **L1 / NOC 值班** | 「现在该看什么、看到什么算异常、第一步做什么、什么时候叫人」 | 日常巡检 + 告警首响应 + 常见操作 |
 | [`runbook-l2.md`](runbook-l2.md) | **L2 / 二线工程** | 「为什么是这个现象、AS 侧能不能自证、故障归属是哪一方、怎么取证」 | 深度排障 + 信令/日志取证 + 归属定界 |
+| **跨层参考（L1 / L2 之上层）**：[`alert-response-matrix.md`](alert-response-matrix.md)（告警-动作对照）、[`fault-demarcation.md`](fault-demarcation.md)（定界）、[`rollback-playbook.md`](rollback-playbook.md)（回退）、[`backup-restore.md`](backup-restore.md)（备份恢复）、[`grafana-dashboards/`](grafana-dashboards/README.md)（可视化） | L1 / L2 处置时查阅 | 「这个告警什么级别、第一步做什么、什么时候叫人、留什么证据」「故障归属是哪一方」「怎么回退」「备份恢复怎么做」「看板指到什么」 | 给级别 / 动作 / 升级路径、定界、回退、备份恢复与可视化，供 L1 / L2 处置时查阅 |
 
 **升级路径**：L1 → L2 → 维护者。
 
 - **L1 → L2**：命中本册中标注「升级 L2」的任一条件；或 L1 的四步排查走完仍不能判定归属。
-- **L2 → 维护者**：需要裁决产品口径或改动未决项（O1 / O4 / O5 / D3 / D5 等），或需要推翻既有裁决。L2 **不得**自行修改未决项（`AGENT.md` §15）。
+- **L2 → 维护者**：需要裁决产品口径（**O1 仍未裁决**），或改动已裁事项的执行面（**O4 / O5 / D3 / D5 取值已裁（G6 / G7，2026-10-10）**，相关实现未落，改动执行面仍需维护者授权），或需要推翻既有裁决。L2 **不得**自行修改未决项（`AGENT.md` §15）。
 
 ---
 
@@ -77,15 +78,17 @@
 1. **本目录不是验收结论。** 所有内容基于工程切片证据；**M5 工程关门 ≠ REQ 验收**，**M8 RC 就绪 ≠ 关门**。
 2. **零容量数字。** 无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 百分比容量。O1 未裁决。比例型告警阈值（如 1%、30%）与固定窗口计数（如 3 次/分钟）是**既有告警阈值**，**不是**容量指标。
 3. **不引用 M6 dev-host 数字。** M6 测量为内部参考、非对外 O1/SLA。
-4. **e2e = 0。** `docs/acceptance/test-plan.md` 中 e2e marker 数量为 0，完整呼叫 + 控制台端到端路径未落地；performance 仅 accept-all harness，**非业务判决路径**。
+4. **e2e 现状。** `pytest -m e2e` 现有 **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 **fail 不 skip**），REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**（已覆盖双腿归一化消息序列对拍、C_in ≠ C_out、SDP offer 逐字节恒等；**14 条消息的逐条 header 对拍仍未覆盖**）；performance 仅 accept-all harness，**非业务判决路径**。
 5. **不做 Diameter Sh / 不做 CDR / 不做计费 / 不做媒体。** 出现即 N/A，理由见 `AGENT.md` §2 与 [`../product/compliance-matrix.md`](../product/compliance-matrix.md)。
 6. **不主动抓在途呼叫。** AS 侧不摘在途呼叫；摘流是对方（OP-SBC / OP-NET）侧动作。
 7. **TLS 下解密属各方责任，密钥不跨方共享。** 不为解密复制对端私钥。
 8. **testbed / kind / compose 抓包不是现网证据。** ADR-0014 明确 v1 不把 testbed 作为交付物。
 9. **术语纪律。** 「v1」「v1.1」**不是发行版本**（`docs/plan.md` §0，2026-10-07 维护者口径）；产品版本号只看根目录 `VERSION`。文档中的主叫 / 正则规则一律标 **v1.1（不是发行版本）**。
-10. **命名纪律。** 产品名为 **In-house IMS Application Server（文档暂用名）**；chart name / 镜像名 / OTel 服务名保持 `3rdparty-as` 不变。
+10. **命名纪律。** 产品名为 **In-house IMS Application Server**，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**）；chart name / 镜像名 / OTel 服务名保持 `3rdparty-as` 不变。
 11. **密钥与抓包。** 禁止保存密码 / token / cookie / 私钥；**绝不提交真实抓包**（`AGENT.md` §11 / §13）。
 
 ---
 
 > **评审入口**：本目录各分册的**执行记录**见 [`../reviews/product-packaging-execution-record-2026-10-10.md`](../reviews/product-packaging-execution-record-2026-10-10.md)。该文件是**包装交付的执行记录，不是维护者签字的 review record** —— `AGENT.md` §3.3 要求的独立 review record 仍待维护者评审。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。

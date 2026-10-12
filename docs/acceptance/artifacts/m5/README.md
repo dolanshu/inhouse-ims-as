@@ -60,6 +60,7 @@ Sanitized M5.1 transcripts. Raw kind runs may still land under gitignored `artif
 | `2026-10-12/PASS-integration-pg-logical-sample-2026-10-12.txt` | 通过 | 同上运行的尾部摘要 |
 | `2026-10-12/FAIL-integration-pg15-2026-10-12.txt` | **不是通过证据** | **如实失败**：PG **15.18**（自定义 DSN `:55434`）下 `-m integration` → `1 failed, 124 passed, 76 errors`，exit 1。根因：`SELECT defaclobjtype \|\| ':' \|\| ...` → `AmbiguousFunction: operator is not unique: "char" \|\| unknown`（PG 14+ 将该列类型由 `char` 改为 `"char"`，需显式类型转换）。**未改任何产品代码**；仓库标准环境（compose）为 PG 12.22，故当前不阻塞，但 PG 12 已 EOL，升级时会踩到 |
 | `2026-10-12/FAIL-integration-pg15-sample-2026-10-12.txt` | **不是通过证据** | 同上运行的尾部摘要 |
+| `2026-10-12/PASS-chart-version-sync-2026-10-12.txt` | 通过 | **A6 首次 chart 同步**（维护者 2026-10-12 指令「何时同步成什么由 agent 定」）：同步前 `--check` 如实 DRIFT（`version: 0.0.0-skeleton` / `appVersion: "0.0.0"` vs 根 `VERSION` `0.2.0`，exit 1）；动作 = 落入裁决的 `kubeVersion: ">=1.23.0-0"` + `sync-chart-version.sh --apply`；同步后 `--check` exit 0（`version: 0.2.0` / `appVersion: "0.2.0"`），`make chart-check`（helm 3.16.4，`tools/bin/helm` 经 `HELM_BIN` 解析）→ `chart-check: OK`。环境 `dev-win03ib7niepf0` |
 | `README.md` | — | this index |
 
 ## 三件容易被误读的事

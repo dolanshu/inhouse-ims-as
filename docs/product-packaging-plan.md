@@ -246,28 +246,50 @@ testbed 仿真结果（含 M7.1 仿真平台、callload）属于研发/演示资
 
 | 编号 | 交付物 | 落盘路径 | 状态 | 阻塞源 |
 |---|---|---|---|---|
-| 1.1 | 产品一页纸 + 命名（文档暂用名） | `docs/product/one-pager.md` | 已落盘，待维护者评审 | — |
-| 1.2 | 3GPP 规范符合性矩阵 | `docs/product/compliance-matrix.md` | 已落盘，待维护者评审 | — |
-| 1.3 | 网元档案（NE Datasheet） | `docs/product/ne-datasheet.md` | 已落盘（§3 只给容量**模型结构与测量方法学**，未填数值） | **O1**（容量取值） |
-| 1.4 | 故障定界手册 | `docs/operations/fault-demarcation.md` | 已落盘，待维护者评审 | — |
+| 1.1 | 产品一页纸 + 命名（文档暂用名） | `docs/product/one-pager.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
+| 1.2 | 3GPP 规范符合性矩阵 | `docs/product/compliance-matrix.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
+| 1.3 | 网元档案（NE Datasheet） | `docs/product/ne-datasheet.md` | 已落盘（§3 只给容量**模型结构与测量方法学**，未填数值）；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | **O1**（容量取值） |
+| 1.4 | 故障定界手册 | `docs/operations/fault-demarcation.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
 | 1.5 | README 重写为产品入口 | 根 `README.md`、`docs/README.md` | 已落盘，待维护者评审 | — |
-| 2.1 | Grafana 看板模板 | `docs/operations/grafana-dashboards/{overview.json,sip-signaling.json,README.md}` | 已落盘；**不含 Sh 面板 / 时延面板 / 容量数字**；抓取接线缺口已显式标注为**未闭合** | 接线闭环属 chart 工作，未做 |
-| 2.2 | 告警规则补强 + 告警-动作对照表 | `docs/operations/alert-response-matrix.md`、`deploy/alerts/as-alerts.yaml`、`deploy/alerts/README.md` | 已落盘；新增 `as.runtime` / `as.platform` 两组共 5 条规则，**`as.call-path` 原 5 条未改**；`promtool check rules` **未执行**（执行环境 `dev-win03ib7niepf0` 无 `promtool`，见 [`environments.md`](environments.md)） | 同上（抓取接线） |
-| 2.3 | L1 / L2 Runbook 分册 | `docs/operations/{runbook-l1.md,runbook-l2.md,README.md}` | 已落盘；`docs/acceptance/` 原件**保留不动**，只做归集与索引 | — |
-| 2.4 | 摘流 / 回退 + iFC 配合 | `docs/operations/rollback-playbook.md` | 已落盘（方案与边界）；**真实集群演练未做** | 真实集群（**M8 7.2d blocked**）+ S-CSCF / HSS 侧配合 |
-| 2.5 | 备份恢复方案 + 演练记录 | `docs/operations/backup-restore.md` | 已落盘（方案 + 记录**模板**）；**演练记录为空**；未给 RPO / RTO 数值 | 真实集群；客户侧 HA 未决（O5 / D3） |
-| 3.1 | Preflight 环境校验脚本 | `docs/delivery/preflight.sh` | 已落盘；`bash -n` 通过，`--dry-run` 行为与退出码已验证 | 环境 `dev-win03ib7niepf0` 无 `kubectl` / `helm`，真实环境校验未跑 |
-| 3.2 | 离线安装包（air-gapped） | `docs/delivery/airgap-package.md`、`docs/delivery/scripts/{bundle-images.sh,load-images.sh,images.txt}` | 已落盘；范围限定 image save/load + 清单 + 校验和 + `helm package`，不产生第二套安装形态 | `helm package` 未实测（环境 `dev-win03ib7niepf0` 无 `helm`） |
-| 3.3 | 责任边界矩阵（RACI） | `docs/product/responsibility-matrix.md` | 已落盘，待维护者评审 | — |
-| 3.4 | 安全合规说明（PDPO） | `docs/product/security-privacy.md` | 已落盘；**未写保留天数**，只写留存范围 / 删除机制 / 数据留港原则 | **O4**（保留期）、**D5**（存储选型） |
-| 3.5 | 版本生命周期与 EOL 策略 | `docs/product/version-lifecycle.md` | 已落盘；§3 逐条**转述** ADR-0027 已接受的决定，不新增承诺 | — |
-| 4.1 | 性能基准报告 | `docs/product/ne-datasheet.md` §3（方法学章节） | **只交付方法学**，正式报告未做 | **O1** |
-| 4.2 | 7×24 长稳测试报告 | — | **按计划未做**（v1.1 / 按需，不纳入当前里程碑） | — |
-| 4.3 | API 版本兼容策略 | `docs/product/version-lifecycle.md` §7 | 以「**候选、未决策**」形式列出待决点与出口条件；无 ADR | 需维护者决策 + 新 ADR + review record |
-| 4.4 | 产品白皮书 / 架构白皮书 | — | **按计划未做**（第四批，不纳入当前里程碑） | — |
-| 4.5 | 多业务平台能力开放机制文档 | — | **按计划未做**（v1.1 / 按需，不纳入当前里程碑） | — |
+| 2.1 | Grafana 看板模板 | `docs/operations/grafana-dashboards/{overview.json,sip-signaling.json,README.md}` | 已落盘；**不含 Sh 面板 / 时延面板 / 容量数字**；抓取接线缺口已显式标注为**未闭合**；2026-10-12 B6 评审：看板 JSON **accept**、看板 README **需修改**；2026-10-12 闭环复评：JSON 与 README **均 accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 接线闭环属 chart 工作，未做 |
+| 2.2 | 告警规则补强 + 告警-动作对照表 | `docs/operations/alert-response-matrix.md`、`deploy/alerts/as-alerts.yaml`、`deploy/alerts/README.md` | 已落盘；新增 `as.runtime` / `as.platform` 两组共 5 条规则，**`as.call-path` 原 5 条未改**；`promtool check rules` **未执行**（执行环境 `dev-win03ib7niepf0` 无 `promtool`，见 [`environments.md`](environments.md)）；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 同上（抓取接线） |
+| 2.3 | L1 / L2 Runbook 分册 | `docs/operations/{runbook-l1.md,runbook-l2.md,README.md}` | 已落盘；`docs/acceptance/` 原件**保留不动**，只做归集与索引；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
+| 2.4 | 摘流 / 回退 + iFC 配合 | `docs/operations/rollback-playbook.md` | 已落盘（方案与边界）；**真实集群演练未做**；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 真实集群（**M8 7.2d blocked**）+ S-CSCF / HSS 侧配合 |
+| 2.5 | 备份恢复方案 + 演练记录 | `docs/operations/backup-restore.md` | 已落盘（方案 + 记录**模板**）；**演练记录为空**；未给 RPO / RTO 数值；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 真实集群；客户侧 HA 未决（O5 / D3） |
+| 3.1 | Preflight 环境校验脚本 | `docs/delivery/preflight.sh` | 已落盘；`bash -n` 通过，`--dry-run` 行为与退出码已验证；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 环境 `dev-win03ib7niepf0` 无 `kubectl` / `helm`，真实环境校验未跑 |
+| 3.2 | 离线安装包（air-gapped） | `docs/delivery/airgap-package.md`、`docs/delivery/scripts/{bundle-images.sh,load-images.sh,images.txt}` | 已落盘；范围限定 image save/load + 清单 + 校验和 + `helm package`，不产生第二套安装形态；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | `helm package` 未实测（环境 `dev-win03ib7niepf0` 无 `helm`） |
+| 3.3 | 责任边界矩阵（RACI） | `docs/product/responsibility-matrix.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
+| 3.4 | 安全合规说明（PDPO） | `docs/product/security-privacy.md` | 已落盘；**未写保留天数**，只写留存范围 / 删除机制 / 数据留港原则；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | **O4**（保留期）、**D5**（存储选型） |
+| 3.5 | 版本生命周期与 EOL 策略 | `docs/product/version-lifecycle.md` | 已落盘；§3 逐条**转述** ADR-0027 已接受的决定，不新增承诺；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
+| 4.1 | 性能基准报告 | `docs/product/ne-datasheet.md` §3（方法学章节） | **只交付方法学**，正式报告未做；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | **O1** |
+| 4.2 | 7×24 长稳测试报告 | — | **按计划未做**；**归属已裁（2026-10-12）：v1.1** —— 下一批次交付，不纳入当前里程碑 | — |
+| 4.3 | API 版本兼容策略 | `docs/product/version-lifecycle.md` §7 | 以「**候选、未决策**」形式列出待决点与出口条件；无 ADR。**归属已裁（2026-10-12）：v1.1** —— 下一批次以 ADR + 策略章节收口 | 需维护者决策 + 新 ADR + review record |
+| 4.4 | 产品白皮书 / 架构白皮书 | — | **按计划未做**；**归属已裁（2026-10-12）：按需** —— 有对外叙事需求时再写 | — |
+| 4.5 | 多业务平台能力开放机制文档 | — | **按计划未做**；**归属已裁（2026-10-12）：按需** —— 插件化机制落地后再写，避免凭空写 | — |
 
 **代码侧改动面**：仅 `deploy/alerts/as-alerts.yaml` 与 `deploy/alerts/README.md`（新增告警规则组与说明），**未改任何产品代码**。**未执行任何 git 写操作**（无 `commit` / `add` / 改分支 / 改 remote / 打 tag）。
 
 **遗留缺口（不在本次改动面内，仅记录）**：① 告警抓取接线未闭合（chart 无 `prometheus.io/scrape`、无 ServiceMonitor / PodMonitor）；② `promtool check rules` 未运行；③ `Chart.yaml` 的 `version` / `appVersion` 与根 `VERSION` 不同步；④ chart 无 `kubeVersion` 声明（`preflight.sh` 按模板实际使用的 API 推导下限作为补偿）。
+
+**2026-10-12 B6 评审回写（追加，不改上行原文）**：16 份文档评审结论已落
+[`reviews/product-packaging-review-checklist-2026-10-12.md`](reviews/product-packaging-review-checklist-2026-10-12.md) §6 ——
+**accept 0 / 需修改 16 / 驳回 0**；附带资产中看板 JSON 与 images.txt 为 accept，其余需修改。
+共性缺口五项：① 2026-10-11 下游同步（任务 E）只覆盖 security-privacy 与 backup-restore 两份，其余 14 份的
+O4/O5/D3/D5「未决」与「e2e=0」表述 stale；② 全批 9+ 处「e2e=0」（实际 8 条稳定通过，REQ-F-1 = 自动化子集已覆盖 /
+全文仍 open）；③ chart 版本一致性缺位（VERSION 0.2.0 vs Chart.yaml 0.0.0-skeleton、kubeVersion 未写入），
+影响 rollback-playbook L3 与交付产物命名；④ 交付清单未列入 `deploy/alerts/`（G9-a 四类交付产品只落三类）；
+⑤ 附带脚本功能缺陷（bundle-images.sh:205 digest 校验写反、load-images.sh --values 名实不符、
+preflight.sh Sentinel 部署误报）。**本回写不签收任何 REQ/里程碑，不授权执行修改；需修改项闭环后复评。**
+另：上行遗留缺口第 ② 项（`promtool check rules` 未运行）已于 2026-10-11 闭合 ——
+(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)，3 组 10 条；
+X1 抓取接线仍待外部输入。
+
+**2026-10-12 闭环复评回写（追加，不改上行原文）**：B6 评审清单的 16 份「需修改」项已全部闭环并复评，结论见 [`reviews/product-packaging-review-checklist-2026-10-12.md`](reviews/product-packaging-review-checklist-2026-10-12.md) §7 —— **accept 16 / 需修改 0 / 驳回 0（待维护者确认）**；附带资产中看板 README 与三个交付脚本由「需修改」转 accept，两份看板 JSON 与 `images.txt` 维持 accept。共性缺口五项：①②（任务 E 覆盖缺口、e2e 口径）已闭环（根因 `docs/acceptance/test-plan.md` marker 表已修并回填全批）；④（交付清单缺告警规则）已按 G9-a 闭环；⑤（附带脚本功能缺陷）已闭环；③（chart 版本一致性）文档口径已全部同步，**实际同步（首次 `--apply` 与 `kubeVersion` 写入）待维护者决定**。仍未闭环项见清单 §7.4。**本回写不签收任何 REQ / 里程碑，不构成对外交付或验收依据。**
+
+**2026-10-12 晚些时候追加（不改上行原文）**：
+
+1. **chart 首次同步已执行**（回应上行「实际同步待维护者决定」—— 维护者 2026-10-12 裁定时机与取值由 agent 自行判断）：`Chart.yaml` `version` / `appVersion` = `0.2.0`（根 `VERSION` 为唯一源），`kubeVersion: ">=1.23.0-0"` 已写入；`(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)`。上行「遗留缺口」第 ③ 项自此在**事实层面关闭**（该行原文保留为审计链）。
+2. **Lane D 四项归属已裁**（维护者 2026-10-12 授权 agent 三选一）：**4.2 → v1.1、4.3 → v1.1、4.4 → 按需、4.5 → 按需**；已写入上表四行状态列。口径注记：「v1.1」按本计划既有用法指**下一批次**，非正式发行版本定义（`docs/plan.md` §0「版本称呼」行继续有效）。
+3. **X1 抓取接线与 B2 / B3（含 RPO / RTO 取值）已按维护者 2026-10-12 决定后置到下一个 release** —— 后续盘点只引指针、不再单列（落点：`docs/handoff/2026-10-11-open-adjudication-register.md` §3 X1、`docs/handoff/2026-10-12-b2-b3-deferred-items.md` §5）。
+4. 本追加**不签收任何 REQ / 里程碑，不构成对外交付或验收依据**。
 

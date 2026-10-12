@@ -1,16 +1,16 @@
-# In-house IMS Application Server（文档暂用名）—— 责任边界矩阵（RACI）
+# In-house IMS Application Server —— 责任边界矩阵（RACI）
 
 > **状态块（阅读本文前先看这里）**
 >
-> - **产品名**：**In-house IMS Application Server（文档暂用名）**，首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。该名称**不是已正式批准的产品名**（`../plan.md` §0「产品决策记录」；`../product-packaging-plan.md` §4.3）。git repo 名拟改为 `inhouse-ims-as`，**仅涉及 git 仓库名与 remote URL**；chart name（`3rdparty-as`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
+> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`../plan.md` §0「产品决策记录」G8 行）。git repo 名：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
 > - **本文件归属**：`../product-packaging-plan.md` §1 第三批交付物 **3.3（责任边界矩阵 / RACI）**。按该计划 §3.2，本交付物属 **A 类**（不依赖未决项，可立即启动）。
 > - **⚠️ iFC 触发逻辑属 S-CSCF / HSS，不在 AS 侧**（评审 **G-P0-5** 已裁决）。本产品**只实现 ISC 触发后的业务判决与摘流/ 回退**。按号段/ 百分比的 **iFC 侧灰度触发必须由 S-CSCF / HSS 侧配置**，AS 侧无从代劳。本文所有 RACI 行都按这一边界写。
 > - **⚠️ 计费域全程 N/A**：不做 CDR、不投递、不归档、不批价（ADR-0017 accepted）；**Sh 相关活动 N/A**（`AGENT.md` §2 非目标）；**LI / IRI N/A**（ADR-0016 accepted）。
 > - **本文不含任何容量 / 性能数字**：O1（容量目标）**未裁决**（`../plan.md` §5.1 O1），`AGENT.md` §2 在实测裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延数字。文中出现的 `5060` / `5061` 是**协议端口常量**，不是容量指标。
-> - **本文尚未评审**：按 `AGENT.md` §3.3，评审必须留下独立 review record；本文当前**没有** review record，待维护者评审。
-> - **未验收项不得当作已验收**：E1（reSIProcate 生产路径行为）/ E4（TLS 证书热轮换）/ E5（状态外置与恢复）**未验收**；e2e marker **为 0**；REQ-S-4 仅为**工程切片**，M4/M4b 工程关门 ≠ REQ 验收；M8 RC 产物就绪但**退出签字仍搁置**（RC 就绪 ≠ 通过）。
+> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
+> - **未验收项不得当作已验收**：E1（reSIProcate 生产路径行为）/ E4（TLS 证书热轮换）/ E5（状态外置与恢复）**未验收**；e2e：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open；REQ-S-4 仅为**工程切片**，M4/M4b 工程关门 ≠ REQ 验收；M8 RC 产物就绪但**退出签字仍搁置**（RC 就绪 ≠ 通过）。
 > - **互链**：本文与 [`../operations/fault-demarcation.md`](../operations/fault-demarcation.md)（故障定界手册）、[`../operations/rollback-playbook.md`](../operations/rollback-playbook.md)（业务摘流 / 回退 + iFC 侧配合手册）互链，二者**均已落盘**；但依赖真实集群 / 对端配合的部分**仍 blocked**（G-P1-10）。
-> - **评审入口**：本次产品化包装的**执行记录**见 [`../reviews/product-packaging-execution-record-2026-10-10.md`](../reviews/product-packaging-execution-record-2026-10-10.md) —— 它是**执行记录，不是维护者签字的 review record**（下条「本文尚未评审」仍然成立）。
+> - **评审入口**：本次产品化包装的**执行记录**见 [`../reviews/product-packaging-execution-record-2026-10-10.md`](../reviews/product-packaging-execution-record-2026-10-10.md) —— 它是**执行记录，不是维护者签字的 review record**（上条「B6 评审状态」中「结论待维护者确认」仍然成立）。
 
 ---
 
@@ -24,7 +24,7 @@
 | **OP-HSS** | HSS | 客户 | iFC 签约数据的**存储方**；按 iFC 灰度触发需其侧配合配置 |
 | **OP-BILL** | 计费域（OCS / 计费网元） | 客户 | **N/A** —— 与本产品**无接口**。不做 CDR / 计费 / 批价（ADR-0017） |
 | **OP-NOC** | 网管 / NOC | 客户 | 承接告警响应、日常巡检、变更窗口执行；在我方回退决策配合下操作 |
-| **OP-SEC** | 安全与合规 | 客户 | PDPO 与数据留港的**责任方**；保留期与跨境安排的裁决方（O4）；渗透测试的委托方与出口标准裁决方 |
+| **OP-SEC** | 安全与合规 | 客户 | PDPO 与数据留港的**责任方**；保留期与跨境安排的确认方（O4 取值已裁：默认 10 天、部署可配；适用范围与跨境安排仍待 OP-SEC 确认）；渗透测试的委托方与出口标准裁决方 |
 | **3P** | 第三方联调方（如集成商、S-SBC 厂商） | 客户指定 | 在客户授权下参与互通测试与联调；**不直接持有本产品任何凭据**（`AGENT.md` §11：绝不提交密钥 / 证书 / 真实抓包） |
 
 **边界一句话**：AS 侧只拥有「ISC 触发之后的判决、摘流与回退」；触发之前的接入决策（iFC 签约、触发、灰度）全部在 OP-NET / OP-HSS / OP-SBC 侧。
@@ -44,7 +44,7 @@ flowchart TB
     end
     subgraph OPS["客户运维与合规"]
         NOC["OP-NOC<br/>值班 · 告警响应 · 窗口执行"]
-        SEC["OP-SEC<br/>PDPO · 保留期裁决（O4）"]
+        SEC["OP-SEC<br/>PDPO · 保留期确认（O4 已裁，范围待确认）"]
     end
     BILL["OP-BILL · 计费域<br/>N/A —— 与本产品无接口"]
 
@@ -164,7 +164,7 @@ flowchart TB
 |---|---|---|---|
 | AS 侧变更（镜像 `helm upgrade`、配置变更单、证书轮换） | **AS-Vendor** | AS-Vendor 内部 + **OP-NOC** 知会 | 配置走变更单 → 审批 → 写 PG → 灰度分发 → 可回滚（ADR-0006）。**不走 GitOps**（`AGENT.md` §2） |
 | 运营商网络侧变更（iFC 签约 / 触发灰度、trunk 优先级、摘流） | **OP-NET / OP-NOC** | **OP-NET** | **AS 侧不代提、不代批** |
-| 有状态组件维护（PostgreSQL / Redis） | **AS-Vendor** 提方案 | **OP-NOC** 批准窗口 | chart 内建的是**单副本**，**不是 HA**（`../product/ne-datasheet.md` §7）；HA / 容灾等级受 **O5** 未决影响 |
+| 有状态组件维护（PostgreSQL / Redis） | **AS-Vendor** 提方案 | **OP-NOC** 批准窗口 | chart 内建的是**单副本**，**不是 HA**（`../product/ne-datasheet.md` §7）；O5 / D3 取值**已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby、Redis primary/replica + Sentinel；chart 仍单副本渲染，实现未落 |
 | 跨站点切换 | **AS-Vendor** 提供切换脚本 | **OP-NOC + OP-NET**（S-SBC 侧 trunk 优先级由对方改） | ADR-0008：站点内 N+1 零单点 + 跨站点 **1+1 温备（非双活）**；切换是**运维动作**，必须演练 |
 
 ### 5.2 窗口期的硬约束
@@ -189,13 +189,13 @@ flowchart TB
 | E1 reSIProcate 生产路径行为 | M8 验收（O2 / O3） | ②⑧ 互通与定界结论缺生产证据；14 条 B2BUA 全文回放未签收 | AS-Vendor |
 | E5 状态外置与恢复 | REQ-NF-1 签收归 M8 | ⑪ 恢复路径只有工程切片证据 | AS-Vendor |
 | O1 容量目标未裁决 | 维护者裁决 | ⑫⑯ 无法给容量口径；容量类告警全部 defer | 维护者 + OP-NET |
-| O4 呼叫轨迹保留期未决 | 客户合规要求 | 轨迹 TTL、存储容量、清理行为均未定| **OP-SEC**（AS 侧提供机制与范围） |
-| D5 轨迹存储选型未决（PostgreSQL 或独立短保留存储） | 与 O4 相关 | §2 数据留存与备份策略无法定稿 | OP-SEC + AS-Vendor |
-| O5 容灾等级未决（N+1 节点 / N+M 机架或 AZ） | 客户 SLA | Redis 是否跨 AZ、Sentinel 拓扑、PG HA 均未定 | OP-NET（客户 SLA） |
+| O4 呼叫轨迹保留期 | 取值**已裁（G6）**：默认 10 天、部署可配；**实现未落** | 轨迹 TTL、存储容量、清理行为的落地依赖轨迹存储 / 查询 / 删除能力实现；适用范围与跨境安排仍待 OP-SEC 确认 | **OP-SEC**（AS 侧提供机制与范围） |
+| D5 轨迹存储选型 | 取值**已裁（G6）**：in-cluster PostgreSQL；**实现未落** | §2 数据留存与备份策略的落地随轨迹存储实现 | OP-SEC + AS-Vendor |
+| O5 容灾等级 | 取值**已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby；不承诺机架 / AZ 级容错；RPO / RTO 数值未裁 | chart 仍单副本渲染，failover 实测行为无证据；Redis / PG HA 落地依赖实现 | OP-NET（客户 SLA） |
 | D1 Python 3.10 生命周期终点 | 该日期之后的任何交付 | 需先验证迁移或登记为已接受风险（详见 [`security-privacy.md`](security-privacy.md) §6） | 维护者 |
 | REQ-S-4 正式验收 | 仅为**工程切片** | ⑮ 安全相关结论不得写成已通过验收 | AS-Vendor + OP-SEC |
 | 渗透测试未执行 | 无产物、无排期 | ⑦⑮ 安全基线无独立验证 | **OP-SEC**（委托）+ AS-Vendor（执行） |
-| e2e marker = 0 | M8 | 完整呼叫 + 控制台端到端无自动化证据 | AS-Vendor |
+| e2e 覆盖不完整 | M8 | `pytest -m e2e` 8 条稳定通过（缺 native 时 fail 不 skip）；REQ-F-1 = 自动化子集已覆盖 / 全文仍 open —— 完整呼叫 + 控制台端到端无自动化证据，14 条消息逐条 header 对拍未覆盖 | AS-Vendor |
 
 ---
 
@@ -210,4 +210,4 @@ flowchart TB
 | **关键代码依据** | 对端准入 `platform/src/as_platform/sip/transport.py:249-298`（空策略拒绝 `:272-273`）；mTLS 默认值 `transport.py:86,88-93`；明文拒绝 `platform/src/as_platform/sip/ingress.py:178-194`；双证书重叠窗口 `ingress.py:70-100`；环境变量 `platform/src/as_platform/runtime/transport_env.py:52-103`；fail-closed 渲染 `deploy/helm/templates/deployment.yaml:11-16`、`validate-install.yaml:6,9,12`；draining `deployment.yaml:49-53`；NetworkPolicy `deploy/helm/templates/state-networkpolicy.yaml:1-29`；角色矩阵 `services/console/src/as_console/access.py:26-74,152-185`；密码与会话 `services/config-service/src/as_config_service/auth.py:191-232`；append-only 审计 `services/config-service/src/as_config_service/audit_store.py:102-104`；运行态覆盖 `platform/src/as_platform/gating/overrides.py:39-97`；日志字段契约 `docs/acceptance/m8-resip-runtime-log-contract.md` |
 | **同批交付物** | [`one-pager.md`](one-pager.md)（1.1）、[`compliance-matrix.md`](compliance-matrix.md)（1.2）、[`ne-datasheet.md`](ne-datasheet.md)（1.3）、[`version-lifecycle.md`](version-lifecycle.md)（3.5）、[`security-privacy.md`](security-privacy.md)（3.4）及 `docs/operations/` 目录**均已落盘** |
 | **已落盘的互链文档** | [`../operations/fault-demarcation.md`](../operations/fault-demarcation.md)（§4 完整剧本）、[`../operations/rollback-playbook.md`](../operations/rollback-playbook.md)（§5.2 回退）、[`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md)（§4 告警归属）、[`../operations/backup-restore.md`](../operations/backup-restore.md)（§2 备份与恢复 RACI）、[`version-lifecycle.md`](version-lifecycle.md)（§5.2 版本与回退）。其中依赖真实集群 / 对端配合的部分**仍 blocked**（G-P1-10） |
-| **状态纪律** | 本文只登记**责任划分与证据状态**，不构成验收结论。M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；O1 / O4 / O5 / D1 / D3 / D5 未决；REQ-S-4 仅为工程切片。本文**尚未评审**，按 `AGENT.md` §3.3 待维护者评审并留独立 review record |
+| **状态纪律** | 本文只登记**责任划分与证据状态**，不构成验收结论。M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；O1 / D1 未决，O4 / D5 **已裁（G6，实现未落）**，O5 / D3 **已裁（G7，chart 仍单副本）**；e2e：`pytest -m e2e` **8 条稳定通过**，REQ-F-1 = 自动化子集已覆盖 / 全文仍 open；REQ-S-4 仅为工程切片。**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3） |

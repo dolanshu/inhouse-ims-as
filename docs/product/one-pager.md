@@ -1,12 +1,12 @@
-# In-house IMS Application Server（文档暂用名）—— 产品一页纸
+# In-house IMS Application Server —— 产品一页纸
 
 > **状态块（阅读本文前先看这里）**
 >
-> - **产品名**：**In-house IMS Application Server（文档暂用名）**，首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。该名称**不是已正式批准的产品名** —— 正式命名决策落点待补（`docs/plan.md` §0「产品决策记录」；`docs/product-packaging-plan.md` §4.3）。
-> - **git repo 名**拟改为 `inhouse-ims-as`，**仅涉及 git 仓库名与 remote URL**；chart name（`3rdparty-as`，见 `deploy/helm/Chart.yaml`）、镜像名（`registry.example.com/3rdparty-as`）、OTel 服务名**保持 `3rdparty-as` 不变**。
-> - **目标场景**：**3HK 内部上线评审（内部评审导向）** —— 这是**当前默认方向**（来源为 `docs/discussion.md` 讨论 + 维护者 2026-10-09 确认方向），**尚未形成正式决策落点**，不得当作已确认的产品决策引用。
+> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。
+> - **git repo 名**：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`，见 `deploy/helm/Chart.yaml`）、镜像名（`registry.example.com/3rdparty-as`）、OTel 服务名**保持 `3rdparty-as` 不变**。
+> - **目标场景**：**3HK 内部生产就绪 / 发版评审（internal production-readiness / release review）** —— G8-1 正式口径，已落 `docs/plan.md` §0 决策记录。
 > - **本文件归属**：`docs/product-packaging-plan.md` §1 第一批交付物 **1.1（产品一页纸 + 命名）**。
-> - **本文尚未评审**：按 `AGENT.md` §3.3，评审必须留下独立 review record；本文当前**没有** review record，待维护者评审。
+> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 > - **本文不含任何容量/性能数字**：O1（容量目标）**未裁决**（`docs/plan.md` §5.1）。M6 dev-host 测量属内部参考、非对外指标，`AGENT.md` §2 在 O1 裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 时延数字。本文因此**没有**容量章节，也**没有**时延 KPI。
 
 ---
@@ -165,11 +165,11 @@ Helm 是生产唯一交付形态（ADR-0013），chart name 为 `3rdparty-as`。
 | E1 reSIProcate 生产路径行为 | **待验收**（O3 / O2） |
 | E4 TLS 证书热轮换 | **待验收**；运营商 PKI 无实验室证据 |
 | E5 状态外置与恢复 | **待验收**（REQ-NF-1 签收仍归 M8） |
-| e2e 测试 | `pytest e2e` marker **为 0**，完整呼叫 + 控制台端到端路径未落地 |
+| e2e 测试 | `pytest -m e2e` **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 fail 不 skip）；REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**（14 条消息逐条 header 对拍未覆盖，见 `../acceptance/test-plan.md` REQ-F-1 段 2026-10-12 追加块） |
 | O1 容量目标 | **未裁决** —— 因此本文无任何容量数字 |
-| O4 呼叫轨迹保留期 | **未决** —— 保留期限无法落地 |
-| D5 轨迹存储选型 | **未决** —— PostgreSQL 或独立短保留存储待定 |
-| O5 容灾等级 | **未决**（N+1 单节点 / N+M 机架或 AZ），影响 Redis 是否跨 AZ |
+| O4 呼叫轨迹保留期 | **已裁（G6，2026-10-10）**：默认 10 天、部署可配；**实现未落** —— 轨迹存储 / 查询 / 删除能力当前不存在，不得表述为「系统已按 10 天清理」 |
+| D5 轨迹存储选型 | **已裁（G6，2026-10-10）**：in-cluster PostgreSQL；**实现未落**（随轨迹存储能力落地） |
+| O5 容灾等级 | **已裁（G7，2026-10-10）**：站点内 N+1 + 跨站 1+1 warm standby（沿用 ADR-0008 拓扑；**不承诺机架 / AZ 级容错**）；RPO / RTO 数值仍未裁；chart 当前仍单副本渲染，failover 实测行为无证据 |
 
 ---
 
@@ -182,7 +182,7 @@ Helm 是生产唯一交付形态（ADR-0013），chart name 为 `3rdparty-as`。
 | [`ne-datasheet.md`](ne-datasheet.md) | 网元档案：KPI 定义、告警清单、依赖关系、资源规格、容量模型（容量数值受 O1 阻塞） | `docs/product/` |
 | [`responsibility-matrix.md`](responsibility-matrix.md) | 责任边界矩阵 RACI：AS 与 S-CSCF / HSS / 计费域 / 网管 / 安全各域 | `docs/product/` |
 | [`version-lifecycle.md`](version-lifecycle.md) | 版本生命周期与 EOL 策略（REQ-NF-16 / ADR-0027） | `docs/product/` |
-| [`security-privacy.md`](security-privacy.md) | 安全与隐私合规（PDPO）；保留期限待 O4、存储选型待 D5 | `docs/product/` |
+| [`security-privacy.md`](security-privacy.md) | 安全与隐私合规（PDPO）；保留期（O4）与存储选型（D5）取值已裁（G6），实现未落 | `docs/product/` |
 | [`../operations/runbook-l1.md`](../operations/runbook-l1.md) | L1 运维手册（NOC 日常与告警处置） | `docs/operations/` |
 | [`../operations/runbook-l2.md`](../operations/runbook-l2.md) | L2 运维手册（深度排障与信令分析） | `docs/operations/` |
 | [`../operations/fault-demarcation.md`](../operations/fault-demarcation.md) | 故障定界手册：AS / S-CSCF / HSS / 计费域四方定界 | `docs/operations/` |
@@ -209,6 +209,7 @@ Helm 是生产唯一交付形态（ADR-0013），chart name 为 `3rdparty-as`。
 - **已落实的评审整改项**：
   - **G-P0-6**（目标场景决策依据不足）→ 目标场景降格为**当前默认方向（讨论确认，待补正式决策落点）**，见状态块；正式落点位置为 `docs/plan.md` §0「产品决策记录」。
   - **G-P2-6**（产品名"已确认"依据不足）→ 全文使用**文档暂用名**，并写明「不是已正式批准的产品名」；git repo 改名限定为仓库名与 remote URL，chart / 镜像 / OTel 服务名不变。
+  - **2026-10-12 追加（G8）**：上述两条整改项的「降格为默认方向 / 暂用名」处理已被 G8-1 / G8-2 / G8-3 裁决覆盖 —— 目标场景正式口径与描述名均已落 `docs/plan.md` §0 决策记录；本段原文保留为审计链。
 - **引用的 REQ**：`REQ-NF-1`（进程重启不丢会话）、`REQ-NF-2`（单进程状态有界）、`REQ-NF-3`（可水平扩展）、`REQ-NF-4`（ISSU）、`REQ-NF-5`（S-SBC 透明桥接）、`REQ-NF-9`（单租户 on-premises）、`REQ-NF-13`（OTel 三信号导出）、`REQ-NF-14`（告警规则集）、`REQ-NF-16`（版本生命周期与 EOL）；`REQ-F-1`（基本呼叫信令序列）、`REQ-F-2`（B2BUA 两侧 Call-ID 不同）、`REQ-F-5`（Route / Record-Route 处理）、`REQ-F-7`（命中阻止策略返回 603 Decline）。定义见 `docs/requirements/prd.md`。
 - **引用的 ADR（状态以各文件头为准）**：ADR-0002（一用例一进程，accepted）、ADR-0003（S-SBC 透明桥接 / 单一 ISC，accepted）、ADR-0004（媒体 seam，accepted）、ADR-0005（OTel 可观测性，accepted）、ADR-0006（配置治理，accepted）、ADR-0007（数据面 split，accepted）、ADR-0009（ISSU / draining，accepted）、ADR-0013（Helm-only 生产形态，accepted）、ADR-0014（三层 testbed，accepted）、ADR-0016（边界内安全，accepted）、ADR-0017（不做 CDR，accepted）、ADR-0021（运行态覆盖粒度，accepted）、ADR-0026（集群内状态存储，accepted）、ADR-0027（版本生命周期与 EOL，accepted）。**ADR-0023（Redis checkpoint，proposed）与 ADR-0025（托管规则运行时 bundle，draft）尚未通过**，本文不据其作结论。
 - **未做的事**：不写容量数字（O1 未裁决）；不写 Diameter Sh 与 CDR / 计费相关内容（N/A 并给理由）；不引用 M6 dev-host 数字作为对外指标；不把任何未验收项写成已通过。

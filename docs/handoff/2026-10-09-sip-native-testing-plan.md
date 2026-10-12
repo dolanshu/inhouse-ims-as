@@ -158,6 +158,44 @@ AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m "unit or contract" -q
 
 ---
 
+## 4-D. Phase D 排期定稿（2026-10-12 追加；§4 原文保留不改）
+
+> **性质：排期与优先级决定。** 维护者 2026-10-12 指令「A3 Phase D 排期由 agent 自行判断、执行、不用问」。
+> 本节回答「S5–S11 真栈用例按什么顺序做」；**不实现任何用例、不签收任何 REQ**。
+> 用例实现属 A3/A4 后续批次，每批落地时另留 review record。
+
+### 4-D.1 现状锚点（排期依据，2026-10-12 实测口径）
+
+| 场景 | REQ | 当前真栈覆盖 | 缺口 |
+|---|---|---|---|
+| S5 双腿 B2BUA | F-2 | **部分**：e2e Wave 2 `test_e2e_s1_replay_second_leg_starts_a_new_call_id`（C_in≠C_out）+ `test_m7_forward_two_leg_integration.py` | 两腿**各自**归一化序列对拍 |
+| S6 Request-URI 改写 | F-3 | **部分**：e2e E2E-SIP-1 出腿用户号断言 + `test_product_path.py` T1 + derived baseline 翻译场景 | 多规则优先级 / 无匹配组合的真栈对拍 |
+| S7a SDP 完全透传 | F-4 | **子集**：e2e Wave 2 SDP offer 逐字节恒等 + `test_req_f4_sdp_identity_integration.py` + D11 fixtures | 更大 corpus（多 media 变体） |
+| S8 Route/Record-Route | F-5 | **未覆盖**：`test_derived_baseline.py` 2 skip（S1 基线无 Route / Record-Route 头） | **先决缺口在基线本身**，需 M2 probe 补采 |
+| S9 in-dialog 路由 | F-9 | **工程切片**：M7.3 `restore_from_checkpoint` / `route_in_dialog_bye` | in-dialog re-INVITE / UPDATE / BYE 真栈对拍 |
+| S10 非 2xx 分支（486/480/408） | F-10 | **工程切片**：D9 adapter 486 映射已解决 | 对端返回非 2xx 的真栈透传对拍（testbed 对端当前只返 200） |
+| S11 CANCEL 与最终响应竞态 | F-11 | **工程切片**：D9 forking / final-response race 归属 M8 验收 | 竞态两分支真栈对拍 |
+
+### 4-D.2 优先级（P1 最高）
+
+| 优先级 | 场景 | 为什么排这个位置 | 前置依赖 | 落地形态 |
+|---|---|---|---|---|
+| **P1** | S5 两腿归一化序列对拍 | Wave 2 的 bridge 采集框架已在位，扩成「两腿各自 INVITE→200→ACK→BYE→200」是成本最低、收益最直接的一条；把 REQ-F-2 从「子集」推成 fuller coverage | 无（复用 `testbed/e2e/` 框架） | e2e |
+| **P2** | S7a SDP 透传 corpus 扩充 | byte-identity 断言已在 e2e；补带 media 描述 / 多 m-line 的 SDP 变体 corpus 即可扩大 D11 覆盖面 | 无 | e2e |
+| **P3** | S6 多规则优先级 + 无匹配组合 | 出腿用户号断言已在 e2e；补「规则优先级 / 无匹配 404」组合，与 S2（404 已绿）共用仿真链 | 无 | e2e |
+| **P4** | S10 非 2xx 透传 | 有 D9 工程基础，但**依赖先扩 testbed 对端 UAS**（当前只返 200，无法表达 486/480/408）—— 依赖新的仿真能力，故排在纯 e2e 扩充之后 | 扩 `as_simulators` / `PeerUas` 非 2xx 分支 | e2e 或 integration |
+| **P5** | S9 in-dialog 路由 | 依赖 M7.3 context restoration 工程切片；需要 in-dialog 状态机驱动（re-INVITE / UPDATE / BYE），用例复杂度高 | M7.3 工程切片（已在位） | integration |
+| **P6** | S11 CANCEL 竞态 | 竞态两分支的**确定性证明成本最高、flaky 风险最大**；放最后，且明确允许以 gap 登记收尾（竞态归属 M8 验收） | S4 cancel harness（487 已绿） | integration |
+| **阻塞（不排优先级）** | S8 Route/Record-Route | 基线本身缺 Route / Record-Route 头（2 条既有 skip 的根因）。**补采前不排实现**；补采完成后建议插在 P3 之后。REQ-F-5 在补采前按 N4 停止线**不签 pass** | M2 probe 补采（Route / Record-Route 头） | 补采后重排 |
+
+### 4-D.3 三条边界
+
+1. **本排期不实现任何用例。** 实现按 P1→P6 分批启动，每批需维护者授权（或同等授权口径），落地时留 review record。
+2. **S1 的 14 条逐条 header 对拍不在本表内** —— 它属 S1 的既有 gap，载体为 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)（Wave 2 已落地归一化骨架，14 条逐条对拍仍未实现）。
+3. **不签收任何 REQ。** 排期只定顺序；任何一条场景的签收以该批用例的证据 + 评审为准。
+
+---
+
 ## 5. Phase E — M2 smoke 与 demo 边界（证据层）
 
 真栈但不替代契约全集：
@@ -216,6 +254,5 @@ Demo / kind：`docs/handoff/pre-m8-demo-review-plan.md`（`as-m71`）— 人工 
 - [ ] Phase C native build job 绿且 required —— **未完成（2026-10-11 标注）**：
   CI job 未创建，属 CI 配置变更，需维护者授权；本次只在**本机**把 `make gate-native` 跑常态化
   （`1068 passed / 2 skipped / 206 deselected`，exit 0）
-- [ ] Phase D 至少 S1 全链或明确推迟项写入 `test-plan.md` / `plan.md` —— **未完成（2026-10-11 标注）**：
-  「S1 的 14 条回放」已由 A4-3 的仓内载体 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)
-  承接，但**用例未实现**；S5–S11 真栈用例的排期需维护者确认优先级
+- [x] Phase D 至少 S1 全链或明确推迟项写入 `test-plan.md` / `plan.md` —— **2026-10-12 满足**：S5–S11 的排期与优先级已定稿并落本文 §4-D（P1 S5 两腿归一化对拍 → P6 S11 竞态；S8 因基线缺 Route / Record-Route 头登记为阻塞项，补采前不排；S1 的 14 条逐条 header 对拍仍由 wave2 register 跟踪）。排期由维护者 2026-10-12 授权 agent 自行判断；**未实现任何用例、未签收任何 REQ**。
+  —— **未完成（2026-10-11 标注，原文保留）**：「S1 的 14 条回放」已由 A4-3 的仓内载体 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md) 承接，但**用例未实现**；S5–S11 真栈用例的排期需维护者确认优先级

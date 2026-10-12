@@ -1,6 +1,6 @@
 # `docs/delivery/` — 交付文档与脚本
 
-> **产品**：In-house IMS Application Server（文档暂用名，3GPP Third-Party AS role；命名状态见 [`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3）。
+> **产品**：In-house IMS Application Server，**已正式采用为产品/文档描述名**（G8-2；非商标 / 非品牌宣称；3GPP Third-Party AS role；命名状态见 [`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3）。命名边界：chart name / 镜像名 / OTel 服务名保持 `3rdparty-as` 不变；git repo 名已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅仓库名与 remote URL）。
 >
 > **本目录状态**：**新增**交付文档目录。交付物 **3.1 Preflight 环境校验脚本** 与 **3.2 离线安装包（air-gapped）** 已落盘；安装指南 [`install-guide.md`](./install-guide.md) 为交付命令序列的入口。
 > **生产形态**：**Helm-only** —— Helm + 标准 K8s 资源是唯一生产交付形态，不写 Operator，**不产生第二套安装形态**（ADR-0013；评审 G-P1-7）。
@@ -39,6 +39,7 @@ flowchart LR
 | [`scripts/bundle-images.sh`](./scripts/bundle-images.sh) | **联网侧**：读镜像清单 → `docker pull/tag/save` → `SHA256SUMS` → `helm package` → `MANIFEST.txt` | 交付实施（联网侧） | `docker`、可访问上游 registry、`helm` 3.x |
 | [`scripts/load-images.sh`](./scripts/load-images.sh) | **离线侧**：先校验 `SHA256SUMS`（不匹配中止）→ 导入镜像 → chart / helm / context / Secret 前置检查 → 打印安装命令骨架 | 交付实施、客户运维 | `sha256sum`；`--load` 需 `docker`（或按提示用 `ctr` / `crictl`） |
 | [`scripts/images.txt`](./scripts/images.txt) | 依赖镜像清单模板（格式、占位符、按 digest 固定的写法先例） | 交付实施 | 按客户 registry 与交付版本改写 |
+| [`../../deploy/alerts/as-alerts.yaml`](../../deploy/alerts/as-alerts.yaml) + [`../../deploy/alerts/README.md`](../../deploy/alerts/README.md) | 告警规则（G9-a 判定为交付产品）：3 组 10 条 | 交付实施、客户运维 | `promtool check rules` 已于 2026-10-11 通过（(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)，`SUCCESS: 10 rules found`）；**抓取接线未闭合（X1）需向客户说明** —— 标准部署下 `as_*` 序列不会被 Prometheus 采集 |
 
 > `install-guide.md` 是同一交付批次的安装指南入口（交付清单 + 命令序列），已落盘。其中的命令序列与 [`airgap-package.md`](./airgap-package.md) §3/§4 一致；Helm 参数口径以 [`../../deploy/helm/README.md`](../../deploy/helm/README.md) 为准。
 
@@ -53,7 +54,7 @@ flowchart LR
 | K8s | 默认按 **1.23** 下限校验（`preflight.sh --min-k8s` 可覆盖） | chart **没有** `kubeVersion` 声明；该下限由模板实际使用的 API 推导，依据写在 `preflight.sh` 头部注释（引自 Kubernetes 官方 Deprecated API Migration Guide 的 "available since" 条目） |
 | 工具 | `kubectl`、`helm` 3.x（chart `apiVersion: v2`）；离线侧还需 `sha256sum` | `KUBECTL_BIN` / `HELM_BIN` / `DOCKER` / `HELM` 可覆盖二进制路径 |
 | 镜像 | 客户内网 registry 中的产品镜像，或用本目录离线包导入到节点 | `registry.example.com` 是占位地址；air-gapped 走 [`airgap-package.md`](./airgap-package.md) |
-| 依赖服务 | 外部 PostgreSQL（`postgres.host` + 凭据 Secret）或内建 `stateStores.enabled=true`；Redis 同理 | 内建 PG 默认 `postgres:12.22`、内建 Redis 默认 `redis:7-alpine`；Sentinel HA 仍是 O5/D3 未决 |
+| 依赖服务 | 外部 PostgreSQL（`postgres.host` + 凭据 Secret）或内建 `stateStores.enabled=true`；Redis 同理 | 内建 PG 默认 `postgres:12.22`、内建 Redis 默认 `redis:7-alpine`；Redis HA 拓扑取值已裁（O5 / D3，G7：primary/replica + Sentinel，ADR-0008，不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据；RPO / RTO 数值仍未裁） |
 | Secret | TLS（客户 PKI）、PostgreSQL 凭据、config-service 运行时（`AS_CONFIG_DSN` + `AS_AUDIT_RESOURCE_HMAC_KEY_B64`）、migrate owner DSN（`AS_CONFIG_OWNER_DSN`） | chart **只引用不创建**客户凭据；owner DSN 绝不入 runtime Pod；运行时登录是 `as_config_web`，运行时角色由 DBA 预置 |
 | chart | 能通过 `make chart-check`（`deploy/helm/scripts/chart-check.sh`） | 打包前先跑；`helm package` 失败通常意味着 chart 本身渲染不过 |
 | 权限 | 安装账号需能创建 Deployment / StatefulSet / Service / ConfigMap / Secret / ServiceAccount / Job / NetworkPolicy / PVC / PDB / HPA | 本 chart **不创建** Role/RoleBinding，权限由客户 K8s 管理员授予（`preflight.sh` 用 `kubectl auth can-i` 核对） |
@@ -79,10 +80,10 @@ flowchart LR
 | 1 | 真实集群证据（7.2d HTTPS ingress / trusted-proxy / 浏览器工作流） | **blocked**（`docs/plan.md` §5.4）；`preflight.sh` 与离线包流程**未在真实客户环境跑过** |
 | 2 | M8 退出签字 | **仍搁置**；M8 RC 产物就绪 ≠ 验收关门 |
 | 3 | chart 无 `kubeVersion` 声明 | 已知缺口；`preflight.sh` 用推导下限兜底，但 Helm 自身不拦 |
-| 4 | Chart `version` / `appVersion` 与根 `VERSION` 不同步 | 已知缺口；打包时人工核对（`bundle-images.sh` 会打印三者） |
+| 4 | Chart `version` / `appVersion` 与根 `VERSION` 不同步 | 已知缺口；打包前跑 [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check`（只读，drift 即 exit 1），`--apply` 留待维护者首次同步（`bundle-images.sh` 会打印三者） |
 | 5 | Pod 无 `prometheus.io/scrape` 注解 | 已知缺口；AS 指标抓取接线未闭环，见 [`../operations/grafana-dashboards/README.md`](../operations/grafana-dashboards/README.md) |
 | 6 | `useCases[].resources` 默认空 | 容量规格待 O1 裁决后由 NE datasheet 给出；本目录不给推荐值 |
-| 7 | e2e = 0、REQ-S-4 / M4b 未整体验收 | 见 `docs/acceptance/test-plan.md`、`docs/plan.md` §5.4 |
+| 7 | `pytest -m e2e` 现有 8 条稳定通过；REQ-S-4 / M4b 未整体验收 | REQ-F-1 = 自动化子集已覆盖 / 全文仍 open；见 `docs/acceptance/test-plan.md`、`docs/plan.md` §5.4 |
 | 8 | 依赖 S-CSCF / HSS 侧配合的事项 | iFC 触发与灰度在 S-CSCF/HSS 侧；AS 侧只实现 ISC 触发后的判决（G-P1-10） |
 
 ---
@@ -93,3 +94,7 @@ flowchart LR
 - 范围收窄：**G-P1-7**（镜像同步脚本 + `helm package` + 依赖镜像清单 + 离线加载脚本，不产生第二套安装形态）；评审记录 [`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md)。
 - Helm-only：**ADR-0013**。
 - 工程事实约束：[`../product-packaging-plan.md`](../product-packaging-plan.md) §0.3。
+
+---
+
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。

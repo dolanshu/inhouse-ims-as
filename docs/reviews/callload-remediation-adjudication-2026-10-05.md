@@ -31,3 +31,22 @@
 | F9 阻塞门禁 | **未生效** — blocking 目标（`m2-native-smoke` / `m2-platform-resip`）尚未纳入必跑门禁 |
 | 维护者 merge 清单 | [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md) |
 | 合入 master @ SHA | **`139d299`**（2026-10-06；squash） |
+
+---
+
+## 代签补记（2026-10-12；N2 第 3 项「须同步」之一）
+
+> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决。
+> N2 第 3 项（F8）的「须同步」列指向本文件的 **F6 行**，此处补记正式化结果。
+> **本补记不是维护者亲签**；代签总记录见
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)。
+
+**上表 F6 行的状态更新**：由「部分修复」**补充**为「**部分修复 + documented limitation 已接受**」。
+签字：**agent 代签（维护者 2026-10-12 授权）**。
+
+**依据（不新造结论）**：N2 第 4 项原文 —— F6 接受 documented limitation
+（长连接无 dialog 终止时只靠 2048 指纹 LRU 与 4096 连接上限）；正式化记录见
+[`m8-phase-a-f6-f8-note-2026-10-06.md`](m8-phase-a-f6-f8-note-2026-10-06.md) §5.1。
+
+**边界**：**结论不是「已修复」** —— native transport-close 回调**仍然缺席**，
+本补记不改变上表 F6 行的事实描述，只补「风险已接受」这一签字事实。

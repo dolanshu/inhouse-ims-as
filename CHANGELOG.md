@@ -8,6 +8,7 @@
 ### 新增（Added）
 
 - M8 发布候选执行计划：[`docs/handoff/2026-10-06-m8-release-candidate-plan.md`](docs/handoff/2026-10-06-m8-release-candidate-plan.md)（阶段 A→E、`plan.md` §0/§4 入口更新）。
+- Helm chart 首次版本同步（A6，维护者 2026-10-12 定时机与取值）：`deploy/helm/Chart.yaml` 的 `version` / `appVersion` 随根 `VERSION`（`0.2.0`）落定，并声明 `kubeVersion: ">=1.23.0-0"`（由 chart 实际 API 反推，约束最大者为 `autoscaling/v2` 与 Job TTL）。同步由 `scripts/sync-chart-version.sh` 执行（默认 `--check` 只读校验并 exit 1，显式 `--apply` 才写入）；`make chart-check` 复跑 `chart-check: OK`。
 - 产品 SIP runtime：`AS_SIP_BIND_ADDRESS` / `AS_SIP_ADVERTISED_ADDRESS` 与 `AS_TLS_*` / `AS_PEER_*` 环境变量接缝（`transport_env.py`）。
 - `platform/tests/native_extensions.py`：`AS_REQUIRE_NATIVE_EXTENSIONS=1` 时无 native 扩展则契约测 fail。
 - Demo：故事 C M5 对账话术、故事 B 增加 S4/487 步骤、`run-all-automated` PASS/SKIP/FAIL 汇总。

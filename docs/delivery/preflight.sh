@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# preflight.sh — 交付物 3.1：In-house IMS Application Server（文档暂用名）
+# preflight.sh — 交付物 3.1：In-house IMS Application Server（已正式采用为产品/文档描述名，G8-2；非商标 / 非品牌宣称）
 # 部署前环境校验脚本（Helm-only 生产交付形态，ADR-0013）。
 #
 # 用法：
@@ -31,7 +31,7 @@
 #     集群创建临时 Pod、不执行 kubectl run。真正的连通性由 AS 进程在运行时用
 #     Redis PING 写入指标 as_state_store_available 确认（仅当 REDIS_URL 非空时
 #     产出该序列；未配置时序列不存在，不是 0）。
-#   * 绝不打��� Secret 内容、token 或证书：只查存在性与 metadata。
+#   * 绝不打印 Secret 内容、token 或证书：只查存在性与 metadata。
 #   * 真实集群证据尚未取得（M8 7.2d blocked），本脚本在真实客户环境的运行结果
 #     才是验收证据；本仓库内未在真实集群执行过。
 #
@@ -40,6 +40,13 @@
 #   交付清单与命令序列 .... docs/delivery/install-guide.md
 #   离线包 ................. docs/delivery/airgap-package.md
 set -euo pipefail
+
+# bash 版本底线：要求 bash >= 4.4（三脚本统一底线）。依据：load-images.sh 使用
+# mapfile、preflight.sh 使用 bash 4.4 数组展开，故统一按 4.4 声明；不满足即退出。
+if [[ "${BASH_VERSINFO[0]:-0}" -lt 4 ]] || [[ "${BASH_VERSINFO[0]:-0}" -eq 4 && "${BASH_VERSINFO[1]:-0}" -lt 4 ]]; then
+  printf 'ERROR: 需要 bash >= 4.4（当前: %s）\n' "${BASH_VERSION:-未知}" >&2
+  exit 1
+fi
 
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -506,12 +513,17 @@ else
     else
       record WARN "外部 PostgreSQL" "同命名空间找不到 Service ${PG_HOST}：若它由客户自建在别的命名空间，本脚本不做跨命名空间猜测。${NETWORK_NOTE}"
     fi
-    if [[ -z "${RED_URL:-}" ]]; then
-      record WARN "外部 Redis" "渲染出的 REDIS_URL 为空（redis.url 为空且 redis.sentinel.masters 为空）—— 运行态状态存储不可用；拓扑待 O5/D3 裁决，不要凭空填地址"
-    elif [[ "${SKIP_NETWORK}" -eq 1 ]]; then
-      record SKIP "外部 Redis" "--skip-network：${RED_URL%%@*}@***（凭据不回显）"
+    RD_SENTINEL_HOSTS="$(awk -F': ' '/^  REDIS_SENTINEL_HOSTS: /{gsub(/"/,"",$2); print $2; exit}' "${RENDER_FILE}")"
+    if [[ -n "${RED_URL:-}" ]]; then
+      if [[ "${SKIP_NETWORK}" -eq 1 ]]; then
+        record SKIP "外部 Redis" "--skip-network：${RED_URL%%@*}@***（凭据不回显）"
+      else
+        record PASS "外部 Redis 已配置" "redis.url 已设置（凭据不回显）；${NETWORK_NOTE}"
+      fi
+    elif [[ -n "${RD_SENTINEL_HOSTS:-}" ]]; then
+      record PASS "外部 Redis（Sentinel）已配置" "REDIS_SENTINEL_HOSTS 已设置（Sentinel 部署时 REDIS_URL 本就不该出现：configmap 仅在 redis.url 非空时才写 REDIS_URL）；拓扑取值已裁（G7：O5 = 站点内 N+1 + 跨站 1+1 warm standby；D3 = Redis primary/replica + Sentinel，ADR-0008，不选 Redis Cluster；RPO / RTO 数值仍未裁）；chart 仍单副本渲染，failover 实测行为无证据；地址由客户按部署形态提供"
     else
-      record PASS "外部 Redis 已配置" "redis.url 已设置（凭据不回显）；${NETWORK_NOTE}"
+      record WARN "外部 Redis" "渲染出的 REDIS_URL 与 REDIS_SENTINEL_HOSTS 均为空（redis.url 与 redis.sentinel.addresses 均未配置）—— 运行态状态存储不可用；拓扑取值已裁（G7：D3 = Redis primary/replica + Sentinel，ADR-0008，不选 Redis Cluster），地址由客户按部署形态提供，不要凭空填"
     fi
   fi
 fi

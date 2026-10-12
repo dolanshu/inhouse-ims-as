@@ -53,9 +53,17 @@
 | 2026-10-11 | **S1 文档结构整理第一批已完成**（2026-10-11 收尾轮追加） | 五层整理（requirement / ADR / design / coding / testing）**第一批 6 任务已完成**：AGENT.md 开场仪式断链修复、REQ-NF 分组内顺序核查通过、验收矩阵补 REQ-NF-16 行（open）、Makefile `test` 移出空 e2e 层、新建 `tests/test_requirements_registry.py`（6 个测试函数）、register §8 元规则；**design 重叠由 [`architecture/README.md`](architecture/README.md) §1 优先级线消解**（规范文档 = hld.md / lld.md）；**ADR 0023 注册表漂移已修**（改为 `proposed`，以正文为准）；`uv run pytest tests/ -q` → 76 passed | 执行计划 [`handoff/2026-10-11-s1-document-structure-cleanup.md`](handoff/2026-10-11-s1-document-structure-cleanup.md)、执行记录 [`handoff/2026-10-11-s1-execution-record.md`](handoff/2026-10-11-s1-execution-record.md)；见 register §4 S1「现状更正」。**S1 不标全部完成：ADR 体系进一步整理与 coding 边界整理是否启动后续批次，待维护者另行授权** |
 | 2026-10-11 | **本机 infra 工具链 bootstrap 已执行**（2026-10-11 追加） | 按 [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) 在已登记环境 `dev-win03ib7niepf0`（host `WIN-03IB7NIEPF0`）执行完毕：`helm` 3.16.4 / `kubectl` 1.31.4 / `kind` 0.24.0 / `promtool` 2.55.1 装入 `tools/bin/`（不入库，版本与官方 sha256 锁定于 `tools/VERSIONS`）；`make chart-check` 与 `make alert-check` 本机复跑通过 —— alert-check 为与 2026-10-05 证据**同版本**的本地 promtool 2.55.1，`SUCCESS: 10 rules found`（3 组 10 条），证据基座由 docker v2.45.0 升级为同版本本地；kind 集群 `as-m5` 已创建、context `kind-as-m5` 校验 OK。**集群级产品验证未做**：采集脚本随附的 `M5_STRICT=1 m5-verify` 在新建空集群（未部署产品 AS pod）上如实 **FAIL**（exit=1），**不据此宣称集群级验证通过**。安装当日 GitHub 对象出口长时间不可达，kubectl / promtool / kind 三个回退取径及其溯源校验详见执行记录 | 三元组：chart-check `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-chart-check-2026-10-11.txt, 2026-10-11)`；alert-check `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)`；m5-verify-strict `(失败, docs/acceptance/artifacts/m5/2026-10-11/FAIL-m5-verify-strict-2026-10-11.txt, 2026-10-11)`；执行记录 [`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md)。**待维护者评审；不签收任何 REQ / 里程碑**；`tools/bootstrap-infra.sh` 的脚本修复与全部文档改动**均未提交**，commit 拆分由维护者决定 |
 | 2026-10-11 | **W0 本机可执行部分已执行：真栈门禁 + A3 复验 + A4 Wave 1 e2e 落地** | 在已登记环境 `dev-win03ib7niepf0`（host `WIN-03IB7NIEPF0`）执行 [`handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](handoff/2026-10-10-unfinished-assessment-and-next-plan.md) §0-A.1 / §5 W0 的本机可执行部分：**A2** 真栈构建常态化（`make m2-platform-resip-build` → `make gate-native` exit 0，`1068 passed / 2 skipped / 206 deselected`；原 7 条 `native_extensions.py` skip 与 1 条 `_resip_recovery` skip **已消失**）；**A3** Phase A 真栈复验（契约 7 passed + integration 1 passed）；**A4 Wave 1** e2e 落地（新建 `testbed/e2e/test_sip_first_edition.py`，`pytest -m e2e` 由 **0 条** → **5 条**且连续 3 次全绿，缺 native 时 **fail 不 skip**）；**A5** 告警规则语法校验（本地 promtool 2.55.1 → `SUCCESS: 10 rules found`，3 组 10 条）与 `make chart-check`（`chart-check: OK`）；本地真栈四项 smoke 全过；`_resip_recovery` / `_resip_two_leg` 已构建。**未做**：A4 Wave 2 的 14 条对拍（REQ-F-1 全文仍 open）、A4-4 的门禁配置变更（`make test` 行为一字未改）、A5 抓取接线（X1 待运营商 monitoring-integration 标准输入）、A6 版本口径的执行（G4 写明「当前不修改 `VERSION` 与 `Chart.yaml`」、`kubeVersion` 最小值未裁）、W2（B1–B6，B1 取值仍 open）、W3（C1–C5，外部采证 hold 继续有效） | 执行记录 [`handoff/2026-10-11-w0-native-and-e2e-execution-record.md`](handoff/2026-10-11-w0-native-and-e2e-execution-record.md)；状态回写见 [`handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](handoff/2026-10-10-unfinished-assessment-and-next-plan.md) §11；证据索引 [`acceptance/artifacts/m5/README.md`](acceptance/artifacts/m5/README.md)。三元组：gate-native `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-gate-native-2026-10-11.txt, 2026-10-11)`；A3 `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-phase-a-revalidation-2026-10-11.txt, 2026-10-11)`；e2e `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-e2e-2026-10-11.txt, 2026-10-11)`；smoke `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-native-smoke-2026-10-11.txt, 2026-10-11)`。**真栈绿属工程门禁层证据：不签收任何 REQ / 里程碑，`report.md` §0.5 的 open 24 / blocked 12 未改；工具就位 ≠ 集群级验证通过；`promtool` 通过 ≠ 抓取接线闭合**。未执行任何 git 写操作 |
+| 2026-10-12 | **A6 执行口径：「由谁改」＋ `kubeVersion` 最小值** | 维护者 2026-10-12 裁决：① **「由谁改」＝ (a) 写进 release 流程 / 脚本，自动同步** —— 根 `VERSION` 为唯一源，`Chart.yaml` 的 `version` / `appVersion` 由脚本同步，不靠人记；实现为 `scripts/sync-chart-version.sh`（**默认 `--check` 只读校验**并报告差异，显式 `--apply` 才写入）。② **`kubeVersion` 最小值 = `>=1.23.0-0`** —— 由 chart 实际用到的 API 反推，约束最大者为 `autoscaling/v2`（HPA，**K8s 1.23 GA**）与 `ttlSecondsAfterFinished`（Job TTL，**1.23 GA**）；其余为 `apps/v1`（1.9）、`networking.k8s.io/v1` Ingress（1.19）、`policy/v1` PDB（1.21）、`batch/v1` Job（1.21）。**当前仍未改 `VERSION` 与 `Chart.yaml`**（G4「当前不修改」继续有效；脚本只提供能力，首次同步的时机与取值由维护者另行决定） | 依据：G4 已裁「根 `VERSION` 为唯一源 + 需要声明 `kubeVersion`」，本行只补齐其留待裁决的两项；反推明细见 [`handoff/2026-10-12-a6-b-packaging-execution.md`](handoff/2026-10-12-a6-b-packaging-execution.md) §1。**不得据本行推出 chart 已同步** —— 当前根 `VERSION` = `0.2.0` 而 `Chart.yaml` = `0.0.0-skeleton` / `appVersion: "0.0.0"`，**两者仍不同步** |
+| 2026-10-12 | **M8 N2 九项已由 agent 代签（维护者授权）** | 维护者 2026-10-12 **授权 agent 代签** M8 的 N2 九项书面裁决（`handoff/2026-10-07-m8-next-step-plan.md` §N2）。九项**全部有既有结论可引**，逐项落正本并附依据：① 批准进入 M8（**补记** 2026-10-06 已发生）；② B-1 最小 M5.1 / B-2 工程关门降级为非 REQ 验收 / B-3 故事 C 保持 L1；③ F8 接受「字段契约已落地」；④ F6 接受 documented limitation（**结论不是「已修复」**）；⑤ D6 testbed 客户验收**放 v1.1**（矩阵 `D6-testbed验收` 转 `n-a`）；⑥ NF-3 标 `n-a`（矩阵 `REQ-NF-3` 行转 `n-a`）；⑦ 确认四项排除；⑧ **M5D-1…M5D-6 移出 v1**（六行已写入本文 §5.2-bis）；⑨ M1/M2/M6/M7 签**工程完成**（M8 未签）。矩阵计数随 ⑤⑥ 变更：blocked 12→**10**、n-a 4→**6** | 代签总记录 [`handoff/2026-10-12-m8-n2-countersign-record.md`](handoff/2026-10-12-m8-n2-countersign-record.md)。**各正本签字一律写「agent 代签（维护者 2026-10-12 授权）」，不是维护者亲签。** **不得据此推出**：M5 REQ 级**仍是不通过**、M8 仍是「RC 就绪、**待退出签字**」；「工程完成」≠「里程碑签收」≠「REQ 全绿」——「维护者 M6 里程碑签收仍 open」**原样保留**；`report.md` 的 open 24 / blocked 12 **一字未改**；NF-3 转 n-a 的只是矩阵验收口径，REQ-NF-3 按 G5 **保持 applicable 且 blocked**；M5D 六行全部**保持未实现**。**N3（open 中可签的行）未执行**，RC 计划 §10「阶段 A 完成」「M8 退出签字」两栏**未填** |
 | 2026-10-12 | **授权后的四项执行：integration 补齐 + native 可复现性 + O1 饱和点探测 + A4 Wave 2** | 维护者 2026-10-12 授权后，在已登记环境 `dev-win03ib7niepf0` 执行（执行记录 [`handoff/2026-10-12-o1-and-native-reproducibility.md`](handoff/2026-10-12-o1-and-native-reproducibility.md)）：**①** 起 `deploy/compose` 的 PostgreSQL 12.22，integration 层由「2 failed / 113 errors」变为 **200 passed / 1 skipped / exit 0**（补 Redis 与 `wal_level=logical` 后；剩余 1 条为 PG 版本门槛 ≥15，非缺陷）；**②** 新发现并如实登记：PG **15.18** 下 config-service 集成测试 **1 failed / 76 errors**，根因 `defaclobjtype \|\| ':'` → `AmbiguousFunction: operator is not unique: "char" \|\| unknown`（PG 14+ 类型变更），**未改任何产品代码**（标准环境为 PG 12.22，但 PG 12 已 EOL，与 D1 同类，是否立项修复待维护者决定）；**③** native **可复现性验证**通过（换独立缓存目录从零 `restore` → 构建 → `make gate-native` exit 0），故 B4 的 Python 3.12 spike 可单独一次改动进行、失败能干净归因；**④** **O1 饱和点探测**：本机 loopback 模型下 20 → 1280 CPS **全部 100% 成功、零错误，未测到饱和点**，唯一退化信号为 `unresolved_sessions` 2 → 13 → 30；**不据此定任何对外容量值**，仅把内部工程目标下限基线抬到「CPS 1280 无失败」，**未落任何容量取值 / HPA 阈值 / 容量告警**；**⑤** **A4 Wave 2 落地**：新建 `testbed/e2e/test_s1_replay_contract.py`（3 条），`pytest -m e2e` 由 5 条 → **8 条**连续全绿，缺 native 时 8 failed / 0 skipped；REQ-F-1 状态改为「自动化子集已覆盖 / 全文仍 open」，**`- [ ]` 一项未打勾**（14 条逐条 header 对拍仍 open） | 三元组：integration `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-integration-pg-logical-2026-10-12.txt, 2026-10-12)`；PG15 `(失败, docs/acceptance/artifacts/m5/2026-10-12/FAIL-integration-pg15-2026-10-12.txt, 2026-10-12)`。**不签收任何 REQ / 里程碑**：不签收 REQ-F-1 全文 / REQ-F-2 / REQ-F-4，不签收里程碑，不构成外部验收通过。最终门禁：`make gate` 与 `make gate-native` 均 exit 0（1100 passed / 2 skipped / 214 deselected）、`pytest -m e2e` 8 passed、根守卫 131 passed。**未执行任何 git 写操作** |
 | 2026-10-11 | **A2 暴露出的既有缺陷（已修）：`RESIP_RUNTIME_LISTENING` 端口正则长期失配** | `testbed/load/tests/test_product_runtime_smoke.py` 的 `_LISTEN_RE` 与 `testbed/load/scripts/` 下 4 个 M6 脚本的 `_UAS_UDP_RE` 均为**不含** `advertised=` 的旧形态，而 C++ 实际输出（`platform/native/resip_runtime/runtime_module.cxx`）与 [`acceptance/m8-resip-runtime-log-contract.md`](acceptance/m8-resip-runtime-log-contract.md) §3 记录的行格式**含**该字段 ⇒ **永远匹配不上**。`git log -S` 显示该正则与 `advertised=` 打印**同在 commit `139d299`** 落地，即**自落地起从未匹配成功**，只是一直因缺 `.so` 而 skip。**已修**（`advertised=` 改为可选字段，向后兼容）并验证：该 smoke 由 failed（60s 超时）变为 **1 passed**；`m6-product-runtime-smoke.sh` 由必然 `die` 变为 **exit 0** | 执行记录 [`handoff/2026-10-11-w0-native-and-e2e-execution-record.md`](handoff/2026-10-11-w0-native-and-e2e-execution-record.md) §11。**未产生、未改写任何容量或性能数字**；M6 历史测量与 O1 结论不在本次范围。**这条正是「skip 不能当证据」的实证 —— skip 掩盖的不只是「没跑」，还有「跑了会红」** |
 | 2026-10-11 | **S1 第二批（收尾批）：coding 边界机器化 + ADR 全量复核** | 新建 [`tests/test_layer_boundaries.py`](../tests/test_layer_boundaries.py)，以 ast 只读扫描（数据源为根 workspace 声明与各成员 pyproject，不硬编码成员清单）机器化 AGENT.md §4 横向边界：app 互斥、产品包（apps / services）不依赖 testbed、内部 import 必须在依赖方 pyproject 显式声明三条边界 + workspace 成员必须恰好分入 kernel / apps / services / testbed 四类的结构支撑测试，另加声明的内部依赖图无环测试（共 5 测，现状全绿；kernel 侧旧守卫 `platform/tests/test_library_independence.py` 未动）；ADR 0001–0027 全量复核：25 个英文 Status 行 + 0011 / 0019 两个中文状态行与注册表全部一致、0011↔0019 双向可追溯、无 ADR-0028+ 越界引用（206 条链接中 205 有效，1 条 2026-10-04 历史文档既有断链已登记未修，待维护者决定）；`AGENT.md` §4 追加 services 内部依赖澄清（现存唯一一例 config-service → console，显式声明且无环；不放宽 app 互斥与 testbed 禁令） | 执行记录 [`handoff/2026-10-11-s1-execution-record.md`](handoff/2026-10-11-s1-execution-record.md) §11；ADR 注记见 [`architecture/adr/README.md`](architecture/adr/README.md)「第二次全量复核」；登记回写见 [`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §4 / §5 S1 行。**S1 五层整理全部完成；testing 层 e2e 用例实现属 A4 批次；待维护者评审，不签收任何 REQ / 里程碑**；未做任何 git 写操作 |
+| 2026-10-12 | **A6 首次 chart 同步已执行** | 维护者当日裁定「何时同步成什么由 agent 自行判断」。执行 = 落入裁决的 `kubeVersion: ">=1.23.0-0"` + `scripts/sync-chart-version.sh --apply`（`Chart.yaml` `version: 0.2.0` / `appVersion: "0.2.0"`，根 `VERSION` 为唯一源）；复验 `--check` exit 0、`make chart-check` → `chart-check: OK`（helm 3.16.4）；`CHANGELOG.md` 按 §7.2 追加条目（未 bump 版本） | 三元组 `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)`；执行记录 [`handoff/2026-10-12-remaining-items-execution.md`](handoff/2026-10-12-remaining-items-execution.md) §1。**边界**：G4「当前不修改 `VERSION` 与 `Chart.yaml`」仅由维护者 2026-10-12 指令为本次同步动作解除，不构成后续 bump / 改 `VERSION` 的授权；**不得据本行推出「已发版」**（未 tag、M8 退出签字仍后置） |
+| 2026-10-12 | **A3 Phase D 排期定稿（S5–S11 优先级）** | 优先级 **P1 S5 两腿归一化对拍 → P6 S11 CANCEL 竞态**（P2 S7a SDP corpus、P3 S6 规则优先级、P4 S10 非 2xx、P5 S9 in-dialog）；**S8 登记为阻塞项** —— 基线缺 Route / Record-Route 头（M2 probe 补采前不排，REQ-F-5 按 N4 停止线不签 pass）；S1 的 14 条逐条 header 对拍仍由 wave2 register 跟踪 | 维护者 2026-10-12 授权 agent 自行判断；落 [`handoff/2026-10-09-sip-native-testing-plan.md`](handoff/2026-10-09-sip-native-testing-plan.md) §4-D 与 [`acceptance/test-plan.md`](acceptance/test-plan.md) REQ-F-1 边界段追加。**未实现任何用例、未签收任何 REQ**；实现分批启动时另需授权 |
+| 2026-10-12 | **Lane D 四项归属三选一裁定** | **4.2 长稳报告 → v1.1；4.3 API 版本兼容策略 → v1.1；4.4 白皮书 → 按需；4.5 多业务能力开放机制 → 按需**（无一项取消） | 维护者 2026-10-12 授权 agent 裁定。「v1.1」按 Lane D 表既有用法指**下一批次**，**不是正式发行版本定义**（§0「版本称呼」行继续有效：要定义须经维护者确认）；已同步 [`product-packaging-plan.md`](product-packaging-plan.md) §5 |
+| 2026-10-12 | **B1 / O1 取值落定一层（内部工程目标值）** | **内部工程目标值 = loopback 模型下 ≥ CPS 1280 无失败**（2026-10-12 饱和点探测实测达成；由「已验证下限基线」升格为内部工程目标 / 回归保持线）；**对外承诺值仍不填**（ne-datasheet §3 填值准入条件三条均未满足） | 维护者 2026-10-12 指令「B1 容量目标值由 agent 自行判断执行」。**HPA 阈值 / 容量类告警 / ne-datasheet 容量取值 / 4.1 正式报告四项下游维持阻塞**（逐项精确理由见 §5.1 的 2026-10-12 追加段）；内部目标值**仅限内部，不得写入任何对外材料**；不签收任何 REQ |
+| 2026-10-12 | **B5 / M8 N3 已执行（7 行「工程证据接受」代签）** | open 中可签的 7 行（**F-1 / F-2 / F-3 / F-6 / F-7 / F-12 / F-14**）按 N3 口径逐行签收；矩阵计数 **pass 9→16、open 24→17**（剩余 17 行与 N4 停止线清单逐行一致） | 维护者 2026-10-12 指令「B5 的 N3 一并完成、自行判断」；签字一律写「agent 代签（维护者 2026-10-12 授权）」。**N4 停止线未被越过**：`report.md` §0.5 的 open / blocked 计数一字未改；M5 REQ 级仍不通过、M8 仍「RC 就绪、待退出签字」；不宣称 test-plan 整句全绿 |
+| 2026-10-12 | **A5 抓取接线（X1）与 B2 / B3 后置到下一个 release** | 维护者 2026-10-12 决定：① **X1**（`prometheus.io/scrape` 注解 vs ServiceMonitor / PodMonitor）需**运营商 monitoring-integration 标准输入**，输入到位前不选边、不改 chart；② **B2 / B3** 的 requirement / ADR 起草（含 **B3 的 RPO / RTO 取值**）整体后置，本轮不启动 | 与 §12「已裁不做登记区」同口径：**后续状态盘点一律只引指针、不再单列、不再列入待维护者动作**。落点：[`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §3 X1 追加、[`handoff/2026-10-12-b2-b3-deferred-items.md`](handoff/2026-10-12-b2-b3-deferred-items.md) 追加（含四项启动条件） |
 
 > **注记（2026-10-10）**：上表这四条是**边界 / 口径 / 定位 / 许可**层面的认可，**不等同于** A4、A5、A6、B1、B2、B3 六项建议的**取值**已被裁决 —— 该六项的取值**仍全部待维护者裁决**；本次**只落盘、未开工**。详见 [`handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](handoff/2026-10-10-unfinished-assessment-and-next-plan.md) §0.2「口径边界」段与 §10「当前开工状态」。
 
@@ -433,6 +441,41 @@ M6 是一个带决策的研究里程碑，不是对某个数字的承诺。容�
 > **边界**：本建议**不产出、不落任何容量取值 / HPA 阈值 / 容量类告警**；
 > G5 裁决句「在 M6 证据与维护者决策前，不落容量取值」**继续有效**。
 > 执行与落盘见 [`handoff/2026-10-12-o1-and-native-reproducibility.md`](handoff/2026-10-12-o1-and-native-reproducibility.md)。
+>
+> **采纳与确认（2026-10-12 追加；上方「建议」段原文保留不改，本段只在其后追加结论）**
+>
+> 维护者 2026-10-12 **采纳**上述建议并授权执行。据此，**O1 分两层落，本次只落能落的那一层**：
+>
+> | 层 | 本次落盘结果 | 依据 |
+> |---|---|---|
+> | **内部工程目标** | **已落：下限基线 = 本机 loopback 模型下 CPS 1280 无失败**（峰值并发 19200、`unresolved_sessions` 30、零 error）。定性为「**已验证下限基线**」，**不是目标值、不是承诺值** | 2026-10-12 饱和点探测，见 [`handoff/2026-10-12-o1-and-native-reproducibility.md`](handoff/2026-10-12-o1-and-native-reproducibility.md) §4 |
+> | **对外承诺值**（SLA / [`product/ne-datasheet.md`](product/ne-datasheet.md) 容量取值 / 4.1 正式报告） | **不填**，状态保持「待饱和点测量」 | 缺 S-SBC 路径、缺真实集群多副本；一填即成对外承诺 |
+>
+> **B1 的「取值」仍未裁决** —— 本行上方「维护者目标裁决仍 open」**继续成立**：本次落的是**下限基线**，
+> 它回答「设计和回归按什么量级做」，**不回答**「我们的容量目标是多少」。
+> **未落任何容量取值 / HPA 阈值 / 容量类告警**；G5 裁决句「在 M6 证据与维护者决策前，不落容量取值」继续有效。
+>
+> ---
+>
+> **O1 取值落定（2026-10-12 晚些时候追加；上方「采纳与确认」段原文保留不改，本段只追加结论）**
+>
+> 维护者 2026-10-12 指令：「B1 容量目标值由 agent 自行判断，执行，不用问」。据此，O1 分两层落：
+>
+> | 层 | 落定结果 | 依据与边界 |
+> |---|---|---|
+> | **内部工程目标值** | **loopback 模型下 ≥ CPS 1280 无失败**（峰值并发 19200、`unresolved_sessions` 30、零 error）—— 由「已验证下限基线」**升格为内部工程目标（回归保持线）** | 2026-10-12 饱和点探测（20 → 1280 CPS 全部 100% 成功、未测到饱和点），见 [`handoff/2026-10-12-o1-and-native-reproducibility.md`](handoff/2026-10-12-o1-and-native-reproducibility.md) §4。**仅限内部**：驱动回归量级与工程设计，**不得写入任何对外材料、不得作为 SLA** |
+> | **对外承诺值** | **不填**（状态：待目标环境测量批次） | [`product/ne-datasheet.md`](product/ne-datasheet.md) §3「填值的准入条件」三条均未满足：① 缺**业务判决路径**（accept-all harness 旁路 `decide()`）上的实测；② 缺**饱和点观测**；③ 缺**真实集群多副本 / S-SBC 路径** |
+>
+> **四项下游维持阻塞，逐项精确理由（不是遗漏，是证据纪律）**：
+>
+> | 下游 | 状态 | 精确阻塞理由 |
+> |---|---|---|
+> | HPA 阈值（M5） | 仍不落；chart `autoscaling.*` 保持 null（fail-closed 设计不变） | 缺「带 per-pod 资源利用率（CPU / memory at load）的测量批次」—— 2026-10-12 探测未记录资源数据；`hpa.yaml` 自带守卫「Fill them from the M6 measurement, not from intuition」继续有效 |
+> | 容量类告警 | 仍不新增 `as.capacity` 组 | 缺可对外的容量锚；`as-alerts.yaml` 文件头「Capacity alerts are added after M6, from the measurement」的口径不变 |
+> | `ne-datasheet.md` 容量取值 | 仍为空 | 准入条件三条未满足（见上表）；该文档属 B6 lane，本轮不 edit，其「O1 未裁决」表述的 stale 面已登记于执行记录 §5 |
+> | 4.1 性能基准正式报告 | 仍只交方法学章节 | 同左：无业务判决路径实测即无正式报告 |
+>
+> **边界**：本追加**不签收任何 REQ / 里程碑**；REQ-NF-3 保持 applicable 且 blocked（G5）；本行上方「维护者目标裁决仍 open」旧句自此**仅指对外承诺值**（内部工程目标值已由本段落定）；未 bump `VERSION`、未打 tag。
 
 ### 5.2 搭骨架时新增
 
@@ -462,6 +505,36 @@ M6 是一个带决策的研究里程碑，不是对某个数字的承诺。容�
 - [x] **M7.7 进程壳 + REQ-NF-1 工程 harness**（工程切片，2026-10-05）：`SipStackService`、`test_d10_req_nf1_harness_integration.py`（**非** REQ-NF-1 / 全 D10 签收）— [`m7-process-shell-recovery-review-2026-10-05.md`](reviews/m7-process-shell-recovery-review-2026-10-05.md)、[`d10-req-nf1-harness-review-2026-10-05.md`](reviews/d10-req-nf1-harness-review-2026-10-05.md)、[`m7-d10-third-pass-review-2026-10-05.md`](reviews/m7-d10-third-pass-review-2026-10-05.md)。
 
 本次 4 KiB extension payload、16 KiB checkpoint 与 30-day TTL 上限只是 payload / retention groundwork only，不实现上述恢复、提交或生命周期语义。此 TODO 序列仅覆盖当前 ACK-established-dialog baseline，不把 D10 扩展到崩溃时的 mid-transaction recovery；该可选未来范围须另行获得 requirement 与 test-plan 批准。
+
+### 5.2-bis · M5 defer 项落定（M5D-1…M5D-6，2026-10-12 代签落盘）
+
+> **本节为新增行**：M8 的 N2 第 8 项要求「M5D-1…M5D-6 **移出 v1**」，正本为 `plan.md` §5 新行，
+> 原文写明「由维护者写」。**维护者 2026-10-12 授权由 agent 代签**，据此落定。
+> 代签总记录：[`handoff/2026-10-12-m8-n2-countersign-record.md`](handoff/2026-10-12-m8-n2-countersign-record.md)。
+> **本节不是维护者亲笔**，来源与依据一并列出以便追溯。
+>
+> 行内容沿用 [`reviews/m5-req-acceptance-review-2026-10-06.md`](reviews/m5-req-acceptance-review-2026-10-06.md)
+> §6 表的提议（该表逐项标注了拟归属的 `M5D-*` 行），本节只作聚合落盘，**不新增判断**。
+
+| 行 | 聚合的 defer 项 | 内容 | 阻塞源 | 状态 |
+|---|---|---|---|---|
+| **M5D-1** | C-1、C-2、C-3、C-9 | 告警规则与指标阈值 / 调用点：告警 6 条死规则（4 指标不存在 + 2 零调用点）、`clamp_min` 数学错误（低话务全量故障不触发）、telemetry 阈值 `> 0` 语义不符、指标零生产调用点 | §5.1 **O1**（阈值须 M6 实测）＋ §5.3 PM/AM（告警生命周期需求待补）＋ M7 E1 | **移出 v1** |
+| **M5D-2** | C-6、T-1 | 缩容守卫参控（当前读入只 log、不参与判定）＋ feature 开关开 / 关两态行为测试 | ADR-0020 / M7 actuation 未决；ADR-0020 默认态 / 灰度策略未决 | **移出 v1** |
+| **M5D-3** | C-7 | OTLP 导出（当前为 NoOp sink，入队即丢） | §5.3 PM（OTel traces / logs 未落地） | **移出 v1** |
+| **M5D-4** | H-8 | NetworkPolicy 无 Egress、源标签过宽 | §5.1 **D12 / O5**（HA 拓扑与客户 SLA） | **移出 v1** |
+| **M5D-5** | H-11 | 无 resources（BestEffort）、AS 无 startupProbe、config-service tcpSocket 探针语义 | §5.1 **O1** / M6（sizing 下游于实测） | **移出 v1** |
+| **M5D-6** | A-2 | 跨站点切换演练未做（ADR-0008 指派给 M5） | §5.1 **O5**（容灾等级客户 SLA） | **移出 v1** |
+
+**边界（不得据本节推出过度结论）**
+
+1. **「移出 v1」≠「已解决」，也 ≠ 「M5 REQ 通过」。** 六行全部**保持未实现**；
+   M5 的 REQ 级复评结论（**REQ 级不通过**）**不变**。
+2. 六行的归属映射来自复评 §6 表，**本节的落盘不改该表的任何判断**。
+3. M5D-1 / M5D-5 阻塞于 **O1 取值**——O1 取值**仍未裁决**（2026-10-12 只落了「内部工程目标下限基线」，
+   非目标值），故这两行**无法排期**。
+4. M5D-4 / M5D-6 阻塞于 **D12 / O5**——O5 容灾基线已裁、**实现未落**（见
+   [`handoff/2026-10-12-b2-b3-deferred-items.md`](handoff/2026-10-12-b2-b3-deferred-items.md)），
+   故这两行**亦无法排期**。
 
 ### 5.3 PM / AM / UM 产品管理能力缺口（需求待补）
 

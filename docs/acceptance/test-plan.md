@@ -2,7 +2,8 @@
 
 **版本**：v0.3（验收标准 + 自动化边界）
 **日期**：2026-09-28（正文）；**2026-10-09** 增补真栈 / e2e 边界
-**状态**：REQ 勾选仍多为 open。自动化分层见下节；**端到端（e2e）套件尚未落地**，计划见 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md)。
+**状态**：REQ 勾选仍多为 open。自动化分层见下节；**端到端（e2e）套件尚未落地**，计划见 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md)。**2026-10-12 更正（e2e 口径）**：e2e 已非 0 条 —— 见自动化分层表 ③ 与下文 REQ-F-1 段 2026-10-12 追加块；上一句原文保留不改。
+**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 **M4b-8 BLOCKED 矩阵（2026-10-03）**：维护者裁决见 [`reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md`](../reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md)。**M4 工程关门**（2026-10-04）后，下列项为 **补测/后置**，不阻塞 §4.3：见 [`plan.md`](../plan.md) **§5.4**（F-13、F-15 真 AS、主叫/正则 v1.1、REQ 全绿）。dev HTTPS 上已采证：**被叫+前缀** CRUD→审批、fleet、distribution start 等（[`m4b-8-runbook.md`](m4b-8-runbook.md)）。**步骤 3（F-13）**：BLOCKED→**§5.4**。**7.2d**：**M5**。
 
@@ -16,7 +17,7 @@
 |----|-------------|------|
 | ① | `unit or contract` | `make gate`。绝大多数不经 `_resip_runtime`。E1 有 `.so` 时跑真栈；**S1/S4** 用 `accept_all_invites` harness（旁路 `decide()`）；**S2/S3** 走 `decide()`。 |
 | ② | `integration` | 真栈子集：TCP/TLS、FORWARD 双腿、SDP、`test_product_path`（仿真链 + `demo_rules`，**无** accept-all）。门禁层② 全量 integration **不编** native；native 路径另由 `make m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate` 覆盖。 |
-| ③ | `e2e` | **0 条**。完整呼叫 + 控制台不在此标记下。规划见 e2e 计划。 |
+| ③ | `e2e` | **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 **fail 不 skip**）。REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**，详见下文 REQ-F-1 段 2026-10-12 追加块。 |
 | 容量 | `performance` / `as_load` | M6 产品 runtime 压测对端是 `load_uas_runtime.py`（**accept-all harness**），不是业务判决路径。 |
 
 `accept_all_invites` **不是** ims-sim，也 **不是** 生产路径：真栈上固定 100/180/200，用于栈/SDP 探针。REQ-F-1 的 14 条 B2BUA **未**由 harness 签收。
@@ -28,6 +29,8 @@
 ### REQ-F-1 验收标准
 
 **真栈自动化边界（2026-10-09）**：`accept_all_invites` harness 在产品 `_resip_runtime` 上覆盖入向可见前缀 **100 → 180 → 200（带 SDP）**（`test_e1_contract_resip_runtime.py`、`test_e1_contract_resip_runtime_full.py`）。这不是下面 14 条 B2BUA 全文。出腿 INVITE、独立 Call-ID、SDP 逐字节透传、Route 消费、ACK/BYE 仍在 integration（`test_m7_forward_two_leg_integration.py`、`test_req_f4_sdp_identity_integration.py`、`test_resip_two_leg_integration.py`），**未**并入 `make gate`。S5–S11 的真栈全文回放同样推迟。跨仿真 S-SBC 且 **不**用 accept-all 的路径见 `test_product_path.py`（`integration`）。**pytest `e2e` 标记仍为空**；补齐计划见 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md)。不作为 REQ-F-1 全文签收。
+
+> **排期与覆盖状态更新（2026-10-12 追加；上方原文保留不改）**：① **e2e 标记已非空** —— Wave 1（5 条）与 Wave 2（3 条归一化骨架对拍，含 C_in≠C_out 与 SDP 逐字节恒等）已落地，REQ-F-1 状态为「自动化子集已覆盖 / 全文仍 open」，14 条逐条 header 对拍仍未实现（载体 [`2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md)）。② **S5–S11 排期已定稿**（优先级 P1 S5 → P6 S11；S8 因基线缺 Route / Record-Route 头登记为阻塞项，补采前不排），见 [`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md) §4-D。**未签收任何 REQ。**
 
 - [ ] 启动仿真 S-SBC 和仿真对端（Return UAS）
 - [ ] 从仿真 S-CSCF 发送 INVITE（目标号码命中业务规则）

@@ -1,14 +1,14 @@
-# In-house IMS Application Server（文档暂用名）—— 网元档案（NE Datasheet）
+# In-house IMS Application Server —— 网元档案（NE Datasheet）
 
 > **状态块（阅读本文前先看这里）**
 >
-> - **产品名**：**In-house IMS Application Server（文档暂用名）**，首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。该名称**不是已正式批准的产品名**（`docs/plan.md` §0「产品决策记录」；`docs/product-packaging-plan.md` §4.3）。git repo 名拟改为 `inhouse-ims-as`，**仅涉及 git 仓库名与 remote URL**；chart name（`3rdparty-as`，`deploy/helm/Chart.yaml:2`）、镜像名（`registry.example.com/3rdparty-as`）、OTel 服务名**保持 `3rdparty-as` 不变**。
+> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。git repo 名：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`，`deploy/helm/Chart.yaml:2`）、镜像名（`registry.example.com/3rdparty-as`）、OTel 服务名**保持 `3rdparty-as` 不变**。
 > - **本文件归属**：`docs/product-packaging-plan.md` §1 第一批交付物 **1.3（网元档案 / NE Datasheet）**。按该计划 §3.2，本交付物属 **B 类**：容量数值部分被 O1 阻塞。
 > - **⚠️ 容量章节受 O1 阻塞**：**O1（容量目标）未裁决**（`docs/plan.md` §5.1 O1「维护者目标裁决仍 open」）。`AGENT.md` §2「M6 实测之前不发布任何容量数字」是硬约束。因此**本文全篇不含任何 CPS / CAPS / BHCA / 并发会话数 / 每千次呼叫资源 / 吞吐 / 时延（含毫秒）/ P95 / P99 / 容量百分比**，连"量级估计"也不写。§3 只交付**模型结构与测量方法学**（评审 G-P0-3、G-P1-3、G-P0-8 的落实）。
-> - **本文无 review record**：按 `AGENT.md` §3.3，评审必须留下独立 review record；本文当前**没有** review record，待维护者评审。
+> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 > - **M6 dev-host 报告只能作为"方法学存在"的证据**：`docs/acceptance/m6-o1-measurement-report-2026-10-05.md` 明确标注受众为 "Maintainers / capacity research only"、**不是**公开 SLA。引用它时一律带「内部测量 / 非对外 / 非 SLA」限定，且**本文不引用其中任何测量值**（`AGENT.md` §2；评审 G-P0-2 / G-P0-8）。
 > - **testbed 边界与告警口径**：`testbed/` 是**研发资产，绝不做运行时依赖**（`AGENT.md` §4），ADR-0014 明确 v1 不把 testbed 作为交付物；其仿真结果（含 callload、M7.1 仿真平台、dev-host harness）**不得充当运营商 IOT 或现网容量证据**（`docs/product-packaging-plan.md` §0.3 第 8 条、§3.4）。告警与指标的**唯一权威契约**是 `deploy/alerts/as-alerts.yaml` 与 `deploy/alerts/README.md`，本文只引用、不另立口径。
-> - **术语纪律**：M8 发布候选（RC）产物就绪，**退出签字仍搁置** —— **RC 就绪 ≠ 通过**（`docs/plan.md` §0）。E1 / E4 / E5 **未验收**。O1 / O4 / O5 / D3 / D5 **未决**。
+> - **术语纪律**：M8 发布候选（RC）产物就绪，**退出签字仍搁置** —— **RC 就绪 ≠ 通过**（`docs/plan.md` §0）。E1 / E4 / E5 **未验收**。O1 **仍未裁决**；O4 / D5 **取值已裁（G6，2026-10-10；实现未落）**；O5 / D3 **取值已裁（G7，2026-10-10；chart 仍单副本渲染，failover 实测行为无证据）**。
 
 ---
 
@@ -23,7 +23,7 @@
 | 交付版本 | **一次交付一个系统**：产品 release 版本只看仓库根 `./VERSION`（`AGENT.md` §8；ADR-0018 accepted）。**已知缺口**：`deploy/helm/Chart.yaml:5-6` 的 `version: 0.0.0-skeleton` / `appVersion: "0.0.0"` 仍是骨架值，**与 `./VERSION` 不同步** |
 | 生产形态 | **Helm-only**：`Helm` + 标准 Deployment / ConfigMap / Secret；**不写 Operator（CRD）**（ADR-0013 accepted；`deploy/compose/` 仅 dev） |
 | 不做什么 | 不做媒体、不做 CDR、不做 LI、不做 Diameter Sh、不做计费、不做多租户、配置不走 GitOps、不写 Operator（`AGENT.md` §2；一句话版本见 [`one-pager.md`](one-pager.md) §2，**不在此重复造口径**） |
-| 状态 | M8 RC 产物就绪，**退出签字搁置**；E1（reSIProcate 生产路径行为）/ E4（TLS 热轮换）/ E5（状态外置与恢复）**未验收**；e2e marker **为 0** |
+| 状态 | M8 RC 产物就绪，**退出签字搁置**；E1（reSIProcate 生产路径行为）/ E4（TLS 热轮换）/ E5（状态外置与恢复）**未验收**；e2e：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open |
 
 **产品定位一句话**：多业务承载平台 —— 新增业务只需"加一个 app + 一条配置变更单"，不需要改动 IMS 核心网（`one-pager.md` §1）。
 
@@ -37,7 +37,7 @@
 | SIP trunk over TLS | 双向 | SIP over TLS `5061` | 与 S-SBC 的端到端 TLS（mTLS） | **必需**（默认 `tls.enabled: true`） | `tls.enabled=true` 且 `tls.secretName` 为空 → **渲染期 fail-closed**（`deploy/helm/templates/deployment.yaml:11-13`）。证书轮换是配置热更新，不重启进程（ADR-0016） |
 | AS 内部 API | 入向 | HTTP `8000`（ClusterIP） | config-service 同时提供控制台 `/` 与 `/internal/v1` | 可选（config-service **默认关闭**） | `services.configService.enabled: false`（`values.yaml:115`）；无独立 console workload |
 | 健康与指标端点 | 出向（供抓取） | HTTP `8080`：`/health/live`、`/health/ready`、`/metrics` | K8s 探针 + Prometheus 文本格式指标 | **必需** | 端口来自 Helm `health.port`（`values.yaml:281-282`）→ ConfigMap `AS_HEALTH_PORT`（`configmap.yaml:58`）→ `HealthServerConfig.port`（`platform/src/as_platform/runtime/health.py:23-24`） |
-| Redis（运行态） | 双向 | Redis 协议，chart 默认 `6379`（`stateStores.redis.port`） | 会话状态 / dialog 状态 / 反诈速率窗口 | **必需**（运行态无状态化前提） | 探针口径见 §8 注记；Sentinel / HA 拓扑**未决**（O5 / D3） |
+| Redis（运行态） | 双向 | Redis 协议，chart 默认 `6379`（`stateStores.redis.port`） | 会话状态 / dialog 状态 / 反诈速率窗口 | **必需**（运行态无状态化前提） | 探针口径见 §8 注记；Redis HA 拓扑**已裁（G7 / D3）**：primary/replica + Sentinel（沿用 ADR-0008 拓扑，不选 Redis Cluster）；chart 当前仍单副本渲染，Sentinel 接线**实现未落** |
 | PostgreSQL（治理态） | 双向 | PostgreSQL，chart 默认 `5432`（`postgres.port`） | 规则版本、变更单、审批、审计；schema `as_config` / `console_audit` | **必需**（控制面） | 三角色：`owner` / `web` / `runtime`（`state-postgres.yaml:18-22`）；`runtime` 为 `NOLOGIN` 最小权限 |
 | **Diameter Sh（TS 29.328 / 29.329）** | — | — | — | **N/A** | **理由**：AS 的业务数据来自自有数据面（规则集、号码翻译表、反诈限额），不与 HSS 交互，故不做 Diameter Sh（`AGENT.md` §2 非目标）。本文不含任何 Sh 相关面板或告警（评审 G-P0-4 / G-P2-3） |
 | **计费 / CDR（TS 32.260 / 32.299）** | — | — | — | **N/A** | **理由**：不采集、不投递、不归档、不批价（ADR-0017 accepted）。以按 **Call-ID** 的呼叫轨迹替代话单，用于投诉追溯与反诈举证 |
@@ -143,7 +143,7 @@
 **两条不可协商的原则**
 
 1. **只用真实 socket**：容量层**禁止**用驱动回调测 —— 那样测的是业务逻辑，不是系统（`AGENT.md` §6；ADR-0014）。harness 在 `testbed/load/`。
-2. **`performance` 层当前对端是 accept-all harness，不是业务判决路径**：`docs/acceptance/test-plan.md` L20 明确"M6 产品 runtime 压测对端是 `load_uas_runtime.py`（**accept-all harness**），不是业务判决路径"；L22 进一步指出 `accept_all_invites` **不是** ims-sim，也**不是**生产路径。因此当前 harness 的读数**不能**代表判决路径 + Redis + 规则的真实开销。
+2. **`performance` 层当前对端是 accept-all harness，不是业务判决路径**：`docs/acceptance/test-plan.md` L21 明确"M6 产品 runtime 压测对端是 `load_uas_runtime.py`（**accept-all harness**），不是业务判决路径"；L23 进一步指出 `accept_all_invites` **不是** ims-sim，也**不是**生产路径。因此当前 harness 的读数**不能**代表判决路径 + Redis + 规则的真实开销。
 
 ### 3.5 裁决前禁止事项清单
 
@@ -231,7 +231,7 @@
 | `ASPodNotReady` | `as.runtime` | 该 Pod 的 `Ready` 条件为 0，持续 5m；就绪 = 进程在拒新工作（`/health/ready` 503 表示正在 draining，ADR-0009） | `critical` / `runtime` | **可触发（前提：集群装了 kube-state-metrics）**：只看 AS namespace 内的 Pod，**不区分组件**，用 `pod` 名区分。阈值是**二元就绪状态，不是容量指标**；正常滚动中的 Pod 也会命中，升级前先看 `/health/ready` | 同上 §2 #6 |
 | `ASDeploymentReplicasUnavailable` | `as.runtime` | 同一 Deployment 的可用副本数 < 期望副本数，持续 10m | `warning` / `runtime` | **可触发（前提：KSM）**：选择器按 namespace 限定，也覆盖内建 `state-redis` 与 `config-service` 两个 Deployment。阈值是**副本可用性状态，不是容量指标**，且**故意不说明系统该有几个副本**（那是 O1 / M6） | 同上 §2 #7 |
 | `ASDownscaleBlocked` | `as.runtime` | 同一 `pod` / `use_case` 上 `as_downscale_removable == 0` **且** `as_active_calls == 0`，持续 30m。ADR-0010 的 guard 只有两个拦截理由（有在途呼叫 / 已在 draining），两者都排除后只剩 draining 卡住 | `warning` / `runtime` | **序列总是产出**（metrics 循环无条件写，不依赖 OTLP），但取值依赖真实 SIP dialog 活动 —— 无流量时不触发。另见 §5 的**抓取接线缺失**。阈值是**二元 guard 状态 + 零计数，不是容量指标** | 同上 §2 #8 |
-| `ASStatefulSetUnavailable` | `as.platform` | 某 StatefulSet 的 ready 副本数 < 期望副本数，持续 5m；chart 内即治理库 PostgreSQL（ADR-0008），持有配置版本、变更单与 append-only 审计 | `critical` / `state` | **可触发（前提：KSM）**：内建 PG 是**单副本、非 HA**（HA 由客户拥有；Redis HA 仍是 **O5 / D3**）—— 单副本是设计事实，**不是**容量结论 | 同上 §2 #9 |
+| `ASStatefulSetUnavailable` | `as.platform` | 某 StatefulSet 的 ready 副本数 < 期望副本数，持续 5m；chart 内即治理库 PostgreSQL（ADR-0008），持有配置版本、变更单与 append-only 审计 | `critical` / `state` | **可触发（前提：KSM）**：内建 PG 是**单副本、非 HA**（HA 由客户拥有）；Redis HA 拓扑已裁（G7 / D3：primary/replica + Sentinel）但 **chart 仍单副本渲染、failover 实测行为无证据** —— 单副本是设计事实，**不是**容量结论 | 同上 §2 #9 |
 | `ASServiceEndpointsAbsent` | `as.platform` | 某 Service 的可用 endpoint 地址数为 0，持续 5m → selector 匹配不到任何 Ready Pod；chart 内覆盖 `state-redis` 与 `config-service` 两个 Service | `warning` / `state` | **可触发（前提：KSM）**：与 `ASCallStateStoreUnavailable` 是**不同**失效模式 —— 本条是「Service 根本没有后端」，那条是「AS 连不上 Redis」。阈值是**路由状态，不是容量指标** | 同上 §2 #10 |
 
 **容量类告警：defer。** `as-alerts.yaml` **当前没有任何 CPS 上限或并发上限告警**，且这是刻意设计（文件头 L8-13；`deploy/alerts/README.md` §"Why there is no capacity alert"）。容量类告警在 **O1 裁决后**新建独立组（建议 `as.capacity`），从实测结果取值，**不得在此之前凭直觉写一个**。在此之前，异常负载用 `ASActiveCallsSurge` 与 M6 harness 排查，而不是用一个提前编造的数。
@@ -267,11 +267,11 @@ graph LR
     SSBC ==>|"必需 · SIP trunk UDP/TCP 5060 · TLS 5061<br/>mTLS + 对端白名单"| TR
     SSBC ==> AF
 
-    TR -->|"必需 · HA 未决 O5/D3"| REDIS
-    AF -->|"必需 · HA 未决 O5/D3"| REDIS
+    TR -->|"必需 · HA 已裁 O5/D3（G7）· 实现未落"| REDIS
+    AF -->|"必需 · HA 已裁 O5/D3（G7）· 实现未落"| REDIS
     TR -.->|"checkpoint / 治理读"| PG
     AF -.-> PG
-    CFG -->|"必需 · 规则版本与审计 · HA 未决 O5"| PG
+    CFG -->|"必需 · 规则版本与审计 · HA 已裁 O5（G7）· 实现未落"| PG
     NGINX -->|"可选"| CFG
 
     TR -.->|"指标 /metrics :8080 · 抓取接线缺失"| PROM
@@ -294,12 +294,12 @@ graph LR
 | 依赖 | 必需性 | 备注 |
 |---|---|---|
 | S-SBC（trunk 对端） | **必需** | 运营商网元，我方只做对端准入校验（白名单 + mTLS，ADR-0016）。trunk 不可信 |
-| Redis（运行态） | **必需** | 会话 / dialog / 速率窗口；chart 内建的是**单副本**，**不是 HA**；Sentinel / HA 拓扑**未决（O5 / D3）** |
+| Redis（运行态） | **必需** | 会话 / dialog / 速率窗口；chart 内建的是**单副本**，**不是 HA**；Sentinel / HA 拓扑**已裁（G7 / D3：primary/replica + Sentinel，不选 Cluster）**，接线**实现未落** |
 | PostgreSQL（治理态） | **必需**（控制面） | chart 内建的是**单副本**，**不是 HA**；流复制 / 备份 / PITR 属架构要求，落地受真实集群阻塞 |
 | ingress-nginx → config-service → 控制台 | **可选** | config-service 默认关闭；`config-service-ingress.yaml` **只支持 ingress-nginx**（`className` 非 `nginx` 时渲染失败），且强制 HTTPS 重定向；7.2d 真实集群证据仍 blocked |
 | Prometheus / OTLP collector | **可选**（部署侧） | chart 不含 ServiceMonitor / PodMonitor，也无 scrape 注解 → **抓取接线缺失**（§5）。OTLP exporter 当前为 `NoOp`，队列存在但不落地 |
 | K8s / Helm | **必需** | Helm 是生产唯一形态（ADR-0013） |
-| **跨站点容灾** | **未决** | 架构决策是**站点内 N+1 零单点 + 跨站点 1+1 温备（非双活）**（ADR-0008 accepted）；跨站点流量分担由运营商网元配置决定，不在我方交付范围。容灾等级（O5：N+1 节点 / N+M 机架或 AZ）**未决** |
+| **跨站点容灾** | **已裁（G7）** | O5 基线：**站点内 N+1 + 跨站 1+1 warm standby**（ADR-0008 拓扑；**不承诺机架 / AZ 级容错**，RPO / RTO 数值**仍未裁**）；chart 当前仍单副本渲染，failover 实测行为无证据。跨站点流量分担由运营商网元配置决定，不在我方交付范围 |
 
 ---
 
@@ -311,7 +311,7 @@ graph LR
 |---|---|---|
 | chart name / 类型 | `3rdparty-as`，`apiVersion: v2`，`type: application` | `deploy/helm/Chart.yaml:1-6` |
 | 镜像 | `registry.example.com/3rdparty-as`，`tag` 为空 → 回落到 `Chart.appVersion`；`pullPolicy: IfNotPresent`。**没有公开 registry**，安装时须设客户内网 registry | `values.yaml:76-82`；`_helpers.tpl` 的 `as.image` |
-| 版本 | `./VERSION` 是产品 release **唯一源头**；**`Chart.yaml` 的 `version` / `appVersion` 仍是骨架值，与 `./VERSION` 不同步** —— **已知缺口** | `AGENT.md` §8；ADR-0018；`Chart.yaml:5-6` |
+| 版本 | `./VERSION` 是产品 release **唯一源头**；**`Chart.yaml` 的 `version` / `appVersion` 仍是骨架值，与 `./VERSION` 不同步** —— **已知缺口**。**2026-10-12 追加（G4 / A6）**：一致性同步已落地为 `scripts/sync-chart-version.sh`（默认 `--check` 只读，drift 即 exit 1；`--apply` 才写入）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效） | `AGENT.md` §8；ADR-0018；`Chart.yaml:5-6` |
 | `useCases` | `translation` / `anti-fraud` 各一条，`enabled: true`；`enabled: false` 渲染 nothing | `values.yaml:84-107` |
 | **资源规格** | **`useCases[].resources` 默认全空（`{}`），chart 不渲染 requests/limits** → **没有推荐资源规格**。这是刻意留空：sizing 与 O1 同源，模板宁可不渲染也不回落猜测值 | `values.yaml:97-103`；`deploy/helm/README.md` §"Keys left empty on purpose" |
 | 副本数 | `useCases[].replicaCount: null` → Deployment 渲染 `replicas: 1` 作**渲染回落**，**不是容量结论** | `values.yaml:92-96`；`deployment.yaml:31-36` |
@@ -324,9 +324,9 @@ graph LR
 | **fail-closed 项** | ① `tls.enabled: true` 且 `tls.secretName` 为空 → **渲染失败**；② `sip.peerAllowlist` 为空且未设 `allowEmptyAllowlistForTest` → **渲染失败**。两项都是安全控制，不是可用性开关 | `deployment.yaml:11-16`；ADR-0016 |
 | 集群内状态存储 | `stateStores.enabled: false`（默认保持 AS-only 渲染）；启用后渲染集群内 PostgreSQL / Redis + NetworkPolicy；`bootstrapDevCredentials` **仅 kind/dev** | `values.yaml:167-200`；ADR-0026 accepted |
 | config-service | **默认关闭**；启用需外部 Secret（`AS_CONFIG_DSN`、审计 HMAC key）与预置 `NOLOGIN` runtime 角色；chart **不创建也不填充** 该 Secret | `values.yaml:109-136`；`deploy/helm/README.md` |
-| K8s 最低版本 | **chart 无 `kubeVersion` 声明** → **没有 K8s 最低版本契约**（已知缺口） | `deploy/helm/Chart.yaml`（全文） |
+| K8s 最低版本 | `kubeVersion` 已定为 `>=1.23.0-0`（2026-10-12 裁，G4 / A6：由 chart 实际 API 反推 —— autoscaling/v2 HPA 与 Job TTL 均 K8s 1.23 GA），**尚未写入 `Chart.yaml`**；preflight.sh 推导下限 1.23 与之一致。chart 当前仍无 `kubeVersion` 声明（已知缺口，待维护者写入） | `deploy/helm/Chart.yaml`（全文）；`../delivery/preflight.sh` |
 | Prometheus 抓取 | **无 `prometheus.io/scrape` 注解，无 ServiceMonitor / PodMonitor**（已知缺口，见 §5） | `deploy/helm/templates/`（grep 无命中） |
-| 备份 / 恢复、e2e | **chart 无备份 Job**（`stateStores.migrateJob` 是一次性 schema 迁移 Job，**不是备份**）；`pytest e2e` marker **为 0**，完整呼叫 + 控制台端到端路径未落地 | `values.yaml:192-200`；`test-plan.md` L19 |
+| 备份 / 恢复、e2e | **chart 无备份 Job**（`stateStores.migrateJob` 是一次性 schema 迁移 Job，**不是备份**）；`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open，完整呼叫 + 控制台端到端路径未落地 | `values.yaml:192-200`；`test-plan.md` L20 |
 | 未验收项 | E1（reSIProcate 生产路径行为）、E4（TLS 证书热轮换）、E5（状态外置与恢复）**均未验收** | `docs/plan.md` §5.1 O2/O3 |
 
 **注记 —— Redis 探针的环境变量口径差异（自核实）**：状态存储读取 `AS_REDIS_URL`，未设时回落到 chart 的 `REDIS_URL`（`platform/src/as_platform/state/redis_store.py:263-282`）；而**可用性探针只读 `REDIS_URL`**（`__main__.py:125`），chart 也只写 `REDIS_URL`（`configmap.yaml:43-46`）。因此若只通过 `runtime.extraEnv` 设置 `AS_REDIS_URL`，状态存储能连上，但 `as_state_store_available` 序列**不会产生** → `ASCallStateStoreUnavailable` 永不触发。交付时应统一走 `REDIS_URL`。
@@ -337,7 +337,7 @@ graph LR
 
 | 项 | 内容 |
 |---|---|
-| 版本来源 | `./VERSION` 是产品 release 的**唯一源头**；`<member>/pyproject.toml` 携带各组件自己的接口版本；**任何成员都不得拥有 `VERSION` 文件**；由 `tests/test_version_consistency.py` 守卫（`AGENT.md` §8；ADR-0018 accepted）。**已知缺口**：`Chart.yaml` 的 `version` / `appVersion` 未同步 |
+| 版本来源 | `./VERSION` 是产品 release 的**唯一源头**；`<member>/pyproject.toml` 携带各组件自己的接口版本；**任何成员都不得拥有 `VERSION` 文件**；由 `tests/test_version_consistency.py` 守卫（`AGENT.md` §8；ADR-0018 accepted）。**已知缺口**：`Chart.yaml` 的 `version` / `appVersion` 未同步。**2026-10-12 追加（G4 / A6）**：同步脚本 `scripts/sync-chart-version.sh` 已就绪（默认 `--check` 只读、drift 即 exit 1；`--apply` 才写入）；首次 `--apply` 时机与取值待维护者决定 |
 | 生命周期与 EOL 策略 | 见 [`version-lifecycle.md`](version-lifecycle.md)（**已落盘**，对应交付物 3.5；REQ-NF-16 与 ADR-0027 已新增并 accepted，但 §7 的 **API / 接口版本兼容策略（交付物 4.3）仍是待决策**，不得写为已定承诺） |
 | **ISSU 语义** | **ISSU = draining，不是在途状态迁移**（ADR-0009 accepted）：① 停止接收新请求（摘流）；② 存量呼叫继续在原进程上跑完；③ `active_calls` 归零后退出。会话 / dialog / 速率窗口状态在 Redis，因此"不迁移状态"成立；但"不迁移状态"**不等于**"可以立刻杀进程" —— 进程上仍有在途呼叫，其事务机、定时器与 socket 都在本进程。**缩容走同一条路径**：控制器选出实例 → 摘流 → 等归零 → 删除，不强杀（ADR-0010） |
 | **升级纪律** | **AS 镜像**：走 `helm upgrade`，配置与证书热更新不重启进程（证书轮换是热更新，ADR-0016）；ConfigMap 变更通过 `checksum/config` 注解触发 Pod 滚动（`deployment.yaml:44-46`）。**PostgreSQL / Redis**：属有状态组件，升级走**维护窗口**，不随 AS 镜像一起滚；`stateStores.migrateJob` 只做一次性 schema 迁移，迁移用 owner DSN、运行时启动**不做** DDL / 迁移 / 授权 |
@@ -353,10 +353,10 @@ graph LR
 | E1 reSIProcate 生产路径行为 | **未验收** | O2 / O3；14 条 B2BUA 全文回放推迟 | 容量结论与信令行为都缺生产证据 |
 | E4 TLS 证书热轮换 | **未验收** | 运营商 PKI 无实验室证据（REQ-S-2/S-3） | TLS 相关能力无 lab 证据 |
 | E5 状态外置与恢复 | **未验收** | REQ-NF-1 签收仍归 M8；默认 DUM 的 UAS 重启回 481 | checkpoint / 恢复路径只有工程切片证据 |
-| O4 呼叫轨迹保留期 | **未决** | 客户合规要求 | 保留期限无法落地（影响 PDPO 与备份策略） |
-| D5 呼叫轨迹存储选型 | **未决** | 与 O4 相关 | PostgreSQL 或独立短保留存储待定 |
-| O5 容灾等级（N+1 节点 / N+M 机架或 AZ） | **未决** | 客户 SLA | Redis 是否跨 AZ、Sentinel 拓扑、PG HA 均未定 |
-| D3 Redis Sentinel 接线与脑裂窗口幂等 | 客户端接线**已解决**；**HA 拓扑与幂等契约仍未决** | O5 | `redis.sentinel.masters` / `.addresses` 故意留空 |
+| O4 呼叫轨迹保留期 | **已裁（G6）**：默认 10 天、部署可配；**实现未落** | 客户合规要求（取值已落 `docs/plan.md` §0 决策记录） | 轨迹存储 / 查询 / 删除能力当前不存在，不得表述为「系统已按 10 天清理」（影响 PDPO 与备份策略） |
+| D5 呼叫轨迹存储选型 | **已裁（G6）**：in-cluster PostgreSQL；**实现未落** | 与 O4 相关（取值已裁） | 存储落地随轨迹存储能力实现 |
+| O5 容灾等级 | **已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby；**不承诺机架 / AZ 级容错**；RPO / RTO 数值未裁 | 客户 SLA（取值已裁） | chart 仍单副本渲染，failover 实测行为无证据；Redis / PG HA 落地依赖实现 |
+| D3 Redis Sentinel 接线与脑裂窗口幂等 | 客户端接线**已解决**；HA 拓扑**已裁（G7 / D3）**：primary/replica + Sentinel（沿用 ADR-0008，不选 Cluster）；**实现未落** | O5（取值已裁） | `redis.sentinel.masters` / `.addresses` 故意留空 |
 | D1 Python 3.10 EOL | **未决** | 2026-10 到达生命周期终点 | 该日期之后的任何交付需先验证迁移或登记为已接受风险 |
 | D6 testbed 是否在 v1 支持客户验收测试 | **未决**（推迟到 v1.1） | M8 | 客户验收测试能力不在 v1 |
 | **无推荐资源规格** | 缺口 | 与 O1 同源 | `useCases[].resources` 全空；chart 不渲染 requests/limits |
@@ -364,7 +364,7 @@ graph LR
 | **抓取接线缺失** | 缺口 | 无 scrape 注解、无 ServiceMonitor / PodMonitor | 所有 `as_*` 序列在标准部署中不会被 Prometheus 采集 → 全部 `as.*` 规则事实上不可触发 |
 | **OTLP exporter 为 NoOp** | 缺口 | 队列存在但 exporter 不落地 | 遥测只进内存队列，不进后端；`as_telemetry_dropped_total` 也难以产生 |
 | **版本不同步** | 缺口 | `Chart.yaml` 骨架值 ≠ `./VERSION` | 交付物版本口径需修正 |
-| **无备份 Job**、**e2e = 0** | 缺口 | chart 未提供备份；e2e 未落地 | 备份恢复方案（交付物 2.5）另需真实集群演练；完整呼叫 + 控制台端到端路径无自动化证据 |
+| **无备份 Job**、**e2e 覆盖不完整** | 缺口 | chart 未提供备份；`pytest -m e2e` 8 条稳定通过（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open | 备份恢复方案（交付物 2.5）另需真实集群演练；完整呼叫 + 控制台端到端路径无自动化证据 |
 | ADR-0023（Redis checkpoint）、ADR-0025（托管规则运行时 bundle） | **未通过（draft）** | ADR 注册表 | 本文不据其设计作容量或恢复结论 |
 
 ---
@@ -379,4 +379,4 @@ graph LR
 | 引用的 ADR | ADR-0002（一用例一进程 / 状态外置，accepted）、ADR-0003（S-SBC 透明桥接单一 ISC，accepted）、ADR-0004（媒体 seam，accepted）、ADR-0005（OTel 可观测性，accepted）、ADR-0006（配置治理，accepted）、ADR-0007（数据面 split，accepted）、ADR-0008（冗余 / 跨站点 1+1 温备，accepted）、ADR-0009（ISSU = draining，accepted）、ADR-0010（自定义指标 HPA + 缩容保护控制器，accepted）、ADR-0013（Helm-only，accepted）、ADR-0014（三层 testbed；容量只用真实 socket，accepted）、ADR-0016（边界内安全，accepted）、ADR-0017（不做 CDR，accepted）、ADR-0018（版本号语义，accepted）、ADR-0019（SIP 栈选型，accepted）、ADR-0021（运行态覆盖粒度，accepted）、ADR-0026（集群内状态存储，accepted）。**ADR-0023（Redis checkpoint，proposed）与 ADR-0025（托管规则运行时 bundle，draft）尚未通过**，本文不据其作结论 |
 | 关键代码依据 | 指标定义 `platform/src/as_platform/telemetry/metrics.py:34-39`；`/metrics` 与探针端点 `platform/src/as_platform/runtime/health.py:56-74`；缩容守卫 `platform/src/as_platform/ops/downscale_guard.py:72-139`；指标循环与 Redis 探针 `platform/src/as_platform/__main__.py:88-142`；Helm `deploy/helm/{values.yaml,Chart.yaml,README.md,templates/*}`；告警 `deploy/alerts/{as-alerts.yaml,README.md}` |
 | 同批交付物 | [`one-pager.md`](one-pager.md)（1.1）、[`compliance-matrix.md`](compliance-matrix.md)（1.2）、[`responsibility-matrix.md`](responsibility-matrix.md)（3.3）、[`version-lifecycle.md`](version-lifecycle.md)（3.5）、[`security-privacy.md`](security-privacy.md)（3.4）及 `docs/operations/`、`docs/delivery/` 目录**均已落盘**。**本文的跨目录互链**：[`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md)（§2 逐条对应本文 §6）、[`../operations/runbook-l1.md`](../operations/runbook-l1.md)（§2 与本文 §6 同源）、[`version-lifecycle.md`](version-lifecycle.md)（§9 生命周期行） |
-| 状态纪律 | 本文只登记**事实与证据状态**，不构成验收结论。M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；O1 / O4 / O5 / D3 / D5 未决；testbed 是研发资产。本文**尚未评审**，按 `AGENT.md` §3.3 待维护者评审并留独立 review record |
+| 状态纪律 | 本文只登记**事实与证据状态**，不构成验收结论。M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；O1 **未裁**，O4 / D5 **已裁（G6，实现未落）**，O5 / D3 **已裁（G7，chart 仍单副本）**；e2e：`pytest -m e2e` **8 条稳定通过**，REQ-F-1 = 自动化子集已覆盖 / 全文仍 open；testbed 是研发资产。**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3） |

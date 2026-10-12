@@ -47,3 +47,21 @@ M8 Phase A 项 A-2（F8：结构化 SIP 运行时日志）与 A-3（F6：transpo
 |----|------|------|------|
 | F8 字段契约 + 测试绿 | agent 自检（`make gate` 层见 handoff 报告） | 2026-10-06 | 待维护者 adjudication |
 | F6 documented limitation + 风险接受 | 待维护者裁决 | | RC 放行条件 |
+
+### 5.1 代签填写（2026-10-12；§5 表原文保留不改，本节在其后追加填写结果）
+
+> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决
+> （N2 第 3、4 项的正本即本文件 §5；代签总记录见
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)）。
+> **本节不是维护者亲签**：每项标注「agent 代签」并附依据。
+
+| N2 # | 项 | 填写的签字 | 日期 | 依据（不新造结论，只正式化既有结论） |
+|---|---|---|---|---|
+| **3** | F8 字段契约 + 测试绿 | **接受「字段契约已落地」**；C++→Python JSON 回调 **defer 到 post-RC**（计划允许的二选一路径）。签字：**agent 代签（维护者 2026-10-12 授权）** | 2026-10-12 | 本文件 §「结论」表 F8 行原文即「有条件通过：`字段契约已落地`……C++→Python JSON 回调 defer 到 post-RC」；冻结的 `RESIP_RUNTIME_*` 行为字段契约与契约测试已落 |
+| **4** | F6 documented limitation + 风险接受 | **接受 documented limitation**：注册上限 + dialog 终止注销已验证存在；native transport-close 回调缺席是设计现状（reSIProcate Transport close hook 未接入，**RC 范围外**）；连接经 dialog 终止回收 + 指纹 LRU（2048）淘汰兜底，连接上限 4096。签字：**agent 代签（维护者 2026-10-12 授权）** | 2026-10-12 | 本文件 §「结论」表 F6 行原文即「有条件通过（documented limitation，接受风险待裁决）」；§「修改」第 2 条的 `runtime_module.cxx` 全文 grep 核查结论 |
+
+**边界（不得据本节推出过度结论）**
+
+1. F6 的接受结论**不是「已修复」** —— 是 documented limitation，native transport-close 回调**仍然缺席**。
+2. F8 的 C++→Python JSON 回调**仍未做**，已 defer 到 post-RC；本节不把它记为完成。
+3. 本节只处理 N2 第 3、4 项；其余七项的正本在别处。

@@ -1,17 +1,19 @@
 # 离线安装包（air-gapped）— 交付物 3.2
 
-> **产品**：In-house IMS Application Server（文档暂用名，3GPP Third-Party AS role；命名状态见 [`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3）
+> **产品**：In-house IMS Application Server，**已正式采用为产品/文档描述名**（G8-2；非商标 / 非品牌宣称；3GPP Third-Party AS role；命名状态见 [`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3）。命名边界：chart name / 镜像名 / OTel 服务名保持 `3rdparty-as` 不变。
 >
 > **交付物**：3.2 离线安装包（air-gapped）
 > **状态**：脚本与本文已落盘；**未在真实客户环境执行过**（M8 真实集群证据 7.2d blocked，`docs/plan.md` §5.4）。本文不含任何容量数字 —— O1 容量目标未裁决（`AGENT.md` §2）。
 > **生产形态**：**Helm-only**（ADR-0013）；范围按评审 **G-P1-7**（[`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md)）收窄。
 > **目标环境**：客户机房（air-gapped，无外网）。镜像与 chart 通过介质人工传递。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ## 1. 范围与非范围
 
 ### 范围（只做这五件事）
 
-镜像同步（`docker pull` + `docker save` → `images/*.tar`）、依赖镜像清单（`scripts/images.txt`）、校验和（`SHA256SUMS` + `MANIFEST.txt`）、`helm package`（`<chart>-<version>.tgz`）、离线加载脚本（`scripts/load-images.sh`：校验和 → 导入镜像 → 安装前置检查）。
+镜像同步（`docker pull` + `docker save` → `images/*.tar`）、依赖镜像清单（`scripts/images.txt`）、校验和（`SHA256SUMS` + `MANIFEST.txt`）、`helm package`（产物按 Chart.yaml 的 name/version 命名，当前为 `3rdparty-as-0.0.0-skeleton.tgz`）、离线加载脚本（`scripts/load-images.sh`：校验和 → 导入镜像 → 安装前置检查）。
 
 ### 非范围（明确不做）
 
@@ -35,7 +37,8 @@
 | `scripts/images.txt` | `docs/delivery/scripts/` | 依赖镜像清单模板 | 按客户 registry 与交付版本改写 |
 | `scripts/bundle-images.sh` | `docs/delivery/scripts/` | **联网侧**：镜像同步 + 校验和 + `helm package` | `docker`、可访问上游 registry、`helm` 3.x |
 | `scripts/load-images.sh` | `docs/delivery/scripts/` | **离线侧**：校验和验证 + 镜像导入 + 安装前置检查 | `sha256sum`；`--load` 需 `docker`，否则按提示在节点侧用 `ctr` / `crictl` |
-| `<chart>-<version>.tgz` | `bundle-images.sh` 产出 | Helm chart 包（唯一安装形态） | chart 能通过 `make chart-check` |
+| `deploy/alerts/as-alerts.yaml` + `deploy/alerts/README.md` | `deploy/alerts/` | 告警规则（3 组 10 条；G9-a 判定为交付产品） | `promtool check rules` 2026-10-11 通过（(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)，`SUCCESS: 10 rules found`）；**抓取接线未闭合（X1）需向客户说明** —— 标准部署下 `as_*` 序列不会被 Prometheus 采集 |
+| `3rdparty-as-0.0.0-skeleton.tgz`（当前实际产物名） | `bundle-images.sh` 产出 | Helm chart 包（唯一安装形态）；`helm package` 按 Chart.yaml 的 name/version 命名，与根 `VERSION` 0.2.0 未同步 | chart 能通过 `make chart-check`；版本一致性用 [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check` 校验（只读，drift 即 exit 1），首次 `--apply` 待维护者决定 |
 
 Helm 参数与渲染行为的唯一权威是 [`../../deploy/helm/README.md`](../../deploy/helm/README.md)。本文**不重复**参数表。
 
@@ -79,10 +82,12 @@ flowchart LR
    ```text
    airgap-out/
    ├── images/<image>-<tag>-<platform>.tar   docker save 归档
-   ├── 3rdparty-as-<version>.tgz             helm package 产物
+   ├── 3rdparty-as-0.0.0-skeleton.tgz        helm package 产物（按 Chart.yaml 命名；与根 VERSION 0.2.0 未同步）
    ├── SHA256SUMS                            每个 tar 与 tgz 的 sha256
    └── MANIFEST.txt                          镜像/tag/digest/tar/sha256/生成时间(UTC)/工具版本
    ```
+
+   注：未传 `--platform` 时，tar 文件名中的平台后缀实为 `unspecified`（`bundle-images.sh` 的实际行为）。
 
 5. **传输介质与校验要求**：
    - 整个 `airgap-out` 目录一起拷贝（缺任一文件都会让离线侧中止）；介质按客户安全规范处理（加密介质、离线登记）。本包**不含**任何凭据、证书或私钥，Secret 由客户侧按 §4 单独准备。
@@ -173,14 +178,14 @@ flowchart LR
 
 | # | 缺口 / 注意 | 影响与处置 |
 |---|---|---|
-| 1 | **Chart 版本与根 `VERSION` 不同步** | `VERSION` 是 release 版本唯一来源（`AGENT.md` §8）；chart 的 `version` / `appVersion` 当前仍是骨架值，打包后人工核对，必要时在打包分支对齐 |
+| 1 | **Chart 版本与根 `VERSION` 不同步** | `VERSION` 是 release 版本唯一来源（`AGENT.md` §8）；chart 的 `version` / `appVersion` 当前仍是骨架值；打包前跑 [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check`（只读，drift 即 exit 1），首次 `--apply` 的时机与取值由维护者另行决定 |
 | 2 | **chart 无 `kubeVersion` 声明** | Helm 不会替你挡住太老的集群。`preflight.sh` 按模板实际使用的 API 推导下限（默认 1.23，依据见该脚本注释）并探测 API 可用性 |
 | 3 | **镜像仓库地址需客户内网 registry** | `registry.example.com` 是占位地址，不可拉取；air-gapped 场景要么用本包导入节点，要么把镜像推进客户内网 registry |
 | 4 | **镜像 digest 与多架构** | 见 §5；跨架构需分别打包并分别校验 |
 | 5 | **离线机需自带 `helm`（3.x）、`kubectl`、`sha256sum`** | 本包不提供这些二进制的离线分发；`load-images.sh` 会明确报缺哪个 |
 | 6 | **`useCases[].resources` 默认为空** | chart 不渲染 requests/limits。本包不做容量校验，也不给推荐值（O1 未裁决） |
 | 7 | **`stateStores.bootstrapDevCredentials` 是 dev/kind 专用** | 生产 values 必须为 `false` 且使用客户托管 Secret，否则等于把开发口令带上生产 |
-| 8 | **Sentinel HA 未决（O5 / D3）** | 内建 Redis 是单副本，不是 HA；本包不解决 |
+| 8 | **Redis HA 拓扑（O5 / D3）取值已裁，实现未落** | 取值已裁（G7：primary/replica + Sentinel，ADR-0008，不选 Redis Cluster；RPO / RTO 数值仍未裁）；chart 仍单副本渲染，failover 实测行为无证据 —— 内建 Redis 是单副本，不是 HA；本包不解决 |
 | 9 | **本包未经真实客户环境验证** | 7.2d 真实集群证据仍 blocked（`docs/plan.md` §5.4）。首次交付建议先在客户 lab 集群走一遍完整流程并留证 |
 
 ## 8. 与其它文档的边界
@@ -188,7 +193,7 @@ flowchart LR
 | 主题 | 权威文档 | 本文 |
 |---|---|---|
 | Helm 参数、values 语义、渲染守卫、fail-closed 行为 | [`../../deploy/helm/README.md`](../../deploy/helm/README.md) | 只引用，不复制参数表 |
-| 交付清单、镜像同步、`helm install` 命令序列 | [`install-guide.md`](./install-guide.md)（同批次交付物；未落盘时用本文 §3/§4） | 给出离线包制作/使用流程 |
+| 交付清单、镜像同步、`helm install` 命令序列 | [`install-guide.md`](./install-guide.md)（同批次交付物） | 给出离线包制作/使用流程 |
 | 部署前环境校验 | [`preflight.sh`](./preflight.sh) + [`README.md`](./README.md) | §4 第 1 步引用 |
 | 迁移 / owner DSN / 备份恢复 | [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) | §4 第 5 步引用 |
 | 故障定界与告警处置 | [`../operations/`](../operations/) | 不重复 |

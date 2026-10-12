@@ -1,4 +1,4 @@
-# 业务摘流 / 回退手册（Rollback Playbook）— In-house IMS Application Server（文档暂用名）
+# 业务摘流 / 回退手册（Rollback Playbook）— In-house IMS Application Server
 
 > **交付物归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第二批 **2.4 ISC 触发后业务灰度 / 摘流方案 + 与 S-CSCF 侧 iFC 灰度的配合**。按该计划 §3.2，本交付物的**文档部分**属 A 类；**真实集群演练部分为 B 类**，被M8 真实集群环境（**7.2d仍 blocked**）与 S-CSCF / HSS 侧配合阻塞（评审 **G-P1-10**）。**M8 退出签字仍搁置**。
 >
@@ -13,6 +13,8 @@
 > **互链**：[`runbook-l1.md`](runbook-l1.md)（日常操作）、[`runbook-l2.md`](runbook-l2.md)（深度排障）、[`fault-demarcation.md`](fault-demarcation.md)（定界）、[`backup-restore.md`](backup-restore.md)（有状态组件维护窗口）、[`../product/responsibility-matrix.md`](../product/responsibility-matrix.md)（RACI）。
 >
 > **状态说明**：上游文档中的过期「未创建」标注已于 2026-10-10 统一清理；本文件所述的 blocked 状态（**M8 真实集群环境 / 演练**）**仍然成立**。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ---
 
@@ -59,7 +61,11 @@
 
 ### 2.3 L3 的回退命令（原文照抄 `deploy/helm/templates/NOTES.txt` §3）
 
-NOTES.txt §3 明确「两种东西都叫 rollback，不要混淆」：**(a) 配置回滚**走变更单（= L1）；**(b) 镜像 / manifest 回滚** revert Helm release 让 Deployment 滚回，**draining 在退出路径上生效**（ADR-0009）：
+NOTES.txt §3 明确「两种东西都叫 rollback，不要混淆」：**(a) 配置回滚**走变更单（= L1）；**(b) 镜像 / manifest 回退** revert Helm release 让 Deployment 滚回，**draining 在退出路径上生效**（ADR-0009）：
+
+**版本映射前置（执行 `helm rollback` 前必做）**：先执行 `helm -n <ns> history <release>`，记录 **revision ↔ chart `version` / `appVersion`** 的对应关系，并与根 `VERSION`（当前 `0.2.0`）对照；回退证据链必须记录 **revision → chart version → 产品 VERSION** 三者，否则对外不可验证。
+
+**如实标注当前不同步（已知缺口）**：`deploy/helm/Chart.yaml` 当前为 `version: 0.0.0-skeleton` / `appVersion: "0.0.0"`、**无 `kubeVersion`**，与根 `VERSION`（`0.2.0`）**不同步**；校验用 `scripts/sync-chart-version.sh --check`（默认只读，drift 即 exit 1）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效）；`kubeVersion` 已定为 `>=1.23.0-0`（由 chart 实际 API 反推），**尚未写入 Chart.yaml**。本文**不得**声称已演练或已同步 —— 上述同步动作截至本文闭环日（2026-10-12）**未执行**。
 
 ```sh
 helm -n <ns> history <release>
@@ -123,7 +129,7 @@ kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdpa
 | **谁决策回退** | **AS 侧决策 + OP-NOC 执行 + OP-NET 配合**（RACI §5.2）。AS-Vendor 对 L0–L4 的选择负责；**呼叫是否进入本 AS** 不在我方决策范围 |
 | **网络侧窗口** | iFC 签约 / 触发灰度、trunk 优先级、摘流的提单与审批在**OP-NET**，**AS 侧不代提、不代批** |
 | **有状态组件窗口的特殊性** | PostgreSQL / Redis 维护需 OP-NOC 批准窗口。⚠️ **Redis 维护窗口内预期出现短暂运行态不可用** —— 在途呼叫状态（会话 / dialog / 反诈速率窗口）都在 Redis，Redis 不可用即在途呼叫无法维持。**这不是缺陷，是已知窗口行为**；处置与恢复见 [`backup-restore.md`](backup-restore.md) |
-| **PG / Redis 拓扑提醒** | chart 内建的是**单副本**，**不是 HA**；Redis HA 仍是未决项 **O5 / D3**（Sentinel）；生产 PG HA 由客户拥有（ADR-0008 / ADR-0026） |
+| **PG / Redis 拓扑提醒** | chart 内建的是**单副本**，**不是 HA**；Redis HA 拓扑取值已裁（**O5 / D3，G7**：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel，沿用 ADR-0008 拓扑、不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据）；生产 PG HA 由客户拥有（ADR-0008 / ADR-0026） |
 | **回退后复核项** | ① 生效配置版本回退到位（`CONFIG_VERSION` 各副本一致）；② 判决结果分布回到预期；③ `as_active_calls` 与 draining 状态收敛；④ **审计行已产生**（append-only，回退本身也留痕）；⑤ 变更单进入终态且**不可再动**；⑥ 双方时间线归档 |
 | **回退不是「一键零影响」** | L0 / L2 只改变 AS 侧行为；**把呼叫从本 AS 引走仍需 S-SBC / S-CSCF 侧配合** |
 
@@ -137,7 +143,7 @@ kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdpa
 |---|---|
 | **日期** | 演练实际执行日期（含时区） |
 | **环境** | 集群标识 / 命名空间 / chart release；⚠️ **当前无真实集群** |
-| **版本 from → to** | 回退前的版本 → 回退后的版本（配置版本填 `CONFIG_VERSION` / 变更单号；镜像版本填 `helm history` 的 revision） |
+| **版本 from → to** | 回退前的版本 → 回退后的版本（配置版本填 `CONFIG_VERSION` / 变更单号；镜像 / manifest 版本填 `helm history` 的 revision + chart `version` / `appVersion`，并与根 `VERSION` 对齐记录 —— 当前 chart 与 `VERSION` 不同步（`0.0.0-skeleton` / `"0.0.0"` vs `0.2.0`），须如实记录三者） |
 | **触发原因** | 现象 + 判定依据；写明是哪个剧本（§2 的 L0–L4 哪一层） |
 | **层次** | L0 / L1 / L2 / L3 / L4 |
 | **双方参与人** | AS-Vendor（决策人 / 执行人）、OP-NOC（执行）、OP-NET / OP-SBC（配合）；**姓名与角色由各方自行记录**，本模板不代填 |
@@ -159,6 +165,6 @@ kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdpa
 | **L0 runtime override 生产接线** | `match_override` 仅单测覆盖 | §2 的 L0 行**当前不可当场执行** | AS-Vendor |
 | **真实 SIP 不掉呼叫** | G-P1-1；draining 证据为**模拟** `active_calls` | §2.4 与 §3.2 阶段 3 的收敛性**未验收** | AS-Vendor（M7 / M8） |
 | **E1 / E4 / E5** | M8 验收（O2 / O3） | L3 回退后的行为判定缺生产证据 | AS-Vendor |
-| **O5 / D3（容灾 / Redis Sentinel）** | 客户 SLA | §4 的 PG / Redis 窗口分级无法定稿 | OP-NET + 维护者 |
+| **O5 / D3（容灾 / Redis Sentinel）** | 客户 SLA | 取值已裁（G7）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（ADR-0008）；**实现未落**（chart 仍单副本渲染，failover 实测行为无证据），§4 的 PG / Redis 窗口分级待客户侧拓扑落地后定稿 | OP-NET + 维护者 |
 | **告警侧确认** | `ASConfigRollbackTriggered` / `ASConfigDrift` 在 `as-alerts.yaml` 中**不存在** | 回退后**没有告警证据**可自动留痕，只能人工记录 | AS-Vendor（M6 后 / O1 裁决后另定） |
-| **本文评审状态** | `AGENT.md` §3.3 需独立 review record | **本文尚无 review record**，待维护者评审 | 维护者 |
+| **本文评审状态** | `AGENT.md` §3.3 需独立 review record | 已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据 | 维护者 |

@@ -1,13 +1,13 @@
-# In-house IMS Application Server（文档暂用名）—— 版本生命周期、EOL 与接口兼容策略
+# In-house IMS Application Server —— 版本生命周期、EOL 与接口兼容策略
 
 > **状态块（阅读本文前先看这里）**
 >
-> - **产品名**：**In-house IMS Application Server（文档暂用名）**，首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。该名称**不是已正式批准的产品名**（`docs/product-packaging-plan.md` §4.3；命名决策落点待补）。
-> - **git repo 名**拟改为 `inhouse-ims-as`，**仅涉及 git 仓库名与 remote URL**；chart name（`3rdparty-as`，`deploy/helm/Chart.yaml:2`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
+> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。
+> - **git repo 名**：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`，`deploy/helm/Chart.yaml:2`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
 > - **本文件归属**：`docs/product-packaging-plan.md` §1 第三批交付物 **3.5（版本生命周期与 EOL 策略）** + 第四批交付物 **4.3（API 版本兼容策略）**，合并成一份文档。
 > - **§3 的决策已落地**：版本生命周期与 EOL 的决定已由 **REQ-NF-16**（`docs/requirements/prd.md:459-470`）+ **ADR-0027**（`docs/architecture/adr/0027-version-lifecycle-and-eol.md`，**accepted，2026-10-09**，已注册于 `docs/architecture/adr/README.md:43`）承载。本文是**面向评审与运维的说明文档**，只忠实转述 ADR-0027 已接受的决定，**不改写、不扩写**其结论。
 > - **§7（交付物 4.3）尚无 ADR**：API 与接口版本兼容策略**尚无决策落点**。本文只给「现状盘点 + 候选方案 + 需要决策的点」，**任何表述都不得被引用为已确认承诺**。出口条件见 §7.4。
-> - **本文尚未评审**：按 `AGENT.md` §3.3，评审必须留下独立 review record；本文当前**没有** review record，待维护者评审。
+> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 > - **本文不含任何容量/性能数字**：O1（容量目标）**未裁决**（`docs/plan.md` §5.1）；`AGENT.md` §2 在 M6 真实 socket 实测与维护者裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延数字。本文因此不给任何容量结论。
 > - **本文不含发布状态声明**：M8 现状是「**RC 产物就绪，退出签字仍搁置**」（`docs/plan.md` §4 M8 行）；本文不把任何 RC 产物写成已发布，也不把任何未验收项写成已验收。
 
@@ -64,7 +64,7 @@
 
 因此本文、以及其它任何交付物中出现的「v1」「v1.1」字样都**不是发行版本**，不得当作交付范围或版本承诺引用。ADR-0027 §Context 也据此把当前状态记为「尚未正式发布 GA 版本」（`0027:19`）。
 
-### 2.4 已知缺口：chart 版本与 `VERSION` 不同步（如实记录，本文只给建议）
+### 2.4 已知缺口：chart 版本与 `VERSION` 不同步（如实记录；修法口径已裁，首次同步未执行）
 
 | 项 | 实际值 | 位置 |
 |---|---|---|
@@ -76,7 +76,7 @@
 
 **缺口的准确表述**：chart 的 `version` / `appVersion` 目前是骨架占位值，**与根 `VERSION` 不同步**；由于 `image.tag` 为空时回落到 `appVersion`，**镜像 tag 与 `app.kubernetes.io/version` 标签当前也不反映产品 release 版本**。`tests/test_version_consistency.py` **不覆盖** chart（它只检查 `VERSION`、`CHANGELOG.md` 与成员 `pyproject.toml`）。
 
-**建议修法（建议，本文不改任何 chart/代码）**：把「发布时 chart `version` / `appVersion` 与 `VERSION` 对齐」写成发布检查清单的一条，并在 `make chart-check` 之外增加一致性断言；`VERSION` 仍是唯一源头，chart 值是它的**派生物**，不构成第二个家。
+**已裁修法（G4 / A6，2026-10-10 裁；2026-10-12 脚本落地）**：把「发布时 chart `version` / `appVersion` 与 `VERSION` 对齐」写成发布检查清单的一条，并在 `make chart-check` 之外增加一致性断言；`VERSION` 仍是唯一源头，chart 值是它的**派生物**，不构成第二个家。该口径已落地为 `scripts/sync-chart-version.sh`（默认 `--check` 只读，drift 即 exit 1；`--apply` 才写入）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效，本文不改任何 chart/代码）。
 
 ---
 
@@ -111,11 +111,11 @@
 | 产品 release 号 | bump 根 `VERSION` | `AGENT.md` §8、§14；`ADR-0018` |
 | 变更记录 | `CHANGELOG.md`，遵循 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)，版本遵循 SemVer；标题层级为 `## [x.y.z] - 未发布（Unreleased）`（当前首条为 `## [0.2.0] - 未发布（Unreleased）`，`CHANGELOG.md:6`），其下按 `### 新增（Added）` / `### 变更（Changed）` 分节（`:8`） | 格式说明 `CHANGELOG.md:3-4`；标题与分节结构 `:6`、`:8`、`:20`、`:29`、`:67` |
 | 一致性 | `CHANGELOG.md` 最新标题必须等于 `VERSION`，否则守卫失败 | `tests/test_version_consistency.py:63-70` |
-| chart 版本 | **现状缺口**：chart `version` / `appVersion` 与 `VERSION` 不同步（见 §2.4）；发布时应对齐，本文只作建议 | `deploy/helm/Chart.yaml:5-6` |
+| chart 版本 | **现状缺口**：chart `version` / `appVersion` 与 `VERSION` 不同步（见 §2.4）；发布时应对齐（G4 / A6 已裁口径，脚本 `scripts/sync-chart-version.sh` 已就绪；首次 `--apply` 待维护者执行） | `deploy/helm/Chart.yaml:5-6` |
 | 镜像 tag | `image.tag` 为空时回落到 `Chart.appVersion`；仓库地址为占位值 `registry.example.com/3rdparty-as`，安装时由客户内网 registry 指定 | `deploy/helm/values.yaml:76-82`；`deploy/helm/templates/_helpers.tpl:38-41` |
 | 发布 / 打 tag | **tag 是维护者的步骤**，agent 不打 tag、不 push | `AGENT.md` §10.4 结束仪式、§11 |
 
-**工具现状（如实记录）**：`Makefile` 中**没有** bump / release / version 类 target —— 现有 target 只有 `lint` / `type` / `test*` / `chart-check` / `alert-check` / `m2-*` / `m5-*` / `m7-*` / `demo-*` / `gate` / `gate-native` / `gate-strict`。版本 bump 与 chart 对齐目前是**人工步骤**，无自动化。
+**工具现状（如实记录）**：`Makefile` 中**没有** bump / release / version 类 target —— 现有 target 只有 `lint` / `type` / `test*` / `chart-check` / `alert-check` / `m2-*` / `m5-*` / `m7-*` / `demo-*` / `gate` / `gate-native` / `gate-strict`。chart↔`VERSION` 一致性已有脚本：`scripts/sync-chart-version.sh`（默认 `--check` 只读，drift 即 exit 1；`--apply` 才写入，首次执行时机待维护者决定）；`VERSION` bump 本身仍**无** Makefile target，保持**人工步骤**。
 
 ### 4.2 升级语义（ISSU = draining）
 
@@ -228,7 +228,7 @@ stateDiagram-v2
 | 告警与指标契约 | [`deploy/alerts/README.md`](../../deploy/alerts/README.md) | 指标名 / 标签契约表 |
 | 升级回退 | [`../operations/rollback-playbook.md`](../operations/rollback-playbook.md) | **已落盘**；真实集群演练仍 blocked（G-P1-10） |
 | 责任边界（RACI） | [`responsibility-matrix.md`](responsibility-matrix.md) | 已存在；客户配合项的分工依据 |
-| 命名（暂用名 / repo 名） | [`docs/product-packaging-plan.md`](../product-packaging-plan.md) §4.3 | 待补正式决策落点 |
+| 命名（描述名 / repo 名） | [`docs/plan.md`](../plan.md) §0 决策记录 G8 行 | G8-2：描述名 `In-house IMS Application Server` 已正式采用（非商标 / 非品牌宣称）；G8-3：repo rename `inhouse-ims-as` 维护者报告已完成；chart name / 镜像名 / OTel 服务名仍为 `3rdparty-as` |
 | 版本称呼纪律（无 v1 / v1.1 定义） | [`docs/plan.md`](../plan.md) §0「版本称呼」行（`:16`） | 维护者 2026-10-07 确认 |
 
 ---
@@ -238,7 +238,7 @@ stateDiagram-v2
 | 项 | 状态 | 阻塞源 | 何时可闭合 |
 |---|---|---|---|
 | 4.3 API 版本兼容策略无 ADR | **未决** | 无 REQ / 无 ADR（§7.3 Q1–Q6） | 走 §7.4 四步出口条件 |
-| chart `version` / `appVersion` 与 `VERSION` 不同步 | **未决**（已知缺口，本文 §2.4 只给建议） | 无人拥有发布对齐动作；无自动化 | 发布检查清单落地 + 一致性断言（需维护者决策） |
+| chart `version` / `appVersion` 与 `VERSION` 不同步 | **口径已裁（G4 / A6），首次同步未执行**（已知缺口） | 同步动作由 `scripts/sync-chart-version.sh` 承担（默认 `--check` 只读、drift 即 exit 1；`--apply` 才写入）；首次 `--apply` 时机与取值待维护者决定 | 维护者执行首次 `--apply` |
 | 摘流期间新呼叫的停用配合 + 升级演练证据 | 依赖客户侧；**暂无真实集群证据** | 需 S-CSCF / S-SBC 侧 iFC 停用配合；真实集群演练受 M8 7.2d 阻塞 | 真实 S-SBC / 客户 K8s 环境具备后（M8 7.2d 解锁） |
 | 发布 tag | 由维护者执行 | `AGENT.md` §10.4 / §11：agent 不打 tag、不 push | 维护者执行 |
 | M8 退出签字 | **搁置** | `docs/plan.md` §4 M8 行：RC 产物就绪但退出签字待维护者 | 维护者签字；本文不把 RC 当作已发布 |

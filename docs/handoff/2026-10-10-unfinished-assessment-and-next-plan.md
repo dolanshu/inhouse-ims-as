@@ -263,11 +263,12 @@
 - **为什么未完成**：Phase A 的改动未经真栈复验；C/D 无产物。
 - **出口判据**：
   - [x] A2 完成后，Phase A 的三个复验目标**每一条**都有真实执行结果并留档 —— **2026-10-11 完成**：① `-m contract` 两个 E1 文件 → **7 passed**（含 `test_e1_s1_accept_all_harness_returns_200` 与 `test_e1_s1_accept_all_from_contract_invite`）；② `test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200` → **1 passed**。`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-phase-a-revalidation-2026-10-11.txt, 2026-10-11)`
-  - [ ] Phase D 的范围与批次已排期（写入本文或新 plan，需维护者确认优先级）—— **未完成（2026-10-11 标注）**：S1 的 14 条回放已由仓内载体 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md) 承接，但用例未实现；S5–S11 排期**待维护者确认优先级**
+  - [x] Phase D 的范围与批次已排期（写入本文或新 plan，需维护者确认优先级）—— **2026-10-12 完成**：S5–S11 排期与优先级已定稿，落 [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D（P1 S5 两腿归一化对拍 → P6 S11 竞态；S8 登记为阻塞项：基线缺 Route / Record-Route 头，补采前不排；S1 的 14 条逐条 header 对拍仍由 wave2 register 跟踪）。优先级由维护者 2026-10-12 授权 agent 自行判断；**未实现任何用例、未签收任何 REQ**。 —— **未完成（2026-10-11 标注，原文保留）**：S1 的 14 条回放已由仓内载体 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md) 承接，但用例未实现；S5–S11 排期**待维护者确认优先级**
   - [x] 该 plan 文末 Sign-off 三框的处置（勾选或标注未完成）已明确 —— **2026-10-11 完成**：框 1（Phase A）已勾选；框 2（Phase C CI job）与框 3（Phase D）已标注未完成并写明依据
 - **依赖**：A2（先有真栈）。
 - **谁做**：**agent**（Phase D 排期需维护者确认优先级）。
 - **状态（2026-10-11 追加）**：**除 Phase D 排期外已完成，待维护者评审**。附注：该 plan §0 记载的「本机有 `.so` 时 2 failed」在本次真栈复验中**未复现**；这不构成对任何 REQ 的签收。
+- **状态（2026-10-12 追加）**：**Phase D 排期亦已完成**（优先级 P1–P6 + S8 阻塞登记，见上方出口判据行）；A3 出口判据至此全部闭合，待维护者评审。
 
 #### A4 · e2e 落地
 
@@ -302,17 +303,20 @@
 - **依赖**：A6 裁决（其中两项）、有 `promtool` 的环境、helm（chart 验证）。
 - **谁做**：**agent + 需外部环境（`promtool` / helm / 集群）**。
 - **状态（2026-10-11 追加）**：**5 项中 1 项完成（`promtool` 语法校验）**；抓取接线（X1）与版本口径两项**仍待裁决**，chart 未改。
+- **状态（2026-10-12 追加）**：**抓取接线选型（X1）按维护者 2026-10-12 决定后置到下一个 release** —— 该项需运营商 monitoring-integration 标准输入才能继续，在输入到位前不选边、不改 chart。本日对 `deploy/helm/Chart.yaml` 的改动**仅限 A6 的 version / appVersion / kubeVersion**，与抓取接线无关。后续状态盘点对 X1 一律只引指针、不再单列（与 §12「已裁不做登记区」同口径）。登记落点：[`2026-10-11-open-adjudication-register.md`](2026-10-11-open-adjudication-register.md) §3 X1 的 2026-10-12 追加记录。
 
 #### A6 · 版本口径裁决（先裁决，再动）
 
 - **现状与证据**：根 `VERSION` = `0.2.0`；`deploy/helm/Chart.yaml` = `0.0.0-skeleton` / `appVersion: "0.0.0"`；chart 无 `kubeVersion`。
 - **为什么未完成**：`AGENT.md` §8 规定任何成员不得拥有 `VERSION` 文件 → 同步动作的权限归属未定。
 - **出口判据**：
-  - [ ] 维护者书面裁决：`Chart.yaml` 的 `version` / `appVersion` 是否同步到根 `VERSION`、由谁改；
-  - [ ] 维护者书面裁决：chart 是否声明 `kubeVersion`，若是则取值；
-  - [ ] 裁决结果落 `plan.md` §5（或 ADR），再执行改动。
+  - [x] 维护者书面裁决：`Chart.yaml` 的 `version` / `appVersion` 是否同步到根 `VERSION`、由谁改 —— **2026-10-12 已裁**：维护者裁定「由谁改」＝ **(a) 写进 release 流程 / 脚本，自动同步**；实现为 `scripts/sync-chart-version.sh`（默认 `--check` 只读校验并 exit 1，显式 `--apply` 才写入）；
+  - [x] 维护者书面裁决：chart 是否声明 `kubeVersion`，若是则取值 —— **2026-10-12 已裁**：`kubeVersion` = **`>=1.23.0-0`**（由 chart 实际 API 反推；约束最大者为 `autoscaling/v2` HPA 与 `ttlSecondsAfterFinished` Job TTL，均 **K8s 1.23 GA**）；
+  - [ ] 裁决结果落 `plan.md` §5（或 ADR），再执行改动 —— **部分完成**：裁决已落 `docs/plan.md` §0 决策记录表（非 §5）；**执行改动未做** —— `Chart.yaml` 当前仍为 `0.0.0-skeleton` / `appVersion: "0.0.0"`、无 `kubeVersion`，且与根 `VERSION`（`0.2.0`）**仍不同步**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效）。首次同步的时机与取值由维护者另行决定。
+  - [x] 首次 chart 同步已执行 —— **2026-10-12 完成**：维护者当日裁定「何时同步成什么由 agent 自行判断」。执行 = 落入裁决的 `kubeVersion: ">=1.23.0-0"` + `scripts/sync-chart-version.sh --apply`（`version: 0.2.0` / `appVersion: "0.2.0"`，根 `VERSION` 为唯一源）。复验：`--check` exit 0；`make chart-check` → `chart-check: OK`（helm 3.16.4，`tools/bin/helm`）。三元组 `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)`。**边界**：G4「当前不修改」仅由维护者 2026-10-12 指令为本次同步动作解除，不构成后续改 `VERSION` 的授权；`CHANGELOG.md` 已按 §7.2 追加条目（未 bump 版本）。
 - **依赖**：维护者裁决。
 - **谁做**：**维护者（裁决）→ agent（执行）**。
+- **状态（2026-10-12 追加）**：**前两项裁决已得，第三项（执行改动）已于同日完成** —— 见上方新增的首次同步行；反推明细与脚本实测见 [`2026-10-12-a6-b-packaging-execution.md`](2026-10-12-a6-b-packaging-execution.md) §1，执行记录见 [`2026-10-12-remaining-items-execution.md`](2026-10-12-remaining-items-execution.md) §1。**chart 已同步，但不得据此推出「已发版」** —— `VERSION` 未 bump、未打 tag、M8 退出签字仍后置。
 
 ### Lane B · 维护者裁决（阻塞验收与多个交付物）
 
@@ -320,49 +324,76 @@
 
 - **现状与证据**：`docs/plan.md` §5.1 中 O1 仍 open（「维护者目标裁决仍 open」）。
 - **阻塞**：HPA 阈值（M5）、容量类告警、`docs/product/ne-datasheet.md` 的容量取值、包装批次 **4.1 性能基准报告**。
-- **出口判据**：- [ ] 维护者给出目标值并落 `plan.md` §5.1；- [ ] 上述 4 项下游随之更新并留 review record。
+- **出口判据**：- [ ] 维护者给出目标值并落 `plan.md` §5.1 —— **未完成**：O1 **取值仍 open**（G5 只裁了流程）；2026-10-12 落的是「**内部工程目标下限基线 = 本机 loopback 模型下 CPS 1280 无失败**」，属**下限基线**而非目标值，故本框保持未勾；- [ ] 上述 4 项下游随之更新并留 review record —— **未完成**：4 项下游（HPA 阈值、容量类告警、`ne-datasheet.md` 容量取值、4.1 报告）**一项未更新**，且前两项明确禁止在 O1 取值前落。
 - **谁做**：**维护者**。
+- **状态（2026-10-12 追加）**：**建议已采纳并部分落盘，取值仍未裁。**
+  按 2026-10-12 采纳的建议，O1 **分两层落，本次只落能落的那层**：
+  ① **内部工程目标下限基线**（CPS 1280 无失败，loopback 模型）已落 `plan.md` §5.1「采纳与确认」段；
+  ② **对外承诺值不填**，状态「待饱和点测量」。
+  饱和点探测已做（20→1280 CPS 全成功、未测到饱和点），见
+  [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md) §4。
+  **未落任何容量取值 / HPA 阈值 / 容量类告警**；G5 裁决句继续有效。
+- **状态（2026-10-12 晚些时候追加）**：**O1 取值按维护者 2026-10-12 指令（「B1 容量目标值由 agent 自行判断执行」）落定一层**：
+  ① **内部工程目标值 = loopback 模型下 ≥ CPS 1280 无失败**（2026-10-12 饱和点探测实测达成；由「已验证下限基线」升格为内部工程目标 / 回归保持线，**仅限内部，不得写入任何对外材料**）；
+  ② **对外承诺值仍不填** —— ne-datasheet §3 的填值准入条件（业务判决路径实测 / 饱和点观测 / 目标环境多副本）均未满足。
+  **HPA 阈值、容量类告警、`ne-datasheet.md` 容量取值、4.1 正式报告四项下游维持阻塞**，逐项精确理由见 `plan.md` §5.1 的 2026-10-12 追加段与执行记录 [`2026-10-12-remaining-items-execution.md`](2026-10-12-remaining-items-execution.md) §3。**本追加不签收任何 REQ。**
 
 #### B2 · O4 呼叫轨迹保留期 + D5 轨迹存储选型
 
 - **现状与证据**：`docs/plan.md` §5.1 O4（阻塞 M4）、§5.2 D5（阻塞 M4，与 O4 相关）均 open。
 - **阻塞**：`docs/product/security-privacy.md` 的 PDPO 保留期限与存储方案。
-- **出口判据**：- [ ] O4 保留期已裁决；- [ ] D5 存储选型已裁决；- [ ] `security-privacy.md` 相应章节按裁决更新。
+- **出口判据**：- [x] O4 保留期已裁决 —— **2026-10-10 已裁（默认 10 天、部署可配）**；- [x] D5 存储选型已裁决 —— **2026-10-10 已裁（in-cluster PostgreSQL）**；- [ ] `security-privacy.md` 相应章节按裁决更新 —— 文档侧同步已于 2026-10-11 完成，但**能力本身未实现**，故本框保持未勾。
 - **谁做**：**维护者**。
+- **状态（2026-10-12 追加）**：**取值已裁、实现未落；本轮不启动，已单独留 item。**
+  维护者 2026-10-12 决定：requirement 与 ADR 起草属大工程，**本轮不做，单独留 item，后续做**；
+  功能实现放**下个 phase，当前不做**。载体：[`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md)。
+  注意：`security-privacy.md` §4.1 记录的「chart **无备份 Job**」这一事实**未变**，起草 ADR 时必须处理。
+- **状态（2026-10-12 晚些时候追加）**：**按维护者 2026-10-12 决定，B2 / B3 的 requirement / ADR 起草（含 B3 的 RPO / RTO 取值）整体后置到下一个 release** —— 本轮不启动，后续状态盘点不再单独提出（与 §12「已裁不做登记区」同口径）。同日决定与四项启动条件已追加到载体 [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md)。
 
 #### B3 · O5 容灾等级 + D3 Redis HA 拓扑
 
 - **现状与证据**：`docs/plan.md` §5.1 O5（N+1 节点 vs N+M 机架/AZ）open；§5.2 D3 的客户端接线已 resolved，**HA 拓扑仍挂在 O5**。
 - **阻塞**：`docs/operations/backup-restore.md` 的 RPO/RTO 与 HA 章节。
-- **出口判据**：- [ ] O5 等级已裁决；- [ ] D3 HA 拓扑随之确定；- [ ] `backup-restore.md` 相应章节按裁决更新。
+- **出口判据**：- [x] O5 等级已裁决 —— **2026-10-10 已裁（站点内 N+1 + 跨站 1+1 warm standby）**；- [x] D3 HA 拓扑随之确定 —— **2026-10-10 已裁（Redis primary/replica + Sentinel，ADR-0008）**；- [ ] `backup-restore.md` 相应章节按裁决更新 —— 文档侧同步已于 2026-10-11 完成，但**RPO / RTO 数值仍未裁、实现未落**，故本框保持未勾。
 - **谁做**：**维护者**。
+- **状态（2026-10-12 追加）**：**取值已裁、实现未落；本轮不启动，已单独留 item。** 载体同上。
+  额外阻塞：**RPO / RTO 数值仍未裁** —— 该值不定，requirement 无处落验收标准（见载体 §4 启动条件）。
 
 #### B4 · D1 Python 3.10 EOL
 
 - **现状与证据**：`docs/plan.md` §5.2 D1 —— Python 3.10 在 2026 年 10 月到达 EOL；产品锁 3.10 因 sippy 验证过该版本。
 - **为什么未完成**：二选一未定 —— 迁移，或在 ADR 里登记为**已接受 risk**。
-- **出口判据**：- [ ] 维护者选定路径；- [ ] 若选 risk 接受，须有对应 ADR 记录（`AGENT.md` §15）。
+- **出口判据**：- [x] 维护者选定路径 —— **2026-10-12：选项①（Python 3.12 验证 spike）已执行并通过**（依据：维护者 2026-10-12 授权 B4 执行 + G1 已裁「选项①」）；- [ ] 若选 risk 接受，须有对应 ADR 记录（`AGENT.md` §15）—— **不适用**（选的是 ①，不是 risk 接受）。
+  - **spike 实测结论（2026-10-12）**：CPython **3.12.14** 下，5 个运行时依赖全部可装、native 扩展可编可加载、`make gate-native` **exit 0**（1099 passed / 3 skipped）。
+  - **已完整回滚**：7 处 `requires-python` pin + `uv.lock` 全部还原（`git diff` → **0 处**），重编回 cpython-310，`gate-native` **1100 passed / 2 skipped**，与 spike 前逐字一致。
+  - **正式迁移仍未做**：需 requirement → ADR → review（`AGENT.md` §3），并把 `requires-python` / `UV_PYTHON` 口径在 CI 固定。
+  - 执行记录：[`2026-10-12-a6-b-packaging-execution.md`](2026-10-12-a6-b-packaging-execution.md) §4
 - **谁做**：**维护者**。
+- **状态（2026-10-12 追加）**：**spike 已完成并回滚；正式迁移未启动。** 附带事实：`requires-python = ">=3.10,<3.11"` 实为 **7 处**（`platform`、`services/config-service`、`services/console`、`apps/translation`、`apps/anti-fraud`、`testbed/load`、`testbed/simulators`），非先前文档所记的 5 处。
 
 #### B5 · M8 的 N2 九项书面裁决 → N3 → N4
 
 - **现状与证据**：`docs/handoff/2026-10-07-m8-next-step-plan.md`：N2（9 项书面裁决，含 M5D-1…M5D-6 落 `plan.md` §5、NF-3 改 n-a、D6 放 v1.1）→ N3（open 里可签的行）→ N4（停止线）。
 - **为什么未完成**：N2 未裁决；N3 未执行。
 - **出口判据**：
-  - [ ] N2：9 项裁决有书面记录并落 `plan.md` §5；
-  - [ ] N3：open 中确定可签的行按流程签收；
-  - [ ] N4：停止线全程未被越过。
+  - [x] N2：9 项裁决有书面记录并落 `plan.md` §5 —— **2026-10-12 完成**：维护者**授权代签**，九项逐项落正本并附依据；`M5D-1…M5D-6` 六行已写入 `plan.md` §5.2-bis。代签总记录：[`2026-10-12-m8-n2-countersign-record.md`](2026-10-12-m8-n2-countersign-record.md)。**不是维护者亲签**，各正本签字一律写「agent 代签（维护者 2026-10-12 授权）」
+  - [ ] N3：open 中确定可签的行按流程签收 —— **未执行**。「哪些 open 行可签」本身是判断，需维护者参与；不代签
+  - [x] N4：停止线全程未被越过 —— **2026-10-12 复核成立**：代签九项均**正式化既有结论**，未创造新结论；未改 `report.md`、未改任何 REQ 签收状态、未宣称全绿
 - **谁做**：**维护者（裁决与授权）+ agent（执行）**。
+- **状态（2026-10-12 追加）**：**N2 已代签完成，N3 已执行。** 关键边界：**M5 REQ 级仍是不通过、M8 仍是「RC 就绪、待退出签字」**；「工程完成」≠「里程碑签收」≠「REQ 全绿」，`plan.md` 所载「维护者 M6 里程碑签收仍 open」原样保留。
+- **状态（2026-10-12 晚些时候追加）**：**N3 已执行**（维护者 2026-10-12 指令「B5 的 N3 一并完成、自行判断」）：open 中可签的 7 行（F-1 / F-2 / F-3 / F-6 / F-7 / F-12 / F-14）按 N3 口径逐行签「工程证据接受」，签字一律写「agent 代签（维护者 2026-10-12 授权）」；矩阵计数 **pass 9→16、open 24→17**（剩余 17 行与 N4 停止线清单逐行一致）。**N4 停止线未被越过**：`report.md` §0.5 的 open / blocked 计数一字未改；M5 REQ 级仍不通过、M8 仍「RC 就绪、待退出签字」；不宣称 test-plan 整句全绿。明细见矩阵「M8 N3 执行结果」节与 [`2026-10-12-m8-n2-countersign-record.md`](2026-10-12-m8-n2-countersign-record.md) N3 节。
 
 #### B6 · 产品化包装 16 份文档的评审
 
 - **现状与证据**：`docs/product/`（6 份）、`docs/operations/`（8 份文档 + 2 份看板 JSON + README）、`docs/delivery/`（3 份文档 + 脚本）共 **16 份已落盘**，`docs/reviews/product-packaging-execution-record-2026-10-10.md` 记录为 **0 份已评审**。
 - **为什么未完成（且重要）**：这批文档 materially 影响「Phase 1 能否当作工程完成」——未经评审的包装文档不得作为对外交付或验收依据。
 - **出口判据**：
-  - [ ] 16 份文档逐份评审，结论（accept / 需修改 / 驳回）留 review record；
-  - [ ] 需修改项闭环后复评；
-  - [ ] `docs/product-packaging-plan.md` §5 的批次状态按评审结果更新。
+  - [x] 16 份文档逐份评审，结论（accept / 需修改 / 驳回）留 review record —— **2026-10-12 完成**：review record = [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（accept 0 / 需修改 16 / 驳回 0）；结论待维护者确认；
+  - [x] 需修改项闭环后复评； —— **未执行（2026-10-12）**：16 份需修改项均未闭环；**〔2026-10-12 收尾追加；上一分句为闭环前状态，保留为审计链〕已执行**：16 份需修改项已全部闭环并复评 —— accept 16 / 需修改 0 / 驳回 0（待维护者确认），结论见 [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §7。
+  - [x] `docs/product-packaging-plan.md` §5 的批次状态按评审结果更新。 —— **2026-10-12 完成**：§5 状态列已追加评审结论，表后已追加评审回写段；
 - **谁做**：**维护者**。
+- **状态（2026-10-12 追加）**：评审已执行并落盘（agent 分批评审 + 主 agent 抽查复核），16 份全部「需修改」，结论与明细见 review checklist §6；`product-packaging-plan.md` §5 已同步。**出口判据第 1、3 项已闭环，第 2 项（闭环后复评）未执行。** 本追加不签收任何 REQ/里程碑；修改动作未授权执行，待维护者确认结论后另行安排。
+- **状态再追加（2026-10-12，需修改项闭环 + 复评）**：维护者指示「处理」评审清单后，16 份需修改项已全部闭环并复评 —— 复评结论见 [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §7（accept 16 / 需修改 0 / 驳回 0，**待维护者确认**）；B6 出口判据第 2 项已执行。改动面 21 个文件（16 份文档 + `docs/acceptance/test-plan.md` e2e 口径根因 + 看板 README + 3 个交付脚本）；未改 `deploy/`、`VERSION` 与任何代码；未执行任何 git 写操作。仍未闭环项（首次 chart 版本 `--apply`、`kubeVersion` 写入、RPO / RTO、O1、X1、真实集群）与依赖见清单 §7.4。**本追加不签收任何 REQ / 里程碑。**
 
 ### Lane C · 需外部环境的验收（本机 / 本仓库无法自证）
 
@@ -378,7 +409,22 @@
 
 - **依赖**：B2（C1 的恢复路径与 B3 的 HA 拓扑相关）、B5（M8 重开前提）。
 - **排期**：由维护者排；本文不假定时间。
-- **追加说明（2026-10-10）**：上表每行已就地追加状态标记（原文未改）。按 §0 第 2 项裁决，**C2 / C3 / C4 整体后置**；**C1 与 C5 仅其中需要运营商 PKI 或客户 K8s 的部分后置**。其中 **C1 的本地真栈部分不属于外部 IOT**，仍随 A2 / A3 在 W0 推进，边界见 §5 的「W0 范围调整」追加段。本 lane 其余约定不变：**在拿到环境之前不得宣称绿**。
+- **追加说明（2026-10-10）**：上表每行已就地追加状态标记（原文未改）。按 §0 第 2 项裁决，**C2 / C3 / C4 整体后置**；**C1 与 C5 仅其中需要运营商 PKI 或客户 K8s 的部分后置**。
+- **追加说明（2026-10-12）**：维护者已确认外部环境采证**不做**，C 栏与 W3 已一次性登记为「已裁不做」——**见 §12**，后续状态盘点不再逐项复述本表。其中 **C1 的本地真栈部分不属于外部 IOT**，仍随 A2 / A3 在 W0 推进，边界见 §5 的「W0 范围调整」追加段。本 lane 其余约定不变：**在拿到环境之前不得宣称绿**。
+
+**Lane C 状态追加（2026-10-12；上表各行原文保留不改）**
+
+- **C1 的「本机侧准备」已完成**：W3 表点名的 `make m7-platform-recovery-build` 与
+  `make m7-platform-two-leg-build` 均已于 2026-10-11 / 2026-10-12 构建成功，
+  `_resip_recovery` 与 `_resip_two_leg` 两个扩展在位。**这只是准备动作，不等于 C1 任何一项已验收。**
+- **C1 的本地真栈部分已随 A2 / A3 推进**（S1–S4 harness、自签证书 TLS smoke 四项全过），
+  但**需要运营商 PKI 或客户 K8s 的外部部分仍后置**。
+- **C2 / C3 / C4 / C5 整体仍后置**，未做任何采证。**不以本机真栈绿充抵 C 栏任何一项。**
+- 本机新增的实测事实（**不闭合任何 C 栏项**）：`make test` 的 integration 层已跑全
+  （`200 passed / 1 skipped / exit 0`，需起 `deploy/compose` 的 PostgreSQL 与 Redis）；
+  另发现 **PG 15.18 下 config-service 集成测试 76 errors**（`AmbiguousFunction`，PG 14+ 类型变更），
+  已如实落 `FAIL-` 证据、**未改任何产品代码**。详见
+  [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md) §2。
 
 ### Lane D · 延后 / 候选（不纳入当前里程碑）
 
@@ -391,6 +437,16 @@
 
 - **出口判据**：- [ ] 维护者确认归属（v1.1 / 按需 / 取消）；- [ ] 若启动，须走 requirement → ADR → HLD/LLD → 契约 → 代码+测试 → 验收项 + review record（`AGENT.md` §3）。
 - **谁做**：**维护者（决定是否启动）**。
+- **状态（2026-10-12 追加）**：**四项归属仍未确认**。其中 **4.3（API 版本兼容策略）** 已与 B6 评审清单关联
+  （`product/version-lifecycle.md` §7 以「候选、未决策」形式存在，**无 ADR**）；
+  4.2 / 4.4 / 4.5 仍为「按计划未做」。确认归属只需对每项三选一（**v1.1 / 按需 / 取消**），
+  见 [`2026-10-12-a6-b-packaging-execution.md`](2026-10-12-a6-b-packaging-execution.md) §6。
+- **状态（2026-10-12 晚些时候追加）**：**四项归属已由维护者授权 agent 三选一裁定**：
+  **4.2 长稳报告 → v1.1**（生产就绪评审需要稳定性证据，属下一批次交付）；
+  **4.3 API 版本兼容策略 → v1.1**（收口 `version-lifecycle.md` §7 的「候选、未决策」占位，成本低）；
+  **4.4 白皮书 → 按需**（商业材料，有对外叙事需求时再写）；
+  **4.5 能力开放机制 → 按需**（插件化机制本身未建，文档待机制落地再写，避免凭空写）。
+  口径注记：「v1.1」按本表既有用法指**下一批次**，**不是正式发行版本定义**（正式定义仍按 `plan.md` §0「版本称呼」行，要定义须经维护者确认）。已同步 `product-packaging-plan.md` §5 与 `plan.md` §0 决策记录。
 
 ---
 
@@ -507,6 +563,8 @@
 **出口判据**：每项有留档证据 + review record；**在拿到环境之前不得宣称绿**。
 
 **明确不动**：不以本机 skip / 本地门禁绿充抵 C 栏任何一项。
+
+**追加（2026-10-12）**：C 栏已登记为「已裁不做」，**见 §12**；本节此后不再作为待办出现。
 
 ### 附：本机可复制命令一览
 
@@ -867,7 +925,7 @@ D1 那一行写的是：**「产品锁 3.10 是因为那是 sippy 验证过的�
 | **A5 抓取接线**（annotation vs ServiceMonitor/PodMonitor） | **X1 仍待运营商 monitoring-integration 标准输入**；`deploy/helm/` 一个字节未动 | 外部输入 + 维护者裁决 |
 | **A6 版本口径的执行** | G4 写明「当前不修改 `VERSION` 与 `Chart.yaml`」；`kubeVersion` 最小值「本次不作数值裁决」 | 维护者裁决 + release 流程 |
 | **W2 · B1–B6** | B1 **取值仍 open**；B2 / B3 / B4 取值已裁但实现未落未授权；B5 / B6 属**维护者**动作 | 维护者 |
-| **W3 · C1–C5** | 需外部环境；§0 第 2 项 hold **继续有效**。**不以本机真栈绿充抵任何一项** | 外部环境 + 维护者重启授权 |
+| **W3 · C1–C5** | **已裁不做（2026-10-12），见 §12** —— 后续不再逐项复述。不做的影响（哪些 REQ 长期 open）已在 §12.1 **一次性写清** | 已登记；不再作为待办 |
 | **Phase C / Phase D** | CI job 属配置变更；S5–S11 排期需维护者确认优先级 | 维护者授权 |
 
 ### 11.3 三条不得被误读的边界
@@ -956,3 +1014,69 @@ skip 掩盖的不只是「没跑」，还掩盖了「跑了会红」。
 本次**未执行任何 git 写操作**（未 `commit` / `add` / `push` / `tag` / 建分支 / 改 remote）；
 全部改动停留在工作树，commit 拆分由维护者决定。
 
+
+---
+
+## 12. 已裁不做登记区（2026-10-12）
+
+> **本节的目的：把「外部环境不做」这件事一次性登记，后续任何状态盘点只引指针，不逐项复述。**
+>
+> **维护者 2026-10-12 明确**：外部环境采证**已确认多次不做**，且要求
+> **以后不再单独拿出来说**。本节即该决定的落盘载体。
+>
+> **本节不是把 C 栏标记为完成** —— 「不做」不等于「closed」；它只表示
+> **不再作为待办反复出现**。
+
+### 12.1 登记表（C 栏一次性登记为「已裁不做」）
+
+| 项 | 登记结论 | 不做的影响（**只说一次**） |
+|---|---|---|
+| **C1** 外部部分 | **不做** | E1 / E4 / E5 中需要运营商 PKI 或客户 K8s 的部分长期 open（本地真栈部分已随 A2 / A3 完成） |
+| **C2** D-1 运营商 PKI + 外网 S-SBC | **不做** | REQ-S-2 / REQ-S-3 长期 open |
+| **C3** D-2 客户 K8s REQ-NF-1 live | **不做** | REQ-NF-1 live（kill / restart / BYE）长期 open |
+| **C4** 包装 2.4 摘流 / 2.5 备份恢复演练 | **不做** | 上述两项演练记录缺失 |
+| **C5** REQ-F-13 / F-15 / S-4 / PostgreSQL 16 | **不做** | 四项补测长期 open |
+| **W3** | **随 C 栏一并登记为不做** | 同上 |
+
+### 12.2 后续口径（本节重点）
+
+1. **任何状态盘点、汇报、handoff、后续 session 的开场，涉及 C 栏一律只写「见 §12」，
+   不逐项展开、不单独提醒、不再列入「待维护者动作」。**
+2. `docs/acceptance/report.md` 的 open / blocked 计数**不因本节而改** —— 这些 REQ 仍是 open，
+   不做的后果已一次性写在上表，此后不再复述。
+3. 本节**不改写** Lane C 表格与 §5 W3 的既有原文，只在其后追加本节；两处已各加指针。
+4. 若将来维护者重启外部采证，**届时**重新排期，并在本节**追加**重启记录，不改写本节。
+
+### 12.3 一句话状态
+
+**外部环境采证：已裁不做（2026-10-12）。后续见本节，不再单列。**
+
+---
+
+## 13. A4 的状态澄清（2026-10-12）
+
+> 维护者问「A4 是 e2e，到底要我确认什么」。本节是一次性澄清，**结论是：A4 不需要你再确认任何事**。
+
+**A4 的四项裁决已于 2026-10-10 全部落盘（§0-A.6 G2 / A4-1…A4-4），并已于 2026-10-11 / 2026-10-12 全部执行完毕：**
+
+| 裁决 | 状态 | 执行结果 |
+|---|---|---|
+| **A4-1** 新建独立 `testbed/e2e/test_sip_first_edition.py`，保留现有 integration tests | ✅ 已裁 + 已执行 | 新建；`test_product_path.py` 的 `integration` 标记未动 |
+| **A4-2** 缺必需 native extension 时 e2e **fail**，不用 skip 充替 | ✅ 已裁 + 已执行 | 实测：移走 `.so` 后 **8 failed / 0 skipped** |
+| **A4-3** Wave 2 回放后置到独立 issue（仓内载体） | ✅ 已裁 + 已执行 | Wave 2 已落地（`test_s1_replay_contract.py`），载体已回写 §6 |
+| **A4-4** kind e2e 方向是 PR-required 的 E2E policy | ✅ 已裁 | 裁决明写「**仅**是政策方向登记，**不构成任何配置变更授权；本任务不改任何配置文件**」 |
+
+**A4 出口判据 3/3 已勾**（裁决有书面答复 / Wave 1 落地且稳定 / e2e 计划文档状态已更新）。
+
+**一次更正（上一轮我说错了一处）**：我在 2026-10-12 晚些的汇报里写了「等你一句话的：A4 的 Phase D 排期优先级」——
+**这是我把 A3 和 A4 混了**。Phase D 属于 [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md)
+（即 **A3** 的收尾：S5–S11 真栈用例），**不是 A4 的事项**。A4 本身无待确认项。
+
+### 13.1 A4 相关但**不**属于 A4 的两件事（若你要推进，是这两件）
+
+| 事项 | 归属 | 需要你做什么 |
+|---|---|---|
+| S5–S11 真栈用例排期 | **A3**（native plan Phase D） | 定优先级（可选：全部做 / 只做某几个 / 继续 gap 记录） |
+| e2e 层是否重新纳入 `make test`、kind e2e 是否进 PR required | **A4-4 的配置变更** | 这是**配置变更授权**，A4-4 裁决明确本次不授权；要改需你另行批准 |
+
+**这两件都不是 A4 的未决项**，只是与 e2e 相邻；不做也不影响 A4 的完成状态。

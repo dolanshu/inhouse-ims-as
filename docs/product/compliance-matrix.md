@@ -2,8 +2,8 @@
 
 > **状态块（阅读本文前先看这里）**
 >
-> - **产品名**：**In-house IMS Application Server（文档暂用名）**，首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。该名称**不是已正式批准的产品名**（`docs/plan.md` §0「产品决策记录」；[`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3）。git repo 名拟改为 `inhouse-ims-as`（仅仓库名 / remote URL）；chart name、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
-> - **本文件归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第一批交付物 **1.2（3GPP 规范符合性矩阵）**。本文**尚无 review record**，按 `AGENT.md` §3.3 待维护者评审。
+> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。git repo 名：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
+> - **本文件归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第一批交付物 **1.2（3GPP 规范符合性矩阵）**。**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 > - **四态定义**：**Fully**（已实现且有仓库内证据）／**Partial**（部分实现或有已知缺口）／**N/A**（按范围决策不适用，必须写理由）／**open**（证据不足，禁止断言符合）。计划文档中的「N-A」即本文的 **N/A**。
 > - **证据规则**：每个 Fully / Partial 单元格必须给出 `file:line` 或契约场景号（S1–S12）；**找不到证据一律不写 Fully**，只写 open。
 > - **生产栈**：**reSIProcate**（C++，Vovida 许可），ADR-0019 **accepted**。**sippy 仅是 testbed 行为基线**（`testbed/contracts/sip-baseline/README.md:1-6`），**不进入生产依赖**；`platform/` 生产路径不使用 sippy。
@@ -76,7 +76,7 @@
 | 入腿按业务规则判决（FORWARD / TRANSLATE / DECLINE / NOT_FOUND） | 适用 | **Partial** | `platform/src/as_platform/sip/adapter.py:128-148`、`platform/src/as_platform/sip/call_controller.py:82-95` | A：`platform/tests/test_call_controller.py`、`apps/*/tests/test_contract_replay.py` | 判决是纯函数；规则集来自配置，非 SIP 语义 |
 | 无匹配规则 → `404 Not Found` | 适用 | **Partial** | `platform/src/as_platform/sip/adapter.py:25` | A：契约场景 `S2-no-match-404`（`testbed/contracts/sip-baseline/README.md:13`） | 产品路径已实现；基线由 sippy 抓取，对拍属 E1 |
 | 策略拒绝 → `603 Decline` | 适用 | **Partial** | `platform/src/as_platform/sip/adapter.py:24`；反诈超限 `apps/anti-fraud/src/as_anti_fraud/decision.py:152-156` | A：契约场景 `S3-policy-reject-603`（同 README L14） | 与 RFC 8688 `608` 的口径差见 §3.8 |
-| 双腿 B2BUA（两腿独立 Call-ID） | 适用 | **Partial** | `platform/native/resip_runtime/runtime_module.cxx:1057-1103` | A：`platform/tests/test_resip_two_leg_integration.py`、`test_m7_forward_two_leg_integration.py` | 14 条消息全文回放未签收（`../acceptance/test-plan.md` L30） |
+| 双腿 B2BUA（两腿独立 Call-ID） | 适用 | **Partial** | `platform/native/resip_runtime/runtime_module.cxx:1057-1103` | A：`platform/tests/test_resip_two_leg_integration.py`、`test_m7_forward_two_leg_integration.py` | REQ-F-1 = 自动化子集已覆盖 / 全文仍 open：Wave 2 归一化对拍覆盖双腿骨架序列、C_in ≠ C_out、SDP offer 逐字节恒等（`testbed/e2e/test_s1_replay_contract.py`）；14 条消息逐条 header 对拍未做（2026-10-12 更新，原「14 条消息全文回放未签收」） |
 | S-SBC 透明桥接 | **不适用**（运营商侧） | **N/A** | — | 仿真器 `testbed/simulators/src/as_simulators/bridge.py:1-6` | 理由：S-SBC 是运营商网元，不是我方交付物（ADR-0003） |
 | Release 适用性 | — | **open** | — | D：仓库内无原文 | 待人工核对规范原文后填写 |
 
@@ -114,7 +114,7 @@
 
 | 能力项 | 适用性 | 状态 | 实现位置（file:line） | 证据 | 备注 |
 |---|---|---|---|---|---|
-| 初始 INVITE（UAS 入腿） | 适用 | **Partial** | `platform/native/resip_runtime/runtime_module.cxx:979-1055` | A：`platform/tests/test_resip_runtime_log_contract.py` 等 | 14 条全文未签收 |
+| 初始 INVITE（UAS 入腿） | 适用 | **Partial** | `platform/native/resip_runtime/runtime_module.cxx:979-1055` | A：`platform/tests/test_resip_runtime_log_contract.py` 等 | REQ-F-1 = 自动化子集已覆盖 / 全文仍 open（Wave 2 归一化对拍；14 条消息逐条 header 对拍未做，2026-10-12 更新，原「14 条全文未签收」） |
 | ACK | 适用 | **Partial** | 由 DUM 处理；`accept_all_invites` harness 下固定 100/180/200/ACK（`platform/src/as_platform/sip/README.md:7-8`） | C：harness 性质 | `accept_all_invites` 是 testbed-only，**不是生产路径** |
 | BYE | 适用 | **Partial** | 入腿 BYE → 出腿 `end()`：`runtime_module.cxx:1117-1140` | A：`platform/tests/test_d10_req_nf1_redis_integration.py`（恢复后 in-dialog BYE） | 恢复路径有工程实现，**产品路径未验收** |
 | CANCEL（主叫放弃，含 487 分支） | 适用 | **Partial** | `runtime_module.cxx:1226-1242`（`early_cancel_harness` 保持早期态）；B2BUA CANCEL 见 `README.md:19` | A（仅 harness 形态）+ C | 竞态（S11）基线缺失，见 §4 |
@@ -231,7 +231,7 @@
 
 | 场景 | 内容 | 基线状态 | 产品路径证据 | 判定 |
 |---|---|---|---|---|
-| S1 | 基本呼叫 INVITE→100→180→200→ACK→BYE→200 | ✅ 已抓取 | `accept_all_invites` harness 覆盖入向 100/180/200（带 SDP） | Partial（14 条全文未签收） |
+| S1 | 基本呼叫 INVITE→100→180→200→ACK→BYE→200 | ✅ 已抓取 | `accept_all_invites` harness 覆盖入向 100/180/200（带 SDP） | Partial（REQ-F-1 = 自动化子集已覆盖 / 全文仍 open：14 条消息逐条 header 对拍未做，2026-10-12 更新） |
 | S2 | 无匹配规则 → `404` | ✅ 已抓取 | 走 `decide()` | Partial |
 | S3 | 策略拒绝 → `603` | ✅ 已抓取 | 走 `decide()` | Partial |
 | S4 | 主叫放弃 → CANCEL → `200 OK` → `487` | ✅ 已抓取 | `early_cancel_harness` 保持早期态 | Partial（harness 形态） |
@@ -256,14 +256,14 @@
 
 ### 4.3 分层现状（引用即受限）
 
-依据 [`../acceptance/test-plan.md`](../acceptance/test-plan.md) L13-22：
+依据 [`../acceptance/test-plan.md`](../acceptance/test-plan.md) L14-23：
 
 - **① 快 `unit or contract`**：有 `.so` 时跑真栈；**S1/S4 走 `accept_all_invites` harness**（旁路 `decide()`），S2/S3 走 `decide()`。
 - **② 集成 `integration`**：真栈子集 —— TCP/TLS、FORWARD 双腿、SDP、`test_product_path`（仿真链 + 规则，**无** accept-all）。
-- **③ e2e `e2e`**：**0 条**。
+- **③ e2e `e2e`**：**8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 fail 不 skip；2026-10-12 更正，原「0 条」）；REQ-F-1 = 自动化子集已覆盖 / 全文仍 open。
 - **容量 `performance`**：M6 产品 runtime 压测对端是 **accept-all harness**，**不是业务判决路径**。
 
-> `accept_all_invites` **不是** ims-sim，**也不是**生产路径；REQ-F-1 的 14 条 B2BUA **未**由 harness 签收（`test-plan.md` L22、L30）。
+> `accept_all_invites` **不是** ims-sim，**也不是**生产路径；REQ-F-1 的 14 条 B2BUA **未**由 harness 签收（`test-plan.md` L23、L31）。**2026-10-12 更正（e2e 口径）**：REQ-F-1 = 自动化子集已覆盖 / 全文仍 open —— Wave 2 归一化对拍覆盖双腿骨架序列、C_in ≠ C_out、SDP offer 逐字节恒等（`testbed/e2e/test_s1_replay_contract.py`）；14 条消息逐条 header 对拍未做。
 
 ---
 

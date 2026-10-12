@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # bundle-images.sh — 交付物 3.2 的联网侧脚本：镜像同步 + 校验和 + helm package
-# In-house IMS Application Server（文档暂用名），Helm-only 生产交付形态（ADR-0013）。
+# In-house IMS Application Server（已正式采用为产品/文档描述名，G8-2；非商标 / 非品牌宣称），Helm-only 生产交付形态（ADR-0013）。
 #
 # 范围（评审 G-P1-7）：只做「镜像 save + 校验和 + helm package」。本脚本
 # 不产生 Helm 之外的第二套安装形态，也不做在线安装器、不走私有 registry 自动同步
@@ -28,6 +28,13 @@
 #       registry.example.com。
 set -euo pipefail
 
+# bash 版本底线：要求 bash >= 4.4（三脚本统一底线）。依据：load-images.sh 使用
+# mapfile、preflight.sh 使用 bash 4.4 数组展开，故统一按 4.4 声明；不满足即退出。
+if [[ "${BASH_VERSINFO[0]:-0}" -lt 4 ]] || [[ "${BASH_VERSINFO[0]:-0}" -eq 4 && "${BASH_VERSINFO[1]:-0}" -lt 4 ]]; then
+  printf 'ERROR: 需要 bash >= 4.4（当前: %s）\n' "${BASH_VERSION:-未知}" >&2
+  exit 1
+fi
+
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
@@ -54,6 +61,7 @@ bundle-images.sh — 离线包制作（联网侧）：镜像同步 + SHA256SUMS 
       --images <file>     依赖镜像清单（每行一个 repository:tag[@digest]）
                           默认: 本脚本同目录的 images.txt
       --out <dir>         输出目录（默认 ./airgap-out）
+      --destination <dir> 同 --out（兼容别名，二者等价）
       --chart <path>      chart 路径（默认 <repo>/deploy/helm）
                           相对路径先按当前目录解析，失败再按 repo 根解析
       --repository <repo> 按客户 registry 重打标签时的目标前缀
@@ -202,8 +210,12 @@ for entry in "${ENTRIES[@]}"; do
     BAD=1
     continue
   fi
-  if [[ "${entry}" == *"@sha256:"* && "${entry}" != *"@sha256:"*:* ]]; then
+  if [[ "${entry}" == *"@sha256:"* && "${entry%@*}" != *:* ]]; then
     printf '清单格式错误: %s —— digest 必须跟在 tag 之后（repo:tag@sha256:...）\n' "${entry}" >&2
+    BAD=1
+  fi
+  if [[ "${entry}" == *"@"* && "${entry}" != *"@sha256:"* ]]; then
+    printf '清单格式错误: %s —— digest 算法只支持 sha256，条目必须是 repository:tag@sha256:...\n' "${entry}" >&2
     BAD=1
   fi
 done
@@ -341,7 +353,8 @@ if [[ "${SKIP_HELM_PACKAGE}" -eq 0 ]]; then
     SUMS+=("${CHART_SHA}  ${CHART_TGZ}")
     printf '    chart tgz: %s  sha256=%s\n' "${CHART_TGZ}" "${CHART_SHA}"
     printf '    注意: Chart version=%s appVersion=%s；根 VERSION 与 Chart.appVersion 不同步是已知缺口，\n' "${CHART_VERSION:-?}" "${CHART_APP_VERSION:-?}"
-    printf '          交付版本以根 VERSION 为准（AGENT.md §8），打包前请人工确认两者是否需要对齐。\n'
+    printf '          交付版本以根 VERSION 为准（AGENT.md §8）；打包前跑 scripts/sync-chart-version.sh --check\n'
+    printf '          （只读，drift 即 exit 1）核对，--apply 留待维护者首次同步。\n'
   fi
 else
   printf -- '==> 跳过 helm package（--skip-helm-package）\n'
@@ -355,7 +368,7 @@ if [[ "${DRY_RUN}" -eq 0 ]]; then
   DOCKER_VERSION="$("${DOCKER_BIN}" version --format '{{.Client.Version}}' 2>/dev/null || echo '<unknown>')"
   HELM_VERSION="$("${HELM_BIN_RESOLVED}" version --short 2>/dev/null || echo '<unknown>')"
   {
-    printf '# MANIFEST —— In-house IMS Application Server（文档暂用名）离线包\n'
+    printf '# MANIFEST —— In-house IMS Application Server（G8-2 已正式采用为产品/文档描述名）离线包\n'
     printf '# 生成时间(UTC): %s\n' "${GENERATED_UTC}"
     printf '# 生成方式: docs/delivery/scripts/bundle-images.sh（Helm-only，ADR-0013）\n'
     printf '# 镜像清单: %s\n' "${IMAGES_FILE}"

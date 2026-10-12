@@ -1,13 +1,15 @@
-# L1 运维手册（NOC 日常与告警处置）— In-house IMS Application Server（文档暂用名）
+# L1 运维手册（NOC 日常与告警处置）— In-house IMS Application Server
 
 > **读者**：L1 / NOC 值班。**不含**深度信令分析（见 [`runbook-l2.md`](runbook-l2.md)）。
 >
 > **证据口径（必读）**：本页**所有结论基于工程切片证据**。
 > - **M5 工程关门 ≠ REQ 验收**；**M8 RC 就绪 ≠ 关门**（[`../acceptance/report.md`](../acceptance/report.md) §0）。
-> - **e2e marker = 0**：完整呼叫 + 控制台端到端路径未落地；performance 仅 accept-all harness，**非业务判决路径**（G-P1-2）。
+> - **e2e 现状**：`pytest -m e2e` **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 **fail 不 skip**），REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**（已覆盖双腿归一化消息序列对拍、C_in ≠ C_out、SDP offer 逐字节恒等；**14 条消息的逐条 header 对拍仍未覆盖**）；performance 仅 accept-all harness，**非业务判决路径**（G-P1-2）。
 > - **模拟 `active_calls` 的证据边界**：缩容 / draining / 滚动升级的不掉呼叫证据来自 kind 上 `AS_M5_SIMULATED_ACTIVE_CALLS` 模拟，**真实 SIP 负载下不掉呼叫待 M7 / M8 验收**（G-P1-1）。
 > - **零容量数字**：本页无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 百分比容量（O1 未裁决）。表中出现的百分比与固定窗口计数是**既有告警阈值**，不是容量指标。
 > - **原件保留**：本页是 [`../acceptance/`](../acceptance/) 下既有 runbook 的**归集与重组**，原文件**不删除、不移动、不改写**。每节末尾给出来源链接，证据原件在那边。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ---
 
@@ -26,7 +28,7 @@
 | 7 | PostgreSQL 可用性 | 由平台侧在治理库主机执行 `pg_isready`（owner / 运维账号，非应用角色） | 接受连接 | 失败 → §4 | 角色与 DSN 口径见 §3.5 与 L2 §6 |
 | 8 | 控制台可登录 | 浏览器访问控制台 HTTPS 入口，operator 登录 | 登录成功并可看到审批队列 | 失败 → §4；**不保存凭据**，不把会话 cookie 截图入档 | [`runbook-l2.md`](runbook-l2.md) §4.6 |
 
-> ⚠️ **当前限制（如实标注）**：以上检查项在**真实生产集群上的执行记录当前 blocked** —— M4b-7.2d / M8 7.2d 仍为 **blocked**（`docs/product-packaging-plan.md` §0.3 第 1、3 条）。本页给的是**可执行动作**，**不得**据此在任何材料中写"已在生产验证"。同类地，L1 的证据底座是 kind / compose，**不是现网**。
+> ⚠️ **当前限制（如实标注）**：以上检查项在**真实生产集群上的执行记录当前 blocked** —— M4b-7.2d / M8 7.2d 仍为 **blocked**（出处：`docs/product-packaging-plan.md` §3.2 交付物 2.4 行「2.4 / 2.5 真实集群演练（iFC 配合、备份恢复）… M8 真实集群环境（7.2d 仍 blocked），且 2.4 另需 S-CSCF/HSS 侧配合」）。本页给的是**可执行动作**，**不得**据此在任何材料中写"已在生产验证"。同类地，L1 的证据底座是 kind / compose，**不是现网**。
 
 ---
 
@@ -44,7 +46,7 @@
 | `ASPodNotReady`（`as.runtime`） | `critical` / `runtime` | 该 Pod 的 `Ready` 条件为 **0**，持续 `5m`；就绪 = 进程在**拒新工作**（**就绪状态条件，非容量指标**） | 先分「正常摘流」与「卡住」：`/health/ready` **503 = 正在 draining（正常摘流中）**，持续 503 才是异常；再看 `describe pod` 的 Events（探针 / 挂载 / 镜像） | draining 不收敛 / 反复 not-ready → L2（L2 §4.7）；与 `ASRestartLoop` 同时出现 → 按 CrashLoop 处理 | **可触发（前提：集群装了 kube-state-metrics）**：只看 AS namespace 内的 Pod，**不区分组件**（AS 引擎 / `state-redis` / `state-postgres` / `config-service`），用 `pod` 名区分 |
 | `ASDeploymentReplicasUnavailable`（`as.runtime`） | `warning` / `runtime` | 同一 Deployment 的可用副本数 < 期望副本数，持续 `10m`（**副本可用性状态条件，非容量指标**） | 先看告警里的 `deployment` 标签 —— 可能是用例 Deployment、`state-redis` 或 `config-service`；再 `get deploy` + `describe`；与 `ASPodNotReady` 合并判断（通常是同一事件的两个视角） | 用例副本不足影响业务 → L2；`state-redis` 不可用 → 与 `ASCallStateStoreUnavailable` 同路径立即升级 | **可触发（前提：KSM）**：选择器**按 namespace 限定**，故也覆盖内建 `state-redis` 与 `config-service` 两个 Deployment |
 | `ASDownscaleBlocked`（`as.runtime`） | `warning` / `runtime` | 同一 `pod` / `use_case` 上 `as_downscale_removable == 0` **且** `as_active_calls == 0`，持续 `30m`。ADR-0010 的 guard 只有两个拦截理由（有在途呼叫 / 已在 draining），两者都排除后只剩「**draining 卡住**」（**guard 状态条件，非容量指标**） | 确认两个序列都产生（方法同 §1 #4）；看该 Pod `/health/ready` 是否长期 **503**；与 `ASPodNotReady` 合并：同一 Pod 上大概率同时 not-ready | 持续不收敛 → L2（L2 §4.7）；涉及多 Pod 或影响发布窗口 → 立即升级。**不得**直接删 Pod 或 SIGKILL —— 先走完 draining（ADR-0009 / ADR-0010） | **序列总是产出**（metrics 循环无条件写，不依赖 OTLP），但取值依赖真实 SIP dialog 活动 —— 无流量时不触发。另见 §1 #4 的抓取接线缺口 |
-| `ASStatefulSetUnavailable`（`as.platform`） | `critical` / `state` | 某 StatefulSet 的 ready 副本数 < 期望副本数，持续 `5m`；chart 内即**治理库 PostgreSQL**（ADR-0008）（**副本就绪状态条件，非容量指标**） | 确认告警里的 `statefulset` 名（预期是 `<release>-postgres`）；`get sts` + `describe`；查最近的 migrate Job；治理库主机 `pg_isready` | **立即** L2 → 维护者。治理 PG 持有配置版本、变更单与 append-only 审计链 → **配置无法审批与分发**；先暂停变更单审批 | **可触发（前提：KSM）**：内建 PG 是**单副本、非 HA**（HA 由客户拥有；Redis HA 仍是 **O5 / D3**）—— 单副本是设计事实，**不是**容量结论 |
+| `ASStatefulSetUnavailable`（`as.platform`） | `critical` / `state` | 某 StatefulSet 的 ready 副本数 < 期望副本数，持续 `5m`；chart 内即**治理库 PostgreSQL**（ADR-0008）（**副本就绪状态条件，非容量指标**） | 确认告警里的 `statefulset` 名（预期是 `<release>-postgres`）；`get sts` + `describe`；查最近的 migrate Job；治理库主机 `pg_isready` | **立即** L2 → 维护者。治理 PG 持有配置版本、变更单与 append-only 审计链 → **配置无法审批与分发**；先暂停变更单审批 | **可触发（前提：KSM）**：内建 PG 是**单副本、非 HA**（HA 由客户拥有；Redis HA 拓扑取值已裁 —— **O5 / D3（G7）**：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel，沿用 ADR-0008 拓扑、不选 Redis Cluster；chart 当前仍单副本渲染，failover 实测行为无证据）—— 单副本是设计事实，**不是**容量结论 |
 | `ASServiceEndpointsAbsent`（`as.platform`） | `warning` / `state` | 某 Service 的可用 endpoint 地址数为 **0**，持续 `5m` → selector 匹配不到任何 Ready Pod，客户端无法路由（**路由状态条件，非容量指标**） | 确认告警里的 `service` 名；`get endpoints <service> -o yaml`（ENDPOINTS 为空即证实）；对齐对应 Pod | 影响 `state-redis` → 与 `ASCallStateStoreUnavailable` 同路径立即升级；影响 `config-service` → 控制台不可用，转 L2（L2 §4.6）。回到 Pod 侧恢复，**不要**改 Service selector | **可触发（前提：KSM）**：与 `ASCallStateStoreUnavailable` 是**不同**失效模式 —— 本条是「Service 根本没有后端」，那条是「AS 连不上 Redis」 |
 
 > **容量类告警：defer。** `as-alerts.yaml` **当前没有任何 CPS 上限或并发上限告警**，这是刻意设计。容量类告警在 **O1 裁决后**新建独立组，从实测取值。在此之前，异常负载用 `ASActiveCallsSurge` 与内部测量排查，**不得**用一个提前编造的数（`AGENT.md` §2 / §6）。
@@ -191,7 +193,7 @@ kubectl -n <ns> cp as-3rdparty-as-postgres-0:/tmp/as_config.dump ./as_config.dum
 **必须知道的三个限制**
 
 - **Chart 不自带备份 Job。** 排期由客户备份工具承担（Velero、cron Job，或 HA 场景的集群外 WAL 归档）。
-- **内建 Redis / PG 是单副本，不是 HA。** Redis HA 仍是未决项 **O5 / D3**（Sentinel）；生产 PG HA 由客户拥有（Patroni / 云 RDS，或改用外部 `postgres.host` 并设 `stateStores.enabled=false`）。客户须自行记录 **RPO / RTO**。
+- **内建 Redis / PG 是单副本，不是 HA。** Redis HA 拓扑取值已裁（**O5 / D3，G7**）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（沿用 ADR-0008 拓扑，不选 Redis Cluster；chart 当前仍单副本渲染，failover 实测行为无证据；RPO / RTO 数值仍未裁）；生产 PG HA 由客户拥有（Patroni / 云 RDS，或改用外部 `postgres.host` 并设 `stateStores.enabled=false`）。客户须自行记录 **RPO / RTO**。
 - Redis（运行态）丢失 ≈ 呼叫失败，备份可选（ADR-0007），但 RPO / RTO 仍须与客户共同记录。
 - **Restore drill、备份验证脚本、定期演练记录**属交付物 2.5，见 [`backup-restore.md`](backup-restore.md)（**已落盘**；但**真实集群 restore drill 记录仍 blocked**，M8 真实集群证据当前搁置，G-P1-10）。
 
@@ -203,7 +205,7 @@ kubectl -n <ns> cp as-3rdparty-as-postgres-0:/tmp/as_config.dump ./as_config.dum
 
 **升级 L2 的触发条件**：§1 任一项无法判定归属；§2 表中标「升级 L2」；`/health/ready` 持续 503；Pod 反复重启；配置改了不生效。
 
-**升级维护者的触发条件**：需要裁决产品口径、推翻既有裁决、或改动未决项（O1 / O4 / O5、D3 / D5）。L1 / L2 都**不得**自行把未决项当成已解决（`AGENT.md` §15）。
+**升级维护者的触发条件**：需要裁决产品口径（**O1 仍未裁决**）、改动已裁事项的执行面（**O4 / O5 / D3 / D5 取值已裁（G6 / G7）**，相关实现未落，执行面改动仍需维护者授权）、推翻既有裁决。L1 / L2 都**不得**自行把未决项当成已解决（`AGENT.md` §15）。
 
 **求助时必须附的证据清单**
 

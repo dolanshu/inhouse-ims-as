@@ -1,19 +1,21 @@
-# 告警-动作对照表（Alert / Action Matrix）— In-house IMS Application Server（文档暂用名）
+# 告警-动作对照表（Alert / Action Matrix）— In-house IMS Application Server
 
 > **交付物**：**2.2 告警规则补强 + 告警-动作对照表**（[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第二批 2.2）。
 > **规则唯一权威**：[`../../deploy/alerts/as-alerts.yaml`](../../deploy/alerts/as-alerts.yaml)（REQ-NF-14）。**阈值以规则文件为准**；本页只回答"看到这个告警，第一步做什么、什么时候叫人、要留什么证据"。
-> **加载与校验**：[`../../deploy/alerts/README.md`](../../deploy/alerts/README.md)（`promtool check rules` / `make alert-check`）。
-> **本册位置**：[`README.md`](README.md) §1 分层中的 L1 / L2 之上层 —— L1 给首响应，L2 给定界与取证，本页给**级别、动作、升级路径**。
+> **加载与校验**：[`../../deploy/alerts/README.md`](../../deploy/alerts/README.md)（`promtool check rules` / `make alert-check`）—— `promtool check rules` 已于 2026-10-11 通过（已验证, [`../acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt`](../acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt), 2026-10-11）：`SUCCESS: 10 rules found`（3 组 10 条；promtool 2.55.1）。**边界：语法校验通过 ≠ 抓取接线闭合**（X1 仍待运营商 monitoring-integration 标准输入）。
+> **本册位置**：[`README.md`](README.md) §1 分层中的「跨层参考（L1 / L2 之上层）」行 —— L1 给首响应，L2 给定界与取证，本页给**级别、动作、升级路径**。
 >
 > **状态：草稿，未验收。** 本页是**工程切片证据**，不构成验收结论：
 > - **M5 工程关门 ≠ REQ 验收**；**M8 RC 就绪 ≠ 关门**（[`../acceptance/report.md`](../acceptance/report.md) §0）。
-> - **e2e marker = 0**：完整呼叫 + 控制台端到端路径未落地；performance 仅 accept-all harness，**非业务判决路径**（G-P1-2）。
+> - **e2e 现状**：`pytest -m e2e` **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 **fail 不 skip**），REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**（已覆盖双腿归一化消息序列对拍、C_in ≠ C_out、SDP offer 逐字节恒等；**14 条消息的逐条 header 对拍仍未覆盖**）；performance 仅 accept-all harness，**非业务判决路径**（G-P1-2）。
 > - **E1 / E4 / E5 未验收**（生产栈 reSIProcate 行为、TLS 热轮换、状态外置），见 [`../product/ne-datasheet.md`](../product/ne-datasheet.md)。
 > - **7.2d / M8 真实集群证据仍 blocked**（G-P1-10）：本页的每个命令都是**可执行动作**，**没有任何一条**在生产集群上跑过并留档。
 >
-> **⚠️ 当前告警面存在已知盲区**（详见 §3）：抓取接线缺口、e2e=0、M8 退出签字搁置、7.2d blocked。
+> **⚠️ 当前告警面存在已知盲区**（详见 §3）：抓取接线缺口、e2e 端到端兜底仍不足（`pytest -m e2e` 已有 8 条稳定通过，REQ-F-1 全文仍 open）、M8 退出签字搁置、7.2d blocked。
 > **零容量数字**：本页无 CPS / CAPS / BHCA / 并发上限 / 时延阈值 / 吞吐数字。O1 未裁决（[`../../AGENT.md`](../../AGENT.md) §2 / §6），容量类告警 defer 到 O1 裁决后新建 `as.capacity` 组。
 > **范围之外**：不做 Diameter Sh / 不做 CDR 与计费 / 不做媒体（[`../../AGENT.md`](../../AGENT.md) §2）。本页无任何 Sh 相关告警。
+>
+> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 
 ---
 
@@ -38,7 +40,7 @@ Prometheus 的 `severity` 标签是规则里的**唯一级别来源**。P 级是
    │  命中对照表"升级路径"列的任一条件
    ▼
 二线工程（L2）—— 定界、取证、必要时改配置
-   │  需要裁决产品口径 / 动未决项（O1、O4、O5、D3、D5）/ 推翻既有裁决
+   │  需要裁决产品口径 / 动未决项（O1 仍未裁决；O4 / O5 / D3 / D5 取值已裁（G6 / G7），执行面改动需授权）/ 推翻既有裁决
    ▼
 维护者 / 架构
    │
@@ -65,7 +67,7 @@ Prometheus 的 `severity` 标签是规则里的**唯一级别来源**。P 级是
 | 1 | **`ASHighErrorRatio`** | P2 `warning`<br/>`signalling` | 5xx 与**非 487 的** 4xx 之和 ÷ 全部 SIP 响应 > **1%**，持续 **10m**。分母 `clamp_min(..., 1)` 避免零样本除零；**487（主叫取消）被显式排除**，属正常行为 | 1) 确认 `as_sip_responses_total` **是否真有样本**（`kubectl -n <ns> port-forward deploy/<release>-<use-case> 8080:8080` 后 `curl -s localhost:8080/metrics \| grep '^as_sip_responses_total'`）<br/>2) 无样本 → **不要**判定为故障，先看抓取接线<br/>3) 有样本 → 按 `status_class` / `status_code` 拆开看是哪一类 | 先分清判决类与故障类：404 = 无匹配规则、603 = 策略拒绝，**都是预期判决**（[L2 §4.3](runbook-l2.md)）。确有 5xx 再查 Redis 可达性、S-SBC 侧拒绝原因、决策模块异常 | 有真实样本且比率持续升高 → L2（[L2 §4.3](runbook-l2.md) / [L2 §4.4](runbook-l2.md)）；落点在 S-SBC → 客户侧对接人 | 业务侧止损：按号段 / 百分比切 runtime override 放行下一环节（ADR-0021）；AS 侧**不主动摘在途呼叫**（摘流是对方动作） | 表达式求值时间序列 + `status_code` 分布 + Call-ID（跨腿两腿 Call-ID **不同**，两个都留）+ 同期 `helm history` / 变更单 revision | **不可触发。** 唯一写入点是启动时一次性探针 `AS_M5_PROBE_SIP_STATUS`（`__main__.py:_apply_m5_metrics_probes`），生产 on-prem 不设；产品 SIP adapter 每次响应都调用的路径待 M7 |
 | 2 | **`ASTelemetryDropped`** | P2 `warning`<br/>`observability` | `as_telemetry_dropped_total` 在 **15m** 窗口内 `increase` ≥ **50**，持续 **15m** | 1) 确认是否配置了 OTLP 端点（chart `telemetry.otlpEndpoint`，默认 `null`）<br/>2) 未配置 → 该序列**本就不产生**，不是故障<br/>3) 已配置 → 看后端可达性与队列日志 | 丢遥测**设计上可接受**，对呼叫路径施加背压**不可接受**；持续丢弃通常意味着后端不可达或过慢。先确认呼叫路径是否受影响，再修导出链路 | 已配置后端却持续丢弃 → L2；影响面扩到呼叫路径 → 按 P1 处理 | 无需业务止损；必要时**静默**关闭导出（不阻塞呼叫路径，ADR-0005） | `/metrics` 片段 + 后端可达性证据 + 丢弃量与窗口 | **不可触发（默认配置下）。** 仅当 `OTEL_EXPORTER_OTLP_ENDPOINT` 非空才创建 `BoundedQueueSink`；且 exporter 默认 `NoOpExporter`，队列难以填满 |
 | 3 | **`ASRestartLoop`** | P1 `critical`<br/>`runtime` | 单 Pod 容器重启次数 `increase(...[1m])` > **3**，`for: 0m` | 1) `kubectl -n <ns> describe pod <pod>`<br/>2) 取上一个容器日志：`kubectl -n <ns> logs <pod> --previous`<br/>3) 核对最近一次配置版本（`printenv CONFIG_VERSION`） | CrashLoop。先分清**反复重启**与**单次滚动**；反复重启按 P1 走，不等业务反馈 | 反复重启 / 涉及多个 Pod → L2（[L2 §4.6](runbook-l2.md) 的 config-service 段、§4.7 缩容段） | `kubectl -n <ns> rollout undo deploy/<release>-<use-case>`；镜像 / manifest 回退用 [`rollback-playbook.md`](rollback-playbook.md)（**已落盘**；但依赖对端配合，真实集群演练仍 blocked，G-P1-10） | `describe` 输出 + `--previous` 日志 + `CONFIG_VERSION` + 变更单 revision（避免把"没查"当成"已排除"） | **可触发（唯一无配置前置条件的一类）。** 数据源是集群提供的 kube-state-metrics；只需集群装了 KSM |
-| 4 | **`ASCallStateStoreUnavailable`** | P1 `critical`<br/>`state` | `min by (use_case) (as_state_store_available) == 0`，持续 **2m**。二进制可达性状态 | 1) 读 `/metrics` 确认序列**存在且为 0**（序列不存在 ≠ 0，见下）<br/>2) 查 Redis Pod：`kubectl -n <ns> get pods -l app.kubernetes.io/component=state-redis`<br/>3) 查 Sentinel / failover 状态 | 会话、dialog、反诈速率窗口状态全在 Redis（ADR-0002 / ADR-0007）→ 在途呼叫无法维持、新判决失去计数器。按 P1 立即处置 | **立即** L2。不等 | 恢复前**不要**让 AS 继续承接新呼叫；config-service 侧暂停变更单审批（治理动作，不动数据面） | `/metrics` 片段（证明是 0 不是 absent）+ Redis Pod 状态 + failover 窗口（未决 O5 / D3）+ 受影响 use_case 列表 | **可触发，前提 `REDIS_URL` 已配置**：此时 metrics 循环真实 `PING` Redis 并写序列。`REDIS_URL` 为空时**序列不存在（不是 0）**，规则永不触发 |
+| 4 | **`ASCallStateStoreUnavailable`** | P1 `critical`<br/>`state` | `min by (use_case) (as_state_store_available) == 0`，持续 **2m**。二进制可达性状态 | 1) 读 `/metrics` 确认序列**存在且为 0**（序列不存在 ≠ 0，见下）<br/>2) 查 Redis Pod：`kubectl -n <ns> get pods -l app.kubernetes.io/component=state-redis`<br/>3) 先确认部署形态：chart 内建 Redis 为单副本（`stateStores.enabled`），**无 Sentinel 对象可查**<br/>4) 若客户侧部署外部 Redis（拓扑已裁：primary/replica + Sentinel，G7），按客户侧工具查 failover 状态 | 会话、dialog、反诈速率窗口状态全在 Redis（ADR-0002 / ADR-0007）→ 在途呼叫无法维持、新判决失去计数器。按 P1 立即处置 | **立即** L2。不等 | 恢复前**不要**让 AS 继续承接新呼叫；config-service 侧暂停变更单审批（治理动作，不动数据面） | `/metrics` 片段（证明是 0 不是 absent）+ Redis Pod 状态 + failover 窗口（Redis HA 拓扑取值已裁 —— **O5 / D3（G7）**：primary/replica + Sentinel；chart 仍单副本渲染，failover 实测行为无证据）+ 受影响 use_case 列表 | **可触发，前提 `REDIS_URL` 已配置**：此时 metrics 循环真实 `PING` Redis 并写序列。`REDIS_URL` 为空时**序列不存在（不是 0）**，规则永不触发 |
 | 5 | **`ASActiveCallsSurge`** | P2 `warning`<br/>`signalling` | 每 `use_case` 当前 `as_active_calls` > 其自身 **30m 滑动平均的 1.3 倍**，持续 **10m**。**相对变化**，构造上不含绝对呼叫数 | 1) 先看**是否有变更 / 摘流 / 上游动作**（最常见原因）<br/>2) 对比同期 `ASHighErrorRatio` 是否同时上升<br/>3) 检查 `AS_M5_SIMULATED_ACTIVE_CALLS` 是否被误设 | 判定为「**流量形态变了**」，不是故障本身。确认是业务变更引起就记录并观察；无对应变更再深入 | 伴随错误率上升或状态存储告警 → L2（转 P1 处理）；有对应变更 → **不升级**，记录即可 | **不得**据此推断容量上限或临时封顶。真实负载异常用 M6 harness 与内部测量排查 | 两个时间窗的 `as_active_calls` 曲线 + 同期变更记录 + 是否有模拟值介入 | **序列总是产出**（`__main__.py` metrics 循环无条件写），但取值依赖 SIP 运行时的 dialog 事件；无流量或计数恒 0 时不触发。**另见 §3 抓取接线缺口** |
 
 ### 2.2 `as.runtime` — 2026-10-10 新增 3 条
@@ -106,7 +108,7 @@ Prometheus 的 `severity` 标签是规则里的**唯一级别来源**。P 级是
 | **`as_*` 指标在标准部署下采不到** | ⚠️ **最大盲区。** Pod 模板**无** `prometheus.io/scrape` 注解，chart 内**无** ServiceMonitor / PodMonitor（`deploy/helm/templates/` 全目录无命中）。`/metrics` 端点工作正常，但**没有任何采集器被接线到它** | 人工拉取：L1 §1 检查 4 的 `kubectl port-forward` + `curl` | chart 增加 Pod 注解或 `PodMonitor` / `ServiceMonitor`（属 chart 工作，**不在本交付物的改动范围内**）。**补齐前不得对外称 `as_*` 规则"已生效"** |
 | **遥测丢弃告警在默认配置下不触发** | `OTEL_EXPORTER_OTLP_ENDPOINT` 默认 `null` → 不创建 `BoundedQueueSink` → 序列不写；即便配置了，exporter 默认 `NoOpExporter`，队列难以填满 | 呼叫路径不受影响即无需处置（丢遥测设计上可接受，ADR-0005） | 配置真实 OTLP 后端并接入 collector。**这是配置问题，不是规则问题** —— 规则本身正确 |
 | **SIP 失败率在默认部署下无样本** | `as_sip_responses_total` 的唯一写入点是**启动时一次性探针** `AS_M5_PROBE_SIP_STATUS`，生产 on-prem 不设；产品 SIP adapter 每次响应都调用的路径待 M7 | 抓包对齐（L2 §3） | M7 接线完成 + 抓取接线补齐 |
-| **没有测试兜底** | **e2e marker = 0**：完整呼叫 + 控制台端到端路径未落地；performance 仅 accept-all harness，**非业务判决路径**（G-P1-2） | kind 上的工程证据脚本（M5 / ISSU 缩容证据）——**是工程证据，不是现网证据** | M7 / M8 落地 e2e 层并把该层改为阻塞（AGENT.md §9） |
+| **没有测试兜底** | **e2e 端到端兜底不足**：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open（14 条消息的逐条 header 对拍仍未覆盖）；performance 仅 accept-all harness，**非业务判决路径**（G-P1-2） | kind 上的工程证据脚本（M5 / ISSU 缩容证据）——**是工程证据，不是现网证据** | M7 / M8 落地 e2e 层并把该层改为阻塞（AGENT.md §9） |
 | **容量类告警（`as.capacity`）不存在** | **O1 未裁决。** M6 真实 socket 实测未完成，AGENT.md §2 / §6 禁止在实测前发布任何容量数字 | 异常负载用 `ASActiveCallsSurge`（#5）+ M6 harness 排查，**不得**用提前编造的数 | O1 由维护者基于 M6 实测结果裁决后，**新建** `as.capacity` 组，阈值取自实测 |
 | **Diameter Sh / CDR / 计费 / 媒体告警** | **N/A，不是盲区。** 均为已决策的非目标（[`../../AGENT.md`](../../AGENT.md) §2；评审 G-P0-4 已移除 Sh 告警） | 不适用 | 无。若出现新需求，属新的 requirement + 新的 ADR，不是新告警 |
 
@@ -164,7 +166,9 @@ Prometheus 的 `severity` 标签是规则里的**唯一级别来源**。P 级是
 - [x] **零容量数字**：本页无 CPS / CAPS / BHCA / 并发上限 / 时延阈值 / 吞吐数字（§4 分类可自证）
 - [x] **不含 Diameter Sh 告警**（G-P0-4 已移除；非目标，`AGENT.md` §2）
 - [x] **不含 CDR / 计费 / 媒体告警**（非目标；出现即 N/A + 理由）
-- [x] 命名纪律：产品名用「In-house IMS Application Server（文档暂用名）」；chart / 镜像 / OTel 服务名 `3rdparty-as` 不变
+- [x] 命名纪律：产品名用「In-house IMS Application Server」；chart / 镜像 / OTel 服务名 `3rdparty-as` 不变
+
+> **2026-10-12 追加（G8-2）**：本块「命名纪律」一行原写「In-house IMS Application Server（文档暂用名）」——「文档暂用名」限定已过时：`In-house IMS Application Server` 已正式采用为产品/文档描述名（G8-2；非商标 / 非品牌宣称）。本行勾选状态与核对结论不变，仅同步命名措辞。
 
 **规则文件自身的一致性**
 
@@ -186,10 +190,10 @@ Prometheus 的 `severity` 标签是规则里的**唯一级别来源**。P 级是
 | 3 | **时延 / ISC 超时类指标不存在**（无 histogram / summary） | 阻塞 | 交付物 2.2 中"ISC 超时"一项**无法以告警形式交付** | 需先加仪器 + 真实生产者 + M7 接线；ISC 超时还需与运营商 S-CSCF 侧协商超时判定归属 |
 | 4 | **会话泄漏无判定指标** | 阻塞 | 交付物 2.2 中"会话泄漏"一项**无法以告警形式交付** | 需 O1 裁决合法在途呼叫数，或导出"开启 / 关闭"成对计数使其成为比率 |
 | 5 | **证书到期无指标** | 阻塞 | 证书到期提醒只能靠客户 PKI 日历 | 需从 SIP transport 导出到期 gauge；且 **E4 / REQ-S-2 / REQ-S-3 当前无实验室证据** |
-| 6 | **e2e = 0**（G-P1-2） | 阻塞 | 告警逻辑**没有端到端测试兜底**，只能靠静态评审 + kind 工程证据 | M7 / M8 落地 e2e 层并改为阻塞门禁 |
+| 6 | **e2e 兜底不足**（G-P1-2） | 阻塞 | 告警逻辑**没有端到端测试兜底**，只能靠静态评审 + kind 工程证据；`pytest -m e2e` 已有 8 条稳定通过（REQ-F-1 = 自动化子集已覆盖 / 全文仍 open） | e2e 已 8 条；端到端兜底与 M7 / M8 门禁化仍待 |
 | 7 | **M8 退出签字搁置**（[`../plan.md`](../plan.md) §0） | 阻塞 | 本页所有动作**未在生产集群执行记录** | 维护者签字 |
 | 8 | **7.2d / 真实集群证据 blocked**（G-P1-10） | 阻塞 | `rollback-playbook.md`、`backup-restore.md` **已落盘**，但其**真实集群演练 / restore drill 记录仍 blocked**，本页引用处已就地标注；本页的处置动作**未经真实集群演练** | 需要真实集群环境 + 对端（S-CSCF / HSS）配合 |
-| 9 | **O5 / D3（Redis HA 未决）** | 阻塞 | `ASCallStateStoreUnavailable` 的 failover 窗口无定论 | 维护者裁决 Sentinel / HA 方案 |
+| 9 | **O5 / D3（Redis HA）** | 阻塞 | 拓扑取值已裁（G7）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（ADR-0008，不选 Redis Cluster）；`ASCallStateStoreUnavailable` 的 failover 窗口仍无实测证据（chart 单副本渲染） | failover 实测行为取证 + 客户侧拓扑落地；RPO / RTO 数值仍未裁 |
 | 10 | **`runbook-l1.md` §2 与 `ne-datasheet.md` §6 的告警清单同步** | **已解决** | 新增 5 条（`as.runtime` 3 + `as.platform` 2）已补入两处清单，三份文档的告警条目集合现与 `as-alerts.yaml` 一致（10 条 / 3 组） | 已闭合；后续新增规则仍须按 `deploy/alerts/README.md` §Adding a rule 第 8 条同步这两处 |
 | 11 | **`ASRestartLoop` 选择器按 namespace 而非按 Pod 收敛**（既有规则，本次**未改**，仅报告） | 观察项 | 该规则会匹配命名空间内**任何** Pod 的重启（包括非 AS 工作负载）。与 REQ-NF-9「一个命名空间一套完整系统」在当前 chart 下等价，但若客户在同一命名空间部署了旁路工作负载，误报面会变大 | 需与维护者裁决：是否收窄为 `app.kubernetes.io/part-of=3rdparty-as`（依赖 KSM 的 label allowlist，集群侧设置）。**本次按纪律只在报告中提出，不擅自修改既有规则** |
 
