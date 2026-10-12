@@ -18,6 +18,7 @@ from as_platform.ops.downscale_config import (
 )
 from as_platform.runtime.active_calls import ActiveCallSource, resolve_instance_id
 from as_platform.runtime.health import HealthServer, HealthServerConfig
+from as_platform.runtime.sip_stack_service import SipStackService
 from as_platform.runtime.state_probe import probe_redis_available
 from as_platform.shell import ProcessShell, ShellConfig
 from as_platform.sip.metrics_bridge import record_sip_status_code
@@ -195,6 +196,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         bounded_sink = BoundedQueueSink(capacity=256)
         bounded_sink.start()
 
+    # SipStackService handle declared before try so finally can clean up.
+    # Creation happens inside the try block below so that a missing native
+    # extension (RuntimeError from from_env) is caught and mapped to exit
+    # code 2 instead of an unhandled traceback.
+    sip_service: SipStackService | None = None
+
     health_server: HealthServer | None = None
     health_port = _optional_int_env("AS_HEALTH_PORT")
     if health_port is not None and not disable_health:
@@ -225,11 +232,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     previous_handlers = {signum: signal.getsignal(signum) for signum in termination_signals}
 
     try:
+        # SipStackService: start SIP runtime listener when AS_ENABLE_SIP_RUNTIME=1.
+        # Fail-closed: if the env var is set but the native extension is missing,
+        # from_env raises RuntimeError which is caught below and maps to exit 2.
+        if os.environ.get("AS_ENABLE_SIP_RUNTIME", "").strip():
+            sip_service = SipStackService.from_env(call_source)
+            if sip_service is not None:
+                sip_service.start()
+                logging.info("SipStackService started (SIP runtime listener active)")
+
         for signum in termination_signals:
             signal.signal(signum, request_terminate)
 
         while shell.accepts_new_requests():
             signal.pause()
+
+        # Drain: stop the SIP listener so no new calls are accepted, then wait
+        # for in-flight dialogs to finish via shell.run_until_drained().
+        if sip_service is not None:
+            sip_service.stop()
 
         return 0 if shell.run_until_drained() else _DRAIN_TIMEOUT_EXIT_CODE
     except Exception:
@@ -238,6 +259,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     finally:
         metrics_stop.set()
         metrics_thread.join(timeout=2.0)
+        if sip_service is not None:
+            try:
+                sip_service.stop()
+            except Exception:
+                logging.exception("Error stopping SipStackService during cleanup")
         if bounded_sink is not None:
             bounded_sink.stop()
         if health_server is not None:

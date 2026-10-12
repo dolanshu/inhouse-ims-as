@@ -64,6 +64,7 @@
 | 2026-10-12 | **B1 / O1 取值落定一层（内部工程目标值）** | **内部工程目标值 = loopback 模型下 ≥ CPS 1280 无失败**（2026-10-12 饱和点探测实测达成；由「已验证下限基线」升格为内部工程目标 / 回归保持线）；**对外承诺值仍不填**（ne-datasheet §3 填值准入条件三条均未满足） | 维护者 2026-10-12 指令「B1 容量目标值由 agent 自行判断执行」。**HPA 阈值 / 容量类告警 / ne-datasheet 容量取值 / 4.1 正式报告四项下游维持阻塞**（逐项精确理由见 §5.1 的 2026-10-12 追加段）；内部目标值**仅限内部，不得写入任何对外材料**；不签收任何 REQ |
 | 2026-10-12 | **B5 / M8 N3 已执行（7 行「工程证据接受」代签）** | open 中可签的 7 行（**F-1 / F-2 / F-3 / F-6 / F-7 / F-12 / F-14**）按 N3 口径逐行签收；矩阵计数 **pass 9→16、open 24→17**（剩余 17 行与 N4 停止线清单逐行一致） | 维护者 2026-10-12 指令「B5 的 N3 一并完成、自行判断」；签字一律写「agent 代签（维护者 2026-10-12 授权）」。**N4 停止线未被越过**：`report.md` §0.5 的 open / blocked 计数一字未改；M5 REQ 级仍不通过、M8 仍「RC 就绪、待退出签字」；不宣称 test-plan 整句全绿 |
 | 2026-10-12 | **A5 抓取接线（X1）与 B2 / B3 后置到下一个 release** | 维护者 2026-10-12 决定：① **X1**（`prometheus.io/scrape` 注解 vs ServiceMonitor / PodMonitor）需**运营商 monitoring-integration 标准输入**，输入到位前不选边、不改 chart；② **B2 / B3** 的 requirement / ADR 起草（含 **B3 的 RPO / RTO 取值**）整体后置，本轮不启动 | 与 §12「已裁不做登记区」同口径：**后续状态盘点一律只引指针、不再单列、不再列入待维护者动作**。落点：[`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §3 X1 追加、[`handoff/2026-10-12-b2-b3-deferred-items.md`](handoff/2026-10-12-b2-b3-deferred-items.md) 追加（含四项启动条件） |
+| 2026-10-12 | **F-13 / NF-7 呼叫轨迹：判重大漏项，delay 到 v1.1（作为 feature）** | 按 Call-ID 查 SIP 消息轨迹 + 保留期清理本版**不实现**；判为**重大漏项**（POC 基线能力回退：`observability/tracing.py` 曾被 M1 甄别为产品能力存活、进程内 ring 不存活，产品级实现至今为零）；根因 = M4 起误入「补测」框架、跨里程碑无主、RC 计划 §3.1 排除出 v1；v1.1 启动时走新 feature 流程（requirement → ADR → design → review，与 FM 的 P6 澄清同模式）；F-16 轨迹联动部分只签非轨迹部分 | 维护者 2026-10-12 裁定；见 [`handoff/2026-10-12-m8-scope-revision-internal-release-plan.md`](handoff/2026-10-12-m8-scope-revision-internal-release-plan.md) §6 第 1 项裁决结果、[`acceptance/m8-test-plan-matrix.md`](acceptance/m8-test-plan-matrix.md) 2026-10-12 裁定节 |
 
 > **注记（2026-10-10）**：上表这四条是**边界 / 口径 / 定位 / 许可**层面的认可，**不等同于** A4、A5、A6、B1、B2、B3 六项建议的**取值**已被裁决 —— 该六项的取值**仍全部待维护者裁决**；本次**只落盘、未开工**。详见 [`handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](handoff/2026-10-10-unfinished-assessment-and-next-plan.md) §0.2「口径边界」段与 §10「当前开工状态」。
 
@@ -560,6 +561,8 @@ M6 是一个带决策的研究里程碑，不是对某个数字的承诺。容�
 | REQ-S-4 / `test-plan` §1.4 **正式全绿** | M8 或维护者单独签收 | 与 §4.3 工程关门分离 |
 | PostgreSQL 16 | 非阻塞 follow-up | 证据基线 12.22 |
 | M4b-7.2d 生产 ingress / trusted-proxy | **M5** | 见 §4.4.4 M5-1c / M4b checklist 7.2d |
+
+**重大漏项裁定（2026-10-12，维护者）**：本表「REQ-F-13 / M4b-7.4 Call-ID live trace」一行**改判为能力缺口（重大漏项）**，不再是「补测」——该能力在 POC 即存在（`migration/triage.md` `observability/tracing.py` 甄别行：产品能力存活、进程内 ring 不存活），产品级实现（PG trace store + API + 保留期清理）**至今为零**，属相对 POC 基线的功能回退。处置：**delay 到 v1.1，作为 feature 走新 feature 流程**（requirement → ADR → design → review）；本版（内部版本）不实现。连带：REQ-F-16 的轨迹联动部分只签非轨迹部分；O4（10 天可配）/ D5（in-cluster PostgreSQL）取值不变，随该 feature 落地。
 
 ---
 

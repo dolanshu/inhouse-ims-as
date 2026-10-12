@@ -27,6 +27,20 @@
 - performance 门禁层自 M6 首个用例起阻塞；e2e 层仍不阻塞（0 tests）。
 - `m2-platform-resip` 缺 `_resip_runtime` 时 integration 用例 fail（非 skip）。
 
+### Internal build (2026-10-12)
+
+> **这是内部版本，不是发行版。** 版本号维持 `0.2.0`（`VERSION` 文件不变），镜像 tag 后缀为 `-internal-<date>`。
+
+- **Docker 镜像带 SIP 监听**：`deploy/docker/Dockerfile` 新增多阶段构建（`resip-builder` / `py-builder` / `runtime`），builder 阶段从 `testbed/simulators/resip-probe/vendor/` 源码构建 reSIProcate 共享库（rutil/resip/dum）+ 三个 native Python 扩展（`_resip_runtime`、`_resip_two_leg`、`_resip_recovery`）；runtime 阶段 reSIProcate 共享库放 `/app/lib`（`LD_LIBRARY_PATH=/app/lib`）、native 扩展放 `/app/native`（`AS_RESIP_RUNTIME_BUILD` / `AS_RESIP_TWO_LEG_BUILD` / `AS_RESIP_RECOVERY_BUILD=/app/native`）。
+- **发布镜像默认开启 SIP 监听**：runtime 阶段设置 `AS_ENABLE_SIP_RUNTIME=1`，容器启动即拉起 native listener（UDP/TCP/TLS 取决于 `AS_SIP_*` / `AS_TLS_*` 环境变量）；未设置端口时 UDP 绑定 5060。
+- **进程入口接入 SIP 栈**：`platform/src/as_platform/__main__.py` 的 `main()` 在 try 块内、shell 创建后调用 `SipStackService.from_env()` + `start()`；drain 时调用 `sip_service.stop()`，finally 兜底停止；fail-closed：`AS_ENABLE_SIP_RUNTIME=1` 但 native 扩展缺失时 `from_env` 抛 RuntimeError → except 返回 exit code 2（非崩溃）；未设置 env var 时行为与旧版一致。
+- **EXPOSE 修正**：由 `5060/udp 5061/tcp` 改为 `5060/udp 5060/tcp 5061/tcp`（TCP 与 UDP 共用 5060，TLS 用 5061，与 Helm `values.yaml` 的 `sip.port` / `sip.tlsPort` 一致）。
+- **镜像可重复构建 + digest 记录**：基础镜像固定 tag、uv `--frozen`、源码 tarball 带 SHA256 校验；构建后记录 image ID 到 `docs/acceptance/artifacts/m5/2026-10-12/PASS-docker-build-digest-2026-10-12.txt`。
+- **脱敏复检通过**：镜像内无 `.pem` / `.key` / `.pcap` / `.pcapng` 等敏感文件，无含口令日志。
+- **镜像 tag 格式**：`as-platform:0.2.0-internal-<date>`（date 格式 `YYYYMMDD`）。
+- **chart 不同步**：Helm chart 维持 `0.2.0`，不随 internal build 变更。
+- **本版定位**：function 完整 + 模拟器证据 + 可重复构建；不签收任何 REQ、不构成 M8 里程碑关闭、不对外发布。
+
 ## [0.1.0] - 未发布（Unreleased）
 
 ### 新增（Added）

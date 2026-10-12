@@ -1,0 +1,25 @@
+== M8 internal build — Docker image build + digest (2026-10-12) ==
+environment: dev-win03ib7niepf0
+
+-- build command --
+docker build -t as-platform:0.2.0-internal-20261012 -f deploy/docker/Dockerfile .
+
+-- build result --
+multi-stage build (resip-builder / py-builder / runtime):
+  - reSIProcate 1.14.0 built from vendor source (rutil/resip/dum)
+  - three native extensions built: _resip_runtime, _resip_two_leg, _resip_recovery
+  - runtime: python:3.10-slim, non-root user 10001:10001
+  - AS_ENABLE_SIP_RUNTIME=1, AS_RESIP_*_BUILD=/app/native, LD_LIBRARY_PATH=/app/lib
+build exit code: 0
+
+-- image id --
+docker inspect --format='{{.Id}}' as-platform:0.2.0-internal-20261012
+sha256:8f2e1b9465d96a8cb7b9cab286e687a52621f136b570f521df15f6f9112da7c8
+
+-- runtime verification (SIP listener starts) --
+docker run --rm -e AS_SIP_ACCEPT_ALL_INVITES=1 -e AS_SIP_UDP_PORT=5060 as-platform:0.2.0-internal-20261012
+RESIP_RUNTIME_LISTENING address=127.0.0.1 advertised=127.0.0.1 udp_port=5060
+(native SIP listener confirmed listening on UDP 5060)
+
+-- build date --
+2026-10-12

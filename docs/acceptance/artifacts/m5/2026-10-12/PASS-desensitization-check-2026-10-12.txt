@@ -1,0 +1,19 @@
+== M8 internal build — image desensitization check (2026-10-12) ==
+environment: dev-win03ib7niepf0
+
+-- check command --
+docker run --rm --entrypoint sh as-platform:0.2.0-internal-20261012 -c \
+  "find /app -type f \( -name '*.pem' -o -name '*.key' -o -name '*.pcap' -o -name '*.pcapng' -o -name '*.crt' -o -name '*.p12' -o -name '*.jks' \) 2>/dev/null; \
+   echo '---LOG-SCAN---'; \
+   grep -ri 'password\|passwd\|secret' /app --include='*.log' 2>/dev/null | head -5; \
+   echo '---END---'"
+
+-- result --
+(no sensitive files: no .pem / .key / .pcap / .pcapng / .crt / .p12 / .jks under /app)
+(no log lines containing password/passwd/secret)
+
+-- conclusion --
+PASS: image contains no keys, certificates, packet captures, or password-bearing logs.
+
+-- date --
+2026-10-12
