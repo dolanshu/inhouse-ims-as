@@ -10,6 +10,8 @@
 > - **testbed 边界与告警口径**：`testbed/` 是**研发资产，绝不做运行时依赖**（`AGENT.md` §4），ADR-0014 明确 v1 不把 testbed 作为交付物；其仿真结果（含 callload、M7.1 仿真平台、dev-host harness）**不得充当运营商 IOT 或现网容量证据**（`docs/product-packaging-plan.md` §0.3 第 8 条、§3.4）。告警与指标的**唯一权威契约**是 `deploy/alerts/as-alerts.yaml` 与 `deploy/alerts/README.md`，本文只引用、不另立口径。
 > - **术语纪律**：M8 发布候选（RC）产物就绪，**退出签字仍搁置** —— **RC 就绪 ≠ 通过**（`docs/plan.md` §0）。E1 / E4 / E5 **未验收**。O1 **仍未裁决**；O4 / D5 **取值已裁（G6，2026-10-10；实现未落）**；O5 / D3 **取值已裁（G7，2026-10-10；chart 仍单副本渲染，failover 实测行为无证据）**。
 
+> **注记（2026-10-13 追加）**：上一段中的「O1 仍未裁决」与本文档其余 stale 表述（`0.0.0-skeleton` 等）在事实层面已过期 —— O1 的内部工程目标值已落（对外承诺值仍不填）、chart 已首次同步到 `0.2.0`；处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+
 ---
 
 ## 1. 网元概览

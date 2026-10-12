@@ -15,6 +15,7 @@
 | [`environments.md`](environments.md) | **环境登记表。** 长期事实登记：每台机器的名字、hostname、具备/缺失工具、已产出的证据。引用环境必须用表中的名字。**数据由 `tools/env-probe.sh` 现场探测生成，不手工维护**（见「本机环境与工具」） |
 | [`product-packaging-plan.md`](product-packaging-plan.md) | **产品化包装计划。** 四批交付物、`product/`·`operations/`·`delivery/` 三个新目录的由来与执行顺序 |
 | [`migration/triage.md`](migration/triage.md) | 在采纳任何东西之前，POC 代码如何被甄别 |
+| [`next-release-v1.1-plan.md`](next-release-v1.1-plan.md) | **下一 release（v1.1 批次）的单一追踪载体。** 本版（M8 内部版）close 后的全部遗留项去向在此收口；其余文档只留指针 |
 
 ## 构建它
 

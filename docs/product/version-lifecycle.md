@@ -76,6 +76,8 @@
 
 **缺口的准确表述**：chart 的 `version` / `appVersion` 目前是骨架占位值，**与根 `VERSION` 不同步**；由于 `image.tag` 为空时回落到 `appVersion`，**镜像 tag 与 `app.kubernetes.io/version` 标签当前也不反映产品 release 版本**。`tests/test_version_consistency.py` **不覆盖** chart（它只检查 `VERSION`、`CHANGELOG.md` 与成员 `pyproject.toml`）。
 
+> **注记（2026-10-13 追加）**：上段所描述的 chart 版本不同步缺口在事实层面已过期（chart 已于 2026-10-12 首次同步到 `0.2.0`，本节表格内的 `0.0.0-skeleton` / `"0.0.0"` 为原文保留），处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+
 **已裁修法（G4 / A6，2026-10-10 裁；2026-10-12 脚本落地）**：把「发布时 chart `version` / `appVersion` 与 `VERSION` 对齐」写成发布检查清单的一条，并在 `make chart-check` 之外增加一致性断言；`VERSION` 仍是唯一源头，chart 值是它的**派生物**，不构成第二个家。该口径已落地为 `scripts/sync-chart-version.sh`（默认 `--check` 只读，drift 即 exit 1；`--apply` 才写入）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效，本文不改任何 chart/代码）。
 
 ---

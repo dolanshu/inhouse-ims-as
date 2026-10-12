@@ -52,3 +52,6 @@ deploy/compose/.env
 
 # Office temporary lock files
 ~$*
+
+/docs/product-packag*
+/docs/intro.md

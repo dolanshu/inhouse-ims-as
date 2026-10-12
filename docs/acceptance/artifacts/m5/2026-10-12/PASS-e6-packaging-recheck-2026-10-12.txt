@@ -1,0 +1,74 @@
+== M8 internal build — E-6 packaging recheck (2026-10-12, executed 2026-10-13) ==
+environment: dev-win03ib7niepf0
+scope: M8 批次 6 / E-6 打包复检（RC 计划 E-6）
+
+-- 1. version consistency --
+command: uv run pytest tests/test_version_consistency.py -q
+result: 9 passed in 0.02s, exit 0
+
+-- 2. evidence discipline guard --
+command: uv run pytest tests/test_evidence_discipline.py -q
+result: 135 passed in 0.37s, exit 0
+
+-- 3. gate --
+command: make gate
+result: ruff format --check / ruff check / mypy / pytest 四步 exit 0；pytest 1174 passed, 249 deselected, 11 warnings
+
+-- 4. docker rebuild (repeatability) --
+command: docker build -t as-platform:0.2.0-internal-20261012 -f deploy/docker/Dockerfile .
+result: exit 0；全部构建步骤 CACHED（build 上下文与各层内容未变），耗时 2.5s
+new image id (docker inspect --format='{{.Id}}'):
+sha256:63ba8f4df78d5853e70451cc0e2a12e691f2c38facc800e2135d71c7018ecfdb
+batch-1 recorded image id (docs/acceptance/artifacts/m5/2026-10-12/PASS-docker-build-digest-2026-10-12.txt):
+sha256:8f2e1b9465d96a8cb7b9cab286e687a52621f136b570f521df15f6f9112da7c8
+digest comparison: NOT EQUAL —— 记录新 digest 63ba8f4df78d...，批次 1 的 8f2e1b9465d... 保留为历史值。
+note: 本次构建各层全部 CACHED，说明层内容未发生变化；差异发生在 manifest 层（buildx v0.31.1
+      本次产出带 attestation 的 manifest list，`{{.Id}}` 取到 manifest list digest）。
+      不据此宣称镜像内容发生了变化，也不宣称与批次 1 逐字节一致。
+
+-- 5. desensitization recheck --
+command: docker run --rm --entrypoint sh as-platform:0.2.0-internal-20261012 -c \
+  "find /app -type f \( -name '*.pem' -o -name '*.key' -o -name '*.pcap' -o -name '*.pcapng' -o -name '*.crt' -o -name '*.p12' -o -name '*.jks' \) 2>/dev/null; \
+   echo '---LOG-SCAN---'; \
+   grep -ri 'password\|passwd\|secret' /app --include='*.log' 2>/dev/null | head -5; \
+   echo '---END---'"
+result: (no sensitive files: no .pem / .key / .pcap / .pcapng / .crt / .p12 / .jks under /app)
+        (no log lines containing password/passwd/secret)
+conclusion: PASS —— 镜像内无密钥 / 证书 / 抓包 / 含口令日志
+
+-- 6. runtime SIP listener verification --
+command: timeout 20 docker run --rm -e AS_SIP_ACCEPT_ALL_INVITES=1 -e AS_SIP_UDP_PORT=5060 as-platform:0.2.0-internal-20261012
+result: RESIP_RUNTIME_LISTENING address=127.0.0.1 advertised=127.0.0.1 udp_port=5060
+        (native SIP listener confirmed listening on UDP 5060)
+
+-- 7. helm repeatable render --
+command: PATH="$PWD/tools/bin:$PATH" make chart-check   (helm 3.16.4)
+result: chart-check: OK
+
+-- 8. README / runbook vs AS_SIP_* / AS_TLS_* 逐条核对 --
+实现侧（platform/src/as_platform/，主入口 runtime/transport_env.py）读取的 AS_SIP_* / AS_TLS_* / AS_PEER_* 共 16 个：
+  AS_PEER_ALLOWED_ADDRESSES, AS_PEER_ALLOWED_CERT_FINGERPRINTS,
+  AS_SIP_ACCEPT_ALL_INVITES, AS_SIP_ADVERTISED_ADDRESS, AS_SIP_BIND_ADDRESS,
+  AS_SIP_DISABLE_UDP, AS_SIP_ENABLE_TCP, AS_SIP_ROUTE_HOOK, AS_SIP_TCP_PORT,
+  AS_SIP_TLS_PORT, AS_SIP_UDP_PORT,
+  AS_TLS_CA_PATH, AS_TLS_CERT_PATH, AS_TLS_ENABLE, AS_TLS_KEY_PATH, AS_TLS_REQUIRE_CLIENT_CERT
+覆盖核对（逐条）：
+  platform/README.md            16/16 覆盖
+  docs/operations/runbook-l2.md  3/16 覆盖（AS_PEER_ALLOWED_ADDRESSES / AS_PEER_ALLOWED_CERT_FINGERPRINTS / AS_TLS_CA_PATH），属子集引用
+  docs/delivery/install-guide.md 1/16 覆盖（AS_SIP_ENABLE_TCP）
+  根 README.md                   0/16（无环境变量表）
+反向核对（文档中出现的名字是否在实现里存在）：
+  AS_SIP_NEXT_HOP / AS_SIP_NEXT_HOP_PORT / AS_SIP_NEXT_HOP_TLS_PORT 不在 platform/src，
+  但实现于 apps/translation/src/as_translation/outbound.py:44 / :48 / :50 —— 不是漂移、不是错名。
+  （同目录 testbed/sim-platform/values-product-as.yaml:54 亦用到 AS_SIP_NEXT_HOP）
+conclusion: 未发现错名 / typo / 文档与实现漂移。根 README.md 缺环境变量表为既有文档缺口
+  （非阻塞，docs/acceptance/report.md §0.7 已登记），本批次不补。
+
+-- conclusion --
+PASS：E-6 打包复检六项全部通过（版本一致性 / 证据纪律守卫 / make gate / 镜像可重复构建 /
+      脱敏 / Helm 可重复渲染），环境变量逐条核对无漂移。
+      唯一偏差：重建 digest 与批次 1 记录值不一致，已按计划记录新 digest（各项构建步骤 CACHED）。
+      三元组 (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt, 2026-10-12)
+
+-- date --
+2026-10-12

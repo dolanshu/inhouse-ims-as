@@ -9,5 +9,9 @@ artifacts
 **/__pycache__
 **/*.pyc
 testbed/simulators/resip-probe
+!testbed/simulators/resip-probe/vendor
+!testbed/simulators/resip-probe/vendor/SHA256SUMS
+!testbed/simulators/resip-probe/vendor/resiprocate-1.14.0-632e215c-source.tar.gz
+platform/native/*/build
 **/*.pcap
 **/*.pcapng

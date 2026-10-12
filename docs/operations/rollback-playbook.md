@@ -67,6 +67,8 @@ NOTES.txt §3 明确「两种东西都叫 rollback，不要混淆」：**(a) 配
 
 **如实标注当前不同步（已知缺口）**：`deploy/helm/Chart.yaml` 当前为 `version: 0.0.0-skeleton` / `appVersion: "0.0.0"`、**无 `kubeVersion`**，与根 `VERSION`（`0.2.0`）**不同步**；校验用 `scripts/sync-chart-version.sh --check`（默认只读，drift 即 exit 1）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效）；`kubeVersion` 已定为 `>=1.23.0-0`（由 chart 实际 API 反推），**尚未写入 Chart.yaml**。本文**不得**声称已演练或已同步 —— 上述同步动作截至本文闭环日（2026-10-12）**未执行**。
 
+> **注记（2026-10-13 追加）**：上段 chart 仍为 `0.0.0-skeleton` / `"0.0.0"` 的表述在事实层面已过期（首次同步已于 2026-10-12 执行），处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+
 ```sh
 helm -n <ns> history <release>
 helm -n <ns> rollback <release> <revision>

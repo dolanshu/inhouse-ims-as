@@ -70,6 +70,14 @@
 4. 评审记录 Adjudication 13 行中 B3-01/02/04 标「待维护者确认/待裁决」，请逐行给最终裁决。
 5. `docs/handoff/2026-10-12-m8-batch5-prompt.md` 已在工作树中，下一批启动前请确认其内容。
 
+> **去向指针（2026-10-13 追加；上方五项待维护者事项原文一律保留不改）**：本节尚未闭合的几项去向为 ——
+> **第 1 项**（B3-02 FAILCLOSED 是否立项为零呼损滚动升级增强）已转 v1.1 立项，见
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§3-8**（REQ-NF-4 本版按「接受实测呼损」签 pass，
+> **非**「零丢失已达成」）；**第 2 / 4 项**（B3-04 config-service 单连接重连、评审记录 Adjudication 行的最终裁决）
+> 随该节一并计入 v1.1 排期，归属 **§3**；**第 3 / 5 项**（工作树提交切分、`batch5-prompt.md` 等未跟踪 / 无归属文件）
+> 见 **§5-6**（以 `git status` 现场为准，不逐项固化）。
+> 后续状态盘点、汇报、handoff、新 session 开场涉及本节遗留项一律**只引该指针**，不逐项展开、不再列入「待维护者动作」。
+
 ## 7. 纪律执行声明
 
 - 主 agent 未直接写任何文件；全部文件改动经 general-purpose writing subagent 落盘并以 git status/diff 逐项核对；同一工作树同时仅一个 writing subagent。

@@ -145,6 +145,13 @@ HELM_BIN=$PWD/tools/bin/helm make chart-check
 
 **处置建议（待维护者决定，不在本轮范围）**：由 B6 负责方在下一次文档同步批次中按「原文保留 + 追加注记」方式处理；`product-packaging-plan.md` §5 已追加事实层面关闭的说明（见该文件 2026-10-12 晚些时候追加块）。
 
+> **去向指针（2026-10-13 追加；上方处置建议原文一律保留不改）**：本节登记的五份下游文档
+> （`docs/delivery/airgap-package.md`、`docs/delivery/install-guide.md`、`docs/operations/rollback-playbook.md`、
+> `docs/product/ne-datasheet.md`、`docs/product/version-lifecycle.md`）中的 `0.0.0-skeleton` 与「O1 未裁决」两类 stale 表述，
+> 连同本节的处置建议（原文保留 + 追加注记、是否同步待维护者决定），统一收口于
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§5-1**。
+> 后续状态盘点、汇报、handoff、新 session 开场涉及本项一律**只引该指针**，不逐项展开、不再列入「待维护者动作」。
+
 ---
 
 ## 6. 后置到下一个 release 的两件（已标记，不再单列）
@@ -153,6 +160,13 @@ HELM_BIN=$PWD/tools/bin/helm make chart-check
 |---|---|---|
 | **A5 / X1 抓取接线**（annotation vs ServiceMonitor/PodMonitor） | [`2026-10-11-open-adjudication-register.md`](2026-10-11-open-adjudication-register.md) §3 X1「裁决落盘（2026-10-12 追加）」+ §5 汇总表状态列 + 评估文档 §4 A5 状态行 + `plan.md` §0 决策行 | 需运营商 monitoring-integration 标准输入；输入到位前不选边、不改 chart。**后续状态盘点、汇报、handoff、session 开场一律只引指针，不逐项展开、不单独提醒、不再列入「待维护者动作」**（与评估文档 §12 同口径） |
 | **B2 / B3**（requirement / ADR 起草 + **B3 的 RPO / RTO 取值**） | [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) §5 + 评估文档 §4 B2/B3 状态行 + `plan.md` §0 决策行 | 本轮不启动；§4 四项启动条件原样保留（RPO / RTO 须维护者取值，不代裁）；下一个 release 排期时明确重启时机 |
+
+> **去向指针（2026-10-13 追加；上方表格与「不再单列」原文一律保留不改）**：本表两件的去向为 ——
+> **A5 / X1 抓取接线** → [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§2** 第 7 行（外部硬依赖类，
+> 重启 = 维护者裁决 + 运营商 monitoring-integration 标准到位）；
+> **B2 / B3** → 同文档 **§4-1 / §4-2**，其四项启动条件原样保留为同文档 **§4.3**（未确认不得启动），
+> **RPO / RTO 取值**仍须维护者取值、见 **§7-4**。
+> 后续状态盘点、汇报、handoff、新 session 开场涉及本表遗留项一律**只引该指针**，**本表不再单列**、不逐项复述。
 
 ---
 

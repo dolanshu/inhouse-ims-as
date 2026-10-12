@@ -77,6 +77,12 @@ N3 已代签的 7 行（F-1/F-2/F-3/F-6/F-7/F-12/F-14）签字口径一律是「
 - `../acceptance/report.md` §0.5 计数**仍为 open 24 / blocked 12**（pass 9 / n-a 4），**未同步** N2/N3 后的矩阵（pass 16 / open 17 / blocked 10 / n-a 6）。
 - **X1** 抓取接线已后置（待运营商 monitoring-integration 标准输入，G3 维持待决，不改 chart）；**B2 / B3** 已整体后置到下一个 release；**Lane D 四项**已分别裁为 v1.1 / 按需（4.2 长稳报告 v1.1、4.3 API 版本兼容 v1.1、4.4 白皮书按需、4.5 能力开放机制按需）。
 
+> **去向指针（2026-10-13 追加；上方第 2 条原文一律保留不改）**：本条所列已后置项的去向统一收口于
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) —— **X1 抓取接线**见 **§2** 第 7 行（在七项外部硬依赖表内）；
+> **B2** 见 **§4-1**、**B3** 见 **§4-2**，两者的四项启动条件原样保留为 **§4.3**（未确认不得启动），B3 的 RPO / RTO 取值见 **§7-4**；
+> **Lane D 4.2 / 4.3** 见 **§3-7**（4.4 / 4.5 已裁为「按需」，不在 v1.1 立项列内）。
+> 后续状态盘点、汇报、handoff、新 session 开场涉及本条所列遗留项一律**只引该指针**，不逐项展开、不再列入「待维护者动作」。
+
 ### 0.9 四层证据机制与版本称呼
 
 - **四层证据机制**（2026-10-11 裁决）：① 文件名即结论（`docs/acceptance/artifacts/**` 强制 `PASS-` / `FAILCLOSED-` 前缀）；② 环境必须有名字（[`../environments.md`](../environments.md) 登记，禁匿名「本机」）；③ 状态三元组 `(结论, 证据文件, 日期)`；④ 守卫测试 `tests/test_evidence_discipline.py`。已登记环境 `dev-win03ib7niepf0`（host `WIN-03IB7NIEPF0`）。
@@ -99,6 +105,12 @@ N3 已代签的 7 行（F-1/F-2/F-3/F-6/F-7/F-12/F-14）签字口径一律是「
 | X1 抓取接线 | 待运营商 monitoring-integration 标准输入（G3 / A5 维持待决，当前不改 chart） | 运营商 monitoring-integration 标准 |
 
 **「后置 ≠ 取消」。** 重启条件沿用 [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §0 口径：**维护者另行裁决 + 外部资源到位**，**不得因本机工作顺带推进**。矩阵中这些行**保持原状态词**（`blocked` / `open`），本文不改写、不提前转终态。
+
+> **去向指针（2026-10-13 追加；上方表 A 与本段口径原文一律保留不改）**：表 A 的七行连同本段重启条件口径，
+> 统一收口于 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§2**（外部硬依赖类）—— 第 1–4 行对应
+> D-1 / S-2 / S-3、D-2 / NF-1 live、ADR-0008 演练、D12 / O5，第 5–6 行对应包装 2.4 / 2.5，第 7 行对应 X1 抓取接线；
+> 该节措辞沿用本表与本段原文。另：**O1 对外承诺值**见同文档 **§4-6**，v1.1 立项 feature 见 **§3**。
+> 后续状态盘点、汇报、handoff 涉及表 A 遗留项一律**只引该指针**，**本清单不再逐项复述**。
 
 ### 1.2 表 B「本版必须完成」
 
@@ -272,6 +284,12 @@ N3 已代签的 7 行（F-1/F-2/F-3/F-6/F-7/F-12/F-14）签字口径一律是「
 | F-13 / 5.4-F-13 / NF-7（呼叫轨迹，重大漏项） | 已裁定 delay v1.1 作为 feature；无 trace store / API；O4 与 D5 已裁但实现未落 | v1.1 启动时走新 feature 流程（requirement → ADR → design → review） |
 
 **重启条件同 §1 表 A 口径**：维护者另行裁决 + 外部资源到位；后置 ≠ 取消；不得因本机工作顺带推进。B2 / B3（requirement + ADR 起草）与 Lane D 四项已分别后置，载体为 [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) 与 [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) Lane D，本清单不重复展开。
+
+> **去向指针（2026-10-13 追加；上方移交清单与本段原文一律保留不改）**：本清单已并入
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) —— 七项外部硬依赖见 **§2**；
+> F-13 / 5.4-F-13 / NF-7 呼叫轨迹与其余 v1.1 立项 feature 见 **§3**；**O1 对外承诺值**见 **§4-6**；
+> B2 / B3 见 **§4-1 / §4-2**（含 §4.3 四项启动条件）。
+> 后续任何状态盘点、汇报、handoff，以及重开 M8 时整理「下一 release 输入」，一律**只引该指针**，**本清单不再逐项复述**。
 
 ---
 

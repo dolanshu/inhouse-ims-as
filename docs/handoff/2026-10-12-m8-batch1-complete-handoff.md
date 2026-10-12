@@ -41,6 +41,12 @@
 - docs/plan.md
 - docs/reviews/m8-scope-revision-internal-release-plan-review-2026-10-12.md（新建）
 
+> **去向指针（2026-10-13 追加；上方 §2.3 原文一律保留不改）**：本节记载的工作树未提交改动与无归属文件，
+> 统一收口于 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§5-6**（文档与仓库卫生类）——
+> 该处以 `git status` 现场为准、**不逐项固化**清单（清单随提交动作变化，固化即过期），commit 拆分由维护者决定
+> （`AGENT.md` §10.4）。后续状态盘点、汇报、handoff、新 session 开场涉及本段遗留项一律**只引该指针**，
+> 不重开本节列表、不再列入「待维护者动作」。
+
 ## 3. 待执行批次（按依赖顺序）
 
 ### 批次 2「SIP 对拍」（下一个）

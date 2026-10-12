@@ -15,6 +15,8 @@
 
 镜像同步（`docker pull` + `docker save` → `images/*.tar`）、依赖镜像清单（`scripts/images.txt`）、校验和（`SHA256SUMS` + `MANIFEST.txt`）、`helm package`（产物按 Chart.yaml 的 name/version 命名，当前为 `3rdparty-as-0.0.0-skeleton.tgz`）、离线加载脚本（`scripts/load-images.sh`：校验和 → 导入镜像 → 安装前置检查）。
 
+> **注记（2026-10-13 追加）**：上段安装包产物名中的 `0.0.0-skeleton` 在事实层面已过期（chart 已于 2026-10-12 首次同步到 `0.2.0`），处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+
 ### 非范围（明确不做）
 
 | 非范围声明 | 原因 / 依据 |
