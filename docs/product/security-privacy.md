@@ -42,7 +42,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ### 1.2 法律框架与六原则映射
 
-**框架**：香港《个人资料（私隐）条例》（PDPO）。选择 PDPO 而非等保，理由见 `../discussion.md` §合规过审条（3HK 属上市公司，内控要求）。**本文只做工程侧对照，不作法律解释。**
+**框架**：香港《个人资料（私隐）条例》（PDPO）。选择 PDPO 而非等保，理由见维护者 2026-10-09 确认（运营商属上市公司，内控要求）。**本文只做工程侧对照，不作法律解释。**
 
 | PDPO 原则 | 我方如何满足 | 证据 | 缺口 |
 |---|---|---|---|
@@ -201,7 +201,7 @@ flowchart LR
 | **依赖锁定** | ✅ 有：`uv.lock` + `uv sync --frozen`（锁不一致即失败）；`AGENT.md` §8「每个依赖都走 `uv`，提交 `uv.lock` 并在门禁中校验」 | 锁存在，但**锁不等于没有漏洞** |
 | **本地门禁** | ✅ 有：`make gate` = lint → type → layer①（`Makefile:131`）；`make gate-strict` 追加 ADR 标注扫描（`Makefile:136`）；另有 `make chart-check`、`make alert-check` | 都是**正确性**门禁，**不是安全扫描** |
 | **门禁中的安全扫描** | ❌ **无**。四层测试门禁中没有任何 SCA、容器镜像扫描、SBOM 生成或依赖审计步骤 | **无自动化依赖漏洞检测** |
-| **扫描产物** | ❌ **无现成扫描产物**。`docs/acceptance/artifacts/` 下只有 `m5/`（alert-check / gate / chart-check 采样）与 `m8/`（`req-s-2-pki`、`req-nf-1-live`、`req-s-3-rotation` 三份 README，无扫描报告）；`CHANGELOG.md` 无 CVE 条目；`docs/reviews/` 无渗透测试记录 | 唯一提及「依赖漏洞扫描 / 渗透测试」的地方是 `docs/discussion.md:23` 与 `:160`，属**讨论记录**，不是产物 |
+| **扫描产物** | ❌ **无现成扫描产物**。`docs/acceptance/artifacts/` 下只有 `m5/`（alert-check / gate / chart-check 采样）与 `m8/`（`req-s-2-pki`、`req-nf-1-live`、`req-s-3-rotation` 三份 README，无扫描报告）；`CHANGELOG.md` 无 CVE 条目；`docs/reviews/` 无渗透测试记录 | 仅讨论层面提及过「依赖漏洞扫描 / 渗透测试」，无对应产物记录 |
 | **运行时基线** | ⚠️ `deploy/docker/Dockerfile:23` 运行时镜像 `python:3.10-slim`（builder `:3` 为 `ghcr.io/astral-sh/uv:python3.10-bookworm-slim`）；门禁层① 锁定 Python 3.10 | **D1 未决**：Python 3.10 在 2026 年 10 月到达生命周期终点（`../plan.md` §5.2 D1）。处置二选一：① 尽早验证迁移到受支持版本；② 在 ADR 里把 EOL 运行时**登记为已接受风险**。该日期之后的任何交付需先完成其中一项 |
 | **第三方 native 依赖** | reSIProcate（C++，Vovida 许可，ADR-0019 accepted）；`testbed/simulators/resip-probe/vendor/` 下有上游源码/预编译 tarball | 这类依赖**不在 `uv.lock` 覆盖范围内**，Python SCA 扫不到 —— 是当前扫描方案的**盲区** |
 | **禁止提交项** | `AGENT.md` §11 / §13、`SECURITY.md` | **绝不提交密钥、证书、token、真实地址、真实流量抓包**；仓库只放占位符 |

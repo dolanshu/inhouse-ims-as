@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 >
 > - **产品名是文档暂用名**。本文全篇使用 **In-house IMS Application Server（文档暂用名）**，首现处即本文标题，网络角色为 3GPP **Third-Party AS role**。该名称**不是已正式批准的产品名**；正式命名决策落点见 [`docs/plan.md`](docs/plan.md) §0「产品决策记录」。
 > - **git repo 名**：按 [`docs/plan.md`](docs/plan.md) §0 决策行，git 仓库名与 remote URL 采用 `inhouse-ims-as`（**仅**仓库名 / remote URL 层面）；**chart name、镜像名、OTel 服务名保持 `3rdparty-as` 不变**（见 [`deploy/helm/Chart.yaml`](deploy/helm/Chart.yaml)）。仓库内部内容与组件命名不受此影响。
-> - **目标场景**：**3HK 内部上线评审（内部评审导向）** —— 这是**当前默认方向**（来源为 `docs/discussion.md` 讨论 + 维护者 2026-10-09 确认），**尚未形成带 review record 的正式决策**，不得当作已确认的产品决策引用（评审意见 G-P0-6）。
+> - **目标场景**：**xx运营商 内部上线评审（内部评审导向）** —— 这是**当前默认方向**（来源为维护者 2026-10-09 确认），**尚未形成带 review record 的正式决策**，不得当作已确认的产品决策引用（评审意见 G-P0-6）。
 > - **当前状态**：**M8 发布候选（RC）产物就绪，但退出签字仍搁置**（[`docs/plan.md`](docs/plan.md) §2 M8 行）。**RC 就绪 ≠ 关门**。E1（reSIProcate 生产路径行为）/ E4（TLS 证书热轮换）/ E5（状态外置与恢复）**均未验收**。
 > - **本文不含任何容量/性能数字**：无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 百分比容量。O1（容量目标）**未裁决**（[`AGENT.md`](AGENT.md) §2）。
 

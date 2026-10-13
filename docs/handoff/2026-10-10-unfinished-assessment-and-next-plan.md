@@ -74,7 +74,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | **G5 / B1 + NF-3** | 采纳 O1 三级决策流程，并区分内部目标与外部承诺 | 在 M6 证据与维护者决策前，不落容量取值、不落 HPA 阈值、不落容量类告警。REQ-NF-3 继续适用且 blocked；其固定数值型验收断言需另行修订/后置处理，不能把整条 requirement 标记 N/A。 |
 | **G6 / B2 + D5** | O4 默认呼叫轨迹保留期为 10 天（部署可配）；D5 选 in-cluster PostgreSQL；Redis 保持 runtime checkpoint 存储 | 本次不实现轨迹存储/查询/删除能力。清理触发点与时间起算口径归入实现细节待定义，不作为保留期未决项。 |
 | **G7 / B3 + D3** | O5 基线为站点内 N+1、跨站 1+1 warm standby；D3 选 Redis primary/replica + Sentinel（沿用 ADR-0008 拓扑），不选 Redis Cluster | 当前不承诺机架/AZ 级容错，不裁决 RTO/RPO 数值；本次不授权实现或上线验收。 |
-| **G8-1** | 目标场景正式口径：3HK 内部生产就绪/发版评审 | 同步记录到 `docs/plan.md`；除非架构边界变化，不新增 ADR。 |
+| **G8-1** | 目标场景正式口径：xx运营商 内部生产就绪/发版评审 | 同步记录到 `docs/plan.md`；除非架构边界变化，不新增 ADR。 |
 | **G8-2** | 正式采用 `In-house IMS Application Server` 作为产品/文档描述名 | 描述名属性，不作为商标/品牌宣称。 |
 | **G8-3** | GitHub repo 重命名 `inhouse-ims-as` 记为维护者报告已完成 | 本仓库内不执行 remote 或本地路径改动。 |
 

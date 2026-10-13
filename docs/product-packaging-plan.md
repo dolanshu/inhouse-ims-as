@@ -16,7 +16,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 > 本文档基于 `docs/discussion.md` 中关于"自研第三方 IMS AS 如何包装得像商业产品"的讨论，结合本项目当前实际情况，制定可执行的产品化包装路线图。
 >
-> 适用场景（**当前默认方向**：讨论确认，待补 plan/ADR 正式决策落点，见 §4.1）：运营商自研 **In-house IMS Application Server**（**文档暂用名**，首现标注 3GPP Third-Party AS role，以下简称 in-house AS；命名状态见 §4.3），面向 3HK 内部上线评审。repo 名拟改为 `inhouse-ims-as`（当前默认方向，待补正式决策落点，见 §4.3）。
+> 适用场景（**当前默认方向**：讨论确认，待补 plan/ADR 正式决策落点，见 §4.1）：运营商自研 **In-house IMS Application Server**（**文档暂用名**，首现标注 3GPP Third-Party AS role，以下简称 in-house AS；命名状态见 §4.3），面向 xx运营商 内部上线评审。repo 名拟改为 `inhouse-ims-as`（当前默认方向，待补正式决策落点，见 §4.3）。
 
 ***
 
@@ -213,7 +213,7 @@ testbed 仿真结果（含 M7.1 仿真平台、callload）属于研发/演示资
 
 ### 4.1 目标场景：内部上线评审（当前默认方向）
 
-- **方向**：A —— 3HK 内部上线评审（内部评审导向）。维护者已于 2026-10-09 确认该方向。
+- **方向**：A —— xx运营商 内部上线评审（内部评审导向）。维护者已于 2026-10-09 确认该方向。
 - **状态**：**当前默认方向（讨论确认，待补 plan/ADR 正式决策落点）**。该方向目前仅来自 `docs/discussion.md` 讨论，尚未在 `docs/plan.md` / ADR 形成正式决策落点；后续需补 plan 决策行 + review record。
 - **影响**：包装重点放在故障定界、回退、RACI、运维交接。
 
@@ -238,7 +238,7 @@ testbed 仿真结果（含 M7.1 仿真平台、callload）属于研发/演示资
 
 ### 4.5 决策状态追加（2026-10-10）
 
-- **目标场景正式口径**：3HK 内部生产就绪/发版评审（internal production-readiness/release review）。
+- **目标场景正式口径**：xx运营商 内部生产就绪/发版评审（internal production-readiness/release review）。
 - **产品/文档名称口径**：采用 `In-house IMS Application Server` 作为描述性产品/文档名称，**不作为品牌或商标宣称**。
 - **仓库命名状态**：GitHub 仓库重命名为 `inhouse-ims-as` 记为维护者报告已完成；本次任务**不**更改本仓库本地目录路径与 remote 配置。
 - **命名边界保持不变**：chart name、镜像名、OTel service name 继续保持 `3rdparty-as`，本追加不改该边界。

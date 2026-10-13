@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 >
 > - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。
 > - **git repo 名**：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`，见 `deploy/helm/Chart.yaml`）、镜像名（`registry.example.com/3rdparty-as`）、OTel 服务名**保持 `3rdparty-as` 不变**。
-> - **目标场景**：**3HK 内部生产就绪 / 发版评审（internal production-readiness / release review）** —— G8-1 正式口径，已落 `docs/plan.md` §0 决策记录。
+> - **目标场景**：**xx运营商 内部生产就绪 / 发版评审（internal production-readiness / release review）** —— G8-1 正式口径，已落 `docs/plan.md` §0 决策记录。
 > - **本文件归属**：`docs/product-packaging-plan.md` §1 第一批交付物 **1.1（产品一页纸 + 命名）**。
 > - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
 > - **本文不含任何容量/性能数字**：O1（容量目标）**未裁决**（`docs/plan.md` §5.1）。M6 dev-host 测量属内部参考、非对外指标，`AGENT.md` §2 在 O1 裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 时延数字。本文因此**没有**容量章节，也**没有**时延 KPI。

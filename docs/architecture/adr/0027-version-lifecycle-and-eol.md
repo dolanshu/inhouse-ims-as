@@ -74,7 +74,7 @@ ADR-0018 解决了"版本号从哪里来"的问题（根 VERSION 是 release 唯
 
 - `docs/product-packaging-plan.md` §3.5 明确"版本生命周期与 EOL 策略"为第三批交付物，需新增 requirement + ADR
 - `docs/reviews/product-packaging-plan-review-2026-10-09.md` G-P1-4 / G-P1-9 指出 ADR-0018 仅覆盖版本号语义，生命周期/EOL 是新增决策
-- 香港电信运营商采购评审通常要求版本生命周期承诺（discussion.md L27、L90）
+- 香港电信运营商采购评审通常要求版本生命周期承诺（行业惯例）。
 
 ## Related（相关）
 

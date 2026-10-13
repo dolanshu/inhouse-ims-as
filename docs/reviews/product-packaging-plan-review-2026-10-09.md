@@ -28,7 +28,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - **24 项 gap 已全部验证关闭（8 P0 + 10 P1 + 6 P2），P0 全部关闭**，该计划可作为内部上线评审基线。
 - 当前里程碑：M7.1 工程已关门（2026-10-07），M8 发布候选产物就绪但退出签字仍搁置（`docs/plan.md` §0）。
 - 遗留动作已全部关闭（2026-10-09）：
-  - **G-P0-6 目标场景、G-P2-6 产品命名与 repo 改名**：已在 `docs/plan.md` §0 新增"产品决策记录"小节，包含 2 条决策行（目标场景、产品文档暂用名），来源为 discussion.md 讨论 + 维护者 2026-10-09 确认；git repo 名改为 `inhouse-ims-as`（仅 git 仓库名与 remote URL），chart name、镜像名、OTel 服务名保持 `3rdparty-as` 不变，联动面极小，无需新增 ADR。
+  - **G-P0-6 目标场景、G-P2-6 产品命名与 repo 改名**：已在 `docs/plan.md` §0 新增"产品决策记录"小节，包含 2 条决策行（目标场景、产品文档暂用名），来源为维护者 2026-10-09 确认；git repo 名改为 `inhouse-ims-as`（仅 git 仓库名与 remote URL），chart name、镜像名、OTel 服务名保持 `3rdparty-as` 不变，联动面极小，无需新增 ADR。
   - **G-P1-9（§3.5 版本生命周期 / EOL）**：已新增 REQ-NF-16（`docs/requirements/prd.md` L459-470）与 ADR-0027（`docs/architecture/adr/0027-version-lifecycle-and-eol.md`），并在 ADR 注册表注册。
   - **B 类交付物**（NE Datasheet 容量数值、PDPO 保留期限、性能基准报告、真实集群演练）仍被 M8 退出签字搁置与 O1/O4/D5 未决阻塞。
 
@@ -39,7 +39,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | 项 | 内容 |
 |---|---|
 | 对象文件 | `docs/product-packaging-plan.md` |
-| 基线文档 | `AGENT.md`、`docs/plan.md`、`docs/discussion.md`、`docs/acceptance/test-plan.md`、`docs/acceptance/report.md`、ADR 注册表及 ADR-0013/0014/0017/0018/0019 等 |
+| 基线文档 | `AGENT.md`、`docs/plan.md`、`docs/acceptance/test-plan.md`、`docs/acceptance/report.md`、ADR 注册表及 ADR-0013/0014/0017/0018/0019 等 |
 | 评审范围 | 全文 §0–§4，重点核对与当前里程碑、未决项、非目标及 ADR 的一致性 |
 
 ---
@@ -52,7 +52,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 2. **违反硬规则**：在 §0.1 #9、§1.3、§1.4 #4.1 等处把 dev-host harness 或未决 O1 写成可对外发布的容量/性能数字，违反 `AGENT.md` §2「M6 实测之前不发布任何容量数字」。
 3. **超出项目范围**：§2.1/§2.2 出现 Diameter Sh 接口面板与告警，与 `AGENT.md` §2「不做 Diameter Sh」及 ADR-0017 冲突。
 4. **技术事实错误**：§2.4「iFC 灰度 + 一键回退」把 iFC 触发责任错误地放到 AS 侧；iFC 实际在 S-CSCF/HSS，AS 只实现 ISC 触发后的业务逻辑。
-5. **决策依据不足**：§4 中多项"已确认决策"仅能在 `docs/discussion.md` 中找到讨论记录，未在 `docs/plan.md`、ADR 或 review record 中形成正式决策落点。
+5. **决策依据不足**：§4 中多项"已确认决策"仅停留在讨论记录层面，未在 `docs/plan.md`、ADR 或 review record 中形成正式决策落点。
 6. **排期不现实**：§3 给出 3–4 周总排期，未考虑 M8 签字搁置、O1/O4/D5 等未决项及 12 项 blocked / 24 项 open 的验收矩阵。
 
 综上，本计划需重大修订后方可作为内部上线评审基线。
@@ -98,7 +98,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ### 第一批：评审入场券
 
-- **1.1 产品一页纸 + 命名**：目标场景"内部上线评审"仅见于 `docs/discussion.md` 讨论，未在 `docs/plan.md` 或 ADR 中落点为正式决策（见 G-P0-6）。
+- **1.1 产品一页纸 + 命名**：目标场景"内部上线评审"仅停留在讨论层面，未在 `docs/plan.md` 或 ADR 中落点为正式决策（见 G-P0-6）。
 - **1.2 3GPP 规范符合性矩阵**：标注 Sh/CDR 为 N/A 正确，但需同时明确 E1/E4/E5 仍未验收（`plan.md` §5.1 O2/O3）。
 - **1.3 网元档案（NE Datasheet）**：撰写容量模型前必须等待 O1 裁决；当前写 CAPS/BHCA/并发会话违反 `AGENT.md` §2（见 G-P0-3）。
 - **1.4 故障定界手册**：合理，但需与 RACI、抓包责任方、S-CSCF/HSS 侧日志对齐。
@@ -156,9 +156,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | 决策 | 计划声称 | 实际状态 | 评估 |
 |---|---|---|---|
-| 4.1 目标场景：内部上线评审 | 已确认 | 仅 `docs/discussion.md` L100、L168 有讨论；`docs/plan.md` 无对应决策行，无 ADR，无 review record。 | 待裁决（G-P0-6） |
+| 4.1 目标场景：内部上线评审 | 已确认 | 仅停留在讨论层面；`docs/plan.md` 无对应决策行，无 ADR，无 review record。 | 待裁决（G-P0-6） |
 | 4.2 业务定位：多业务承载平台 | 已确认 | `apps/` 架构支持；讨论中反复提及。 | 可接受，但建议补一条 ADR/计划决策行。 |
-| 4.3 命名：In-house IMS Application Server | 已确认 | 仅 `docs/discussion.md` L203-253 有命名讨论；`docs/plan.md`、ADR 无正式落点。 | 待裁决（G-P2-6） |
+| 4.3 命名：In-house IMS Application Server | 已确认 | 仅停留在命名讨论层面；`docs/plan.md`、ADR 无正式落点。 | 待裁决（G-P2-6） |
 | 4.4 推进节奏：顺序全量推进 | 已确认 | M8 仍搁置，无上游授权推进包装里程碑；O1/O4/D5 未决。 | 需修改（G-P0-7） |
 
 ---
@@ -214,14 +214,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 - **位置**：`docs/product-packaging-plan.md` §2.4
 - **问题**：iFC 触发逻辑属于 S-CSCF/HSS，AS 只实现 ISC 触发后的业务逻辑；计划把 iFC 灰度/回退写成 AS 侧交付物，误导评审。
-- **证据**：`docs/discussion.md` L126（"iFC 支持按用户群/号段/百分比灰度触发"在 S-CSCF 侧）；架构文档 §1.1 单一 ISC 语义。
+- **证据**：iFC 支持按用户群/号段/百分比灰度触发（S-CSCF 侧，讨论记录）；架构文档 §1.1 单一 ISC 语义。
 - **建议**：改为"ISC 触发后的业务灰度/摘流方案 + 与 S-CSCF 侧 iFC 灰度的配合接口"，明确 AS 侧边界。
 
 #### G-P0-6 — "目标场景：内部上线评审"决策依据不足
 
 - **位置**：`docs/product-packaging-plan.md` §4.1
 - **问题**：该决策被标为"已确认"，但在 `docs/plan.md` 中无对应决策行，无 ADR，无 review record。
-- **证据**：`docs/discussion.md` L100、L168 有讨论；`docs/plan.md` 无此决策落点。
+- **证据**：讨论记录中有相关讨论；`docs/plan.md` 无此决策落点。
 - **建议**：维护者裁决：要么在 `docs/plan.md` §1/§4 补正式决策行 + review record，要么本项标为讨论意见而非已确认决策。
 
 #### G-P0-7 — "顺序全量推进"与 M8 搁置冲突
@@ -307,7 +307,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 - **位置**：`docs/product-packaging-plan.md` §2.4 / §2.5
 - **问题**：iFC 灰度与备份恢复演练依赖 S-CSCF 侧配置和真实集群环境，计划未充分说明。
-- **证据**：`docs/discussion.md` L126；M8 7.2d BLOCKED（`plan.md` §5.4）。
+- **证据**：讨论记录（iFC 灰度依赖 S-CSCF 侧）；M8 7.2d BLOCKED（`plan.md` §5.4）。
 - **建议**：在相关交付物中增加"依赖 S-CSCF 侧配合与 M8 真实集群环境"的风险说明。
 
 ### P2 gaps
@@ -350,8 +350,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #### G-P2-6 — 产品名"已确认"依据不足
 
 - **位置**：`docs/product-packaging-plan.md` §4.3
-- **问题**：产品名被标为"已确认"，但仅见于 `docs/discussion.md` L203-253 讨论，无 ADR/plan 决策行。
-- **证据**：`docs/discussion.md` L203-253；`docs/plan.md` 无该决策行。
+- **问题**：产品名被标为"已确认"，但仅见于命名讨论，无 ADR/plan 决策行。
+- **证据**：命名讨论记录；`docs/plan.md` 无该决策行。
 - **建议**：维护者裁决：要么补正式决策落点，要么标为"建议名称"而非已确认。
 
 ---
@@ -365,7 +365,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | G-P0-3 | §1.3 | NE Datasheet 计划写入 CAPS/BHCA/并发数字，但 O1 未裁决 | 接受 | 容量章节写为"受 O1 阻塞，待实测后填入" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L69） | 容量数值待 O1 裁决（B 类交付物） |
 | G-P0-4 | §2.1/§2.2 | Grafana/告警含 Diameter Sh 面板与 Sh 超时告警，超出范围 | 接受 | 移除 Sh 面板与告警；合规矩阵 Sh 标 N/A | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L79-L80） | |
 | G-P0-5 | §2.4 | "iFC 灰度 + 一键回退"误把 S-CSCF/HSS 侧 iFC 责任放到 AS | 接受 | 改为"ISC 触发后业务灰度/摘流 + 与 S-CSCF 侧配合" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L82） | |
-| G-P0-6 | §4.1 | "目标场景：内部上线评审"标为已确认，但无 plan/ADR/review record 落点 | **部分接受** | 维护者 2026-10-09 确认方向 A（内部上线评审），但该方向目前仅来自 discussion.md；计划文档 §4.1 已降格表述为"当前默认方向（讨论确认，待补 plan/ADR 正式决策落点）"，不再写成已确认决策 | 已关闭 | 文档更新 + plan 决策行（docs/plan.md L21-28） | 正式决策落点已补：docs/plan.md §0 "产品决策记录"小节 |
+| G-P0-6 | §4.1 | "目标场景：内部上线评审"标为已确认，但无 plan/ADR/review record 落点 | **部分接受** | 维护者 2026-10-09 确认方向 A（内部上线评审），但该方向目前仅来自讨论记录；计划文档 §4.1 已降格表述为"当前默认方向（讨论确认，待补 plan/ADR 正式决策落点）"，不再写成已确认决策 | 已关闭 | 文档更新 + plan 决策行（docs/plan.md L21-28） | 正式决策落点已补：docs/plan.md §0 "产品决策记录"小节 |
 | G-P0-7 | §4.4 | "顺序全量推进"标为已确认，但 M8 签字搁置、O1/O4/D5 未决 | 接受 | 改为"待 M8 签字与 O1/O4/D5 裁决后确认推进节奏" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L220-L223） | 推进节奏已改为 A/B 两类，B 类待前置项闭合 |
 | G-P0-8 | §1.4 #4.1 | 第四批正式性能基准报告仍违反容量数字禁令 | 接受 | 改为"O1 裁决后整理内部评审版报告"；当前不写数值 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L103） | 性能报告待 O1 裁决（B 类交付物） |
 | G-P1-1 | §0.1 #4 | Health/Draining 仅机制+模拟验证，缺真实集群 ISSU/缩容证据 | 接受 | 增加"真实 SIP 负载下不掉呼叫待 M7/M8 验收"说明 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L18） | |
@@ -389,7 +389,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ## AI 复核结论（Verification）
 
-- 本 review record 已对照 `docs/product-packaging-plan.md` 全文、`AGENT.md`、`docs/plan.md`、`docs/discussion.md`、`docs/acceptance/test-plan.md`、`docs/acceptance/report.md` 及 ADR-0013/0014/0017/0018/0019 进行复核。
+- 本 review record 已对照 `docs/product-packaging-plan.md` 全文、`AGENT.md`、`docs/plan.md`、`docs/acceptance/test-plan.md`、`docs/acceptance/report.md` 及 ADR-0013/0014/0017/0018/0019 进行复核。
 - 所有 P0/P1/P2 gap 均已给出证据来源、修改方案与 adjudication 表初始状态。
 - 维护者已于 2026-10-09 完成全部 24 项裁决（22 项接受、G-P0-6 与 G-P2-6 部分接受），`docs/product-packaging-plan.md` 已按裁决修订。
 - **独立复核 agent 已对照 `docs/product-packaging-plan.md` 修订版全文逐项验证，24 项 gap 的修改方案均已正确落地。**
