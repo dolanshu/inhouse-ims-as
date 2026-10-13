@@ -12,561 +12,561 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 产品需求文档（PRD）— 3rdparty-as
+# Product Requirements Document (PRD) — 3rdparty-as
 
-**版本**：v0.2（reviewed）
-**日期**：2026-09-28
-**状态**：reviewed — prd-v0.1-review 24 Gap 全部裁决接受，对应修改已全部落盘
+**Version**: v0.2 (reviewed)
+**Date**: 2026-09-28
+**Status**: reviewed — all 24 Gaps of prd-v0.1-review have been adjudicated as accepted and the corresponding changes are all on disk
 
-> **验收标准状态**：具体 test case 在 acceptance/test-plan.md。当前 test-plan 为占位，test case 将在 M2 内核实现阶段同步补充。
-> **协议章节号说明**：文中 RFC 3261 章节号以 IETF 2002 年发布的 RFC 3261 原文为准。
+> **Acceptance-criteria status**: the concrete test cases are in acceptance/test-plan.md. The current test-plan is a placeholder; test cases will be added during the M2 kernel implementation phase.
+> **Note on protocol section numbers**: the RFC 3261 section numbers here follow the original RFC 3261 as published by the IETF in 2002.
 
-> 本文档是产品的唯一需求标准。
-> 需求编号体系：REQ-F-*（功能）/ REQ-NF-*（非功能）/ REQ-G-*（治理）/ REQ-S-*（安全）。
-> 信令协议基础：RFC 3261（SIP）、3GPP TS 24.229（IMS）。
-> 验收标准见 ../acceptance/test-plan.md。
-
----
-
-## 0. 产品概述
-
-**这是什么产品。** 3rdparty-as 是一个部署在运营商 IMS（IP Multimedia Subsystem）核心网络**之外**的第三方应用服务器（Application Server）。当运营商的 S-CSCF 网元按 iFC（initial Filter Criteria，3GPP TS 24.229 定义的触发规则表）判定一个呼叫需要第三方介入时，SIP 信令（RFC 3261）经由运营商的 S-SBC（边界会话控制器，承担**透明桥接**职责）送到我们。我们执行业务逻辑判断——例如号码翻译、反欺诈拦截、智能路由——再把结果经 S-SBC 返回给运营商侧。从运营商 S-CSCF 的视角看，我们就是一个"网内 AS"，S-SBC 对它隐藏了"网外"这个事实。
-
-**给谁用、解决什么问题。** 服务对象分两类：① **运营商的业务配置人员**——通过我们提供的控制台配置号段匹配规则、策略（哪些号段需要翻译、哪些号段触发反诈）、审批变更单；② **业务使用方**——翻译服务商、反欺诈提供商、智能路由平台等需要把业务逻辑嵌入呼叫路径的第三方，他们不想自己去部署和维护 SIP 信令栈。运营商的价值是：用我们的 AS，不修改自己的 IMS 核心网配置就能灵活接入第三方业务；业务方的价值是：用我们提供的业务决策接口，不用管 SIP 协议细节。
-
-**它不做什么（非目标，压缩版）。** 不做媒体（不碰 RTP、不做转码、不处理 DTMF、不锚定媒体流）、不做 CDR（计费话单）、不做合法监听、不做 Diameter Sh 接口、单租户、配置管理不走 GitOps（运营商运维不该为了改一个号段去学 Git）。媒体处理如果未来需要放音/录音/转码，触发后由运营商网内的 MRF（媒体资源功能）执行，我们只给判决。
-
-**以下非目标已 formalize 为 REQ-NF-*/REQ-S-*，可追溯可验收：** 不做媒体（REQ-NF-6）、不做 CDR（REQ-NF-7）、不做合法监听（REQ-NF-8）、安全基线（REQ-S-*）。
+> This document is the single requirement standard for the product.
+> Requirement numbering scheme: REQ-F-* (functional) / REQ-NF-* (non-functional) / REQ-G-* (governance) / REQ-S-* (security).
+> Signalling protocol basis: RFC 3261 (SIP), 3GPP TS 24.229 (IMS).
+> Acceptance criteria are in ../acceptance/test-plan.md.
 
 ---
 
-## 1. 用户故事与场景
+## 0. Product overview
 
-### Actor 1：运营商业务配置人员（控制台用户）
+**What this product is.** 3rdparty-as is a third-party Application Server deployed **outside** the operator's IMS (IP Multimedia Subsystem) core network. When the operator's S-CSCF network element decides via iFC (initial Filter Criteria, the trigger-rule table defined in 3GPP TS 24.229) that a call needs third-party involvement, SIP signalling (RFC 3261) reaches us through the operator's S-SBC (the border session controller, which carries the **transparent bridging** responsibility). We execute the business-logic decision — number translation, anti-fraud interception, intelligent routing, and so on — and return the result through the S-SBC to the operator side. From the operator's S-CSCF point of view we are simply an "in-network AS"; the S-SBC hides the fact that we are "out-of-network".
 
-#### US-1：配置号段匹配规则
+**Who uses it and what problem it solves.** There are two kinds of audience: ① **the operator's business configuration staff** — they configure number-range matching rules and policies (which ranges need translation, which ranges trigger anti-fraud) and approve change records through the console we provide; ② **the business users** — third parties such as translation service providers, anti-fraud providers and intelligent routing platforms that need to embed business logic into the call path and do not want to deploy and maintain a SIP signalling stack themselves. The operator's value: with our AS they can flexibly onboard third-party business without modifying their own IMS core network configuration. The business side's value: with the business decision interface we provide, they need not care about SIP protocol details.
 
-**As a** 运营商业务配置人员，**I want** 在控制台上配置"号段 → 业务类型"的匹配规则，**so that** 当 S-CSCF 按 iFC 触发我们时，我们能按规则把呼叫路由到对应的业务（翻译 / 反欺诈 / 智能路由）。
+**What it does not do (non-goals, condensed).** No media (it does not touch RTP, does not transcode, does not handle DTMF, does not anchor media streams), no CDR (billing call detail records), no lawful intercept, no Diameter Sh interface, single tenant, configuration management does not go through GitOps (operator O&M staff should not have to learn Git just to change a number range). If media handling — playback, recording, transcoding — is needed in future, it is performed by the MRF (Media Resource Function) inside the operator's network once triggered; we only deliver the decision.
 
-**场景叙述**：某地市运营商开通了翻译业务，号段 `+86755*` 的所有呼叫要触发翻译 AS。配置人员在控制台添加规则：`match: +86755* → action: route translation`。提交规则草稿 → 进入审批队列 → 审批通过后规则生效。
-
-**对应 REQ**：REQ-F-1（基本呼叫能通）、REQ-F-6（无匹配 → 404）、REQ-F-12（规则 CRUD）、REQ-F-14（审批流程）
-
-#### US-2：配置阻止策略（反欺诈）
-
-**As a** 运营商业务配置人员，**I want** 在控制台上配置"号段 → 阻止"的策略，**so that** 已知的诈骗号段（如 `+86168*`）能被立即拒绝，S-CSCF 不用再尝试其他 AS。
-
-**场景叙述**：反诈中心提供了一批诈骗号段前缀。配置人员添加规则：`match: +86168* → action: decline 603`（**被叫**目标号码）。当被叫号码命中该前缀时，我们直接返回 603 Decline（与 REQ-F-7「目标号码」一致）。
-
-**对应 REQ**：REQ-F-7
-
-#### US-3：查询呼叫轨迹（投诉追溯）
-
-**As a** 运营商业务配置人员，**I want** 能通过 Call-ID 在控制台查询某通呼叫的完整 SIP 消息轨迹，**so that** 用户投诉"为什么我这通电话被拒绝"时能快速追溯原因。
-
-**场景叙述**：用户投诉号段 `+861681234` 的呼叫被拒绝。配置人员在控制台输入 Call-ID，看到：INVITE → 603 Decline，对应配置的阻止策略生效。
-
-**对应 REQ**：REQ-F-13（轨迹查询）、REQ-NF-7（不做 CDR → 用呼叫轨迹替代）
-
-#### US-4：审批配置变更单
-
-**As a** 运营商运维负责人，**I want** 配置变更必须经过审批流程，**so that** 不会有人不小心改错规则导致全量业务异常。
-
-**场景叙述**：配置人员提交变更单"新增 +86755* 翻译规则"。系统进入审批队列，运维负责人在控制台看到审批请求 → 批准 → 变更生效，记录审批人、审批时间。
-
-**对应 REQ**：REQ-F-14（审批流程）、REQ-NF-10
+**The following non-goals have been formalised as REQ-NF-*/REQ-S-*, traceable and acceptance-testable**: no media (REQ-NF-6), no CDR (REQ-NF-7), no lawful intercept (REQ-NF-8), security baseline (REQ-S-*).
 
 ---
 
-### Actor 2：S-CSCF（系统间触发方）
+## 1. User stories and scenarios
 
-#### US-5：通过 S-SBC 透明触发第三方 AS
+### Actor 1: the operator's business configuration staff (console user)
 
-**As an** S-CSCF 网元，**I want** 按 iFC 把 SIP 信令经由 S-SBC 透明转发到第三方 AS，**so that** 运营商不修改自己的 IMS 核心网配置就能灵活接入第三方业务。
+#### US-1: configure number-range matching rules
 
-**场景叙述**：主叫呼叫 `+867551234567`。S-CSCF 按 iFC 检查：该号段要触发 AS。S-CSCF 把 INVITE 发给 S-SBC，S-SBC 做透明桥接（S-CSCF 看不到"网外"），消息抵达我们的 AS。我们执行业务逻辑后返回结果。
+**As a** operator business configuration staff member, **I want** to configure "number range → business type" matching rules on the console, **so that** when the S-CSCF triggers us via iFC, we can route the call to the corresponding business (translation / anti-fraud / intelligent routing) according to the rule.
 
-**对应 REQ**：REQ-F-1、REQ-F-2、REQ-F-3、REQ-NF-5
+**Scenario narrative**: a regional operator has launched a translation service, and all calls in the number range `+86755*` must trigger the translation AS. The configuration staff add a rule on the console: `match: +86755* → action: route translation`. The rule draft is submitted → it enters the approval queue → after approval the rule takes effect.
 
-#### US-6：收到 404 时清理触发链
+**Corresponding REQ**: REQ-F-1 (a basic call can get through), REQ-F-6 (no match → 404), REQ-F-12 (rule CRUD), REQ-F-14 (approval flow)
 
-**As an** S-CSCF 网元，**I want** 当我触发的 AS 返回 404 Not Found 时，知道"这个号段不在该 AS 的业务范围内"，**so that** 我能清理 iFC 链上的该 AS，继续尝试下一个 AS 或直接连对端。
+#### US-2: configure a block policy (anti-fraud)
 
-**场景叙述**：主叫呼叫 `+869991234`（没匹配任何号段规则）。S-CSCF 按 iFC 触发我们。我们返回 404 Not Found。S-CSCF 清理触发链，把呼叫直接转给对端。
+**As a** operator business configuration staff member, **I want** to configure a "number range → block" policy on the console, **so that** known fraud ranges (such as `+86168*`) can be rejected immediately and the S-CSCF does not have to try other ASs.
 
-**对应 REQ**：REQ-F-6
+**Scenario narrative**: the anti-fraud centre has supplied a batch of fraud number prefixes. The configuration staff add a rule: `match: +86168* → action: decline 603` (on the **callee** target number). When the callee number hits that prefix we return 603 Decline directly (consistent with the "target number" in REQ-F-7).
 
-#### US-7：收到 603 Decline 时终止重试
+**Corresponding REQ**: REQ-F-7
 
-**As an** S-CSCF 网元，**I want** 当我触发的 AS 返回 603 Decline 时，知道"该 AS 明确拒绝此呼叫，别再试其他 AS 了"，**so that** 不浪费网元资源做无意义的重试。
+#### US-3: query a call trace (complaint tracing)
 
-**场景叙述**：主叫呼叫 `+861681234`（命中阻止策略）。S-CSCF 触发我们。我们立即返回 603 Decline。S-CSCF 终止 iFC 链，呼叫在我们这里结束。
+**As a** operator business configuration staff member, **I want** to be able to query the complete SIP message trace of a call by Call-ID on the console, **so that** when a user complains "why was my call rejected", the cause can be traced quickly.
 
-**对应 REQ**：REQ-F-7
+**Scenario narrative**: a user complains that calls to the number range `+861681234` were rejected. The configuration staff enter the Call-ID on the console and see: INVITE → 603 Decline, corresponding to a configured block policy taking effect.
 
----
+**Corresponding REQ**: REQ-F-13 (trace query), REQ-NF-7 (no CDR → replaced by the call trace)
 
-### Actor 3：AS 自身 / 运维团队（系统约束的"用户"）
+#### US-4: approve configuration change records
 
-#### US-8：进程重启时呼叫不中断
+**As a** operator operations lead, **I want** configuration changes to have to pass an approval flow, **so that** nobody accidentally changes a rule wrongly and causes an outage across all business.
 
-**As the** AS 系统，**I want** 进程重启或故障时，正在进行的呼叫不中断，**so that** 用户感知不到我们在维护。
+**Scenario narrative**: the configuration staff submit a change record "add the +86755* translation rule". The system enters the approval queue, the operations lead sees the approval request on the console → approves → the change takes effect, recording the approver and the approval time.
 
-**场景叙述**：某通呼叫进行到 180 Ringing 阶段。运维操作重启 AS 进程。呼叫不中断，继续正常信令流程，最终 200 OK → BYE 正常完成。时延承诺待 M6 实测后冻结。
-
-**对应 REQ**：REQ-NF-1
-
-#### US-9：版本升级时新老版本并行
-
-**As the** 运维团队，**I want** 升级 AS 版本时，新请求路由到新版本进程，存量呼叫继续在老版本进程上完成，**so that** 升级过程中没有呼叫中断。
-
-**场景叙述**：版本 v1.2.0 → v1.3.0。版本升级时，新版本就绪后，新到达的请求必须被路由到新版本进程；存量呼叫继续在老版本进程完成，没有新请求进来，2 小时后全部归零，老版本进程下线。
-
-**对应 REQ**：REQ-NF-4
+**Corresponding REQ**: REQ-F-14 (approval flow), REQ-NF-10
 
 ---
 
-### Actor 4：业务方（翻译/反欺诈/智能路由提供商）
+### Actor 2: the S-CSCF (the inter-system trigger)
 
-#### US-10：查询号码翻译结果
+#### US-5: transparently trigger the third-party AS via the S-SBC
 
-**As a** 翻译服务提供商，**I want** 能查询某通呼叫在我们这里匹配到的翻译规则和翻译后的号码，**so that** 我能和自己的翻译业务系统对账。
+**As an** S-CSCF network element, **I want** to transparently forward SIP signalling to the third-party AS via the S-SBC according to iFC, **so that** the operator can flexibly onboard third-party business without modifying its own IMS core network configuration.
 
-**场景叙述**：翻译服务商有个号码 +86755* 规则，翻译为 +852755*。某通 INVITE 到 +867551234567 被翻译为 +8527551234567。翻译服务商通过接口按 Call-ID 查询到这条轨迹。
+**Scenario narrative**: a caller dials `+867551234567`. The S-CSCF checks by iFC: this range must trigger an AS. The S-CSCF sends the INVITE to the S-SBC, the S-SBC performs transparent bridging (the S-CSCF cannot see "out-of-network"), and the message reaches our AS. We execute the business logic and return the result.
 
-**对应 REQ**：REQ-F-13（轨迹查询）、REQ-F-16（翻译处理流程）
+**Corresponding REQ**: REQ-F-1, REQ-F-2, REQ-F-3, REQ-NF-5
 
-#### US-11：查询反欺诈拦截报告
+#### US-6: clean up the trigger chain on receiving 404
 
-**As a** 反欺诈服务提供商，**I want** 能查询某通被 603 Decline 拦截的呼叫命中了哪条阻止策略，**so that** 我能生成反诈报告并上报运营商或监管机构。
+**As an** S-CSCF network element, **I want** that when the AS I triggered returns 404 Not Found, I know that "this number range is not within that AS's business scope", **so that** I can remove that AS from the iFC chain and go on to try the next AS or connect directly to the peer.
 
-**场景叙述**：某通 INVITE 到 +861681234 被 603 Decline。反欺诈服务商查询到命中了 R-BLOCK-90（诈骗号段），生成拦截报告。
+**Scenario narrative**: a caller dials `+869991234` (matching no number-range rule). The S-CSCF triggers us by iFC. We return 404 Not Found. The S-CSCF cleans up the trigger chain and transfers the call directly to the peer.
 
-**对应 REQ**：REQ-F-13（轨迹查询）、REQ-F-7（603 Decline）
+**Corresponding REQ**: REQ-F-6
+
+#### US-7: terminate retries on receiving 603 Decline
+
+**As an** S-CSCF network element, **I want** that when the AS I triggered returns 603 Decline, I know that "this AS explicitly rejects this call, stop trying other ASs", **so that** network element resources are not wasted on meaningless retries.
+
+**Scenario narrative**: a caller dials `+861681234` (hits the block policy). The S-CSCF triggers us. We immediately return 603 Decline. The S-CSCF terminates the iFC chain and the call ends at us.
+
+**Corresponding REQ**: REQ-F-7
 
 ---
 
-### 暂缺用户故事 + POC 基线
+### Actor 3: the AS itself / the operations team (the "user" of system constraints)
 
-> 已有业务描述（§2 功能需求），缺用户故事（§1）和 POC 基线样例。M2 probe 阶段补。
+#### US-8: calls are not interrupted when the process restarts
 
-| 待补 use case | 对应 REQ | 原因 |
+**As the** AS system, **I want** calls in progress not to be interrupted when the process restarts or fails, **so that** users cannot perceive that we are under maintenance.
+
+**Scenario narrative**: a call has progressed to the 180 Ringing stage. Operations restarts the AS process. The call is not interrupted, the normal signalling flow continues, and finally 200 OK → BYE completes normally. The latency commitment is to be frozen after M6 measurements.
+
+**Corresponding REQ**: REQ-NF-1
+
+#### US-9: old and new versions run side by side during a version upgrade
+
+**As the** operations team, **I want** that when upgrading the AS version, new requests are routed to the new-version process while existing calls finish on the old-version process, **so that** there is no call interruption during the upgrade.
+
+**Scenario narrative**: version v1.2.0 → v1.3.0. During the upgrade, once the new version is ready, newly arriving requests must be routed to the new-version process; existing calls continue to complete on the old-version process; with no new requests arriving, everything reaches zero after 2 hours and the old-version process is decommissioned.
+
+**Corresponding REQ**: REQ-NF-4
+
+---
+
+### Actor 4: the business side (translation / anti-fraud / intelligent routing providers)
+
+#### US-10: query number translation results
+
+**As a** translation service provider, **I want** to be able to query which translation rule matched a call here and what the translated number is, **so that** I can reconcile against my own translation business system.
+
+**Scenario narrative**: a translation service provider has a +86755* rule translating to +852755*. An INVITE to +867551234567 is translated to +8527551234567. The translation service provider queries this trace through the interface by Call-ID.
+
+**Corresponding REQ**: REQ-F-13 (trace query), REQ-F-16 (translation processing flow)
+
+#### US-11: query anti-fraud interception reports
+
+**As a** anti-fraud service provider, **I want** to be able to query which block policy a call intercepted by 603 Decline matched, **so that** I can generate an anti-fraud report and report it to the operator or the regulator.
+
+**Scenario narrative**: an INVITE to +861681234 was rejected with 603 Decline. The anti-fraud service provider finds it matched R-BLOCK-90 (a fraud number range) and generates an interception report.
+
+**Corresponding REQ**: REQ-F-13 (trace query), REQ-F-7 (603 Decline)
+
+---
+
+### Missing user stories + POC baseline
+
+> The business description exists (§2 functional requirements) but user stories (§1) and POC baseline samples are missing. To be completed during the M2 probe phase.
+
+| Use case to be added | Corresponding REQ | Reason |
 |---|---|---|
-| CANCEL 流程用户故事 | REQ-F-8 | POC 基线已有，可在 M2 设计阶段补完整叙述 |
-| in-dialog 请求路由 | REQ-F-9 | POC 基线缺失 |
-| 非 2xx 响应分支 | REQ-F-10 | POC ReturnUas 只回 200 OK |
-| CANCEL 竞态 | REQ-F-11 | POC 无显式竞态测试 |
+| CANCEL flow user story | REQ-F-8 | The POC baseline already exists; the complete narrative can be added in the M2 design phase |
+| in-dialog request routing | REQ-F-9 | Missing from the POC baseline |
+| Non-2xx response branches | REQ-F-10 | The POC ReturnUas only returns 200 OK |
+| CANCEL race | REQ-F-11 | The POC has no explicit race test |
 
 ---
 
-## 2. 功能需求（REQ-F-*）
+## 2. Functional requirements (REQ-F-*)
 
-**信令协议基础**：RFC 3261（SIP）、3GPP TS 24.229（IMS 会话控制）。
+**Signalling protocol basis**: RFC 3261 (SIP), 3GPP TS 24.229 (IMS session control).
 
-按功能域分组。每条标注 **P0 / P1** 优先级：
-- **P0 = 产品不存在就没这个功能**（没有呼叫处理能力就不配叫 AS）
-- **P1 = 关键但非核心**（产品能跑但缺了就不完整）
+Grouped by functional domain. Each item is marked **P0 / P1**:
+- **P0 = the product does not exist without this function** (with no call-handling capability it does not deserve to be called an AS)
+- **P1 = important but not core** (the product can run without it but is incomplete)
 
-### 2.1 呼叫信令核心路径（P0）
+### 2.1 Core call signalling path (P0)
 
-**本组定义了"能接运营商的呼叫、能执行业务逻辑、能返回结果"这条最小闭环。**
-
----
-
-#### REQ-F-1：运营商触发的基本呼叫，信令序列遵循 RFC 3261 正确返回
-
-**业务描述。** 当运营商的 S-CSCF 按 iFC（3GPP TS 24.229）触发我们执行业务逻辑时，SIP 信令（RFC 3261）经由 S-SBC 透明桥接送达。我们作为 B2BUA（RFC 3261 §6 Definitions + §12 Dialogs）处理呼叫——接收 INVITE，执行业务判断（转译/反欺诈/路由），然后把结果返回。正常信令序列遵循 RFC 3261 基本呼叫流程：INVITE → 100 Trying → 180 Ringing → 200 OK → ACK → BYE → 200 OK。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.1-REQ-F-1）
+**This group defines the minimal closed loop of "accepting the operator's calls, executing business logic, and returning a result".**
 
 ---
 
-#### REQ-F-2：B2BUA 对话分离，两侧 Call-ID 不同
+#### REQ-F-1: an operator-triggered basic call, with the signalling sequence following RFC 3261 correctly
 
-**业务描述。** 作为 B2BUA（RFC 3261 §6 Definitions（B2BUA 定义）和 §12 Dialogs（B2BUA 两侧各维护独立对话状态）），我们将一个呼叫拆成两条独立对话。每条对话有自己的 Call-ID（RFC 3261 §8.1.1 Call-ID 头域）——两条腿的 Call-ID 必然不同，因为 Call-ID 标识一个对话的唯一性（RFC 3261 §12.1 规定 B2BUA 两侧各维护独立对话状态）。Request-URI（RFC 3261 §8.1.1.1 Request-URI（请求-URI）+ §19.1 通用 URI 格式）在穿越 B2BUA 时改写，确保每条腿的路由正确。
+**Business description.** When the operator's S-CSCF triggers us by iFC (3GPP TS 24.229) to execute business logic, SIP signalling (RFC 3261) arrives via transparent bridging through the S-SBC. We handle the call as a B2BUA (RFC 3261 §6 Definitions + §12 Dialogs) — receiving the INVITE, executing the business decision (translation / anti-fraud / routing), and returning the result. The normal signalling sequence follows the RFC 3261 basic call flow: INVITE → 100 Trying → 180 Ringing → 200 OK → ACK → BYE → 200 OK.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.1-REQ-F-2）
-
----
-
-#### REQ-F-3：Request-URI 改写遵循 RFC 3261
-
-**业务描述。** 上游腿的 INVITE 带的 Request-URI（RFC 3261 §8.1.1.1 Request-URI（请求-URI）+ §19.1 通用 URI 格式）是运营商侧的路由地址（比如 `sip:+86123456789@s-cscf.operator.com`），到了下游腿必须改写成我们内部选定的对端路由（比如 `sip:+86123456789@return-uas:5060`）。反向方向同样：下游腿的 BYE 要改回上游腿的 Request-URI。改写规则来自配置的路由策略。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.1-REQ-F-3）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.1-REQ-F-1)
 
 ---
 
-#### REQ-F-4：SDP 完全透传（我们不碰媒体）
+#### REQ-F-2: B2BUA dialog separation, with different Call-IDs on the two sides
 
-**业务描述。** 上游 INVITE 带的 SDP offer（RFC 3261 §13.2.1 SDP offer/answer 协商流程 + RFC 3264（SDP Offer/Answer Model），描述"我准备好发语音了，用什么编解码、什么端口"），必须原样传递到下游对端；下游 200 OK 带的 SDP answer，必须原样传回上游。我们不在应用服务器层做媒体锚定（即不"截取"语音流、不自己处理 RTP、不触发 DTMF）。保留一个扩展接口定义（出现放音/录音/转码/DTMF 需求时才启用），生产实现为空壳。媒体锚定如果未来需要放音/录音/转码，由运营商网内的 MRF 执行，我们只通过信令告诉运营商侧该找 MRF。
+**Business description.** As a B2BUA (RFC 3261 §6 Definitions (the B2BUA definition) and §12 Dialogs (a B2BUA maintains independent dialog state on each side)), we split one call into two independent dialogs. Each dialog has its own Call-ID (RFC 3261 §8.1.1 Call-ID header) — the Call-IDs of the two legs must differ, because the Call-ID identifies the uniqueness of a dialog (RFC 3261 §12.1 specifies that a B2BUA maintains independent dialog state on each side). The Request-URI (RFC 3261 §8.1.1.1 Request-URI + §19.1 generic URI format) is rewritten when traversing the B2BUA, ensuring that the routing of each leg is correct.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.1-REQ-F-4）
-
----
-
-#### REQ-F-5：Route / Record-Route 头正确处理遵循 RFC 3261
-
-**业务描述。** 寻址到我们的 Route 头值必须被消费（RFC 3261 §20.34 Route 头 + §16.4 proxy 消费寻址本跳的 Route 规则类比，B2BUA 无直接 MUST 但行为应合理）。需要沿用的路由信息（运营商侧指定的后续跳转）由我们的路由策略显式生成，不是无脑复制上游 Route 头。如果下游腿的对端返回了带 Record-Route 的响应（RFC 3261 §20.35 Record-Route 头 + §12.1.2 Route Set 与 Record-Route 反向推导），我们必须在上游腿的响应里正确处理 Record-Route，使对话内后续请求沿 Record-Route 记录的路径反向发送。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.1-REQ-F-5）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.1-REQ-F-2)
 
 ---
 
-### 2.2 路由与策略决策（P0）
+#### REQ-F-3: Request-URI rewriting follows RFC 3261
 
-**本组是我们存在的意义。** 如果我们收到每个呼叫都只做"无条件转发"，那 S-CSCF 直接连对端就行了——我们之所以被触发，是因为我们要做**决策**：匹配规则、选路由、或拒绝。
+**Business description.** The Request-URI (RFC 3261 §8.1.1.1 Request-URI + §19.1 generic URI format) carried by the upstream leg's INVITE is the operator-side routing address (for example `sip:+86123456789@s-cscf.operator.com`), and on the downstream leg it must be rewritten to the peer route we have selected internally (for example `sip:+86123456789@return-uas:5060`). The reverse direction is the same: a downstream-leg BYE must be rewritten back to the upstream leg's Request-URI. The rewriting rules come from the configured routing policy.
 
----
-
-#### REQ-F-6：无匹配规则时返回 404 Not Found
-
-**业务描述。** 当运营商 S-CSCF 通过 S-SBC 触发我们，但目标号码号段未命中任何已配置的业务规则时，我们返回 404 Not Found（RFC 3261 §21.4.5）——告诉上游"这个号段不在我们的业务范围内"。返回 404 而不是 403 Forbidden，因为 403 意味着"我拒绝处理"，而 404 意味着"我不存在（对你这个号段来说）"。这在运营商侧的语义是"清理这个触发链，把这个号段的呼叫转给其他 AS 或直接连对端"。匹配对象默认是目标号码（被叫方向）；最长前缀优先；无匹配 → 404。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.2-REQ-F-6）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.1-REQ-F-3)
 
 ---
 
-#### REQ-F-7：命中"阻止"策略时返回 603 Decline
+#### REQ-F-4: complete SDP pass-through (we do not touch media)
 
-**业务描述。** 当目标号码命中已配置的"阻止"策略（例如反欺诈号段 `+86168*`）时，我们立即返回 603 Decline（RFC 3261 §21.6.2）——告诉上游"我拒绝这个呼叫，你不用再尝试其他 AS 了"。603 Decline 在 RFC 3261 中明确表示"用户拒绝"，S-CSCF 收到后会清理 iFC 链上的触发，不再重试其他 AS。匹配对象默认是目标号码；最长前缀优先；冲突时阻止规则 > 翻译规则 > 默认路由。
+**Business description.** The SDP offer (RFC 3261 §13.2.1 SDP offer/answer negotiation flow + RFC 3264 (SDP Offer/Answer Model), describing "I am ready to send voice, with which codec and which port") carried by the upstream INVITE must be passed through unchanged to the downstream peer; the SDP answer carried by the downstream 200 OK must likewise be passed back upstream unchanged. We do not do media anchoring at the application-server layer (that is, we do not "intercept" the voice stream, do not handle RTP ourselves, do not trigger DTMF). We keep an extension interface definition (enabled only when a playback / recording / transcoding / DTMF requirement appears), with an empty-shell production implementation. If media anchoring for playback / recording / transcoding is needed in future, it is performed by the MRF inside the operator's network, and we only tell the operator side over signalling that it should find the MRF.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.2-REQ-F-7）
-
----
-
-### 2.3 呼叫生命周期（P1）
-
-**本组覆盖基本呼叫之后的各种分支情况。**
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.1-REQ-F-4)
 
 ---
 
-#### REQ-F-8：主叫放弃——CANCEL 与 BYE 两分支流程正确
+#### REQ-F-5: correct handling of Route / Record-Route headers, following RFC 3261
 
-**业务描述。** CANCEL 和 BYE 是两个不同的取消路径（RFC 3261 §9 vs §15）：CANCEL 用于 INVITE 还没产生最终响应时，BYE 用于对话建立之后。
+**Business description.** The value of a Route header addressed to us must be consumed (RFC 3261 §20.34 Route header + §16.4, the proxy rule class for consuming a Route addressed to this hop, as an analogue; a B2BUA has no direct MUST, but the behaviour should still be sensible). Routing information that needs to be carried over (the subsequent hop specified on the operator side) is explicitly generated by our routing policy, not copied mindlessly from the upstream Route header. If the downstream leg's peer returns a response carrying Record-Route (RFC 3261 §20.35 Record-Route header + §12.1.2, the reverse derivation of the Route Set from Record-Route), we must correctly handle Record-Route in the upstream leg's response, so that subsequent in-dialog requests are sent back along the path recorded in Record-Route.
 
-分支 ①——出腿 INVITE 尚无最终响应（早取消）：收到上游腿的 CANCEL → 我们回 CANCEL 的 200 OK → 向下游发送 CANCEL → 对端（Return UAS）回 INVITE 的 487 Request Terminated → 我们向上游透传 487 → 我们向上游发送 ACK。整个流程是"取消在途呼叫并清理对话"（RFC 3261 §9.2）。
-
-分支 ②——出腿 INVITE 已收到 200 OK（对话已建立后取消）：收到上游腿的 CANCEL → 我们回 CANCEL 的 200 OK → 但出腿对话已建立，此时 CANCEL 无效（RFC 3261 §9 明确 CANCEL 对已产生最终响应的请求无效）→ 我们必须走 BYE 拆对话：向下游发送 BYE → 对端回 BYE 的 200 OK → 向上游透传 BYE → 上游回 BYE 的 200 OK → 我们透传到下游。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.3-REQ-F-8）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.1-REQ-F-5)
 
 ---
 
-#### REQ-F-9：in-dialog 请求路由
+### 2.2 Routing and policy decisions (P0)
 
-**业务描述。** 对话建立之后（200 OK → ACK 交换完成，RFC 3261 §17），对话内的后续请求（re-INVITE、UPDATE、INFO、BYE）必须正确路由到**已经建立的那个活跃对话**——不能新建对话、不能路由到错误的对端。对话匹配依据 Call-ID + local/remote tag（RFC 3261 §12 Dialogs）；Route 头指示后续转发路径。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.3-REQ-F-9）
+**This group is the reason we exist.** If we did nothing but "unconditionally forward" every call we received, the S-CSCF could just connect to the peer directly — we are triggered because we must make **decisions**: match a rule, choose a route, or reject.
 
 ---
 
-#### REQ-F-10：非 2xx 响应分支（486 / 480 / 408）
+#### REQ-F-6: return 404 Not Found when no rule matches
 
-**业务描述。** 下游对端可能返回各种非 2xx 最终响应：486 Busy Here（占线）、480 Temporarily Unavailable（临时不可用）、408 Request Timeout（超时）。我们必须把这些响应正确透传回上游（RFC 3261 §16.7 的"响应透传"要求），而不是在中间"吃掉"或"改写"。对上游来说，"下游忙"和"被拒"在 SIP 协议层需要不同处理。
+**Business description.** When the operator's S-CSCF triggers us through the S-SBC but the target number's range hits none of the configured business rules, we return 404 Not Found (RFC 3261 §21.4.5) — telling upstream "this range is not within our business scope". We return 404 rather than 403 Forbidden, because 403 means "I refuse to process", whereas 404 means "I do not exist (for this number range)". On the operator side the semantics are "clean up this trigger chain and transfer calls for this range to another AS or connect directly to the peer". The match target defaults to the target number (the callee direction); longest prefix first; no match → 404.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.3-REQ-F-10）
-
----
-
-#### REQ-F-11：CANCEL 与最终响应竞态
-
-**业务描述。** 引用 RFC 3261 §9.1、§9.2。CANCEL（RFC 3261 §9）和下游最终响应（200 OK 或非 2xx）几乎同时到达是一种真实的竞态场景。我们必须正确处理两种分支：
-
-分支 ①——CANCEL 先于最终响应到达（RFC 合法路径）：下游尚未返回最终响应 → 我们向下游发送 CANCEL → 下游返回 INVITE 的 487 → 我们向上游透传 487 → 我们向上游发送 ACK。
-
-分支 ②——最终响应已到达（RFC §9 明确 "CANCEL has no effect on a request to which a UAS has already given a final response"）：我们已收到下游的 200 OK 或非 2xx 最终响应 → CANCEL 对出腿无效 → 我们走 BYE 拆对话（RFC §15）：向下游发 BYE → 收到 200 OK → 清理对话。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.3-REQ-F-11）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.2-REQ-F-6)
 
 ---
 
-### 2.4 控制台与配置管理（P1）
+#### REQ-F-7: return 603 Decline when a "block" policy is hit
 
-#### REQ-F-12：规则 CRUD
+**Business description.** When the target number hits a configured "block" policy (for example the anti-fraud range `+86168*`), we immediately return 603 Decline (RFC 3261 §21.6.2) — telling upstream "I reject this call, you need not try other ASs". In RFC 3261, 603 Decline explicitly means "declined by the user", and after receiving it the S-CSCF cleans up the trigger in the iFC chain and does not retry other ASs. The match target defaults to the target number; longest prefix first; on conflict, block rule > translation rule > default routing.
 
-**业务描述。** 业务配置人员能通过控制台创建、读取、更新、删除号段匹配规则。每条规则至少包含：匹配对象（主叫/被叫）、匹配模式（前缀/正则）、目标业务类型（翻译/反欺诈/路由/阻止/默认）、启用/禁用状态。
-
-**M4 范围说明（2026-10-03 维护者裁决）**：路由/阻止/翻译的**运行时匹配轴**与 REQ-F-6/F-7 一致，均为**被叫（目标号码）**。M4 验收仅覆盖控制台 **被叫 + 前缀** 规则 CRUD 与下发；**主叫**匹配与**正则**模式标为 **v1.1**，不纳入 M4 验收。详见 [`reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md`](../reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md)。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.4-REQ-F-12）
-
-#### REQ-F-13：轨迹查询
-
-**业务描述。** 业务配置人员和业务方都能通过 Call-ID 查询某通呼叫的完整消息轨迹（INVITE → BYE 的全部 SIP 消息，入/出方向、时间戳、方法、响应码）。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.4-REQ-F-13）
-
-#### REQ-F-14：审批流程
-
-**业务描述。** 配置变更（规则创建/更新/删除、策略变更）必须经过审批流程：提交变更单 → 进入审批队列 → 审批人批准/拒绝 → 审批通过后规则生效。拒绝必须有理由。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.4-REQ-F-14）
-
-#### REQ-F-15：灰度分发与回滚
-
-**业务描述。** 新版本规则必须可灰度分发——分批通知 AS 实例加载新规则版本，每批有健康检查。分发过程中发现问题可自动回滚到上一版本，也可手动回滚。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.4-REQ-F-15）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.2-REQ-F-7)
 
 ---
 
-### 2.5 业务决策链（P1）
+### 2.3 Call lifecycle (P1)
 
-#### REQ-F-16：命中翻译规则后的处理
-
-**业务描述。** 当目标号码命中已配置的翻译规则时（例如 +86755* → +852755*），我们必须：① 提取主叫/被叫号码，② 按规则执行号码翻译，③ 按翻译后的号码查下一跳路由，④ 发出带新 Request-URI 的下游 INVITE。翻译结果、匹配到的规则版本号、路由目标必须可追溯（REQ-F-13 轨迹查询能看到）。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §1.5-REQ-F-16）
+**This group covers the various branch cases after the basic call.**
 
 ---
 
-### 2.6 已知缺口
+#### REQ-F-8: caller gives up — the CANCEL and BYE two-branch flows are correct
 
-| Requirement | 缺口说明 | 计划补齐 |
+**Business description.** CANCEL and BYE are two different cancellation paths (RFC 3261 §9 vs §15): CANCEL is used when the INVITE has not yet produced a final response, BYE is used after the dialog has been established.
+
+Branch ① — the outbound INVITE has no final response yet (early cancel): receiving CANCEL on the upstream leg → we return 200 OK to the CANCEL → we send CANCEL downstream → the peer (Return UAS) returns 487 Request Terminated to the INVITE → we pass the 487 through upstream → we send ACK upstream. The whole flow is "cancel the in-progress call and clean up the dialog" (RFC 3261 §9.2).
+
+Branch ② — the outbound INVITE has already received 200 OK (cancel after the dialog is established): receiving CANCEL on the upstream leg → we return 200 OK to the CANCEL → but the outbound dialog is already established, so CANCEL has no effect (RFC 3261 §9 explicitly states that CANCEL has no effect on a request that has already produced a final response) → we must tear the dialog down with BYE: send BYE downstream → the peer returns 200 OK to the BYE → pass BYE through upstream → upstream returns 200 OK to the BYE → we pass it through to downstream.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.3-REQ-F-8)
+
+---
+
+#### REQ-F-9: in-dialog request routing
+
+**Business description.** After the dialog is established (the 200 OK → ACK exchange completes, RFC 3261 §17), subsequent in-dialog requests (re-INVITE, UPDATE, INFO, BYE) must be correctly routed to **the already-established active dialog** — they must not create a new dialog and must not be routed to the wrong peer. Dialog matching is based on Call-ID + local/remote tag (RFC 3261 §12 Dialogs); the Route header indicates the subsequent forwarding path.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.3-REQ-F-9)
+
+---
+
+#### REQ-F-10: non-2xx response branches (486 / 480 / 408)
+
+**Business description.** The downstream peer may return various non-2xx final responses: 486 Busy Here (line busy), 480 Temporarily Unavailable (temporarily unavailable), 408 Request Timeout (timeout). We must pass these responses through correctly back upstream (the "response pass-through" requirement of RFC 3261 §16.7), rather than "swallowing" or "rewriting" them in the middle. From the upstream perspective, "the downstream is busy" and "rejected" require different handling at the SIP protocol layer.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.3-REQ-F-10)
+
+---
+
+#### REQ-F-11: the race between CANCEL and the final response
+
+**Business description.** Referring to RFC 3261 §9.1, §9.2. CANCEL (RFC 3261 §9) and the downstream final response (200 OK or non-2xx) arriving almost simultaneously is a real race scenario. We must correctly handle both branches:
+
+Branch ① — CANCEL arrives before the final response (the RFC-legal path): downstream has not yet returned a final response → we send CANCEL downstream → downstream returns 487 to the INVITE → we pass the 487 through upstream → we send ACK upstream.
+
+Branch ② — the final response has already arrived (RFC §9 explicitly says "CANCEL has no effect on a request to which a UAS has already given a final response"): we have already received the downstream 200 OK or non-2xx final response → CANCEL has no effect on the outbound leg → we tear the dialog down with BYE (RFC §15): send BYE downstream → receive 200 OK → clean up the dialog.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.3-REQ-F-11)
+
+---
+
+### 2.4 Console and configuration management (P1)
+
+#### REQ-F-12: rule CRUD
+
+**Business description.** Business configuration staff can create, read, update and delete number-range matching rules through the console. Each rule contains at least: match target (caller/callee), match mode (prefix/regex), target business type (translation / anti-fraud / routing / block / default), and enabled/disabled state.
+
+**M4 scope note (2026-10-03 maintainer ruling)**: the **runtime matching axis** for routing/block/translation is consistent with REQ-F-6/F-7 and is **the callee (target number)** in all cases. M4 acceptance covers only console **callee + prefix** rule CRUD and distribution; **caller** matching and **regex** mode are marked **v1.1** and are out of scope for M4 acceptance. See [`reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md`](../reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md) for details.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.4-REQ-F-12)
+
+#### REQ-F-13: trace query
+
+**Business description.** Both business configuration staff and the business side can query the complete message trace of a call by Call-ID (all SIP messages from INVITE → BYE, with inbound/outbound direction, timestamp, method, response code).
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.4-REQ-F-13)
+
+#### REQ-F-14: approval flow
+
+**Business description.** Configuration changes (rule create/update/delete, policy changes) must pass an approval flow: submit a change record → it enters the approval queue → the approver approves/rejects → after approval the rule takes effect. A rejection must carry a reason.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.4-REQ-F-14)
+
+#### REQ-F-15: canary distribution and rollback
+
+**Business description.** New rule versions must be distributable in a canary fashion — notifying AS instances in batches to load the new rule version, with a health check per batch. If a problem is found during distribution it can be rolled back automatically to the previous version, and it can also be rolled back manually.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.4-REQ-F-15)
+
+---
+
+### 2.5 Business decision chain (P1)
+
+#### REQ-F-16: processing after a translation rule is hit
+
+**Business description.** When the target number hits a configured translation rule (for example +86755* → +852755*), we must: ① extract the caller/callee number, ② perform number translation per the rule, ③ look up the next-hop route for the translated number, ④ send the downstream INVITE carrying the new Request-URI. The translation result, the version number of the rule that matched, and the routing target must be traceable (visible via the REQ-F-13 trace query).
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §1.5-REQ-F-16)
+
+---
+
+### 2.6 Known gaps
+
+| Requirement | Gap description | Planned completion |
 |---|---|---|
-| REQ-F-9 | POC 无现成 capture，只有 chained topology 间接覆盖 | M2 probe 阶段在 testbed 补对拍场景 |
-| REQ-F-10 | POC ReturnUas 只返回 200 OK，无 busy 分支 | M2 probe 阶段在 testbed 补对拍场景 |
-| REQ-F-11 | POC 无显式竞态测试 | M2 probe 阶段在 testbed 补对拍场景 |
-| REQ-F-12（扩展） | 主叫匹配、正则模式：PRD 长期能力；**M4 仅被叫+前缀** | **v1.1**（internal API / RuleSet 与控制台能力补齐后验收） |
+| REQ-F-9 | The POC has no ready-made capture, only indirect coverage via the chained topology | Add comparison scenarios to the testbed in the M2 probe phase |
+| REQ-F-10 | The POC ReturnUas only returns 200 OK, with no busy branch | Add comparison scenarios to the testbed in the M2 probe phase |
+| REQ-F-11 | The POC has no explicit race test | Add comparison scenarios to the testbed in the M2 probe phase |
+| REQ-F-12 (extension) | Caller matching and regex mode: a long-term PRD capability; **M4 is callee+prefix only** | **v1.1** (accepted once the internal API / RuleSet and console capabilities are completed) |
 
-这三条不阻塞 M1（M1 聚焦 P0 核心路径和 P1 呼叫生命周期主干），但阻塞 M2 的"完整协议行为"验证。REQ-F-12（扩展）不阻塞 M4 关门（见 REQ-F-12 M4 范围说明）。
-
----
-
-## 3. 非功能需求（REQ-NF-*）
-
-非功能需求定义了"产品必须怎样运行"，不是"产品必须做什么功能"。每条标注 **P0 / P1**：
-- **P0 = 产品架构的基石**（不满足这个，功能需求就无从谈起）
-- **P1 = 关键但非架构基石**（有缺陷不致命但运维会踩坑）
-
-### 3.1 核心架构约束（P0）
+These three do not block M1 (M1 focuses on the P0 core path and the P1 call-lifecycle backbone), but they do block M2's "complete protocol behaviour" verification. REQ-F-12 (extension) does not block M4 closure (see the REQ-F-12 M4 scope note).
 
 ---
 
-#### REQ-NF-1：进程重启不丢会话
+## 3. Non-functional requirements (REQ-NF-*)
 
-**业务描述。** 进程重启或故障时，正在进行的呼叫不能断——会话状态、对话状态、业务处理状态必须持久化在进程之外。
+Non-functional requirements define "how the product must run", not "what functions the product must have". Each item is marked **P0 / P1**:
+- **P0 = the cornerstone of the product architecture** (if it is not met, functional requirements are moot)
+- **P1 = important but not an architectural cornerstone** (a defect is not fatal but operations will trip over it)
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-1）
-
----
-
-#### REQ-NF-2：单进程状态有界
-
-**业务描述。** 一个业务用例一个进程。进程崩溃只影响它承载的那个用例，不波及其他用例。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-2）
+### 3.1 Core architectural constraints (P0)
 
 ---
 
-#### REQ-NF-3：可水平扩展
+#### REQ-NF-1: no session loss on process restart
 
-**业务描述。** 支持水平扩展：业务量增加时能增加处理实例，不影响存量呼叫；业务量减少时能安全缩容。
+**Business description.** On process restart or failure, calls in progress must not be cut — session state, dialog state and business processing state must be persisted outside the process.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-3）
-
----
-
-#### REQ-NF-4：In-Service Upgrade（ISSU）支持
-
-**业务描述。** 版本升级或配置更新时，正在进行的呼叫不能断。新请求路由到新版本进程，存量呼叫继续完成。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-4）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-1)
 
 ---
 
-#### REQ-NF-5：S-SBC 透明桥接——我们看不见"网内/网外"差异
+#### REQ-NF-2: bounded per-process state
 
-**业务描述。** 从我们 AS 的视角看，从 S-SBC 来的消息就"是" S-CSCF 来的。我们不需要实现"网内 AS 适配层"和"网外 AS 适配层"两套逻辑——S-SBC 做了透明桥接，我们只需要实现**一种**接入语义。
+**Business description.** One business use case per process. A process crash affects only the use case it carries and does not spill over into the others.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-5）
-
----
-
-#### REQ-NF-9：单租户 on-premises 部署
-
-**业务描述。** 每客户独立实例，on-premises 交付（运营商机房内部署）。不做多租户（不做共享实例 + 逻辑隔离 + 租户命名空间）。选择单租户的理由：运营商的交付形态本身就是一客户一系统，多租户在此场景无收益，反而增加跨租户数据泄露风险。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-9）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-2)
 
 ---
 
-### 3.2 扩展与治理（P1）
+#### REQ-NF-3: horizontally scalable
 
-本组定义了"运维和工程团队必须怎样合作才能长期维护这个产品"。
+**Business description.** Supports horizontal scaling: processing instances can be added as business volume grows without affecting existing calls; and it can scale down safely as business volume shrinks.
 
----
-
-#### REQ-NF-6：不做媒体
-
-**业务描述。** 不实现 RTP、不做转码、不处理 DTMF、不做媒体锚定、不部署 MRF。保留一个扩展接口定义（出现放音/录音/转码/DTMF 需求时才启用），生产实现为空壳。理由：网外第三方 AS 做媒体中继是三角路由（媒体绕出网再绕回，带宽翻倍 + 时延增加），且网外节点处理用户语音涉及合法监听与隐私合规。（依据 ADR-0004，当前为 skeleton 状态，M2 补）
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-6）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-3)
 
 ---
 
-#### REQ-NF-7：不做 CDR——用呼叫轨迹替代
+#### REQ-NF-4: In-Service Upgrade (ISSU) support
 
-**业务描述。** 不采集计费话单、不投递 CDR、不做 CDR 归档和批价。用按 Call-ID 的**呼叫轨迹**替代 CDR——每一条 SIP 消息（入/出/时间戳/方法/响应码）都可通过控制台查询，用于投诉追溯和反诈举证。呼叫轨迹不是话单：它没有投递通道、不批价、不做网间结算。轨迹保留期待定——由客户合规要求决定，M4 设计阶段冻结。清理任务已 formalize 为功能，但默认值未定。（依据 ADR-0017，当前为 skeleton 状态，M2 补）
+**Business description.** During a version upgrade or configuration update, calls in progress must not be cut. New requests are routed to the new-version process while existing calls continue to complete.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-7）
-
----
-
-#### REQ-NF-8：不做合法监听（LI）
-
-**业务描述。** 不实现合法监听。IRI（Intercept Related Information，监听相关信息）属于网内网元（S-CSCF、S-SBC）的职责；让第三方 AS 介入会引入跨法域暴露（监听指令、监听目标数据、监听回执三个要素不在同一法域）。我们不采集媒体内容，信令层 IRI 应由网内网元自行输出。（依据 ADR-0016，当前为 skeleton 状态，M2 补）
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-8）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-4)
 
 ---
 
-#### REQ-NF-10：配置不走 GitOps
+#### REQ-NF-5: S-SBC transparent bridging — we cannot see the in-network/out-of-network distinction
 
-**业务描述。** 配置变更必须经过审批流程。变更必须可版本化、可追溯、可灰度发布、可回滚。不要求运维人员为改配置去学 Git。
+**Business description.** From the perspective of our AS, a message coming from the S-SBC "is" a message from the S-CSCF. We do not need to implement two sets of logic, an "in-network AS adaptation layer" and an "out-of-network AS adaptation layer" — the S-SBC has done the transparent bridging, and we only need to implement **one** access semantics.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-10）
-
----
-
-#### REQ-NF-11：版本单一来源
-
-**业务描述。** 产品有且只有一个版本号，所有组件声明自己的接口版本。不允许多个组件各有不同的 release 版本。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-11）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-5)
 
 ---
 
-#### REQ-NF-12：所有组件统一仓库内管理
+#### REQ-NF-9: single-tenant on-premises deployment
 
-**业务描述。** 所有组件在一个仓库内。构建和容器构建不应因跨仓依赖而失败。
+**Business description.** An independent instance per customer, delivered on-premises (deployed inside the operator's machine room). No multi-tenancy (no shared instance + logical isolation + tenant namespaces). The reason for choosing single tenancy: the operator's delivery form is itself one customer one system; multi-tenancy brings no benefit in this scenario and instead increases cross-tenant data leakage risk.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-12）
-
----
-
-#### REQ-NF-13：OTel 三信号导出
-
-**业务描述。** 导出 OpenTelemetry 三信号：metrics（active_calls、cps、规则匹配率、4xx/5xx 率）、traces（每通呼叫的完整 span 链）、logs（结构化 JSON 日志）。指标可被 Prometheus/Grafana 消费。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-13）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-9)
 
 ---
 
-#### REQ-NF-14：告警规则集
+### 3.2 Scaling and governance (P1)
 
-**业务描述。** 基于 REQ-NF-13 导出的 metrics，预配置告警规则集：active_calls 突增 > 30%、5xx 率 > 1%、进程重启循环（1min 内 > 3 次）、证书到期 30 天内。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-14）
+This group defines "how operations and the engineering team must cooperate in order to maintain this product long-term".
 
 ---
 
-#### REQ-NF-15：三层 testbed 与真实 socket 容量研究
+#### REQ-NF-6: no media
 
-**业务描述。** 见独立条文 [`req-nf-15-testbed-performance.md`](req-nf-15-testbed-performance.md)：testbed 分 contracts / simulators / load 三层；容量与 O1 研究仅允许真实 socket 压测路径；testbed 为研发资产且不是 v1 交付物。本 REQ 不规定对外 SLA 或营销容量承诺。
+**Business description.** No RTP implementation, no transcoding, no DTMF handling, no media anchoring, no MRF deployment. We keep an extension interface definition (enabled only when a playback / recording / transcoding / DTMF requirement appears), with an empty-shell production implementation. The reason: an out-of-network third-party AS doing media relay creates a triangular route (media leaves the network and comes back, doubling bandwidth and increasing latency), and an out-of-network node handling user voice involves lawful intercept and privacy compliance. (Per ADR-0004, currently in skeleton state, completed in M2)
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-15）
-
----
-
-#### REQ-NF-16：版本生命周期与 EOL 策略
-
-**业务描述。** 每个正式发布版本（GA）应定义明确的生命周期：
-- 支持周期：从 GA 到 EOL 的最短时长（建议 ≥ 12 个月）
-- EOL 提前通知期：至少 6 个月
-- 升级路径：相邻 minor 版本可直接升级；跨 major 版本须提供迁移指南
-- LTS 版本：当前不定义 LTS；如未来需要，须新增 ADR
-- 安全补丁：EOL 后不再提供安全补丁
-
-**对应 ADR**：ADR-0027
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §2-REQ-NF-16）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-6)
 
 ---
 
-## 4. 安全需求（REQ-S-*）— 新增（推翻 requirements-m1-review Gap 3 裁决）
+#### REQ-NF-7: no CDR — replaced by the call trace
 
-**说明**：M1 阶段裁决"安全需求由 REQ-NF 隐含覆盖"（requirements-m1-review Gap 3），**现推翻该裁决**。AGENT.md §13 明确说"trunk 是不可信的"，安全语义不能隐含，必须 formalize 为可追溯可验收的 REQ-S-* 条目。
+**Business description.** No billing record collection, no CDR delivery, no CDR archiving and no wholesale rating. Instead of CDR, a Call-ID-keyed **call trace** is used — every SIP message (inbound/outbound, timestamp, method, response code) can be queried through the console, for complaint tracing and anti-fraud evidence. The call trace is not a billing record: it has no delivery channel, does no wholesale rating and does no inter-operator settlement. The trace retention period is undecided — determined by the customer's compliance requirements, frozen in the M4 design phase. The cleanup job has been formalised as a function, but its default value is undecided. (Per ADR-0017, currently in skeleton state, completed in M2)
 
-#### REQ-S-1：对端白名单校验
-
-**业务描述。** 只接受白名单内的对端（S-SBC、已授权的业务方）发来的消息。白名单通过 config-service 下发，支持证书指纹校验或 IP:port 白名单。不在白名单的消息直接丢弃或返回 403。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §3-REQ-S-1）
-
-#### REQ-S-2：与 S-SBC 端到端 TLS
-
-**业务描述。** 我们与 S-SBC 之间的信令通道必须加密（TLS）。TLS 证书由运营商 PKI 签发。拒绝明文连接。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §3-REQ-S-2）
-
-#### REQ-S-3：证书热轮换
-
-**业务描述。** TLS 证书有效期到期前可热轮换——正在进行的呼叫不受影响，新建连接使用新证书。轮换期间新旧证书并行生效（双证书窗口）。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §3-REQ-S-3）
-
-#### REQ-S-4：控制台操作鉴权与审计
-
-**业务描述。** 控制台（规则 CRUD、审批、回滚）所有写操作必须鉴权（RBAC 或最简角色 + 密码/证书），所有操作生成不可篡改的审计日志（操作者、时间戳、操作类型、变更前后值）。审计日志保留期 = 合规要求（M4 冻结）。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §3-REQ-S-4）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-7)
 
 ---
 
-## 5. 治理需求（REQ-G-*）
+#### REQ-NF-8: no lawful intercept (LI)
 
-**本组标注 P2 = 工程纪律约束。** 不影响产品功能正确性但影响长期可维护性。未满足不阻塞功能验收但阻塞本地门禁（make gate）。
+**Business description.** No lawful intercept implementation. IRI (Intercept Related Information) belongs to the responsibility of in-network network elements (S-CSCF, S-SBC); letting a third-party AS get involved introduces cross-jurisdiction exposure (the three elements — intercept instruction, intercept target data, intercept acknowledgement — are not in the same jurisdiction). We collect no media content, and signalling-layer IRI should be output by the in-network network elements themselves. (Per ADR-0016, currently in skeleton state, completed in M2)
 
-治理需求是开发纪律和工程方法论的约束。全部为 **P2**。
-
----
-
-#### REQ-G-1：每个 feature 必须显式裁决 enablement
-
-**业务描述。** 每个新 feature 在进入 HLD/LLD 之前，必须显式裁决三件事：① 是否引入 feature 开关、② 开关默认态（必须默认关）、③ 开关移除条件（防开关债务）。开关只做能力启停，**不改变接口契约**；关闭时走既有默认路径。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §4-REQ-G-1）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-8)
 
 ---
 
-#### REQ-G-2：改动必须贯通文档链
+#### REQ-NF-10: configuration does not go through GitOps
 
-**业务描述。** 任何行为改动——无论大小——都必须贯通整条文档链：requirement → ADR → 设计 → 契约 → 代码 → 验收。只改代码不改上游文档是未完成。Requirement 是唯一标准，所有阶段必须能追溯到具体 REQ-* 编号。
+**Business description.** Configuration changes must pass an approval flow. Changes must be versionable, traceable, publishable in canary fashion and rollbackable. Operations staff are not required to learn Git in order to change configuration.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §4-REQ-G-2）
-
----
-
-#### REQ-G-3：不显而易见的代码必须标注对应 ADR
-
-**业务描述。** 不显而易见的代码（不读上下文看不懂为什么这么写的）必须有注释指向对应的架构决策。代码里的设计决策点、非直观的工程取舍、有 ADR 支持的架构实现，必须在代码行末标注 `# See ADR-00NN`。审稿人从代码一步走到理由，不是自己猜。AST 扫描属于 `make gate` 之外的额外步骤，不属于 make gate 四步标准动作。AST 扫描可用 `make gate-strict` 目标触发。
-
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §4-REQ-G-3）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-10)
 
 ---
 
-#### REQ-G-4：make gate 必须全绿才能提交
+#### REQ-NF-11: single source of the version
 
-**业务描述。** `make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。本地门禁不绿，什么都不能提交。`--no-verify` 及其等价物禁止。
+**Business description.** The product has exactly one version number, and all components declare their own interface versions. It is not permitted for several components to each have different release versions.
 
-**验收标准。** （验收标准见 ../acceptance/test-plan.md §4-REQ-G-4）
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-11)
 
 ---
 
-## 6. 版本历史
+#### REQ-NF-12: all components managed in one repository
 
-| 版本 | 日期 | 说明 | 作者 |
+**Business description.** All components live in one repository. Build and container build must not fail because of cross-repository dependencies.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-12)
+
+---
+
+#### REQ-NF-13: OTel three-signal export
+
+**Business description.** Export the three OpenTelemetry signals: metrics (active_calls, cps, rule match rate, 4xx/5xx rate), traces (the complete span chain per call), logs (structured JSON logs). Metrics can be consumed by Prometheus/Grafana.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-13)
+
+---
+
+#### REQ-NF-14: alert rule set
+
+**Business description.** Based on the metrics exported by REQ-NF-13, a preset alert rule set: active_calls spike > 30%, 5xx rate > 1%, process restart loop (> 3 times within 1min), certificate expiring within 30 days.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-14)
+
+---
+
+#### REQ-NF-15: three-layer testbed and real-socket capacity study
+
+**Business description.** See the separate clause [`req-nf-15-testbed-performance.md`](req-nf-15-testbed-performance.md): the testbed is split into contracts / simulators / load layers; the capacity and O1 study permits only the real-socket load-testing path; the testbed is a research and development asset and is not a v1 deliverable. This REQ does not specify an external SLA or any marketing capacity claim.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-15)
+
+---
+
+#### REQ-NF-16: version lifecycle and EOL policy
+
+**Business description.** Every formal release (GA) should define an explicit lifecycle:
+- Support period: the minimum duration from GA to EOL (recommended ≥ 12 months)
+- EOL advance notice period: at least 6 months
+- Upgrade path: adjacent minor versions can be upgraded to directly; a migration guide must be provided across major versions
+- LTS versions: LTS is not defined for now; if it is needed in future, a new ADR must be added
+- Security patches: no security patches are provided after EOL
+
+**Corresponding ADR**: ADR-0027
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §2-REQ-NF-16)
+
+---
+
+## 4. Security requirements (REQ-S-*) — newly added (overturns the requirements-m1-review Gap 3 ruling)
+
+**Note**: the M1 phase adjudicated that "security requirements are implicitly covered by REQ-NF" (requirements-m1-review Gap 3); **that ruling is now overturned**. AGENT.md §13 explicitly says "the trunk is untrusted", so security semantics cannot be implicit and must be formalised into traceable, acceptance-testable REQ-S-* items.
+
+#### REQ-S-1: peer allowlist validation
+
+**Business description.** Only accept messages from peers inside the allowlist (S-SBC, authorised business parties). The allowlist is distributed via config-service and supports certificate fingerprint validation or IP:port allowlisting. Messages not on the allowlist are dropped directly or answered with 403.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §3-REQ-S-1)
+
+#### REQ-S-2: end-to-end TLS with the S-SBC
+
+**Business description.** The signalling channel between us and the S-SBC must be encrypted (TLS). The TLS certificate is issued by the operator's PKI. Plaintext connections are rejected.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §3-REQ-S-2)
+
+#### REQ-S-3: certificate hot rotation
+
+**Business description.** TLS certificates can be hot-rotated before their validity period expires — calls in progress are unaffected and new connections use the new certificate. During rotation the old and new certificates are both valid (a dual-certificate window).
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §3-REQ-S-3)
+
+#### REQ-S-4: console operation authorisation and audit
+
+**Business description.** All write operations on the console (rule CRUD, approval, rollback) must be authorised (RBAC, or a minimal role set + password/certificate), and all operations generate tamper-proof audit logs (operator, timestamp, operation type, before/after values). The audit log retention period = the compliance requirement (frozen at M4).
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §3-REQ-S-4)
+
+---
+
+## 5. Governance requirements (REQ-G-*)
+
+**This group is marked P2 = engineering discipline constraints.** They do not affect the correctness of the product's functionality but do affect long-term maintainability. Not meeting them does not block functional acceptance but does block the local gate (make gate).
+
+Governance requirements constrain development discipline and engineering methodology. All are **P2**.
+
+---
+
+#### REQ-G-1: every feature must have an explicit enablement ruling
+
+**Business description.** Before every new feature enters HLD/LLD, three things must be explicitly adjudicated: ① whether to introduce a feature switch, ② the switch's default state (it must default to off), ③ the switch's removal condition (to prevent switch debt). A switch only enables/disables capability and **does not change the interface contract**; when off it follows the existing default path.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §4-REQ-G-1)
+
+---
+
+#### REQ-G-2: changes must run through the whole document chain
+
+**Business description.** Any behavioural change — however small — must run through the entire document chain: requirement → ADR → design → contract → code → acceptance. Changing code without changing the upstream documents is unfinished work. The requirement is the only standard, and every stage must be traceable to a concrete REQ-* number.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §4-REQ-G-2)
+
+---
+
+#### REQ-G-3: non-obvious code must be annotated with the corresponding ADR
+
+**Business description.** Non-obvious code (code whose reason for being written this way is not understandable without context) must carry a comment pointing at the corresponding architectural decision. Design decision points in the code, non-intuitive engineering trade-offs and architectural implementations backed by an ADR must be annotated at the end of the code line with `# See ADR-00NN`. A reviewer walks from the code to the reason in one step instead of guessing. The AST scan is an extra step outside `make gate` and is not part of the standard four make gate actions. The AST scan can be triggered via the `make gate-strict` target.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §4-REQ-G-3)
+
+---
+
+#### REQ-G-4: make gate must be fully green before committing
+
+**Business description.** `make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest (the unit/contract layer). If the local gate is not green, nothing may be committed. `--no-verify` and its equivalents are forbidden.
+
+**Acceptance criteria.** (Acceptance criteria are in ../acceptance/test-plan.md §4-REQ-G-4)
+
+---
+
+## 6. Version history
+
+| Version | Date | Description | Author |
 |---|---|---|---|
-| v0.1 (draft) | 2026-09-28 | 初版，从架构速查表重写为从上往下的 PRD | AI agent |
-| v0.1 (draft) | 2026-09-28 | 剥离设计内容：删所有技术注解、业务描述去设计语言 | AI agent（writing subagent） |
-| v0.2 (reviewed) | 2026-09-28 | prd-v0.1-review 24 Gap 全部修改：A1-5 协议硬伤（REQ-F-8/2/11/RFC 章节/Route 语义）、B1-7 覆盖缺口（Actor 4、REQ-F-12-16、REQ-S-1-4、REQ-NF-13/14、轨迹保留期待定）、C1-12 一致性清理 | AI agent（writing subagent） |
+| v0.1 (draft) | 2026-09-28 | First version, rewritten from the architecture quick-reference table into a top-down PRD | AI agent |
+| v0.1 (draft) | 2026-09-28 | Stripped out design content: removed all technical annotations, rewrote the business description without design language | AI agent (writing subagent) |
+| v0.2 (reviewed) | 2026-09-28 | All 24 prd-v0.1-review Gaps addressed: A1-5 protocol hard errors (REQ-F-8/2/11/RFC sections/Route semantics), B1-7 coverage gaps (Actor 4, REQ-F-12-16, REQ-S-1-4, REQ-NF-13/14, trace retention period undecided), C1-12 consistency cleanup | AI agent (writing subagent) |
 
 ---
 
-## 7. 补课说明
+## 7. Note on making up for lost ground
 
-本 PRD 是在已有 ADR（0001、0002、0003、0011、0018、0019、0020）**之后**创建的。按 AGENT.md §3.1 的理想顺序，requirement 应该在 ADR **之前**。**本次是补课，不追溯修改已有 ADR 的 Context 节**。
+This PRD was created **after** the existing ADRs (0001, 0002, 0003, 0011, 0018, 0019, 0020). In the ideal order of AGENT.md §3.1, the requirement should come **before** the ADR. **This round is making up for lost ground; the Context sections of existing ADRs are not retroactively modified**.
 
-**M2 起的新决策流程要求：** 所有新 ADR 必须先写 requirement（追加到本文档），再写 ADR。ADR 文档头部须加入"本 ADR 回应 REQ-*"字段。已有 ADR 不追溯补这个字段，但 M2 起的新 ADR 必须遵守。
+**The new decision flow from M2 onwards requires:** every new ADR must first have a requirement written (appended to this document), and only then have the ADR written. The ADR document header must carry a "this ADR responds to REQ-*" field. Existing ADRs do not retroactively get this field, but new ADRs from M2 onwards must comply.

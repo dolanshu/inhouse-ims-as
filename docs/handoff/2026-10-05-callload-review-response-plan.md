@@ -12,151 +12,151 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# callload 分支评审 — 意见评估与处置计划（2026-10-05）
+# callload branch review — assessment of findings and remediation plan (2026-10-05)
 
-> **依据**：[`docs/reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md`](../reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md)（下称 **评审**）。  
-> **范围**：工程与验收事实；**不含**版本控制操作（维护者自行处理分支/入库，见 AGENT.md §11）。  
-> **目标**：在维护者认可前，明确「评审是否成立 → 做什么 → 什么算闭合」。
-
----
-
-## 1. 对评审总结论的评估
-
-| 评审结论 | 评估 |
-|----------|------|
-| **工程切片成立、`make gate` 绿** | **同意**。决策层、M6 方法学、demo 边界话术、checkpoint CAS 等正面项与源码一致。 |
-| **按当前形态不批准合并主干 / 直接对客户 Demo** | **同意（有条件）**。根因不是「没写文档」，而是 **产品 runtime 仍按 loopback 实验室形态接线**（F1+F7），且 **恢复/checkpoint 证据链与 REQ 口径有落差**（F2–F4、F3）。 |
-| **1 blocker + 10 major** | **数量级合理**；F11 应降级为 **维护者工程卫生**，不作为 agent 修复队列的 P0（见 §3）。 |
-
-**不同意或需收窄的表述**：
-
-| 评审条目 | 调整 |
-|----------|------|
-| **F10「未合入主干 04afc5a」** | 实质是 **M5 全链结论与 callload 上 Demo 故事 C 话术未对账**，不是「必须先做 git 合并」。处置 = **内容对账**：故事 C 只演示经 M5.1/全链认可的工件，或显式标为 L1/机制演示。 |
-| **F11 提交粒度** | 对 **未来** 维护者入库有参考价值；**不**作为 callload 功能修复的阻塞项；agent **不**重组历史。 |
-| **「18 条全部待改」** | 应拆成 **P0 产品可部署性**、**P1 M8 证据真实性**、**P2 卫生与 Demo 可重复性**；P2 不挡「内部技术 Demo（loopback）」。 |
+> **Basis**: [`docs/reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md`](../reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md) (hereinafter **the review**).  
+> **Scope**: engineering and acceptance facts; **excludes** version control operations (the maintainer handles the branch/merge themselves, see AGENT.md §11).  
+> **Goal**: before maintainer sign-off, settle "does the review hold → what to do → what counts as closed".
 
 ---
 
-## 2. 逐类意见评估（是否采纳）
+## 1. Assessment of the review's conclusions
 
-### 2.1 采纳为 P0（客户 Demo「非 loopback」/ 产品进程可配置前必做）
+| Review conclusion | Assessment |
+|----------|------|
+| **The engineering slice holds, `make gate` is green** | **Agree**. The decision layer, M6 methodology, demo boundary wording, checkpoint CAS and the other positive items are consistent with the source code. |
+| **Merging into trunk / demoing to a customer directly in the current form is not approved** | **Agree (conditional)**. The root cause is not "the documentation was never written" but that **the product runtime is still wired in loopback lab form** (F1+F7), and that **the recovery/checkpoint evidence chain diverges from the REQ statement** (F2–F4, F3). |
+| **1 blocker + 10 major** | **The order of magnitude is reasonable**; F11 should be downgraded to **maintainer engineering hygiene** and must not be a P0 in the agent fix queue (see §3). |
 
-| ID | 评审主张 | 评估 | 处置方向 |
+**Statements that are disagreed with, or that need narrowing**:
+
+| Review item | Adjustment |
+|----------|------|
+| **F10 "04afc5a not merged into trunk"** | In substance this is **the M5 full-chain conclusion not being reconciled with the story C demo wording on callload**, not "a git merge must happen first". Disposition = **content reconciliation**: story C only demos artifacts recognized by M5.1/full chain, or is explicitly labeled as an L1/mechanism demo. |
+| **F11 commit granularity** | Of reference value to **future** maintainer merges; **not** a blocker for callload functional fixes; the agent **does not** rewrite history. |
+| **"All 18 items are pending change"** | Should be split into **P0 product deployability**, **P1 M8 evidence authenticity**, and **P2 hygiene and demo repeatability**; P2 does not block an "internal technical demo (loopback)". |
+
+---
+
+## 2. Per-category assessment of the findings (whether adopted)
+
+### 2.1 Adopted as P0 (must be done before a customer demo can be "non-loopback" / before the product process is configurable)
+
+| ID | Review claim | Assessment | Disposition direction |
 |----|----------|------|----------|
-| **F1** | 监听/Contact/SDP 硬编码 `127.0.0.1` | **成立**（`runtime_module.cxx` 多处已核对） | `AS_SIP_BIND_ADDRESS` / `AS_SIP_ADVERTISED_ADDRESS`（或等价）贯穿 C++ config + Contact/SDP；补非环回绑定集成测 |
-| **F7** | `SipStackService.from_env` 不读 TLS/peer/bind | **成立**（与 F1 同根） | 从 env/Helm 契约加载证书路径、peer allowlist、fingerprint；TLS 启用且配置无效 → **启动失败**（fail-closed） |
-| **F10（内容面）** | Demo 故事 C 与 M5 全链「不通过」矛盾 | **成立** | 更新 `pre-m8-demo-review-plan.md` + `story-c.sh` 话术/范围；全链/M5.1 未闭合项 **不得**对客户称为「已验收运维能力」 |
+| **F1** | Listening address / Contact / SDP hardcode `127.0.0.1` | **Holds** (verified in multiple places in `runtime_module.cxx`) | Thread `AS_SIP_BIND_ADDRESS` / `AS_SIP_ADVERTISED_ADDRESS` (or the equivalent) through the C++ config and Contact/SDP; add a non-loopback bind integration test |
+| **F7** | `SipStackService.from_env` does not read TLS/peer/bind settings | **Holds** (same root cause as F1) | Load certificate paths, peer allowlist, and fingerprints from the env/Helm contract; when TLS is enabled and the config is invalid → **fail to start** (fail-closed) |
+| **F10 (content side)** | Demo story C contradicts the M5 full-chain "does not pass" | **Holds** | Update `pre-m8-demo-review-plan.md` and the wording/scope in `story-c.sh`; full-chain/M5.1 unclosed items **must not** be presented to a customer as "accepted operational capability" |
 
-### 2.2 采纳为 P1（M8 / REQ 硬门槛；可在「内部 loopback Demo」之后做）
+### 2.2 Adopted as P1 (hard M8 / REQ gate; can be done after the "internal loopback demo")
 
-| ID | 评审主张 | 评估 | 处置方向 |
+| ID | Review claim | Assessment | Disposition direction |
 |----|----------|------|----------|
-| **F2** | 恢复 BYE Contact/route_set | **成立** | 用通告地址；BYE 带 checkpoint `route_set`；补 Record-Route 恢复集成测 |
-| **F3** | UAC checkpoint 占位 tag/CSeq | **成立**（`sip_stack_service.py` 硬编码） | native 回调真实 UAC dialog 字段；集成测断言下游接受 BYE，而非仅日志 |
-| **F4** | 非 486 → 502，违 REQ-F-10 | **成立** | C++ + `call_controller` 透传 408/480/486/503/504 等；改 `test_outbound_non486_final_maps_to_502`；补契约 |
-| **F9** | `make gate` 不构建 native → 核心测 skip | **成立** | 增加 **native build + 必选 contract/integration**（扩展缺失时 **fail**，非 skip）；本地 `make gate` 策略与 plan 对齐（AGENT.md §9） |
-| **F5** | fingerprint 缓存无界 | **成立** | 连接关闭淘汰或 LRU/上限；长跑或单测 |
-| **F6** | connection 只注册不注销 | **成立** | transport 关闭回调 `unregister_connection`；overlap 语义修正 |
-| **F8** | C++ cout/cerr | **成立（M8 前）** | 事件回调 Python 结构化日志，或 C++ 字段契约 + 测试；可排在 P1 末 |
+| **F2** | Recovery BYE Contact/route_set | **Holds** | Use the advertised address; BYE carries the checkpoint `route_set`; add a Record-Route recovery integration test |
+| **F3** | UAC checkpoint placeholder tag/CSeq | **Holds** (hardcoded in `sip_stack_service.py`) | Native callbacks carry the real UAC dialog fields; the integration test asserts that the downstream accepts the BYE, not merely that it was logged |
+| **F4** | Non-486 → 502, violating REQ-F-10 | **Holds** | Pass 408/480/486/503/504 etc. through in C++ and `call_controller`; change `test_outbound_non486_final_maps_to_502`; add contract coverage |
+| **F9** | `make gate` does not build native → core tests skip | **Holds** | Add a **native build + required contract/integration** (**fail**, not skip, when the extension is missing); align the local `make gate` policy with plan (AGENT.md §9) |
+| **F5** | Fingerprint cache is unbounded | **Holds** | Evict on connection close, or LRU/cap; long run or unit test |
+| **F6** | Connection is registered but never unregistered | **Holds** | Transport close callback `unregister_connection`; correct the overlap semantics |
+| **F8** | C++ cout/cerr | **Holds (before M8)** | Structured Python logging from the event callback, or a C++ field contract plus tests; may be scheduled at the end of P1 |
 
-### 2.3 采纳为 P2（不挡「工程认可」，挡「发布候选 / 对外口径」）
+### 2.3 Adopted as P2 (does not block "engineering sign-off", does block "release candidate / external statements")
 
-| ID | 评估 | 处置 |
+| ID | Assessment | Disposition |
 |----|------|------|
-| **F12** | 成立 | `as_load` 增加成功率/退出码策略 |
-| **F13** | 成立 | demo 脚本 `--strict` + PASS/SKIP/FAIL 汇总写 artifact |
-| **F14** | 成立 | `AS_M6_OUTPUT_ROOT` |
-| **F15** | 成立 | M8 打包前 CHANGELOG/VERSION（DoD） |
-| **F16** | 成立 | `CallController` 恢复 unit |
-| **F18** | 成立 | story 加 S4 或删 demo 计划中的 487 承诺 |
-| **F17** | 部分成立 | vendor 源码保留；prebuilt 文档化保质期/重建；是否迁出 git 由维护者决策 |
+| **F12** | Holds | Add a success-rate / exit-code policy to `as_load` |
+| **F13** | Holds | demo script `--strict` + PASS/SKIP/FAIL summary written to the artifact |
+| **F14** | Holds | `AS_M6_OUTPUT_ROOT` |
+| **F15** | Holds | CHANGELOG/VERSION before M8 packaging (DoD) |
+| **F16** | Holds | `CallController` recovery unit test |
+| **F18** | Holds | Add S4 to the story, or drop the 487 promise from the demo plan |
+| **F17** | Partially holds | Keep the vendor source; document the shelf life / rebuild procedure for the prebuilt bundle; whether to move it out of git is a maintainer decision |
 
-### 2.4 不纳入本计划执行项
+### 2.4 Not included as execution items in this plan
 
-| ID | 说明 |
+| ID | Explanation |
 |----|------|
-| **F11** | 历史提交形态：**维护者**入库规范；不指派 agent「修复」。 |
+| **F11** | Historical commit shape: **maintainer** merge norms; the agent is not assigned to "fix" it. |
 
 ---
 
-## 3. 处置计划（执行顺序）
+## 3. Remediation plan (execution order)
 
-### 阶段 0 — 裁决与口径（1 次维护者拍板，无代码）
+### Stage 0 — Adjudication and framing (one maintainer decision, no code)
 
-- [x] **D0-1** 确认本计划 P0/P1/P2 划分；确认「内部 loopback Demo」是否允许在 P0 完成前进行（建议：**仅故事 B/E + 文档**，故事 A 信令桥接、故事 C 全量 **暂缓**）。
-- [x] **D0-2** 对 M5 全链 +（若存在）`cur` M5.1 结论做 **Demo 对账表**：故事 C 每一句交付能力 → 引用评审/adjudication 状态（见 [`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md) F10 段）。
-- [x] **D0-3** 在 `docs/plan.md` 或 handoff 记录：**callload 评审 F1–F18 跟踪表**（本文 §4）为单一 backlog，不重复开第三条线（合入清单见 [`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md)）。
+- [x] **D0-1** Confirm this plan's P0/P1/P2 split; confirm whether an "internal loopback demo" is allowed before P0 completes (recommended: **stories B/E + documentation only**, story A signaling bridge and full story C **deferred**).
+- [x] **D0-2** Build a **demo reconciliation table** for the M5 full chain plus the `cur` M5.1 conclusion (if it exists): every delivered-capability claim in story C → cite the review/adjudication status (see the F10 section of [`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md)).
+- [x] **D0-3** Record in `docs/plan.md` or a handoff: the **callload review F1–F18 tracking table** (this document's §4) is the single backlog; do not open a third line (merge checklist see [`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md)).
 
-### 阶段 1 — P0：离开 loopback（产品可配置）
+### Stage 1 — P0: leaving loopback (the product becomes configurable)
 
-**目标**：进程在容器/VM 上可绑定非环回地址、可加载 TLS/peer 配置；Demo 话术与 M5 对齐。
+**Goal**: the process can bind a non-loopback address on a container/VM and load TLS/peer configuration; the demo wording is aligned with M5.
 
-| 任务 | 交付物 | 验证 |
+| Task | Deliverable | Verification |
 |------|--------|------|
-| **P0-1 F1+F7** | C++ transport config + Python `SipStackService`/env 文档；Contact/SDP 用 advertised 地址 | 非 `127.0.0.1` 绑定集成测；`make m2-platform-resip-build` 后 E1 至少 1 条在非环回场景跑通 |
-| **P0-2 F10** | 更新 `pre-m8-demo-review-plan.md`、`scripts/demo-review/story-c.sh` 注释与对客户展示块 | 维护者签字「故事 C 范围」 |
-| **P0-3 评审落盘** | 本文 + §4 跟踪表；F1/F7/F10 标为「修复中/已修复」 | 对照评审 Adjudication 表 |
+| **P0-1 F1+F7** | C++ transport config + Python `SipStackService`/env documentation; Contact/SDP use the advertised address | Integration test binding to non-`127.0.0.1`; after `make m2-platform-resip-build`, at least 1 E1 case passes in a non-loopback scenario |
+| **P0-2 F10** | Update `pre-m8-demo-review-plan.md`, plus the comments and customer-facing blocks in `scripts/demo-review/story-c.sh` | Maintainer signs off on "story C scope" |
+| **P0-3 review write-back** | This document + the §4 tracking table; F1/F7/F10 marked as "fixing/fixed" | Against the review's adjudication table |
 
-**阶段 1 闭合标准**：维护者认可「产品进程具备 **可配置监听与 TLS/peer 接缝**」；**不**宣称 REQ-S-2/NF-9 已验收。
+**Stage 1 closure criteria**: the maintainer accepts "the product process has **configurable listening and TLS/peer seams**"; **do not** claim REQ-S-2/NF-9 acceptance.
 
-### 阶段 2 — P1：证据与 REQ 对齐（M8 前硬项）
+### Stage 2 — P1: evidence and REQ alignment (hard items before M8)
 
-| 任务 | 依赖 | 验证 |
+| Task | Dependency | Verification |
 |------|------|------|
-| **P1-1 F9** | 无 | native build job 绿；无扩展时相关测 **fail**；本地文档写清 `make m2-platform-resip-build` 与 gate 关系 |
-| **P1-2 F4** | native | 契约测 + 改固化错误行为的单测 |
-| **P1-3 F3+F2** | native + recovery | 真实 checkpoint 字段；恢复 BYE 集成测 |
-| **P1-4 F5+F6** | native | 断连/轮换相关单测或集成测 |
-| **P1-5 F8** | 可选与 P1-4 并行 | 日志字段契约测 |
+| **P1-1 F9** | None | native build job green; the relevant tests **fail** when the extension is absent; the local docs clearly state the relationship between `make m2-platform-resip-build` and gate |
+| **P1-2 F4** | native | contract test + modify the unit test that froze the incorrect behavior |
+| **P1-3 F3+F2** | native + recovery | real checkpoint fields; recovery BYE integration test |
+| **P1-4 F5+F6** | native | disconnect / rotation unit or integration tests |
+| **P1-5 F8** | optional, parallel with P1-4 | log field contract test |
 
-**阶段 2 闭合标准**：评审 Adjudication 中 P1 项改为「已修复」；`test-plan` 相关条目 **可进入 M8 执行**（仍非自动绿）。
+**Stage 2 closure criteria**: the P1 items in the review adjudication are changed to "fixed"; the related `test-plan` entries **may enter M8 execution** (still not automatically green).
 
-### 阶段 3 — P2：卫生与 Demo 可重复性
+### Stage 3 — P2: hygiene and demo repeatability
 
-- 按 §2.3 逐项实施；**F15** 对齐 M8 打包里程碑。
-- **F18**：`story-b.sh` 或 `story-sip.sh` 增加 `test_e1_s4_*` 一步，或修订 demo 计划 §5。
+- Implement item by item per §2.3; **F15** aligned with the M8 packaging milestone.
+- **F18**: add a `test_e1_s4_*` step to `story-b.sh` or `story-sip.sh`, or revise §5 of the demo plan.
 
-### 阶段 4 — 重新评审与合入准备
+### Stage 4 — re-review and merge preparation
 
-- [x] 产出：[`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md)（Adjudication 表状态列）。
-- [x] 合入 `master` 准备：[`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md)（维护者执行 merge；**待** 工作区 commit + 显式批准）。
-- 输入：§4 跟踪表除 F8/F6 部分/F11 外已闭合；残余风险见 merge handoff §2.4。
-- **仍不**等于 M2/M6/M7 里程碑退出或 REQ 全绿。
+- [x] Output: [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md) (the status column of the adjudication table).
+- [x] Merge to `master` preparation: [`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md) (the maintainer executes the merge; **pending** working-tree commit + explicit approval).
+- Input: the §4 tracking table is closed except for F8 / part of F6 / F11; residual risk see merge handoff §2.4.
+- This **still does not** mean M2/M6/M7 milestone exit or an all-green REQ.
 
 ---
 
-## 4. 跟踪表（执行时更新状态列）
+## 4. Tracking table (update the status column during execution)
 
-| ID | 优先级 | 状态 | 负责人 | 验证命令 / 证据 |
+| ID | Priority | Status | Owner | Verification command / evidence |
 |----|--------|------|--------|-----------------|
-| F1 | P0 | 已修复 | agent | `transport_env` + `runtime_module.cxx` |
-| F7 | P0 | 已修复 | agent | `test_transport_env.py` |
-| F10 | P0 | 已修复 | agent | story-c + pre-m8 §故事 C |
-| F9 | P1 | 部分修复 | agent | `native_extensions.py`；**blocking native-build job 尚未落地** |
-| F4 | P1 | 已修复 | agent | `test_call_controller.py` |
-| F3 | P1 | 已修复 | agent | FORWARD `uac_leg` native 回调 |
-| F2 | P1 | 已修复 | agent | `recovery_module.cxx` |
-| F5 | P1 | 已修复 | agent | fingerprint 上限 |
-| F6 | P1 | 部分修复 | agent | 注册上限 + 终止注销 |
-| F8 | P1 | 未闭合 | agent | REQ-NF-13 待 M8 前 |
-| F12–F18 | P2 | 已修复 | agent | CHANGELOG 0.2.0 / demo / as_load / M6 root |
-| F11 | — | 维护者 | 维护者 | 不跟踪 agent |
+| F1 | P0 | Fixed | agent | `transport_env` + `runtime_module.cxx` |
+| F7 | P0 | Fixed | agent | `test_transport_env.py` |
+| F10 | P0 | Fixed | agent | story-c + pre-m8 §story C |
+| F9 | P1 | Partially fixed | agent | `native_extensions.py`; **the blocking native-build job is not in place yet** |
+| F4 | P1 | Fixed | agent | `test_call_controller.py` |
+| F3 | P1 | Fixed | agent | FORWARD `uac_leg` native callback |
+| F2 | P1 | Fixed | agent | `recovery_module.cxx` |
+| F5 | P1 | Fixed | agent | fingerprint cap |
+| F6 | P1 | Partially fixed | agent | registration cap + deregistration on termination |
+| F8 | P1 | Not closed | agent | REQ-NF-13 pending before M8 |
+| F12–F18 | P2 | Fixed | agent | CHANGELOG 0.2.0 / demo / as_load / M6 root |
+| F11 | — | Maintainer | maintainer | not tracked by the agent |
 
 ---
 
-## 5. 与分支/里程碑的关系（陈述事实，不指派 git 操作）
+## 5. Relationship to branches/milestones (statement of fact, does not assign git operations)
 
-- **callload** 承载 M2 后半 / M6 / M7 / Pre-M8 Demo 工程；评审正确指出其与 **loopback 实验室形态** 的差距。
-- **master / cur** 上另有 **M5 全链 / M5.1** 线；Demo **故事 C** 必须跨分支 **内容对账**，而非假设「合并即解决」。
-- **M6/M7 工程成果**（harness、O1 报告、E1 形状、FORWARD 486）在 P0/P1 修复后 **保留**；不需因评审全盘回滚。
-- **2026-10-06**：维护者准备将 `callload` 合入 `master` 时，按 [`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md) 执行；合入 **不** 改变 §5 里程碑/REQ 边界。
+- **callload** carries the second half of M2 / M6 / M7 / Pre-M8 Demo engineering; the review correctly points out the gap between it and the **loopback lab form**.
+- **master / cur** carry a separate **M5 full chain / M5.1** line; demo **story C** requires cross-branch **content reconciliation**, rather than assuming "merging resolves it".
+- The **M6/M7 engineering results** (harness, O1 report, E1 shape, FORWARD 486) are **retained** after the P0/P1 fixes; there is no need to roll everything back because of the review.
+- **2026-10-06**: when the maintainer prepares to merge `callload` into `master`, follow [`2026-10-06-callload-merge-to-master.md`](2026-10-06-callload-merge-to-master.md); the merge **does not** change the milestone/REQ boundaries in §5.
 
 ---
 
-## 6. 建议的下一 session 起手式
+## 6. Suggested opening moves for the next session
 
-1. 维护者确认 **阶段 0**（D0-1～D0-3）。  
-2. 实施 **P0-1**（F1+F7）单线，直到非环回集成测绿。  
-3. 并行 **P0-2** 文档（Demo 故事 C 收窄）。  
-4. **P1-1 F9** 尽早做，避免后续修复在无 native 门禁下反复。
+1. The maintainer confirms **Stage 0** (D0-1–D0-3).  
+2. Implement **P0-1** (F1+F7) as a single line until the non-loopback integration test is green.  
+3. In parallel, **P0-2** documentation (narrowing demo story C).  
+4. Do **P1-1 F9** early, to stop later fixes from churning without a native gate.  

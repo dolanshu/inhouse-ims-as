@@ -12,108 +12,108 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M4b-8 浏览器验收 Runbook（dev HTTPS 同源栈）
+# M4b-8 browser acceptance runbook (dev HTTPS same-origin stack)
 
-**映射**：[`test-plan.md`](test-plan.md) §1.4「M4b-8 浏览器验收执行程序」步骤 1–5。  
-**栈**：[`deploy/compose/README.md`](../../deploy/compose/README.md)（PostgreSQL 12.22 + config-service + Caddy 自签 TLS）。  
-**状态**：工程/AI 可执行检查清单；**不**构成 M4b/M4/REQ 验收通过；维护者签字见 [`report.md`](report.md) M4b-8 节（2026-10-04 已记录）。
+**Mapping**: [`test-plan.md`](test-plan.md) §1.4 "M4b-8 browser acceptance procedure" steps 1–5.  
+**Stack**: [`deploy/compose/README.md`](../../deploy/compose/README.md) (PostgreSQL 12.22 + config-service + Caddy self-signed TLS).  
+**Status**: engineering/AI-executable checklist; **does not** constitute M4b/M4/REQ acceptance pass; maintainer sign-off see [`report.md`](report.md) M4b-8 section (recorded 2026-10-04).
 
-## 0. 准备
+## 0. Preparation
 
-- [ ] WSL2/Linux 上 Docker 可用
-- [ ] 完成 compose README 快速开始：`gen-certs` → `postgres` → `migrate` → `bootstrap-admin` → `up` → `smoke-https.sh` 通过
-- [ ] 记录环境：git commit、`docker compose images`、`.env` 中**非 secret** 项（勿提交密码/HMAC）
-- [ ] 准备第二个账号（approver）：在首个 admin 登录后通过用户管理 API/UI 创建（若 UI 未就绪则用 API）；记录角色分配
-- [ ] 7.2d 生产 ingress preflight：本 runbook **不**覆盖；保持 **BLOCKED**（见 test-plan §1.4）
+- [ ] Docker available on WSL2/Linux
+- [ ] Complete compose README quick start: `gen-certs` → `postgres` → `migrate` → `bootstrap-admin` → `up` → `smoke-https.sh` passes
+- [ ] Record environment: git commit, `docker compose images`, **non-secret** items in `.env` (do not commit passwords/HMAC)
+- [ ] Prepare a second account (approver): after the first admin logs in, create it via the user-management API/UI (use API if the UI is not ready); record role assignment
+- [ ] 7.2d production ingress preflight: not covered by this runbook; keep **BLOCKED** (see test-plan §1.4)
 
-## 1. 步骤 1 — operator 规则 CRUD → 审批请求
+## 1. Step 1 — operator rule CRUD → approval request
 
-**验收意图**：创建/编辑/禁用/删除测试规则；每项提交审批；刷新后 live 状态与队列一致；无 fixture fallback。
+**Acceptance intent**: create/edit/disable/delete test rules; each submitted for approval; after refresh the live status is consistent with the queue; no fixture fallback.
 
-| 检查 | 结果 | 备注 |
+| Check | Result | Note |
 |---|---|---|
-| 以 operator HTTPS 登录 | ☐ PASS / ☐ FAIL / ☑ **BLOCKED** | 栈就绪后可测登录；规则写路径见下 |
-| 创建/编辑/禁用/删除规则并提交审批（**被叫 + 前缀**） | ☐ PASS / ☐ FAIL | 裁决已接受；live console 仅暴露被叫+前缀；PG E2E `test_postgres_managed_rule_pipeline_integration.py` |
-| 主叫 / 正则规则 | **N/A（v1.1）** | 不纳入 M4；见 [`m4-req-calling-regex-lossless-adjudication-2026-10-03.md`](../reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md) |
-| 审批队列与 live 表一致 | ☐ PASS / ☐ FAIL | 依赖被叫+前缀规则变更路径 |
+| Log in as operator over HTTPS | ☐ PASS / ☐ FAIL / ☑ **BLOCKED** | testable once stack is ready; rule write path below |
+| Create/edit/disable/delete rule and submit approval (**called-party + prefix**) | ☐ PASS / ☐ FAIL | adjudication accepted; live console only exposes called-party + prefix; PG E2E `test_postgres_managed_rule_pipeline_integration.py` |
+| Calling-party / regex rules | **N/A (v1.1)** | not in M4; see [`m4-req-calling-regex-lossless-adjudication-2026-10-03.md`](../reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md) |
+| Approval queue consistent with live table | ☐ PASS / ☐ FAIL | depends on called-party + prefix rule change path |
 
-**证据**：脱敏截图、Network 中 HTTPS API 调用（无 cookie/token 明文）。
+**Evidence**: redacted screenshots, HTTPS API calls in Network (no plaintext cookie/token).
 
-## 2. 步骤 2 — approver 批准/拒绝
+## 2. Step 2 — approver approve/reject
 
-**验收意图**：不同 approver；批准有效变更；拒绝须理由；creator 不得自批/自拒；状态与审计一致。
+**Acceptance intent**: different approver; approve valid changes; rejection requires a reason; creator must not self-approve/self-reject; status consistent with audit.
 
-| 检查 | 结果 | 备注 |
+| Check | Result | Note |
 |---|---|---|
-| approver 登录 | ☐ PASS / ☐ FAIL | 需步骤 0 第二账号 |
-| 批准/拒绝既有 ChangeOrder（7.3a 范围） | ☐ PASS / ☐ FAIL | 可针对 DB 中已有 draft/submitted order 验证 submit/approve/reject |
-| creator 自批/自拒被拒绝 | ☐ PASS / ☐ FAIL | API 已有回归；浏览器再确认 |
-| 空拒绝理由被拒绝 | ☐ PASS / ☐ FAIL | |
+| approver login | ☐ PASS / ☐ FAIL | requires the second account from step 0 |
+| Approve/reject existing ChangeOrder (7.3a scope) | ☐ PASS / ☐ FAIL | can verify submit/approve/reject against an existing draft/submitted order in the DB |
+| Creator self-approve/self-reject rejected | ☐ PASS / ☐ FAIL | API already has regression; confirm again in browser |
+| Empty rejection reason rejected | ☐ PASS / ☐ FAIL | |
 
-**证据**：脱敏截图、order 状态前后对比。
+**Evidence**: redacted screenshots, order status before/after comparison.
 
-## 3. 步骤 3 — Call-ID live trace
+## 3. Step 3 — Call-ID live trace
 
-**验收意图**：按已知 Call-ID 查询 live trace，核对 SIP 字段与规则命中。
+**Acceptance intent**: query live trace by a known Call-ID, verify SIP fields and rule hit.
 
-| 检查 | 结果 | 备注 |
+| Check | Result | Note |
 |---|---|---|
-| 控制台 trace 查询 | ☑ **BLOCKED** | **REQ-F-13 / M4b-7.4**：M4 关门裁决延期；无 live trace source/API |
-| 字段与规则命中核对 | ☑ **BLOCKED** | 同上 |
+| Console trace query | ☑ **BLOCKED** | **REQ-F-13 / M4b-7.4**: M4 close adjudication deferred; no live trace source/API |
+| Field and rule-hit verification | ☑ **BLOCKED** | same as above |
 
-**证据**：N/A（后端缺失时标注 `BLOCKED: missing backend`）。
+**Evidence**: N/A (annotate `BLOCKED: missing backend` when backend is absent).
 
-## 4. 步骤 4 — 分批 distribution / 健康 / 回滚
+## 4. Step 4 — batched distribution / health / rollback
 
-**验收意图**：分批通知、版本加载、健康检查；失败批自动回滚；手动回滚。
+**Acceptance intent**: batched notify, version load, health check; failed batch auto-rollback; manual rollback.
 
-| 检查 | 结果 | 备注 |
+| Check | Result | Note |
 |---|---|---|
-| 注册 testbed 实例（health URL） | ☐ PASS / ☐ FAIL | 可用 compose `testbed-health`（`AS_TESTBED_HEALTH_URL`） |
-| Operations fleet inventory（实例 CRUD） | ☐ PASS / ☐ FAIL | M4b-7.5 console UI（notify/health URL） |
-| Change order 内 start / report / rollback | ☐ PASS / ☐ FAIL | M4b-7.6 modal UI；需 enabled fleet 实例与健康探针 |
-| API 级 notify + health probe（7.5 slice） | ☐ PASS / ☐ FAIL | 可用 internal API + curl；非步骤 4 完整浏览器验收 |
-| 注入健康失败 → 自动回滚 | ☐ PASS / ☐ FAIL / ☑ **BLOCKED** | 依赖完整 distribution 链路与 AS 栈 |
-| 手动回滚 | ☐ PASS / ☐ FAIL / ☑ **BLOCKED** | 同上 |
+| Register testbed instance (health URL) | ☐ PASS / ☐ FAIL | use compose `testbed-health` (`AS_TESTBED_HEALTH_URL`) |
+| Operations fleet inventory (instance CRUD) | ☐ PASS / ☐ FAIL | M4b-7.5 console UI (notify/health URL) |
+| Start / report / rollback inside Change order | ☐ PASS / ☐ FAIL | M4b-7.6 modal UI; requires enabled fleet instance and health probe |
+| API-level notify + health probe (7.5 slice) | ☐ PASS / ☐ FAIL | use internal API + curl; not the full step-4 browser acceptance |
+| Inject health failure → auto-rollback | ☐ PASS / ☐ FAIL / ☑ **BLOCKED** | depends on full distribution chain and AS stack |
+| Manual rollback | ☐ PASS / ☐ FAIL / ☑ **BLOCKED** | same as above |
 
-**证据**：distribution report JSON（脱敏）、health probe 日志。
+**Evidence**: distribution report JSON (redacted), health probe logs.
 
-## 5. 步骤 5 — 审计与 fail-closed
+## 5. Step 5 — audit and fail-closed
 
-**验收意图**：§3 审计字段；脱敏；append-only；显式写入拒绝；失败路径 fail-closed。
+**Acceptance intent**: §3 audit fields; redaction; append-only; explicit write of rejections; fail-closed on failure paths.
 
-| 检查 | 结果 | 备注 |
+| Check | Result | Note |
 |---|---|---|
-| 登录/登出/ChangeOrder 操作产生审计 | ☐ PASS / ☐ FAIL | 在步骤 2 可操作范围内验证 |
-| 导出/查询 audit 无 password/token | ☐ PASS / ☐ FAIL | |
-| runtime 角色拒绝 INSERT/UPDATE/DELETE/TRUNCATE audit | ☐ PASS / ☐ FAIL | 可用 `psql` 以 `as_config_web` + `SET ROLE` 验证 |
-| audit unavailable 等 fail-closed | ☐ PASS / ☐ FAIL | 按需注入；谨慎操作 |
+| Login/logout/ChangeOrder operations produce audit | ☐ PASS / ☐ FAIL | verify within step 2 operable scope |
+| Export/query audit has no password/token | ☐ PASS / ☐ FAIL | |
+| Runtime role denies INSERT/UPDATE/DELETE/TRUNCATE on audit | ☐ PASS / ☐ FAIL | use `psql` with `as_config_web` + `SET ROLE` to verify |
+| audit unavailable etc. fail-closed | ☐ PASS / ☐ FAIL | inject as needed; operate with care |
 
-**证据**：脱敏 audit 行、psql 拒绝输出。
+**Evidence**: redacted audit rows, psql denial output.
 
-## 6. 产物归档
+## 6. Artifact archiving
 
-将脱敏材料放入维护者指定目录（占位）：
+Place redacted materials into the maintainer-specified directory (placeholder):
 
 ```
 artifacts/m4b-8/<YYYY-MM-DD>/
 ```
 
-在 [`report.md`](report.md) § M4b-8 填写路径、commit、阻塞项摘要；维护者签字已记录（2026-10-04）。
+In [`report.md`](report.md) § M4b-8 fill in path, commit, and blocker summary; maintainer sign-off already recorded (2026-10-04).
 
-## 7. Playwright 自动化（可选）
+## 7. Playwright automation (optional)
 
 ```sh
 cd deploy/compose
-export M4B8_E2E_PASSWORD='<12+ chars, dev-only>'   # 脚本会用 owner DSN 同步 admin / ops-e2e / mgr-e2e
+export M4B8_E2E_PASSWORD='<12+ chars, dev-only>'   # script syncs admin / ops-e2e / mgr-e2e via the owner DSN
 ./scripts/m4b-8-browser-evidence.sh
 ```
 
-产物默认写入 `artifacts/m4b-8/<date>/`（截图 + JSON log）。Ubuntu 20.04 若无法 `playwright install chromium`，脚本会回退到 `mcr.microsoft.com/playwright` 容器（`--network host`）。
+Artifacts default to `artifacts/m4b-8/<date>/` (screenshots + JSON log). On Ubuntu 20.04, if `playwright install chromium` fails, the script falls back to the `mcr.microsoft.com/playwright` container (`--network host`).
 
-## 8. 手动浏览器要点（无自动化时）
+## 8. Manual browser notes (when no automation)
 
-1. 打开 `https://localhost:8443/` → 接受自签证书 → 确认无 mixed-content。
-2. DevTools → Network：确认 API 为 **同一 origin** 的 `https://localhost:8443/internal/v1/...`。
-3. 登录失败/成功时 scheme 仍为 HTTPS；勿通过 `http://` 访问。
-4. 保存截图前遮盖 cookie、session、CSRF、密码字段。
+1. Open `https://localhost:8443/` → accept self-signed cert → confirm no mixed-content.
+2. DevTools → Network: confirm APIs are on the **same origin** `https://localhost:8443/internal/v1/...`.
+3. Login failure/success still uses HTTPS scheme; do not access via `http://`.
+4. Cover cookie, session, CSRF, and password fields before saving screenshots.

@@ -12,123 +12,123 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 环境证据记录（Phase D）
+# M8 environment evidence record (Phase D)
 
-> **日期**：2026-10-06
-> **依据**：`docs/handoff/2026-10-06-m8-release-candidate-plan.md` §4 Phase D + §3 退出条件第 3–4 项；
-> 签收矩阵 `docs/acceptance/m8-test-plan-matrix.md` 中 S-2 / S-3 / NF-1 blocked 行。
-> **原则**：维护者缺席期间不编造运营商 / 客户现场证据。本文件只记录**可验证现状 + 缺口 + defer 结论**，
-> 不替代维护者签字与 M8 退出评审（`docs/reviews/m8-exit-review-*.md`）。中文编写。
-> **脱敏红线**（AGENT §11 / §13）：不得提交私钥、证书明文、真实抓包（pcap/pcapng）、含密钥的日志；
-> 证据目录约定见 §0。
+> **Date**: 2026-10-06
+> **Basis**: `docs/handoff/2026-10-06-m8-release-candidate-plan.md` §4 Phase D + items 3–4 of §3 exit conditions;
+> the S-2 / S-3 / NF-1 blocked rows in the sign-off matrix `docs/acceptance/m8-test-plan-matrix.md`.
+> **Principle**: while maintainers are absent, do not fabricate operator / customer site evidence. This file records only **verifiable current state + gaps + defer conclusions**;
+> it does not replace maintainer sign-off or the M8 exit review (`docs/reviews/m8-exit-review-*.md`). Originally written in Chinese.
+> **Redaction red line** (AGENT §11 / §13): must not commit private keys, cleartext certificates, real packet captures (pcap/pcapng), or logs containing keys;
+> the evidence directory convention is in §0.
 
-## §0 证据目录与脱敏约定
+## §0 Evidence directory and redaction conventions
 
-- 证据根目录：`docs/acceptance/artifacts/m8/<date>/`（`<date>` 为采证日期，形如 `2026-10-06`）。
-- 按条目分子目录：`req-s-2-pki/`（REQ-S-2）、`req-s-3-rotation/`（REQ-S-3）、`req-nf-1-live/`（REQ-NF-1）。
-- 每个子目录必须含 `README.md`（说明采证时间、环境、执行人、版本 tag）+ 脱敏命令 transcript + 脱敏日志摘录。
-- 允许提交：命令 transcript（密钥/指纹打码）、版本号 / 镜像 tag、`openssl x509 -noout -subject -issuer -dates` 类元数据输出（序列号/指纹打码或截断）。
-- **禁止提交**：`*.key` / `*.pem` 私钥、完整证书明文、`*.pcap` / `*.pcapng` 真实抓包、含口令/ token 的日志。
-  `.gitignore` 中 `*.log` / `*.pcap` / `*.pcapng` / `artifacts/` 规则继续有效；
-  `!docs/acceptance/artifacts/` 例外已使本目录可被追踪（见 `docs/acceptance/artifacts/m8/README.md`），
-  密钥类扩展名仍被忽略，属预期行为。
-- Runbook 引用：`docs/acceptance/m4b-8-runbook.md`（dev HTTPS / 浏览器证据方法）、
-  `docs/acceptance/m8-native-consistency-runbook.md`（签收前 native 一致性）、
-  `docs/acceptance/m5-state-stores-runbook.md`（state stores 现场步骤参考）。
-  现场采证时由维护者指定本次适用的 runbook 版本并在子目录 README 中注明。
+- Evidence root: `docs/acceptance/artifacts/m8/<date>/` (`<date>` is the evidence collection date, in the form `2026-10-06`).
+- Per-item subdirectories: `req-s-2-pki/` (REQ-S-2), `req-s-3-rotation/` (REQ-S-3), `req-nf-1-live/` (REQ-NF-1).
+- Each subdirectory must contain a `README.md` (collection time, environment, collector, version tag) + a redacted command transcript + redacted log excerpts.
+- Allowed to commit: command transcripts (keys/fingerprints masked), version numbers / image tags, metadata output such as `openssl x509 -noout -subject -issuer -dates` (serial numbers/fingerprints masked or truncated).
+- **Forbidden to commit**: `*.key` / `*.pem` private keys, full cleartext certificates, `*.pcap` / `*.pcapng` real captures, logs containing passwords/tokens.
+  The `*.log` / `*.pcap` / `*.pcapng` / `artifacts/` rules in `.gitignore` remain in effect;
+  the `!docs/acceptance/artifacts/` exception makes this directory trackable (see `docs/acceptance/artifacts/m8/README.md`),
+  and key-like extensions are still ignored, which is expected behaviour.
+- Runbook references: `docs/acceptance/m4b-8-runbook.md` (dev HTTPS / browser evidence method),
+  `docs/acceptance/m8-native-consistency-runbook.md` (native consistency before sign-off),
+  `docs/acceptance/m5-state-stores-runbook.md` (state stores on-site step reference).
+  At on-site evidence collection the maintainer designates the runbook version applicable to that run and notes it in the subdirectory README.
 
-## D-1 运营商 PKI / 外网 S-SBC（REQ-S-2 / REQ-S-3 尾项）
+## D-1 Operator PKI / external-network S-SBC (REQ-S-2 / REQ-S-3 tail items)
 
-- **需求链接**：`docs/acceptance/test-plan.md` §3 REQ-S-2（AS↔S-SBC 全 TLS、明文 5060 拒绝、运营商 PKI 签发链验证通过）、
-  REQ-S-3（新旧证书并存窗口呼叫不受影响、新连接用新证书）；矩阵 `m8-test-plan-matrix.md` §3 S-2 / S-3 行（均为 `blocked`）。
-- **应有证据形状**（维护者环境采证时补）：
-  - `req-s-2-pki/`：运营商 PKI 签发链信息（`openssl verify -CAfile <打码路径>` 结论摘录，不贴证书明文）、
-    AS→S-SBC TLS 建链命令 transcript（目标地址/端口打码）、明文 5060 被拒绝的命令 transcript（`openssl s_client` / SIP 客户端连接失败摘录）、版本 tag。
-  - `req-s-3-rotation/`：轮换窗口起止时间、新旧证书并存证明（元数据命令输出，打码）、轮换期间存量呼叫保持 + 新建连接用新证书的观察记录（脱敏日志摘录）、版本 tag。
-- **当前状态（2026-10-06 本环境实测）**：本环境**无运营商 PKI lab、无外网 S-SBC 对端**，无法执行上述采证。
-  本地仅有工程侧 TLS 集成测试在 `make gate` 内通过（属工程切片，**不是** REQ-S-2/S-3 现场验收）。
-  未执行、未见证任何运营商签发链验证与明文拒绝 live 证明——如实记录为缺口，不补编造数据。
-- **结论：restriction（2026-10-07）**。维护者确认：本项目 Close 之前不会有真实运营商 S-SBC 联调，也不会有客户 K8s 测试。D-1 不再排期采证。REQ-S-2 的「运营商 PKI 签发链」和 REQ-S-3 在真实对端上的轮换窗口，Close 前不能签 pass。M7.1 已工程关门：测试 CA 上的 TLS 呼叫已在 kind 跑通。明文 5060 仍是第一版可选传输，没有做成「只要 TLS 就拒绝明文」。运营商 PKI 签发链仍属本条 restriction。
+- **Requirement links**: `docs/acceptance/test-plan.md` §3 REQ-S-2 (AS↔S-SBC all TLS, cleartext 5060 rejected, operator PKI issuance chain verified),
+  REQ-S-3 (calls unaffected during the old/new certificate coexistence window, new connections use the new certificate); matrix `m8-test-plan-matrix.md` §3 S-2 / S-3 rows (both `blocked`).
+- **Expected evidence shape** (to be added when maintainers collect evidence in their environment):
+  - `req-s-2-pki/`: operator PKI issuance chain information (`openssl verify -CAfile <masked path>` conclusion excerpts, no cleartext certificates),
+    a transcript of the AS→S-SBC TLS handshake command (target address/port masked), a transcript of the cleartext 5060 rejection command (`openssl s_client` / SIP client connection failure excerpts), version tag.
+  - `req-s-3-rotation/`: rotation window start and end times, proof of old/new certificate coexistence (metadata command output, masked), observation records showing existing calls held during rotation and new connections using the new certificate (redacted log excerpts), version tag.
+- **Current state (measured in this environment, 2026-10-06)**: this environment has **no operator PKI lab and no external-network S-SBC peer**, so the above collection cannot be performed.
+  Locally there are only engineering-side TLS integration tests that pass inside `make gate` (an engineering slice, **not** REQ-S-2/S-3 on-site acceptance).
+  No operator issuance chain verification and no live proof of cleartext rejection were performed or witnessed — recorded honestly as a gap; no data is fabricated to fill it.
+- **Conclusion: restriction (2026-10-07)**. Maintainer confirmation: there will be no real operator S-SBC joint debugging and no customer K8s testing before this project closes. D-1 is no longer scheduled for evidence collection. REQ-S-2's "operator PKI issuance chain" and REQ-S-3's rotation window on a real peer cannot be signed as pass before Close. M7.1 was engineering-closed: TLS calls on the test CA already work in kind. Cleartext 5060 remains the first version's optional transport; it was not made "reject cleartext as long as TLS exists". The operator PKI issuance chain remains covered by this restriction.
 
-## D-2 客户 K8s REQ-NF-1 live 基线（kill / restart / BYE）
+## D-2 Customer K8s REQ-NF-1 live baseline (kill / restart / BYE)
 
-- **需求链接**：`docs/acceptance/test-plan.md` §2 REQ-NF-1（kill 重启状态不丢：基本呼叫 ACK 建 dialog 后 kill/重启，
-  BYE 对拍、Redis 状态恢复）；`docs/plan.md` §5.2 D10（"REQ-NF-1 验收 checkbox 仍 M8 维护者（K8s live baseline）"）；
-  矩阵 `m8-test-plan-matrix.md` §2 REQ-NF-1 行（`blocked`，live 证据归 Phase D D-2）。
-- **应有证据形状**（客户 K8s 采证时补）：
-  - `req-nf-1-live/`：集群与版本信息（K8s 版本、镜像 tag、Helm values 版本）、kill/restart 命令 transcript
-    （`kubectl delete pod / rollout restart` 对象名打码）、重启前后 dialog 状态对比（脱敏日志摘录，Call-ID 打码或截断）、
-    BYE 对拍结论、版本 tag。引用 runbook（见 §0）。
-- **当前状态（2026-10-06 本环境实测）**：本环境**无客户 K8s 集群**，未执行 live kill/restart/BYE 基线。
-  工程侧仅有 M7 D10 切片证据（**工程 harness，非 live 验收**）：
-  - `platform/tests/test_d10_product_recovery_integration.py`（M7.6 产品集成切片）
-  - `platform/tests/test_d10_req_nf1_harness_integration.py`（M7.7 进程壳 + REQ-NF-1 工程 harness）
-  - `platform/tests/test_d10_req_nf1_redis_integration.py`、`platform/tests/test_d10_process_restart_integration.py`
-  - 矩阵头注：`test_d10_product_recovery_integration.py → 1 passed`（ACK-established-dialog 工程切片）。
-  以上均不构成 REQ-NF-1 live 签收——如实区分，不冒充。
-- **结论：restriction（2026-10-07）**。Close 之前不做客户 K8s 上的 kill / restart / BYE。REQ-NF-1 的客户集群条款 Close 前不能签 pass。自有 kind 上的工程 harness 仍然只是工程切片。M7.1 模拟平台若在实验室集群里杀 Pod，也不等于本条。
+- **Requirement links**: `docs/acceptance/test-plan.md` §2 REQ-NF-1 (kill/restart does not lose state: kill/restart after the basic call ACK has established a dialog,
+  BYE is compared, Redis state recovers); `docs/plan.md` §5.2 D10 ("the REQ-NF-1 acceptance checkbox is still owned by M8 maintainers (K8s live baseline)");
+  matrix `m8-test-plan-matrix.md` §2 REQ-NF-1 row (`blocked`, live evidence belongs to Phase D D-2).
+- **Expected evidence shape** (to be added when evidence is collected on the customer K8s):
+  - `req-nf-1-live/`: cluster and version information (K8s version, image tag, Helm values version), kill/restart command transcripts
+    (`kubectl delete pod / rollout restart` object names masked), a before/after dialog state comparison (redacted log excerpts, Call-IDs masked or truncated),
+    the BYE comparison conclusion, version tag. Runbook references (see §0).
+- **Current state (measured in this environment, 2026-10-06)**: this environment has **no customer K8s cluster**; no live kill/restart/BYE baseline was executed.
+  On the engineering side there are only M7 D10 slice evidences (**engineering harness, not live acceptance**):
+  - `platform/tests/test_d10_product_recovery_integration.py` (M7.6 product integration slice)
+  - `platform/tests/test_d10_req_nf1_harness_integration.py` (M7.7 process shell + REQ-NF-1 engineering harness)
+  - `platform/tests/test_d10_req_nf1_redis_integration.py`, `platform/tests/test_d10_process_restart_integration.py`
+  - Matrix header note: `test_d10_product_recovery_integration.py → 1 passed` (the ACK-established-dialog engineering slice).
+  None of these constitutes REQ-NF-1 live sign-off — keep them distinguished honestly, do not pass them off as such.
+- **Conclusion: restriction (2026-10-07)**. No kill / restart / BYE on customer K8s before Close. The customer-cluster clause of REQ-NF-1 cannot be signed as pass before Close. The engineering harness on our own kind is still only an engineering slice. Killing a Pod on the M7.1 simulator platform in a lab cluster does not equal this item either.
 
-## D-3 D6 testbed 是否 v1 客户验收（维护者裁决 pending）
+## D-3 Whether the D6 testbed is v1 customer acceptance (maintainer adjudication pending)
 
-- **需求链接**：`docs/plan.md` §5.2 D6（"testbed 是否必须在 v1 支持客户验收测试；架构文档把它推迟到 v1.1"）；
-  矩阵 `m8-test-plan-matrix.md` 条件行 `D6-testbed验收`（`blocked`，归 Phase D D-3）。
-- **应有证据形状**：维护者裁决记录（v1 纳入 vs v1.1；若纳入则补客户验收用例与证据目录，若不纳入则关闭本项）。
-- **当前状态**：维护者缺席，**无裁决**。本文件不代裁决，仅记录建议。
-- **结论：维护者裁决 pending；建议 v1.1**（除非客户明确要求 v1 验收）。
-  - 理由：架构既有推迟到 v1.1 的基线；M8 窗口内无客户验收输入，纳入 v1 只会新增 open 项而不增加可验证证据。
-  - 后续二选一（须维护者书面确认）：(a) 接受建议 → D-3 关闭，D6 行按 v1.1 处理（矩阵 `D6-testbed验收` 转终态，附理由）；
-    (b) 客户要求 v1 → D-3 转为采证任务，证据落 `docs/acceptance/artifacts/m8/<date>/` 并补 ADR 或 `plan.md` §5 行。
-  - 在裁决前：D6 在矩阵中**继续保持 blocked**；M8 总审前须有终态（关闭或采证计划），不得以 open 状态签字。
+- **Requirement links**: `docs/plan.md` §5.2 D6 ("whether the testbed must support customer acceptance testing in v1; the architecture document defers it to v1.1");
+  matrix `m8-test-plan-matrix.md` conditional row `D6-testbed验收` (`blocked`, belongs to Phase D D-3).
+- **Expected evidence shape**: the maintainer adjudication record (v1 inclusion vs v1.1; if included, add customer acceptance cases and the evidence directory; if not, close this item).
+- **Current state**: maintainers are absent, so there is **no adjudication**. This file does not adjudicate on their behalf; it records only a recommendation.
+- **Conclusion: maintainer adjudication pending; recommend v1.1** (unless the customer explicitly requires v1 acceptance).
+  - Rationale: the architecture already has a baseline deferring this to v1.1; there is no customer acceptance input in the M8 window, so including it in v1 would only add an open item without adding verifiable evidence.
+  - Follow-up, pick one of two (requires written maintainer confirmation): (a) accept the recommendation → D-3 is closed and the D6 row is handled as v1.1 (matrix `D6-testbed验收` moves to terminal state, with rationale);
+    (b) the customer requires v1 → D-3 becomes an evidence collection task, evidence lands in `docs/acceptance/artifacts/m8/<date>/`, and an ADR or a §5 row of `plan.md` is added.
+  - Before adjudication: D6 **remains blocked** in the matrix; a terminal state (closed, or an evidence collection plan) is required before the M8 final review, and sign-off must not be given with an open status.
 
-## 同样的 restriction：其他必须真实客户网络的条目
+## The same restriction: other items that require a real customer network
 
-核对 `test-plan.md` §1–§4 后，Close 前同样不能靠客户网络采证、因此同样标 restriction 的还有：
+After checking `test-plan.md` §1–§4, the following also cannot be evidenced on a customer network before Close, and are therefore likewise marked as restrictions:
 
-| 条目 | 为什么算真实客户网络 |
+| Item | Why it counts as a real customer network |
 |---|---|
-| **ADR-0008 跨站点切换演练** | 要两个客户/生产站点，不是实验室单集群 |
-| **D12 / O5 生产 Redis 与 PostgreSQL HA** | 要客户生产拓扑上的 Sentinel / 流复制 / PITR。kind 里的 bundled state 不是这条 |
+| **ADR-0008 cross-site switchover drill** | It needs two customer/production sites, not a single lab cluster |
+| **D12 / O5 production Redis and PostgreSQL HA** | It needs Sentinel / streaming replication / PITR on the customer's production topology. Bundled state in kind is not this item |
 
-下面这些提到集群、S-SBC 或 live，但**不**标成同一条 restriction：它们要的是实验室或仿真，不是客户的网。
+The items below mention a cluster, S-SBC, or live, but are **not** marked as the same restriction: what they need is a lab or a simulation, not the customer's network.
 
-| 条目 | 处置 |
+| Item | Disposition |
 |---|---|
-| REQ-NF-2、REQ-NF-4、REQ-NF-9 | 自有 kind / 实验室集群即可，不要求客户集群 |
-| REQ-NF-5 | 仿真 S-SBC 已在 M7.1 做成透明桥（无 Kamailio）。不是运营商 S-SBC |
-| REQ-S-2 里「SIP 走 TLS、明文被拒绝」 | M7.1 已用测试 CA 跑通 TLS 呼叫。明文 5060 仍可选，未签「明文被拒绝」。运营商 PKI 签发链仍属 D-1 restriction |
-| REQ-NF-3、REQ-NF-13、REQ-NF-14、REQ-F-13、REQ-F-15 | 缺的是口径、监控后端或产品能力，不是客户 IMS / 客户 K8s |
+| REQ-NF-2, REQ-NF-4, REQ-NF-9 | Our own kind / lab cluster suffices; a customer cluster is not required |
+| REQ-NF-5 | The simulated S-SBC was already made into a transparent bridge in M7.1 (no Kamailio). It is not an operator S-SBC |
+| "SIP over TLS, cleartext rejected" within REQ-S-2 | M7.1 already ran TLS calls on the test CA. Cleartext 5060 is still optional, and "cleartext is rejected" is not signed. The operator PKI issuance chain remains under the D-1 restriction |
+| REQ-NF-3, REQ-NF-13, REQ-NF-14, REQ-F-13, REQ-F-15 | What is missing is a criterion, a monitoring backend, or product capability — not a customer IMS / customer K8s |
 
-## 与 M8 退出的关系
+## Relationship to the M8 exit
 
-- D-1、D-2、ADR-0008 演练、D12/O5 生产 HA 为 **restriction**：Close 前不采证，矩阵里保持 `blocked` 或 `open`，不能签 pass。M7.1 模拟平台不解除这些限制。
-- D-3 仍是裁决 pending；本文件对 v1.1 的建议不生效力。
-- `docs/acceptance/artifacts/m8/` 下 D-1/D-2 目录保持空白。状态是 restriction，不是待采证。
+- D-1, D-2, the ADR-0008 drill, and D12/O5 production HA are **restrictions**: no evidence is collected before Close, they stay `blocked` or `open` in the matrix, and cannot be signed as pass. The M7.1 simulator platform does not lift these restrictions.
+- D-3 is still pending adjudication; this file's v1.1 recommendation has no force.
+- The D-1/D-2 directories under `docs/acceptance/artifacts/m8/` stay empty. The state is a restriction, not "awaiting evidence".
 
 ---
 
-### D-3.1 代签结果（2026-10-12；D-3 原文保留不改，本节在其后追加）
+### D-3.1 Countersignature result (2026-10-12; the D-3 original text is kept unmodified, this section is appended after it)
 
-> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决
-> （N2 第 5 项正本即本 D-3；代签总记录见
-> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)）。
-> **本节不是维护者亲签**，标注「agent 代签」并附依据。
+> **Authorization source**: on **2026-10-12 maintainers explicitly authorized the agent to countersign** the nine written M8 N2 adjudications
+> (item 5 of N2, the authoritative text, is exactly this D-3; the full countersign record is at
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)).
+> **This section is not a maintainer's own signature**: it is marked "agent countersignature" and carries its basis.
 
-**裁决（N2 第 5 项）**：**接受二选一 (a)** —— D-3 **关闭**，D6 行按 **v1.1** 处理。
-签字：**agent 代签（维护者 2026-10-12 授权）**。
+**Adjudication (N2 item 5)**: **accept option (a)** — D-3 is **closed** and the D6 row is handled as **v1.1**.
+Signature: **agent countersignature (maintainer authorization dated 2026-10-12)**.
 
-**依据（不新造结论）**：D-3 原文给出的二选一：
-> (a) 接受建议 → D-3 关闭，D6 行按 v1.1 处理（矩阵 `D6-testbed验收` 转终态，附理由）
+**Basis (no newly invented conclusion)**: the two options given in the D-3 original text:
+> (a) accept the recommendation → D-3 is closed and the D6 row is handled as v1.1 (matrix `D6-testbed验收` moves to terminal state, with rationale)
 
-**已执行的同步**：
+**Synchronizations already executed**:
 
-| 位置 | 动作 |
+| Location | Action |
 |---|---|
-| `m8-test-plan-matrix.md` `D6-testbed验收` 行 | status 由 `blocked` 转终态 `n-a`，理由「D6 testbed 客户验收放 v1.1」 |
-| `2026-10-06-m8-release-candidate-plan.md` §10「D-3 / D6 裁决」栏 | 已填 (a) 结论 |
+| The `D6-testbed验收` row of `m8-test-plan-matrix.md` | status changed from `blocked` to terminal `n-a`, rationale "D6 testbed customer acceptance is deferred to v1.1" |
+| The "D-3 / D6 adjudication" field in §10 of `2026-10-06-m8-release-candidate-plan.md` | the (a) conclusion has been filled in |
 
-**边界**
+**Boundaries**
 
-1. D6 放 v1.1 **不等于** D6 被取消 —— 它仍在 [`../plan.md`](../plan.md) §5.2 D6 行与 v1.1 范围内，
-   **本期不验收、永不记 pass**。
-2. 本节**不**把 D-3 转为采证任务（那是二选一的 (b)，未采纳）。
-3. D-3 原文「在裁决前：D6 在矩阵中继续保持 blocked」一句，因本节裁决而**不再适用**；该句保留为历史。
+1. Deferring D6 to v1.1 **does not mean** D6 is cancelled — it remains in the §5.2 D6 row of [`../plan.md`](../plan.md) and within the v1.1 scope,
+   and is **not accepted in this cycle and never recorded as pass**.
+2. This section does **not** turn D-3 into an evidence collection task (that is option (b) of the either/or, which was not adopted).
+3. The D-3 original sentence "before adjudication: D6 remains blocked in the matrix" is **no longer applicable** because of this section's adjudication; that sentence is retained as history.

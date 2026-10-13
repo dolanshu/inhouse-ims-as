@@ -12,47 +12,47 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0020 评审记录（Feature 能力门控与开关）
+# ADR-0020 Review Record (Feature Capability Gating and Toggles)
 
-> 评审对象：`docs/architecture/adr/0020-feature-capability-gating.md`（Status: draft → 本次评审）
-> 评审日期：2026-09-28
-> 评审人：AI agent（对照 AGENT.md §3.4 / §6、ADR-0006、已落地的门控实现）
-> 评审结论：**通过** —— 转 accepted；1 项未决（D7）列为已知缺口，不阻塞
+> Review target: `docs/architecture/adr/0020-feature-capability-gating.md` (Status: draft → this review)
+> Review date: 2026-09-28
+> Reviewer: AI agent (cross-checked against AGENT.md §3.4 / §6, ADR-0006, and the already-implemented gating code)
+> Review conclusion: **Pass** — moved to accepted; 1 undecided item (D7) listed as a known gap, non-blocking
 
-## 评审方法
+## Review Method
 
-| 维度 | 方法 |
+| Dimension | Method |
 |---|---|
-| 与红线一致性 | AGENT.md §3.4（每个 feature 必须裁决开关 / 默认态 / 灰度 / 移除条件）、§6（两态都要覆盖） |
-| 与既有 ADR 一致性 | ADR-0006（开关复用配置治理流水线）、ADR-0007（运行态覆盖在 Redis） |
-| 与实现一致性 | `platform/src/as_platform/gating/`（默认关、fail-closed、判定幂等）、`platform/src/as_platform/api/contract.py`（`ToggleDTO` 进 `ConfigBundle`） |
-| 结构完整性 | 是否具备 Context / Decision / Consequences / Alternatives / Evidence / Related |
+| Consistency with red lines | AGENT.md §3.4 (every feature must adjudicate the toggle / default state / canary / removal condition), §6 (both states must be covered) |
+| Consistency with existing ADRs | ADR-0006 (feature flags reuse the configuration governance pipeline), ADR-0007 (runtime overrides live in Redis) |
+| Consistency with implementation | `platform/src/as_platform/gating/` (off by default, fail-closed, idempotent verdicts), `platform/src/as_platform/api/contract.py` (`ToggleDTO` entering `ConfigBundle`) |
+| Structural completeness | Whether it has Context / Decision / Consequences / Alternatives / Evidence / Related |
 
-## 发现与裁决
+## Findings and Adjudication
 
-| # | 发现 | 裁决 |
+| # | Finding | Adjudication |
 |---|---|---|
-| T1 | 两层门控职责分明：① 部署级总开关（PG 版本库、热加载）② 运行态细粒度覆盖（Redis、判定幂等） | 接受：既有总闸可一键收敛，又有灰度粒度 |
-| T2 | 明确"默认关"与"移除条件"（防开关债务），并要求每个 feature 在 ADR / HLD 显式裁决 | 接受：与 AGENT.md §3.4 一致；`ToggleDTO.removal_condition` 已实现为**必填**（不给默认值） |
-| T3 | 开关只做能力启停、不改接口契约；关闭走既有默认路径 | 接受：避免出现"关闭态"的对外行为分支 |
-| T4 | 运行态判定必须幂等以承受 Redis 脑裂窗口（风险 R5 / 未决 D3） | 接受：已由 `is_enabled` 的纯函数判定与两态测试覆盖 |
-| T5 | 与 ADR-0006 一致：开关作为一类配置版本走同一条变更流水线，不另开通道 | 接受：已落地 —— `ConfigBundle.toggles` 与 `toggle_deployment()`，并有"开关随变更单走审批→分发→回滚"的测试 |
-| T6 | 未决 D7（运行态覆盖的判定粒度与配置 schema：号段 / 呼叫 / 用户 / 百分比）仍未定 | 接受为**已知缺口**：M4 完成前需定，否则运行态覆盖无法配置化 |
-| T7 | 运行态覆盖目前只有 seam（`StaticToggleSource`），Redis 侧实现未做 | 接受为**已知缺口**：与 ADR-0007 的运行态存储接线同步完成（M5 前后） |
+| T1 | The responsibilities of the two gating layers are clearly separated: ① the deployment-level master toggle (PG version store, hot reload) ② runtime fine-grained overrides (Redis, idempotent verdicts) | Accept: there is both a master switch that can converge in one action and canary granularity |
+| T2 | It makes "off by default" and the "removal condition" explicit (to prevent toggle debt), and requires every feature to be adjudicated explicitly in the ADR / HLD | Accept: consistent with AGENT.md §3.4; `ToggleDTO.removal_condition` is implemented as **required** (no default value) |
+| T3 | Toggles only enable and disable capabilities and do not change the interface contract; the off state goes through the existing default path | Accept: avoids an external behavior branch for the "off state" |
+| T4 | Runtime verdicts must be idempotent in order to withstand the Redis split-brain window (risk R5 / undecided D3) | Accept: covered by the pure-function verdict of `is_enabled` and by tests for both states |
+| T5 | Consistent with ADR-0006: a toggle travels the same change pipeline as a class of configuration version and does not open a separate channel | Accept: already implemented — `ConfigBundle.toggles` and `toggle_deployment()`, with a test covering "a toggle follows the change ticket through approval → distribution → rollback" |
+| T6 | Undecided D7 (the verdict granularity and configuration schema for runtime overrides: number range / call / user / percentage) is still undefined | Accept as a **known gap**: must be decided before M4 completes, otherwise runtime overrides cannot be made configuration-driven |
+| T7 | Runtime overrides currently have only a seam (`StaticToggleSource`); the Redis-side implementation has not been written | Accept as a **known gap**: to be completed in sync with the runtime storage wiring of ADR-0007 (around M5) |
 
-## Adjudication 汇总
+## Adjudication Summary
 
-| 类别 | 条数 | 处置 |
+| Category | Count | Disposition |
 |---|---|---|
-| 接受且无需修改 | 5（T1-T5） | — |
-| 接受为已知缺口 | 2（T6、T7） | D7 在 M4 完成前定；Redis 侧实现与 ADR-0007 接线同步 |
-| 需要修改 | 0 | — |
+| Accepted with no changes needed | 5 (T1-T5) | — |
+| Accepted as known gaps | 2 (T6, T7) | D7 to be decided before M4 completes; the Redis-side implementation is in sync with the ADR-0007 wiring |
+| Changes required | 0 | — |
 
-## 确认签字
+## Sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 通过 |
-| 状态流转 | `draft` → `accepted`；注册表同步 |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | 待填 |
+| Review conclusion | Pass |
+| State transition | `draft` → `accepted`; registry synchronized |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer sign-off | To be filled in |

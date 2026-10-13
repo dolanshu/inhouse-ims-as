@@ -12,52 +12,52 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M4 配置治理内核评审记录
+# M4 Configuration Governance Kernel Review Record
 
-> 评审对象：`services/config-service/src/as_config_service/`（`change_order.py`、`version_store.py`、`distributor.py`）、`platform/src/as_platform/api/contract.py` 的开关契约扩展，及其测试
-> 评审日期：2026-09-28
-> 评审人：AI agent（实跑门禁 + 对照 ADR-0006、ADR-0020、AGENT.md §3.4/§5）
-> 评审结论：**通过（阶段性）** —— 治理逻辑闭环达成；PostgreSQL 接线与控制台未开始，不判 M4 完成
+> Review object: `services/config-service/src/as_config_service/` (`change_order.py`, `version_store.py`, `distributor.py`), the toggle-contract extension in `platform/src/as_platform/api/contract.py`, and their tests
+> Review date: 2026-09-28
+> Reviewer: AI agent (actually ran the gate + cross-checked ADR-0006, ADR-0020, AGENT.md §3.4/§5)
+> Review verdict: **pass (phased)** — the governance logic loop is closed; PostgreSQL wiring and the console have not started, so M4 is not judged complete
 
-## 门禁证据
+## Gate evidence
 
-| 项 | 结果 |
+| Item | Result |
 |---|---|
 | `uv run ruff format --check .` | 127 files already formatted |
 | `uv run ruff check .` | All checks passed! |
 | `uv run mypy` | Success: no issues found in 28 source files |
 | `uv run pytest -m "unit or contract" -q` | 254 passed, 2 skipped |
 | `uv run pytest -m integration -q` | 3 passed |
-| TDD | 三个模块均先红（`ModuleNotFoundError` / `ImportError`）后绿 |
+| TDD | All three modules went red first (`ModuleNotFoundError` / `ImportError`), then green |
 
-## 评审发现
+## Review findings
 
-| # | 发现 | 裁决 |
+| # | Finding | Adjudication |
 |---|---|---|
-| N1 | 变更单状态机为纯函数，非法跳转抛 `IllegalTransitionError`（含 `DRAFT → APPLIED`），审批必留审批人与时间 | 接受：REQ-F-14 与 ADR-0006 的状态机语义落地 |
-| N2 | 版本库为不可变追加，历史版本只读；PG 实现留 seam 未实现 | 接受：ADR-0006 / ADR-0007 要求不可变版本行；PG 接线列为 M4 剩余项 |
-| N3 | 分发在"任一实例不健康"时立即回滚并停止推进后续批次 | 接受：爆炸半径锁在当前批次，正是灰度的意义 |
-| N4 | `rollback_target` 为 `version - 1`，首个版本无可回滚目标返回 `None` | 接受：边界明确，有测试 |
-| N5 | 开关进入 `ConfigBundle`，与规则同属一个版本、走同一条流水线；`ToggleDTO.removal_condition` **不给默认值** | 接受：防开关债务（ADR-0020 / AGENT.md §3.4）；不给默认值是对的 |
-| N6 | `toggle_deployment` 保留 `False`，不过滤"关" | 接受：过滤会让"关"被误读为"未配置"，也会在回滚时残留旧值 |
-| N7 | 开关两态均有测试（内核契约 7 条 + 流水线 7 条） | 接受：AGENT.md §6 要求两态都覆盖 |
-| N8 | `ConfigBundle.toggles` 带默认值，既有构造方式与 config-service 既有测试均未受影响（254 = 240 + 14，2 skipped 未变） | 接受：向后兼容已由门禁验证 |
-| N9 | 两处实现偏差：`InMemoryVersionStore.append` 的 `now` 放宽为可选；`Distribution` 多两个默认字段 | 接受：否则注入的 clock 与 reason/now 无处安放；均为默认参数，不破坏调用方 |
+| N1 | The change-order state machine is a pure function; illegal transitions raise `IllegalTransitionError` (including `DRAFT → APPLIED`), and approval must always record the approver and the time | Accepted: the state-machine semantics of REQ-F-14 and ADR-0006 are landed |
+| N2 | The version store is immutable-append, and historical versions are read-only; the PG implementation leaves a seam unimplemented | Accepted: ADR-0006 / ADR-0007 require immutable version rows; PG wiring is listed as a remaining M4 item |
+| N3 | Distribution rolls back immediately and stops advancing subsequent batches whenever "any instance is unhealthy" | Accepted: the blast radius is locked to the current batch, which is exactly the point of canarying |
+| N4 | `rollback_target` is `version - 1`, and the first version returns `None` when there is no rollback target | Accepted: the boundary is explicit and has tests |
+| N5 | Toggles enter `ConfigBundle`, belong to the same version as rules, and go through the same pipeline; `ToggleDTO.removal_condition` has **no default value** | Accepted: prevents toggle debt (ADR-0020 / AGENT.md §3.4); giving it no default is correct |
+| N6 | `toggle_deployment` retains `False` and does not filter out "off" | Accepted: filtering would make "off" be misread as "not configured", and would also leave stale values behind on rollback |
+| N7 | Both toggle states have tests (7 kernel contract cases + 7 pipeline cases) | Accepted: AGENT.md §6 requires covering both states |
+| N8 | `ConfigBundle.toggles` carries a default, and neither existing construction styles nor existing config-service tests were affected (254 = 240 + 14, 2 skipped unchanged) | Accepted: backward compatibility is already verified by the gate |
+| N9 | Two implementation deviations: the `now` of `InMemoryVersionStore.append` was relaxed to optional; `Distribution` has two extra default fields | Accepted: otherwise the injected clock and reason/now have nowhere to go; both are default parameters and do not break callers |
 
-## 剩余（M4 未完）
+## Remaining (M4 not done)
 
-| # | 剩余 | 说明 |
+| # | Remaining item | Explanation |
 |---|---|---|
-| N10 | PostgreSQL 版 `VersionStore` 实现 | 需真实 PG；建议随 integration 层用例一起引入（该层已改为阻塞） |
-| N11 | `services/console`（读写、鉴权、审计，REQ-S-4） | M4 另一半，尚未开始 |
-| N12 | `ConfigVersion.change_id` 当前允许 `None` | 生产写入路径需强制非空，由 PG 实现或上层服务承担，待裁决 |
-| N13 | ADR-0020 仍为 draft | 开关流水线的依据，须在 M4 完成前评审转正 |
+| N10 | PostgreSQL-backed `VersionStore` implementation | Requires real PG; recommended to introduce it together with integration-layer use cases (that layer has already been switched to blocking) |
+| N11 | `services/console` (read/write, authentication, audit, REQ-S-4) | The other half of M4, not yet started |
+| N12 | `ConfigVersion.change_id` currently permits `None` | The production write path must enforce non-null, borne by the PG implementation or an upper-layer service; pending adjudication |
+| N13 | ADR-0020 is still draft | The basis of the toggle pipeline; it must be reviewed and promoted before M4 completion |
 
-## 确认签字
+## Confirmation sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 通过（阶段性）；M4 不判完成 |
-| 门禁 | 全绿（254 passed / 2 skipped；integration 3 passed） |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | Approved; recorded by AI agent per maintainer authorization in chat (2026-10-04). Historical M4a slice only. |
+| Review verdict | Pass (phased); M4 not judged complete |
+| Gate | Fully green (254 passed / 2 skipped; integration 3 passed) |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer signature | Approved; recorded by AI agent per maintainer authorization in chat (2026-10-04). Historical M4a slice only. |

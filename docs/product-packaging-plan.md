@@ -12,119 +12,119 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# In-house IMS Application Server 产品化包装计划
+# In-house IMS Application Server Productization Packaging Plan
 
-> 本文档基于 `docs/discussion.md` 中关于"自研第三方 IMS AS 如何包装得像商业产品"的讨论，结合本项目当前实际情况，制定可执行的产品化包装路线图。
+> This document is based on the discussion in `docs/discussion.md` about "how to package an in-house third-party IMS AS so that it looks like a commercial product", combined with this project's actual current situation, and sets out an actionable productization packaging roadmap.
 >
-> 适用场景（**当前默认方向**：讨论确认，待补 plan/ADR 正式决策落点，见 §4.1）：运营商自研 **In-house IMS Application Server**（**文档暂用名**，首现标注 3GPP Third-Party AS role，以下简称 in-house AS；命名状态见 §4.3），面向 xx运营商 内部上线评审。repo 名拟改为 `inhouse-ims-as`（当前默认方向，待补正式决策落点，见 §4.3）。
+> Applicable scenario (**current default direction**: confirmed by discussion, with the formal plan/ADR decision landing point still to be added, see §4.1): a carrier's in-house **In-house IMS Application Server** (**a provisional name used in this document**, first occurrence annotated with the 3GPP Third-Party AS role, hereafter in-house AS; naming status see §4.3), targeting xx carrier's internal go-live review. The repo name is proposed to become `inhouse-ims-as` (current default direction, formal decision landing point still to be added, see §4.3).
 
 ***
 
-## 0. 现状盘点与差距
+## 0. Current-state inventory and gaps
 
-### 0.1 已有资产
+### 0.1 Assets already in hand
 
-| # | 资产                            | 对应说明                                          | 状态       |
+| # | Asset                            | Corresponding note                                          | Status       |
 | - | ----------------------------- | --------------------------------------------- | -------- |
-| 1 | 产品版本号（VERSION / 语义化版本）        | ADR-0018 已定义发布版本策略                            | ✅ 已有     |
-| 2 | Helm Chart                    | ADR-0013 确认 Helm-only 生产部署，Chart 已交付；config-service 7.2d、真实集群 HTTPS 仍未验收          | ✅ 已有     |
-| 3 | Prometheus 指标 + 告警骨架          | ADR-0005 可观测性方案，告警规则已建骨架；告警-动作对照表、OTLP exporter 接线、容量类告警仍 defer                      | ✅ 已有     |
-| 4 | Health / Readiness / Draining | ISSU + Draining（ADR-0009），Pod lifecycle 齐全；机制与单测已交付（含 kind + 模拟 active_calls 证据）；真实 SIP 负载下滚动升级/缩容不掉呼叫待 M7/M8 验收 | 🟡 部分已有 |
-| 5 | 分层测试体系                        | ADR-0014 三层测试床（unit / contract / integration）；unit/contract/integration 骨架已建立；e2e marker 为 0 尚未落地；performance 仅 accept-all harness，非业务判决路径 | 🟡 部分已有 |
-| 6 | 架构文档 + ADR 体系                 | `docs/architecture/` 下 HLD/LLD + 26 篇 ADR；部分 ADR 仍为 draft（如 ADR-0023/0025）     | ✅ 已有     |
-| 7 | 控制台（Console）                  | M4 里程碑交付，配置管控 UI（工程切片）；未验收子项：REQ-S-4、M4b-8 生产 ingress、F-13 Live Call-ID trace、F-15 真 AS 补测、主叫/正则 v1.1 | 🟡 部分已有（工程切片） |
-| 8 | 部分 Runbook                    | Runbook 已集中在 `docs/acceptance/`（m5-downscale、m5-state-stores、m4b-8、m8-native-consistency 等）；计划迁/链接到 `docs/operations/` | 🟡 部分已有（集中） |
-| 9 | M6 容量压测 harness（dev-host 内部测量） | dev-host 内部测量、callload 测试；**非对外 O1/SLA**；O1 容量目标维护者裁决仍 open；`AGENT.md` §2 禁止在实测裁决前发布容量数字 | 🟡 部分已有 |
-| 10 | 可插拔业务引擎架构                 | apps/ 目录一用例一进程，天然支持多业务承载平台模式                  | ✅ 已有     |
+| 1 | Product version number (VERSION / semantic versioning)        | ADR-0018 has defined the release version policy                            | ✅ In place     |
+| 2 | Helm Chart                    | ADR-0013 confirms Helm-only production deployment and the chart has been delivered; config-service 7.2d and real-cluster HTTPS are still not accepted          | ✅ In place     |
+| 3 | Prometheus metrics + an alert skeleton          | The ADR-0005 observability scheme; the alert rules skeleton has been built; the alert-to-action matrix, the OTLP exporter wiring, and capacity-class alerts are still deferred                      | ✅ In place     |
+| 4 | Health / Readiness / Draining | ISSU + Draining (ADR-0009) with a complete Pod lifecycle; the mechanism and unit tests have been delivered (including kind + simulated active_calls evidence); not dropping calls during a rolling upgrade / scale-down under real SIP load awaits M7/M8 acceptance | 🟡 Partially in place |
+| 5 | Layered test system                        | The ADR-0014 three-layer testbed (unit / contract / integration); the unit/contract/integration skeleton has been established; the e2e marker count is 0 and has not landed; performance is only an accept-all harness, not a business adjudication path | 🟡 Partially in place |
+| 6 | Architecture docs + the ADR system                 | HLD/LLD + 26 ADRs under `docs/architecture/`; some ADRs are still drafts (e.g. ADR-0023/0025)     | ✅ In place     |
+| 7 | Console                  | Delivered in the M4 milestone, a configuration-management UI (engineering slice); unaccepted sub-items: REQ-S-4, M4b-8 production ingress, F-13 Live Call-ID trace, F-15 real-AS supplementary tests, caller ID / regex v1.1 | 🟡 Partially in place (engineering slice) |
+| 8 | Some runbooks                    | The runbooks have been centralized in `docs/acceptance/` (m5-downscale, m5-state-stores, m4b-8, m8-native-consistency, etc.); the plan is to move / link them into `docs/operations/` | 🟡 Partially in place (centralized) |
+| 9 | M6 capacity load-test harness (dev-host internal measurement) | dev-host internal measurement, callload tests; **not the external O1/SLA**; the maintainer adjudication on the O1 capacity target is still open; `AGENT.md` §2 forbids publishing capacity figures before a measured adjudication | 🟡 Partially in place |
+| 10 | Pluggable business-engine architecture                 | One process per use case in the apps/ directory, naturally supporting the multi-business platform model                  | ✅ In place     |
 
-### 0.2 主要缺口
+### 0.2 Main gaps
 
-| #  | 缺口项                        | 影响范围                        | 状态   | 批次     |
+| #  | Gap item                        | Scope of impact                        | Status   | Batch     |
 | -- | -------------------------- | --------------------------- | ---- | ------ |
-| 1  | 3GPP 规范符合性矩阵               | 网络部评审第一道门槛，无则直接被质疑专业性       | ❌ 缺失 | 第一批   |
-| 2  | 网元档案（NE Datasheet）         | 现网正规网元标配，缺则被当成"项目"而非"产品"；容量章节受 O1 阻塞，裁决前不得出现 CAPS/BHCA/并发数值    | ❌ 缺失 | 第一批   |
-| 3  | 故障定界手册                     | 自研网元最大阻力是"出事先怀疑你"，无定则无法自证清白 | ❌ 缺失 | 第一批   |
-| 4  | 一页纸产品定位 + 架构大图             | 评审第一印象、管理层汇报、对外介绍都需要        | ❌ 缺失 | 第一批   |
-| 5  | Grafana 看板模板               | 只有 Prometheus 指标和告警，没有可视化看板 | ❌ 缺失 | 第二批   |
-| 6  | Preflight 环境校验脚本           | 部署前一键验环境（K8s 版本、资源、依赖服务）    | ❌ 缺失 | 第三批   |
-| 7  | 离线安装包（air-gapped）          | 运营商机房普遍无外网，无离线包则部署受阻        | ❌ 缺失 | 第三批   |
-| 8  | 责任边界矩阵（RACI）               | 多厂商协作定责，主动给边界是评审加分项         | ❌ 缺失 | 第三批   |
-| 9  | SLA / 版本生命周期 / EOL 策略      | 自研最容易死在版本混乱，缺则显不专业；ADR-0018 仅覆盖版本号语义；生命周期/EOL/支持周期是新决策，需新增 requirement + ADR          | ❌ 缺失 | 第三批   |
-| 10 | 安全合规证据（PDPO / 数据留港 / 渗透测试） | 香港运营商内控要求，过审必备；受 O4（呼叫轨迹保留期）/ D5（轨迹存储选型）未决阻塞，无法落地保留期限              | ❌ 缺失（受 O4/D5 阻塞） | 第三批   |
-| 11 | 多业务承载平台的能力开放 / 插件化机制文档 | 平台定位下的长期价值体现，指导新业务接入流程；**v1.1 或按需，不纳入当前里程碑，避免扩项**     | ❌ 缺失（v1.1/按需） | 第四批   |
+| 1  | 3GPP specification-conformity matrix               | The first gate of the network department review; without it, professionalism is questioned outright       | ❌ Missing | First batch   |
+| 2  | Network-element dossier (NE Datasheet)         | Standard equipment for every legitimate network element in a live network; without it you are treated as a "project" rather than a "product"; the capacity chapter is blocked by O1 and no CAPS/BHCA/concurrency figures may appear before the adjudication    | ❌ Missing | First batch   |
+| 3  | Fault demarcation manual                     | The biggest obstacle for an in-house network element is "when something breaks, you are the first suspect"; without a defined procedure you cannot prove your innocence | ❌ Missing | First batch   |
+| 4  | One-page product positioning + an architecture overview diagram             | Needed for the review's first impression, for management reporting, and for external introductions        | ❌ Missing | First batch   |
+| 5  | Grafana dashboard templates               | Only Prometheus metrics and alerts exist, with no visual dashboards | ❌ Missing | Second batch   |
+| 6  | Preflight environment validation script           | One-click environment validation before deployment (K8s version, resources, dependent services)    | ❌ Missing | Third batch   |
+| 7  | Offline installation package (air-gapped)          | Carrier machine rooms generally have no external network; without an offline package deployment is blocked        | ❌ Missing | Third batch   |
+| 8  | Responsibility boundary matrix (RACI)               | Assigning accountability across multiple vendors; proactively offering the boundaries earns review points         | ❌ Missing | Third batch   |
+| 9  | SLA / version lifecycle / EOL policy      | In-house work most often dies of version chaos; without this it looks unprofessional; ADR-0018 covers only the version-number semantics; lifecycle / EOL / support period are new decisions requiring a new requirement + ADR          | ❌ Missing | Third batch   |
+| 10 | Security compliance evidence (PDPO / data residency / penetration testing) | Required by a Hong Kong carrier's internal controls and mandatory for passing review; blocked by the undecided O4 (call-trace retention period) / D5 (trace storage selection), so the retention period cannot be implemented              | ❌ Missing (blocked by O4/D5) | Third batch   |
+| 11 | Capability-openness / plugin mechanism documentation for the multi-business platform | Where the long-term value of the platform positioning shows, guiding the onboarding process for new businesses; **v1.1 or on demand, not folded into the current milestone, to avoid scope creep**     | ❌ Missing (v1.1 / on demand) | Fourth batch   |
 
-### 0.3 前置依赖与工程事实约束
+### 0.3 Prerequisite dependencies and engineering-fact constraints
 
-> 以下 8 项工程事实是本计划全部排期与交付物内容的约束前提，与评审记录（`docs/reviews/product-packaging-plan-review-2026-10-09.md` §7）逐条对应；任何包装文档不得与这些事实冲突。
+> The following 8 engineering facts are the constraining premise for all scheduling and all deliverable content in this plan, and correspond item by item with the review record (`docs/reviews/product-packaging-plan-review-2026-10-09.md` §7); no packaging document may contradict these facts.
 
-1. **M8 退出签字搁置**：M8 发布候选（RC）产物已就绪，但退出签字仍搁置（`docs/plan.md` §0）。
-2. **E1/E4/E5 未验收**：reSIProcate 生产路径行为（E1）、TLS 热轮换（E4）、状态外置（E5）仍为 open，待 M8 验收（`docs/plan.md` §5.1 O2/O3、ADR-0019）。
-3. **运营商 PKI / 证书热轮换无 lab 证据**：TLS 与 REQ-S-2/S-3 尚无实验室证据。
-4. **e2e = 0**：`docs/acceptance/test-plan.md` 中 e2e marker 数量为 0，完整呼叫 + 控制台端到端路径未落地。
-5. **O1 容量目标未裁决**：维护者目标裁决仍 open；`AGENT.md` §2 禁止在实测裁决前发布任何 CPS/CAPS/BHCA/并发/时延数字，M6 dev-host 测量仅供内部参考。
-6. **O4 / D5 未决**：呼叫轨迹保留期（O4）与轨迹存储选型（D5）均未裁决，PDPO 保留期限与存储方案无法落地。
-7. **REQ-S-4 / M4b 未整体验收**：控制台安全审计目前仅为工程切片，M4 工程关门不等于 REQ 级验收（`docs/plan.md` §4.3、§5.4）。
-8. **testbed 非 v1 交付物**：ADR-0014 明确 v1 不把 testbed 作为交付物；testbed 仿真结果（含 M7.1 仿真平台、callload）是研发/演示资产，不得充当运营商 IOT 或现网容量证据。
+1. **The M8 exit signature is on hold**: the M8 release candidate (RC) artifacts are ready, but the exit signature is still on hold (`docs/plan.md` §0).
+2. **E1/E4/E5 are not accepted**: reSIProcate production-path behaviour (E1), TLS hot rotation (E4), and externalized state (E5) are still open, awaiting M8 acceptance (`docs/plan.md` §5.1 O2/O3, ADR-0019).
+3. **No lab evidence for the carrier PKI / certificate hot rotation**: there is no laboratory evidence yet for TLS and REQ-S-2/S-3.
+4. **e2e = 0**: the e2e marker count in `docs/acceptance/test-plan.md` is 0; the full call + console end-to-end path has not landed.
+5. **The O1 capacity target is unadjudicated**: the maintainer's target adjudication is still open; `AGENT.md` §2 forbids publishing any CPS/CAPS/BHCA/concurrency/latency figure before a measured adjudication, and the M6 dev-host measurement is for internal reference only.
+6. **O4 / D5 are undecided**: neither the call-trace retention period (O4) nor the trace storage selection (D5) has been adjudicated, so the PDPO retention period and storage scheme cannot be implemented.
+7. **REQ-S-4 / M4b are not accepted as a whole**: console security audit is currently only an engineering slice, and M4 engineering closure does not equal REQ-level acceptance (`docs/plan.md` §4.3, §5.4).
+8. **The testbed is not a v1 deliverable**: ADR-0014 is explicit that v1 does not treat the testbed as a deliverable; testbed simulation results (including the M7.1 simulation platform and callload) are R&D / demo assets and must not stand in as carrier IOT or live-network capacity evidence.
 
 ***
 
-## 1. 包装层次与优先级
+## 1. Packaging layers and priorities
 
-按"先拿入场券、再补运维、再做交付、最后锦上添花"的逻辑，分四批推进。当前默认第一批优先，其余按需；待 M8 退出签字与 O1/O4/D5 裁决后重新确认推进节奏。
+Following the logic of "first get the entry ticket, then fill in operability, then do delivery, and finally add the finishing touches", the work is advanced in four batches. At present the first batch has priority and the rest are on demand; the pacing will be reconfirmed after the M8 exit signature and the O1/O4/D5 adjudications.
 
-### 第一批：评审入场券（最高优先级）
+### First batch: the review entry ticket (highest priority)
 
-> 目标：让网络部评审会上第一眼觉得"这是产品，不是 POC"。基于多业务承载平台定位，突出平台价值与避免厂商绑定。
+> Goal: to make the network department's review meeting feel at first glance that "this is a product, not a POC". Based on the multi-business platform positioning, highlight the platform value and the avoidance of vendor lock-in.
 
-| #   | 交付物                | 内容要点                                                                                                                                                   | 对应 discussion 思路                               |
+| #   | Deliverable                | Key content                                                                                                                                                   | Corresponding discussion thread                               |
 | --- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| 1.1 | 产品一页纸 + 命名（文档暂用名）       | 一句话价值主张（多业务承载平台 + 不改 IMS 核心即可上线新业务 + 避免被核心网厂商绑定）、目标场景（in-house AS / 3GPP Third-Party AS role，**当前默认方向，非正式决策落点，见 §4.1**）、架构示意、关键 KPI、三步部署；产品名为**文档暂用名** In-house IMS Application Server（见 §4.3），repo 名拟改为 `inhouse-ims-as` | 第 1 层"叙事：从项目变成产品"；命名讨论（repo 名拟改为 `inhouse-ims-as`） |
-| 1.2 | 3GPP 规范符合性矩阵       | 逐条列出 TS 24.229、TS 29.228/29.229（Cx）、GSMA IR.92/IR.94、RFC 3261/6733，如实标注 Fully / Partial / N-A / open + 对应 Release；TS 29.328/29.329（Sh）标 **N/A** 并保留理由（不做 Diameter Sh）；TS 32.260/32.299（计费）标 **N/A** 并保留理由（不做 CDR）。**备注：生产栈 E1/E4/E5（reSIProcate 行为、TLS 热轮换、状态外置）仍待 M8 验收；sippy 仅为 testbed 行为基线参考，不进入生产依赖** | AS 网元专属信任凭证第 1 条；"内部评审第一眼也看这个"                 |
-| 1.3 | 网元档案（NE Datasheet） | 按平台维度撰写：**容量模型（受 O1 阻塞，裁决前仅写模型结构与测量方法，不填具体 CAPS/BHCA/并发数值）**、各业务引擎容量参考、KPI 定义与门限、告警清单、依赖关系图、资源规格、部署形态；容量数值待 M6 真实 socket 实测与维护者裁决后填入 | "现网每个正规网元都有这份，你的有，就被当作同类对待" |
-| 1.4 | 故障定界手册             | AS / S-CSCF / HSS / 计费域 四方故障归属判断流程、SIP/Diameter 抓包对齐方法、"5 分钟自证不是你的锅"检查表、常见故障剧本；**与 RACI、接口抓包责任方、S-CSCF/HSS 侧日志对齐**                                                                         | 三条命门第 1 条"可定界"；责任边界矩阵前置文档                      |
-| 1.5 | README 重写为产品入口     | 首页从"怎么用"改成"为什么值"：平台价值主张 → 架构大图 → 关键 KPI → 规范符合性 → 三步部署 → 文档索引                                                                                            | 第 1 层叙事；"POC 的 README 讲怎么用，产品的首页讲为什么值"         |
+| 1.1 | Product one-pager + naming (provisional document name)       | A one-sentence value proposition (multi-business platform + new businesses can go live without changing the IMS core + no lock-in to a core-network vendor), the target scenario (in-house AS / 3GPP Third-Party AS role, **the current default direction, not a formal decision landing point, see §4.1**), an architecture sketch, the key KPIs, three-step deployment; the product name is the **provisional document name** In-house IMS Application Server (see §4.3), and the repo name is proposed to become `inhouse-ims-as` | Layer 1 "narrative: from project to product"; the naming discussion (repo name proposed to become `inhouse-ims-as`) |
+| 1.2 | 3GPP specification-conformity matrix       | List TS 24.229, TS 29.228/29.229 (Cx), GSMA IR.92/IR.94, RFC 3261/6733 item by item, honestly marked Fully / Partial / N-A / open + the corresponding Release; TS 29.328/29.329 (Sh) marked **N/A** with the reason retained (no Diameter Sh); TS 32.260/32.299 (charging) marked **N/A** with the reason retained (no CDR). **Note: the production-stack E1/E4/E5 (reSIProcate behaviour, TLS hot rotation, externalized state) still await M8 acceptance; sippy is only a testbed behavioural baseline reference and does not enter production dependencies** | Trust credential #1 specific to the AS network element; "this is looked at at first glance even in an internal review"                 |
+| 1.3 | Network-element dossier (NE Datasheet) | Written along platform dimensions: **a capacity model (blocked by O1; before the adjudication only the model structure and measurement method are written, with no concrete CAPS/BHCA/concurrency figures)**, per-engine capacity references, KPI definitions and thresholds, the alert inventory, a dependency diagram, resource specifications, and deployment forms; the capacity figures are filled in after the M6 real-socket measurement and the maintainer adjudication | "Every legitimate network element in a live network has this one; if you have it, you are treated as a peer" |
+| 1.4 | Fault demarcation manual             | The fault-attribution decision process across the four parties AS / S-CSCF / HSS / charging domain, the SIP/Diameter packet-capture alignment method, a "prove in 5 minutes that it is not your fault" checklist, and common fault playbooks; **aligned with the RACI, the interface packet-capture owners, and the S-CSCF/HSS side logs**                                                                         | Make-or-break #1 of the three, "can be demarcated"; the prerequisite document for the responsibility boundary matrix                      |
+| 1.5 | README rewritten as the product entry point     | The front page changes from "how to use it" to "why it is worth it": platform value proposition → architecture overview → key KPIs → specification conformance → three-step deployment → document index                                                                                            | Layer 1 narrative; "a POC README explains how to use it, a product front page explains why it is worth it"         |
 
-### 第二批：可运维性
+### Second batch: operability
 
-> 目标：让 NOC / 运维团队敢接、能排障、能回退。对应 discussion 中"可运维性"和"三条命门"。
+> Goal: make the NOC / operations team willing to take it on, able to troubleshoot, and able to roll back. Corresponds to "operability" and "the three make-or-break items" in the discussion.
 
-| #   | 交付物                | 内容要点                                                                         | 对应 discussion 思路                   |
+| #   | Deliverable                | Key content                                                                         | Corresponding discussion thread                   |
 | --- | ------------------ | ---------------------------------------------------------------------------- | ---------------------------------- |
-| 2.1 | Grafana 看板模板       | 大盘（整体健康/会话数/吞吐/时延 P50/P95/P99）、SIP/ISC 信令明细、资源使用（CPU/内存/连接池）、告警面板；**不含 Diameter Sh 面板（Sh 不在范围内）**；面板不出现容量承诺数字 | 第 3 层"可运维性"；"监控大屏比一百页文档更有说服力"      |
-| 2.2 | 告警规则补强 + 告警-动作对照表  | 补齐关键链路告警（SIP 5xx 飙升、ISC 超时、会话泄漏、Pod 重启等）；告警级别（P1/P2/P3）、触发条件、处理动作、升级路径；**不含 Sh 相关告警（Sh 不在范围内）**；容量类告警继续 defer，待 O1 裁决        | 第 3 层可运维性；L1 Runbook 配套            |
-| 2.3 | L1 / L2 Runbook 分册 | L1：告警处理、日常巡检、常见故障处置（面向 NOC）；L2：深度排障、信令分析、配置变更（面向二线）；**优先归集/重组 `docs/acceptance/` 现有 runbook（m5-downscale、m5-state-stores、m4b-8、m8-native-consistency 等），而非从零新建**                          | 三条命门第 3 条"可交接"；"Runbook L1/L2 分册"  |
-| 2.4 | ISC 触发后业务灰度/摘流方案 + 与 S-CSCF 侧 iFC 灰度的配合 | **iFC 触发逻辑属于 S-CSCF/HSS，不在 AS 侧；AS 只实现 ISC 触发后的业务判决。** AS 侧可做的是业务规则灰度（号段/百分比，对应 ADR-0021）与摘流/回退（runtime override，一键秒级关闭 AS 业务逻辑、放行到下一环节）；按号段/百分比的 iFC 触发需 S-CSCF/HSS 侧配合配置，本交付物只定义配合接口与流程。⚠️ 风险注记：依赖 S-CSCF 侧配合与真实集群演练（M8 7.2d 仍 blocked） | 三条命门第 2 条"可回退"；"回退演练记录在网络评审时说服力极强" |
-| 2.5 | 备份恢复方案 + 演练记录      | 状态数据（Redis / PG）备份策略、恢复 RTO/RPO、备份验证脚本、定期演练记录；**依赖真实集群环境，M8 真实集群证据当前搁置**                                | 第 3 层可运维性；"备份恢复与演练记录"              |
+| 2.1 | Grafana dashboard templates       | An overview board (overall health / session count / throughput / latency P50/P95/P99), SIP/ISC signalling detail, resource usage (CPU / memory / connection pool), and an alert panel; **no Diameter Sh panels (Sh is out of scope)**; no capacity commitment figures appear on the panels | Layer 3 "operability"; "a monitoring wall is more persuasive than a hundred pages of documentation"      |
+| 2.2 | Alert rule reinforcement + an alert-to-action matrix  | Fill in the alerts on the critical paths (SIP 5xx spikes, ISC timeouts, session leaks, Pod restarts, etc.); alert severity (P1/P2/P3), trigger conditions, handling actions, escalation paths; **no Sh-related alerts (Sh is out of scope)**; capacity-class alerts stay deferred pending the O1 adjudication        | Layer 3 operability; the matching L1 runbook            |
+| 2.3 | L1 / L2 runbook volumes | L1: alert handling, daily inspection, common fault handling (for the NOC); L2: deep troubleshooting, signalling analysis, configuration changes (for the second line); **prefer consolidating / reorganizing the existing runbooks in `docs/acceptance/` (m5-downscale, m5-state-stores, m4b-8, m8-native-consistency, etc.) over building new ones from scratch**                          | Make-or-break #3 of the three, "can be handed over"; "separate L1/L2 runbook volumes"  |
+| 2.4 | Post-ISC business canary / traffic-diversion plan + coordination with S-CSCF-side iFC canarying | **The iFC trigger logic belongs to S-CSCF/HSS, not to the AS side; the AS only implements the business decision after the ISC trigger.** What the AS side can do is business-rule canarying (number range / percentage, corresponding to ADR-0021) and traffic diversion / rollback (runtime override, one-click sub-second shutdown of the AS business logic and pass-through to the next stage); iFC triggering by number range / percentage requires coordination configuration on the S-CSCF/HSS side, and this deliverable only defines the coordination interface and process. ⚠️ Risk note: it depends on S-CSCF-side coordination and a real-cluster drill (M8 7.2d is still blocked) | Make-or-break #2 of the three, "can be rolled back"; "a rollback drill record is extremely persuasive at network review" |
+| 2.5 | Backup-restore plan + drill records      | Backup strategy for state data (Redis / PG), recovery RTO/RPO, a backup verification script, and periodic drill records; **it depends on a real cluster environment, and the M8 real-cluster evidence is currently on hold**                                | Layer 3 operability; "backup restore plus drill records"              |
 
-### 第三批：交付形态与合规
+### Third batch: delivery form and compliance
 
-> 目标：交付物完整、合规可过审、可在生产环境落地。对应 discussion 中"交付形态"和"质量与合规证据"。
+> Goal: complete deliverables, pass compliance review, and be deployable in a production environment. Corresponds to "delivery form" and "quality and compliance evidence" in the discussion.
 
-| #   | 交付物               | 内容要点                                                                          | 对应 discussion 思路                    |
+| #   | Deliverable               | Key content                                                                          | Corresponding discussion thread                    |
 | --- | ----------------- | ----------------------------------------------------------------------------- | ----------------------------------- |
-| 3.1 | Preflight 环境校验脚本  | 部署前一键检查：K8s 版本与 API、节点资源（CPU/内存/存储）、依赖服务（Redis/PG/网络）、Helm 版本、RBAC 权限         | 第 4 层"交付形态"；"能一键起、一键验"              |
-| 3.2 | 离线安装包（air-gapped） | 镜像同步脚本（image save/load + 依赖镜像清单 + 校验和）+ `helm package` + 离线加载/安装脚本；**不产生 Helm 之外的第二套安装形态（ADR-0013）**                          | 第 4 层交付形态；"air-gapped 是国内运营商常态"     |
-| 3.3 | 责任边界矩阵（RACI）      | AS 与 S-CSCF / HSS / 计费域 / 网管 / 安全 各域的职责划分；故障定界流程图；接口抓包责任方；变更窗口协作机制            | AS 网元专属信任凭证第 4 条；"主动给边界，评审最买账"      |
-| 3.4 | 安全合规说明（PDPO）      | 香港 PDPO 个人资料私隐条例合规说明；**仅描述数据留存范围（MSISDN/IMPU/呼叫轨迹）、删除机制、数据留港原则（存储位置、无跨境传输证明）；具体保留期限由 O4 裁决、轨迹存储由 D5 裁决后填入，当前不硬编码天数**；附依赖漏洞扫描结果与渗透测试计划 | 第 5 层"质量与合规证据"；香港本地化"PDPO 而非等保"     |
-| 3.5 | 版本生命周期与 EOL 策略    | 需先补 REQ-NF-XX 与对应 ADR（超出 ADR-0018 范围），再走 HLD/LLD/验收文档链；版本号语义化规则、发布节奏、支持周期、EOL 提前通知期、升级路径与兼容性承诺、LTS / 开发版区分                           | 第 6 层商业包装 + 自研六件套第①条；"自研最容易死在版本混乱上" |
+| 3.1 | Preflight environment validation script  | One-click pre-deployment check: K8s version and API, node resources (CPU / memory / storage), dependent services (Redis / PG / network), Helm version, RBAC permissions         | Layer 4 "delivery form"; "can be brought up with one click, validated with one click"              |
+| 3.2 | Offline installation package (air-gapped) | An image synchronization script (image save/load + a dependent-image manifest + checksums) + `helm package` + offline loading/installation scripts; **it must not produce a second installation form besides Helm (ADR-0013)**                          | Layer 4 delivery form; "air-gapped is the norm for domestic carriers"     |
+| 3.3 | Responsibility boundary matrix (RACI)      | The division of responsibility between AS and the S-CSCF / HSS / charging domain / network management / security domains; a fault demarcation flowchart; the owners of interface packet captures; and a change-window coordination mechanism            | Trust credential #4 specific to the AS network element; "proactively offering the boundaries is what reviewers respond to most"      |
+| 3.4 | Security compliance statement (PDPO)      | A Hong Kong PDPO (Personal Data (Privacy) Ordinance) compliance statement; **it describes only the data retention scope (MSISDN / IMPU / call traces), the deletion mechanism, and the data-residency principle (storage location, proof of no cross-border transfer); the concrete retention period is filled in after the O4 adjudication and the trace storage after the D5 adjudication, and no number of days is hard-coded at present**; a dependency vulnerability scan result and a penetration test plan are attached | Layer 5 "quality and compliance evidence"; Hong Kong localization, "PDPO rather than the MLPS"     |
+| 3.5 | Version lifecycle and EOL policy    | A REQ-NF-XX and a corresponding ADR must be added first (outside ADR-0018's scope), and only then does the HLD/LLD/acceptance document chain follow; semantic versioning rules, release cadence, support periods, the EOL advance-notice period, upgrade paths and compatibility commitments, and the LTS / development-edition distinction                           | Layer 6 commercial packaging + item ① of the in-house six-piece set; "in-house work most often dies of version chaos" |
 
-### 第四批：锦上添花（不急，按需推进）
+### Fourth batch: finishing touches (not urgent, advance on demand)
 
-> 目标：产品完整度升级，支撑平台长期演进与新业务快速接入。对应 discussion 中"电信级硬指标"和"商业包装"。
+> Goal: upgrade the completeness of the product, supporting long-term platform evolution and fast onboarding of new businesses. Corresponds to "telecom-grade hard metrics" and "commercial packaging" in the discussion.
 
-| #   | 交付物           | 内容要点                                                           | 对应 discussion 思路                |
+| #   | Deliverable           | Key content                                                           | Corresponding discussion thread                |
 | --- | ------------- | -------------------------------------------------------------- | ------------------------------- |
-| 4.1 | 性能基准报告（内部评审版）   | **O1 裁决后**，基于 M6 真实 socket 实测整理内部评审版报告；当前阶段仅交付测试方法学（环境、流量模型、指标定义），不出现任何吞吐/并发/时延数值 | 第 2 层"电信级硬指标"；"公开的性能基准报告"       |
-| 4.2 | 7×24 长稳测试报告（按需 / v1.1）   | 连续运行稳定性数据、内存泄漏检测、会话泄漏检测、异常恢复统计、累计吞吐与成功率（均为内部测量）；**按需 / v1.1，不纳入当前里程碑默认范围**                        | 第 5 层质量与合规；"7×24 长稳测试报告"        |
-| 4.3 | API 版本兼容策略    | 北向/南向接口版本号规则、向后兼容承诺、废弃策略、升级迁移指南；**依赖 ADR-0018 之上的新决策（与 3.5 一并推进）**                                | 第 5 层质量与合规；"API 版本兼容策略"         |
-| 4.4 | 产品白皮书 / 架构白皮书 | 完整产品叙事、技术架构深度解析、设计理念、与厂商方案对比（TCO/灵活性/避免绑定）、典型部署场景              | 第 1 层叙事 + 第 6 层商业包装；"白皮书 + 架构图" |
-| 4.5 | 多业务平台能力开放机制文档（v1.1 / 按需） | 业务引擎 SDK、插件规范、新业务接入流程、apps/ 目录开发指南、可插拔架构设计说明；**v1.1 / 按需，不纳入当前里程碑**                          | 多业务承载平台定位的长期价值体现            |
+| 4.1 | Performance benchmark report (internal review version)   | **After the O1 adjudication**, an internal-review report is compiled from the M6 real-socket measurement; at the current stage only the test methodology (environment, traffic model, metric definitions) is delivered, with no throughput/concurrency/latency figures at all | Layer 2 "telecom-grade hard metrics"; "a published performance benchmark report"       |
+| 4.2 | 7×24 long-stability test report (on demand / v1.1)   | Continuous-run stability data, memory-leak detection, session-leak detection, abnormal-recovery statistics, cumulative throughput and success rate (all internal measurements); **on demand / v1.1, not part of the current milestone's default scope**                        | Layer 5 quality and compliance; "a 7×24 long-stability test report"        |
+| 4.3 | API version compatibility policy    | Version-number rules for northbound/southbound interfaces, backward-compatibility commitments, deprecation policy, and an upgrade migration guide; **it depends on a new decision on top of ADR-0018 (advanced together with 3.5)**                                | Layer 5 quality and compliance; "an API version compatibility policy"         |
+| 4.4 | Product whitepaper / architecture whitepaper | The complete product narrative, an in-depth analysis of the technical architecture, the design philosophy, a comparison with vendor solutions (TCO / flexibility / avoiding lock-in), and typical deployment scenarios              | Layer 1 narrative + Layer 6 commercial packaging; "whitepaper + architecture diagram" |
+| 4.5 | Capability-openness mechanism documentation for the multi-business platform (v1.1 / on demand) | A business-engine SDK, plugin specifications, the new-business onboarding process, a development guide for the apps/ directory, and an explanation of the pluggable architecture design; **v1.1 / on demand, not folded into the current milestone**                          | Where the long-term value of the multi-business platform positioning shows            |
 
 ***
 
-## 2. 文档结构调整建议
+## 2. Proposed documentation structure changes
 
-> 原则：**不破坏现有结构，只新增**。现有 `architecture/`、`reviews/`、`handoff/` 等目录保持不变。
+> Principle: **do not break the existing structure, only add**. The existing `architecture/`, `reviews/`, `handoff/`, and other directories stay as they are.
 
 ```
 docs/
@@ -150,160 +150,159 @@ docs/
     └── install-guide.md        # 安装部署指南（聚焦交付清单、镜像同步、helm install 命令序列；Helm 参数与行为仍以 `deploy/helm/README.md` 为权威，两文档互相链接、不重复）
 ```
 
-### 说明
+### Notes
 
-- **新增** **`product/`**：集中存放面向评审/客户的产品级文档，和工程类文档（architecture）分离。
-- **新增** **`operations/`**：归集 `docs/acceptance/` 现有 runbook（m5-downscale、m5-state-stores、m4b-8、m8-native-consistency 等）及告警、回退等运维文档，创建目录时统一迁移或建立链接；该目录已创建，其中 runbook 采用「归集 + 索引 + 重写面向值班的操作正文」的方式，`docs/acceptance/` 下原 runbook **原件保留不动**。
-- **新增** **`delivery/`**：交付物相关（安装脚本、离线包、部署指南），让交付团队拿到就能用；`install-guide.md` 只覆盖交付清单、镜像同步与 helm install 命令序列，Helm 参数与行为以 `deploy/helm/README.md` 为权威，两文档互相链接、不重复。
-- 现有 `README.md` 重写为产品入口页，链接到上述三个新目录。
+- **New** **`product/`**: centrally holds the product-level documents aimed at review / customers, separated from the engineering documents (architecture).
+- **New** **`operations/`**: consolidates the existing runbooks in `docs/acceptance/` (m5-downscale, m5-state-stores, m4b-8, m8-native-consistency, etc.) together with operations documents such as alerts and rollback; when the directory was created the content was migrated or linked uniformly. That directory now exists, and the runbooks there use the approach of "consolidate + index + rewrite the operational body aimed at on-duty staff"; the **original runbooks under `docs/acceptance/` are left untouched**.
+- **New** **`delivery/`**: the delivery-related content (installation scripts, offline package, deployment guide), so the delivery team can use it as soon as they receive it; `install-guide.md` only covers the delivery checklist, image synchronization, and the helm install command sequence, with `deploy/helm/README.md` remaining authoritative for Helm parameters and behaviour; the two documents link to each other and do not duplicate each other.
+- The existing `README.md` is rewritten as the product entry page, linking to the three new directories above.
 
 ***
 
-## 3. 执行顺序与排期（带阻塞条件）
+## 3. Execution order and scheduling (with blocking conditions)
 
-> 本节不给出无条件总工期。任何排期都以前置依赖闭合为条件；在 M8 退出签字与 O1/O4/D5 裁决之前，不承诺全量包装的交付时间。
+> This section gives no unconditional total duration. Any schedule is conditional on the closure of the prerequisite dependencies; before the M8 exit signature and the O1/O4/D5 adjudications, no delivery date is committed for the full packaging scope.
 
-### 3.1 前置依赖
+### 3.1 Prerequisite dependencies
 
-包装工作启动/扩展前须确认以下前置项（工程事实详见 §0.3）：
+The following prerequisites must be confirmed before the packaging work starts or is expanded (for the engineering facts see §0.3):
 
-- **M8 退出签字仍搁置**：RC 产物就绪，但验收退出尚未签字。
-- **O1（容量目标）、O4（呼叫轨迹保留期）、D5（轨迹存储选型）均未裁决**。
-- **验收项未闭合**：E1/E4/E5（reSIProcate 行为、TLS 热轮换、状态外置）、REQ-S-2/S-3（运营商 PKI / 证书热轮换）、REQ-S-4、e2e marker = 0 等。
+- **The M8 exit signature is still on hold**: the RC artifacts are ready, but the acceptance exit has not been signed.
+- **O1 (capacity target), O4 (call-trace retention period), and D5 (trace storage selection) are all unadjudicated**.
+- **Acceptance items are not closed**: E1/E4/E5 (reSIProcate behaviour, TLS hot rotation, externalized state), REQ-S-2/S-3 (carrier PKI / certificate hot rotation), REQ-S-4, e2e marker = 0, and so on.
 
-### 3.2 交付物按阻塞关系分两类
+### 3.2 The deliverables split into two classes by blocking relationship
 
-**A 类：不依赖未决项、可立即启动**
+**Class A: no dependency on undecided items, can start immediately**
 
-| 交付物 | 说明 |
+| Deliverable | Note |
 | --- | --- |
-| 1.1 一页纸 / 命名（文档暂用名） | 按当前默认方向与暂用名撰写，正式决策落点待补（见 §4.1、§4.3） |
-| 1.2 规范符合性矩阵 | 如实标注 Fully / Partial / N-A / open；Sh 与计费标 N/A 并保留理由 |
-| 1.4 故障定界手册 | 与 RACI、接口抓包责任方、S-CSCF/HSS 侧日志对齐 |
-| 3.3 RACI 责任边界矩阵 | 多厂商职责划分，无外部阻塞 |
-| 2.3 Runbook 归集 | 归集/重组 `docs/acceptance/` 现有 runbook，而非从零新建 |
-| 2.1 / 2.2 看板与告警 | 不含容量数字、不含 Diameter Sh 面板及 Sh 相关告警 |
-| 3.1 Preflight 脚本 | 部署前环境校验 |
-| 3.2 离线包脚本 | image save/load + 依赖镜像清单 + 校验和 + `helm package` + 离线加载脚本 |
+| 1.1 One-pager / naming (provisional document name) | Written according to the current default direction and the provisional name; the formal decision landing point is still to be added (see §4.1, §4.3) |
+| 1.2 Specification-conformity matrix | Honestly marked Fully / Partial / N-A / open; Sh and charging are marked N/A with the reason retained |
+| 1.4 Fault demarcation manual | Aligned with the RACI, the interface packet-capture owners, and the S-CSCF/HSS side logs |
+| 3.3 RACI responsibility boundary matrix | Division of responsibility across vendors, with no external blocker |
+| 2.3 Runbook consolidation | Consolidate / reorganize the existing runbooks in `docs/acceptance/` rather than building new ones from scratch |
+| 2.1 / 2.2 Dashboards and alerts | No capacity figures, no Diameter Sh panels and no Sh-related alerts |
+| 3.1 Preflight script | Pre-deployment environment validation |
+| 3.2 Offline package script | image save/load + a dependent-image manifest + checksums + `helm package` + the offline loading script |
 
-**B 类：被前置项阻塞、须排期后再定**
+**Class B: blocked by prerequisites, to be decided after scheduling**
 
-| 交付物 | 阻塞项 |
+| Deliverable | Blocking item |
 | --- | --- |
-| 1.3 NE Datasheet 容量章节 | O1（裁决前仅写模型结构与测量方法，不填数值） |
-| 3.4 PDPO 保留期限 | O4 / D5（裁决前只写留存范围、删除机制、数据留港原则） |
-| 4.1 性能基准报告 | O1（裁决后基于 M6 真实 socket 实测整理内部评审版） |
-| 2.4 / 2.5 真实集群演练（iFC 配合、备份恢复） | M8 真实集群环境（7.2d 仍 blocked），且 2.4 另需 S-CSCF/HSS 侧配合 |
-| 3.5 版本生命周期 / EOL | 需先新增 requirement + ADR（超出 ADR-0018），再走设计/验收文档链 |
+| 1.3 The capacity chapter of the NE Datasheet | O1 (before the adjudication only the model structure and measurement method are written, with no figures) |
+| 3.4 PDPO retention period | O4 / D5 (before the adjudication only the retention scope, deletion mechanism, and data-residency principle are written) |
+| 4.1 Performance benchmark report | O1 (after the adjudication, compile the internal-review version from the M6 real-socket measurement) |
+| 2.4 / 2.5 Real-cluster drills (iFC coordination, backup restore) | The M8 real-cluster environment (7.2d is still blocked), and 2.4 additionally needs S-CSCF/HSS-side coordination |
+| 3.5 Version lifecycle / EOL | Requires a new requirement + ADR first (outside ADR-0018), then the design / acceptance document chain |
 
-### 3.3 多情景排期
+### 3.3 Multi-scenario scheduling
 
-- **情景一（仅 A 类，文档与脚本类包装）**：不被任何未决项阻塞，可在 **1–2 周**内完成第一批入场券（1.1 / 1.2 / 1.4 等）及可并行的 A 类脚本/归集工作。
-- **情景二（A + B 全量）**：须在 **M8 退出签字与 O1/O4/D5 裁决之后**重新估算，**不预设总工期**；2.4/2.5 的时间另取决于 S-CSCF/HSS 侧配合窗口与真实集群档期。
+- **Scenario one (Class A only, the documentation and script packaging)**: not blocked by any undecided item; the first batch of entry tickets (1.1 / 1.2 / 1.4, etc.) and the parallelizable Class A script / consolidation work can be completed within **1–2 weeks**.
+- **Scenario two (A + B in full)**: must be re-estimated **after the M8 exit signature and the O1/O4/D5 adjudications**, with **no preset total duration**; the timing of 2.4 / 2.5 additionally depends on the S-CSCF/HSS-side coordination window and the real-cluster schedule.
 
-### 3.4 testbed 证据边界
+### 3.4 The boundary of testbed evidence
 
-testbed 仿真结果（含 M7.1 仿真平台、callload）属于研发/演示资产；ADR-0014 明确 v1 不把 testbed 作为交付物，**不得在包装文档中充当运营商 IOT 或现网容量证据**。引用 M6 dev-host harness 数字时必须带"内部测量 / 非对外"限定，且 O1 裁决前不得据此承诺任何容量/性能指标。
-
-***
-
-## 4. 决策与状态
-
-以下方向与命名均标注当前状态：部分仅有 `docs/discussion.md` 讨论确认，尚未在 `docs/plan.md` / ADR 形成正式决策落点；在补齐决策行与 review record 之前，不得表述为"已确认决策"或已正式批准的产品名。
-
-### 4.1 目标场景：内部上线评审（当前默认方向）
-
-- **方向**：A —— xx运营商 内部上线评审（内部评审导向）。维护者已于 2026-10-09 确认该方向。
-- **状态**：**当前默认方向（讨论确认，待补 plan/ADR 正式决策落点）**。该方向目前仅来自 `docs/discussion.md` 讨论，尚未在 `docs/plan.md` / ADR 形成正式决策落点；后续需补 plan 决策行 + review record。
-- **影响**：包装重点放在故障定界、回退、RACI、运维交接。
-
-### 4.2 业务定位：多业务承载平台
-
-- **当前默认方向**：选项 B —— 多业务承载平台（可插拔业务引擎，当前 translation/anti-fraud，未来可扩展彩铃、语音信箱、能力开放等）
-- **状态**：apps/ 架构已支持（一用例一进程），讨论中反复确认；建议补一条 ADR / plan 决策行
-- **理由**：apps/ 架构天然支持一用例一进程，定位为平台比单业务更有长期价值
-- **影响**：产品叙事突出"平台""可扩展""避免厂商绑定"；Datasheet 按平台维度写
-
-### 4.3 命名：In-house IMS Application Server（文档暂用名 / 建议名称）
-
-- **文档暂用名 / 建议名称（待补正式决策落点）**：产品文档暂用 **In-house IMS Application Server**（首现标注 3GPP Third-Party AS role，后简称 in-house AS）。维护者已于 2026-10-09 确认文档采用该暂用名。
-- **repo 名**：git repo 名拟改为 `inhouse-ims-as`（维护者 2026-10-09 确认；仅 git 仓库名与 remote URL）。chart name、镜像名、OTel 服务名保持 `3rdparty-as` 不变（独立命名空间，与 git repo 名解耦）。
-- **状态**：该名称**不是已正式批准的产品名**；正式命名决策待补 plan/ADR 落点。
-- **影响**：仅改 git 仓库名（目录名 + remote URL），不触及仓库内 chart name、镜像名、OTel 服务名等组件命名；联动面极小（git 层 3 处操作），不需要新增 ADR。在正式决策落点补齐前，产品文档使用暂用名并标注状态。
-
-### 4.4 范围与推进节奏
-
-- **A 类（不依赖未决项）立即启动**：优先完成第一批入场券（见 §3.2），不等 M8 签字或 O1/O4/D5 裁决。
-- **B 类待前置项闭合**：M8 退出签字与 O1/O4/D5 裁决后，重新确认 B 类交付物的范围与排期（见 §3.3 情景二），不预设全量总工期。
-
-### 4.5 决策状态追加（2026-10-10）
-
-- **目标场景正式口径**：xx运营商 内部生产就绪/发版评审（internal production-readiness/release review）。
-- **产品/文档名称口径**：采用 `In-house IMS Application Server` 作为描述性产品/文档名称，**不作为品牌或商标宣称**。
-- **仓库命名状态**：GitHub 仓库重命名为 `inhouse-ims-as` 记为维护者报告已完成；本次任务**不**更改本仓库本地目录路径与 remote 配置。
-- **命名边界保持不变**：chart name、镜像名、OTel service name 继续保持 `3rdparty-as`，本追加不改该边界。
-- **O4/D5 决策落点与边界**：O4（默认 10 天、部署可配）与 D5（in-cluster PostgreSQL）政策决策已记录于 `docs/plan.md` §0，因此 §4.4 中相关「待裁决」表述对 *decision* 层面已被 supersede；但 trace 存储/查询/清理实现、证据补齐与剩余 M8/O1 门禁仍待完成，本追加**不**构成执行授权。
-- **与既有文字关系**：本节为追加决策说明，**优先于** §4.1 / §4.3 及文末状态段中关于「默认方向/暂用名/repo 名拟改」的早期表述；相关旧表述保留为历史审计链，不删除不改写。
-- **治理边界**：本追加不新增 ADR，也不构成执行授权、外部验收或 REQ/里程碑签收。
+testbed simulation results (including the M7.1 simulation platform and callload) are R&D / demo assets; ADR-0014 is explicit that v1 does not treat the testbed as a deliverable, and they **must not stand in as carrier IOT or live-network capacity evidence in the packaging documents**. When citing M6 dev-host harness figures the "internal measurement / not external" qualifier must be attached, and before the O1 adjudication no capacity/performance metric may be promised on that basis.
 
 ***
 
-> 本计划为带阻塞条件的框架性文档：§4 所列方向与命名中，目标场景和产品名目前仅为讨论确认（维护者 2026-10-09 确认方向/暂用名），待补正式决策落点；A 类交付物可立即启动，B 类交付物以前置依赖闭合为条件。各交付物的详细模板和内容可基于上述方向进一步细化。
+## 4. Decisions and status
+
+The current status is annotated for each of the following directions and names: some are confirmed only by discussion in `docs/discussion.md` and have not yet formed a formal decision landing point in `docs/plan.md` / an ADR; until the decision rows and review records are completed, they must not be described as "confirmed decisions" or as a formally approved product name.
+
+### 4.1 Target scenario: internal go-live review (current default direction)
+
+- **Direction**: A — xx carrier's internal go-live review (internal-review orientation). The maintainer confirmed this direction on 2026-10-09.
+- **Status**: **the current default direction (confirmed by discussion, formal plan/ADR decision landing point still to be added)**. This direction currently comes only from the discussion in `docs/discussion.md` and has not yet formed a formal decision landing point in `docs/plan.md` / an ADR; a plan decision row + review record must be added later.
+- **Impact**: the packaging focus falls on fault demarcation, rollback, RACI, and operations handover.
+
+### 4.2 Business positioning: a multi-business platform
+
+- **Current default direction**: option B — a multi-business platform (pluggable business engines; currently translation / anti-fraud, with colour ringback tone, voicemail, capability openness, etc. extensible in the future)
+- **Status**: the apps/ architecture already supports it (one process per use case) and it was repeatedly confirmed in discussion; it is recommended to add an ADR / plan decision row
+- **Rationale**: the apps/ architecture naturally supports one process per use case, and positioning as a platform has more long-term value than a single business
+- **Impact**: the product narrative emphasizes "platform", "extensible", and "avoiding vendor lock-in"; the Datasheet is written along platform dimensions
+
+### 4.3 Naming: In-house IMS Application Server (provisional document name / proposed name)
+
+- **Provisional document name / proposed name (formal decision landing point still to be added)**: the product documents provisionally use **In-house IMS Application Server** (first occurrence annotated with the 3GPP Third-Party AS role, hereafter in-house AS). The maintainer confirmed on 2026-10-09 that the documents adopt this provisional name.
+- **Repo name**: the git repo name is proposed to become `inhouse-ims-as` (confirmed by the maintainer on 2026-10-09; only the git repository name and the remote URL). The chart name, image name, and OTel service name stay `3rdparty-as` (an independent namespace, decoupled from the git repo name).
+- **Status**: this name is **not a formally approved product name**; the formal naming decision still needs a plan/ADR landing point.
+- **Impact**: only the git repository name changes (directory name + remote URL); component naming inside the repository such as the chart name, image name, and OTel service name is untouched; the impact surface is tiny (3 operations at the git layer) and no new ADR is needed. Until the formal decision landing point is completed, the product documents use the provisional name and annotate its status.
+
+### 4.4 Scope and pacing
+
+- **Class A (no dependency on undecided items) starts immediately**: complete the first batch of entry tickets first (see §3.2), without waiting for the M8 signature or the O1/O4/D5 adjudications.
+- **Class B waits for the prerequisites to close**: after the M8 exit signature and the O1/O4/D5 adjudications, reconfirm the scope and schedule of the Class B deliverables (see §3.3 scenario two); no total duration is preset.
+
+### 4.5 Added decision status (2026-10-10)
+
+- **Formal framing of the target scenario**: xx carrier's internal production-readiness / release review (internal production-readiness/release review).
+- **Framing of the product / document name**: `In-house IMS Application Server` is adopted as a descriptive product / document name, **not as a brand or trademark claim**.
+- **Repository naming status**: the GitHub repository rename to `inhouse-ims-as` is recorded as reported complete by the maintainer; this task **does not** change this repository's local directory path or remote configuration.
+- **The naming boundary stays unchanged**: the chart name, image name, and OTel service name continue to be `3rdparty-as`, and this addition does not change that boundary.
+- **The O4/D5 decision landing point and its boundary**: the policy decisions for O4 (10-day default, configurable at deployment) and D5 (in-cluster PostgreSQL) are recorded in `docs/plan.md` §0, so the related "pending adjudication" wording in §4.4 is superseded at the level of the *decision*; but the trace storage / query / cleanup implementation, the evidence completion, and the remaining M8/O1 gates are still outstanding, and this addition **does not** constitute execution authorization.
+- **Relationship to the existing text**: this section is an additional decision statement and **takes precedence over** the earlier wording in §4.1 / §4.3 and the status paragraph at the end of the document regarding "default direction / provisional name / repo name proposed to change"; the relevant old wording is retained as a historical audit chain and is neither deleted nor rewritten.
+- **Governance boundary**: this addition creates no new ADR and does not constitute execution authorization, external acceptance, or REQ/milestone sign-off.
+
+***
+
+> This plan is a framework document with blocking conditions: among the directions and names listed in §4, the target scenario and the product name are currently confirmed only by discussion (the maintainer confirmed the direction / provisional name on 2026-10-09) and await a formal decision landing point; Class A deliverables can start immediately, while Class B deliverables are conditional on the closure of the prerequisite dependencies. The detailed templates and content of each deliverable can be refined further on the basis of the above directions.
 
 ---
 
-## 5. 执行状态（2026-10-10）
+## 5. Execution status (2026-10-10)
 
-> 本节是**执行状态回写**，只追加，不修改 §0–§4 任何既有内容。落盘明细与验证证据见 [`reviews/product-packaging-execution-record-2026-10-10.md`](reviews/product-packaging-execution-record-2026-10-10.md)；上一轮计划评审见 [`reviews/product-packaging-plan-review-2026-10-09.md`](reviews/product-packaging-plan-review-2026-10-09.md)。
+> This section is an **execution-status write-back**; it only appends and does not modify any existing content in §0–§4. The write-back details and verification evidence are in [`reviews/product-packaging-execution-record-2026-10-10.md`](reviews/product-packaging-execution-record-2026-10-10.md); the previous round of plan review is in [`reviews/product-packaging-plan-review-2026-10-09.md`](reviews/product-packaging-plan-review-2026-10-09.md).
 >
-> **状态口径**：下表「已落盘」= 文件已写入并经执行者自检，**不等于已验收**。维护者评审**待进行**（评审人待指定）。本次**未提交任何 commit**。
+> **Status framing**: "written to disk" in the table below = the file has been written and self-checked by the executor, **which does not equal accepted**. Maintainer review is **still pending** (the reviewer is still to be designated). **No commit was made in this round**.
 
-| 编号 | 交付物 | 落盘路径 | 状态 | 阻塞源 |
+| ID | Deliverable | Written-to path | Status | Blocking source |
 |---|---|---|---|---|
-| 1.1 | 产品一页纸 + 命名（文档暂用名） | `docs/product/one-pager.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
-| 1.2 | 3GPP 规范符合性矩阵 | `docs/product/compliance-matrix.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
-| 1.3 | 网元档案（NE Datasheet） | `docs/product/ne-datasheet.md` | 已落盘（§3 只给容量**模型结构与测量方法学**，未填数值）；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | **O1**（容量取值） |
-| 1.4 | 故障定界手册 | `docs/operations/fault-demarcation.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
-| 1.5 | README 重写为产品入口 | 根 `README.md`、`docs/README.md` | 已落盘，待维护者评审 | — |
-| 2.1 | Grafana 看板模板 | `docs/operations/grafana-dashboards/{overview.json,sip-signaling.json,README.md}` | 已落盘；**不含 Sh 面板 / 时延面板 / 容量数字**；抓取接线缺口已显式标注为**未闭合**；2026-10-12 B6 评审：看板 JSON **accept**、看板 README **需修改**；2026-10-12 闭环复评：JSON 与 README **均 accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 接线闭环属 chart 工作，未做 |
-| 2.2 | 告警规则补强 + 告警-动作对照表 | `docs/operations/alert-response-matrix.md`、`deploy/alerts/as-alerts.yaml`、`deploy/alerts/README.md` | 已落盘；新增 `as.runtime` / `as.platform` 两组共 5 条规则，**`as.call-path` 原 5 条未改**；`promtool check rules` **未执行**（执行环境 `dev-win03ib7niepf0` 无 `promtool`，见 [`environments.md`](environments.md)）；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 同上（抓取接线） |
-| 2.3 | L1 / L2 Runbook 分册 | `docs/operations/{runbook-l1.md,runbook-l2.md,README.md}` | 已落盘；`docs/acceptance/` 原件**保留不动**，只做归集与索引；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
-| 2.4 | 摘流 / 回退 + iFC 配合 | `docs/operations/rollback-playbook.md` | 已落盘（方案与边界）；**真实集群演练未做**；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 真实集群（**M8 7.2d blocked**）+ S-CSCF / HSS 侧配合 |
-| 2.5 | 备份恢复方案 + 演练记录 | `docs/operations/backup-restore.md` | 已落盘（方案 + 记录**模板**）；**演练记录为空**；未给 RPO / RTO 数值；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 真实集群；客户侧 HA 未决（O5 / D3） |
-| 3.1 | Preflight 环境校验脚本 | `docs/delivery/preflight.sh` | 已落盘；`bash -n` 通过，`--dry-run` 行为与退出码已验证；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | 环境 `dev-win03ib7niepf0` 无 `kubectl` / `helm`，真实环境校验未跑 |
-| 3.2 | 离线安装包（air-gapped） | `docs/delivery/airgap-package.md`、`docs/delivery/scripts/{bundle-images.sh,load-images.sh,images.txt}` | 已落盘；范围限定 image save/load + 清单 + 校验和 + `helm package`，不产生第二套安装形态；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | `helm package` 未实测（环境 `dev-win03ib7niepf0` 无 `helm`） |
-| 3.3 | 责任边界矩阵（RACI） | `docs/product/responsibility-matrix.md` | 已落盘，待维护者评审；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
-| 3.4 | 安全合规说明（PDPO） | `docs/product/security-privacy.md` | 已落盘；**未写保留天数**，只写留存范围 / 删除机制 / 数据留港原则；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | **O4**（保留期）、**D5**（存储选型） |
-| 3.5 | 版本生命周期与 EOL 策略 | `docs/product/version-lifecycle.md` | 已落盘；§3 逐条**转述** ADR-0027 已接受的决定，不新增承诺；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | — |
-| 4.1 | 性能基准报告 | `docs/product/ne-datasheet.md` §3（方法学章节） | **只交付方法学**，正式报告未做；2026-10-12 B6 评审：**需修改**；2026-10-12 闭环复评：**accept（待维护者确认，见 reviews/product-packaging-review-checklist-2026-10-12.md §7）** | **O1** |
-| 4.2 | 7×24 长稳测试报告 | — | **按计划未做**；**归属已裁（2026-10-12）：v1.1** —— 下一批次交付，不纳入当前里程碑 | — |
-| 4.3 | API 版本兼容策略 | `docs/product/version-lifecycle.md` §7 | 以「**候选、未决策**」形式列出待决点与出口条件；无 ADR。**归属已裁（2026-10-12）：v1.1** —— 下一批次以 ADR + 策略章节收口 | 需维护者决策 + 新 ADR + review record |
-| 4.4 | 产品白皮书 / 架构白皮书 | — | **按计划未做**；**归属已裁（2026-10-12）：按需** —— 有对外叙事需求时再写 | — |
-| 4.5 | 多业务平台能力开放机制文档 | — | **按计划未做**；**归属已裁（2026-10-12）：按需** —— 插件化机制落地后再写，避免凭空写 | — |
+| 1.1 | Product one-pager + naming (provisional document name) | `docs/product/one-pager.md` | Written to disk, awaiting maintainer review; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | — |
+| 1.2 | 3GPP specification-conformity matrix | `docs/product/compliance-matrix.md` | Written to disk, awaiting maintainer review; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | — |
+| 1.3 | Network-element dossier (NE Datasheet) | `docs/product/ne-datasheet.md` | Written to disk (§3 gives only the capacity **model structure and measurement methodology**, with no figures); 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | **O1** (capacity value) |
+| 1.4 | Fault demarcation manual | `docs/operations/fault-demarcation.md` | Written to disk, awaiting maintainer review; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | — |
+| 1.5 | README rewritten as the product entry point | root `README.md`, `docs/README.md` | Written to disk, awaiting maintainer review | — |
+| 2.1 | Grafana dashboard templates | `docs/operations/grafana-dashboards/{overview.json,sip-signaling.json,README.md}` | Written to disk; **no Sh panels / latency panels / capacity figures**; the scrape-wiring gap is explicitly marked as **not closed**; 2026-10-12 B6 review: dashboard JSON **accept**, dashboard README **needs modification**; 2026-10-12 closed-loop re-review: JSON and README **both accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | Closing the wiring is chart work, not done |
+| 2.2 | Alert rule reinforcement + an alert-to-action matrix | `docs/operations/alert-response-matrix.md`, `deploy/alerts/as-alerts.yaml`, `deploy/alerts/README.md` | Written to disk; two new groups `as.runtime` / `as.platform` with 5 rules in total were added, and **the original 5 `as.call-path` rules were not changed**; `promtool check rules` was **not executed** (the execution environment `dev-win03ib7niepf0` has no `promtool`, see [`environments.md`](environments.md)); 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | Same as above (scrape wiring) |
+| 2.3 | L1 / L2 runbook volumes | `docs/operations/{runbook-l1.md,runbook-l2.md,README.md}` | Written to disk; the originals in `docs/acceptance/` are **left untouched**, with only consolidation and indexing done; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | — |
+| 2.4 | Traffic diversion / rollback + iFC coordination | `docs/operations/rollback-playbook.md` | Written to disk (the plan and the boundaries); **the real-cluster drill has not been done**; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | A real cluster (**M8 7.2d blocked**) + S-CSCF / HSS-side coordination |
+| 2.5 | Backup-restore plan + drill records | `docs/operations/backup-restore.md` | Written to disk (the plan + a record **template**); **the drill records are empty**; no RPO / RTO figures are given; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | A real cluster; the customer-side HA is undecided (O5 / D3) |
+| 3.1 | Preflight environment validation script | `docs/delivery/preflight.sh` | Written to disk; `bash -n` passes, and the `--dry-run` behaviour and exit code have been verified; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | The environment `dev-win03ib7niepf0` has no `kubectl` / `helm`, so validation against a real environment was not run |
+| 3.2 | Offline installation package (air-gapped) | `docs/delivery/airgap-package.md`, `docs/delivery/scripts/{bundle-images.sh,load-images.sh,images.txt}` | Written to disk; the scope is limited to image save/load + a manifest + checksums + `helm package`, and it does not produce a second installation form; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | `helm package` was not actually tested (the environment `dev-win03ib7niepf0` has no `helm`) |
+| 3.3 | Responsibility boundary matrix (RACI) | `docs/product/responsibility-matrix.md` | Written to disk, awaiting maintainer review; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | — |
+| 3.4 | Security compliance statement (PDPO) | `docs/product/security-privacy.md` | Written to disk; **no retention day count is written**, only the retention scope / deletion mechanism / data-residency principle; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | **O4** (retention period), **D5** (storage selection) |
+| 3.5 | Version lifecycle and EOL policy | `docs/product/version-lifecycle.md` | Written to disk; §3 **restates** the accepted decisions of ADR-0027 item by item and adds no new commitments; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | — |
+| 4.1 | Performance benchmark report | §3 (the methodology chapter) of `docs/product/ne-datasheet.md` | **Only the methodology is delivered**, the formal report is not done; 2026-10-12 B6 review: **needs modification**; 2026-10-12 closed-loop re-review: **accept (pending maintainer confirmation, see reviews/product-packaging-review-checklist-2026-10-12.md §7)** | **O1** |
+| 4.2 | 7×24 long-stability test report | — | **Not done, as planned**; **the attribution has been adjudicated (2026-10-12): v1.1** — delivered in the next batch, not folded into the current milestone | — |
+| 4.3 | API version compatibility policy | §7 of `docs/product/version-lifecycle.md` | The pending points and their exit conditions are listed in the form "**candidate, undecided**"; no ADR. **The attribution has been adjudicated (2026-10-12): v1.1** — closed out with an ADR + a policy chapter in the next batch | Requires a maintainer decision + a new ADR + a review record |
+| 4.4 | Product whitepaper / architecture whitepaper | — | **Not done, as planned**; **the attribution has been adjudicated (2026-10-12): on demand** — written only when there is an external narrative need | — |
+| 4.5 | Capability-openness mechanism documentation for the multi-business platform | — | **Not done, as planned**; **the attribution has been adjudicated (2026-10-12): on demand** — written after the plugin mechanism lands, to avoid writing it out of thin air | — |
 
-**代码侧改动面**：仅 `deploy/alerts/as-alerts.yaml` 与 `deploy/alerts/README.md`（新增告警规则组与说明），**未改任何产品代码**。**未执行任何 git 写操作**（无 `commit` / `add` / 改分支 / 改 remote / 打 tag）。
+**Code-side change surface**: only `deploy/alerts/as-alerts.yaml` and `deploy/alerts/README.md` (new alert rule groups and their documentation); **no product code was changed**. **No git write operation was performed** (no `commit` / `add` / branch change / remote change / tag).
 
-**遗留缺口（不在本次改动面内，仅记录）**：① 告警抓取接线未闭合（chart 无 `prometheus.io/scrape`、无 ServiceMonitor / PodMonitor）；② `promtool check rules` 未运行；③ `Chart.yaml` 的 `version` / `appVersion` 与根 `VERSION` 不同步；④ chart 无 `kubeVersion` 声明（`preflight.sh` 按模板实际使用的 API 推导下限作为补偿）。
+**Residual gaps (outside this round's change surface, recorded only)**: ① the alert scrape wiring is not closed (the chart has no `prometheus.io/scrape`, no ServiceMonitor / PodMonitor); ② `promtool check rules` was not run; ③ the `version` / `appVersion` in `Chart.yaml` are not in sync with the root `VERSION`; ④ the chart has no `kubeVersion` declaration (`preflight.sh` derives a lower bound from the API actually used by the template as a compensation).
 
-**2026-10-12 B6 评审回写（追加，不改上行原文）**：16 份文档评审结论已落
+**2026-10-12 B6 review write-back (appended, the original text of the rows above is unchanged)**: the review conclusions for the 16 documents have been recorded in
 [`reviews/product-packaging-review-checklist-2026-10-12.md`](reviews/product-packaging-review-checklist-2026-10-12.md) §6 ——
-**accept 0 / 需修改 16 / 驳回 0**；附带资产中看板 JSON 与 images.txt 为 accept，其余需修改。
-共性缺口五项：① 2026-10-11 下游同步（任务 E）只覆盖 security-privacy 与 backup-restore 两份，其余 14 份的
-O4/O5/D3/D5「未决」与「e2e=0」表述 stale；② 全批 9+ 处「e2e=0」（实际 8 条稳定通过，REQ-F-1 = 自动化子集已覆盖 /
-全文仍 open）；③ chart 版本一致性缺位（VERSION 0.2.0 vs Chart.yaml 0.0.0-skeleton、kubeVersion 未写入），
-影响 rollback-playbook L3 与交付产物命名；④ 交付清单未列入 `deploy/alerts/`（G9-a 四类交付产品只落三类）；
-⑤ 附带脚本功能缺陷（bundle-images.sh:205 digest 校验写反、load-images.sh --values 名实不符、
-preflight.sh Sentinel 部署误报）。**本回写不签收任何 REQ/里程碑，不授权执行修改；需修改项闭环后复评。**
-另：上行遗留缺口第 ② 项（`promtool check rules` 未运行）已于 2026-10-11 闭合 ——
-(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)，3 组 10 条；
-X1 抓取接线仍待外部输入。
+**accept 0 / needs modification 16 / rejected 0**; among the accompanying assets the dashboard JSON and images.txt are accept and the rest need modification.
+Five common gaps: ① the 2026-10-11 downstream sync (task E) covered only security-privacy and backup-restore, so the "undecided" and "e2e=0" wording for O4/O5/D3/D5 in the other 14 documents is
+stale; ② 9+ occurrences of "e2e=0" across the whole batch (in reality 8 cases pass stably, REQ-F-1 = the automated subset is covered /
+the full text is still open); ③ chart version consistency is missing (VERSION 0.2.0 vs Chart.yaml 0.0.0-skeleton, kubeVersion not written in),
+which affects rollback-playbook L3 and the naming of delivery artifacts; ④ the delivery checklist does not include `deploy/alerts/` (of the four G9-a delivery products only three have landed);
+⑤ functional defects in the accompanying scripts (bundle-images.sh:205 has the digest check inverted, load-images.sh --values does not match its name,
+preflight.sh false-positives on Sentinel deployment). **This write-back signs off no REQ/milestone and authorizes no modification; the items needing modification are to be re-reviewed after closure.**
+Also: residual gap item ② above (`promtool check rules` not run) was closed on 2026-10-11 —
+(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11), 3 groups / 10 rules;
+X1 scrape wiring still awaits external input.
 
-**2026-10-12 闭环复评回写（追加，不改上行原文）**：B6 评审清单的 16 份「需修改」项已全部闭环并复评，结论见 [`reviews/product-packaging-review-checklist-2026-10-12.md`](reviews/product-packaging-review-checklist-2026-10-12.md) §7 —— **accept 16 / 需修改 0 / 驳回 0（待维护者确认）**；附带资产中看板 README 与三个交付脚本由「需修改」转 accept，两份看板 JSON 与 `images.txt` 维持 accept。共性缺口五项：①②（任务 E 覆盖缺口、e2e 口径）已闭环（根因 `docs/acceptance/test-plan.md` marker 表已修并回填全批）；④（交付清单缺告警规则）已按 G9-a 闭环；⑤（附带脚本功能缺陷）已闭环；③（chart 版本一致性）文档口径已全部同步，**实际同步（首次 `--apply` 与 `kubeVersion` 写入）待维护者决定**。仍未闭环项见清单 §7.4。**本回写不签收任何 REQ / 里程碑，不构成对外交付或验收依据。**
+**2026-10-12 closed-loop re-review write-back (appended, the original text of the rows above is unchanged)**: all 16 "needs modification" items of the B6 review checklist have been closed and re-reviewed, with the conclusions in [`reviews/product-packaging-review-checklist-2026-10-12.md`](reviews/product-packaging-review-checklist-2026-10-12.md) §7 —— **accept 16 / needs modification 0 / rejected 0 (pending maintainer confirmation)**; among the accompanying assets the dashboard README and the three delivery scripts moved from "needs modification" to accept, and the two dashboard JSON files and `images.txt` stay accept. Five common gaps: ①② (the task-E coverage gap, the e2e framing) are closed (the root cause, the marker table in `docs/acceptance/test-plan.md`, has been fixed and back-filled across the whole batch); ④ (the delivery checklist missing the alert rules) is closed per G9-a; ⑤ (functional defects in the accompanying scripts) is closed; ③ (chart version consistency) has been synced in the documentation wording throughout, while **the actual sync (the first `--apply` and writing `kubeVersion`) awaits a maintainer decision**. The items still unclosed are listed in §7.4 of the checklist. **This write-back signs off no REQ / milestone and does not constitute a basis for external delivery or acceptance.**
 
-**2026-10-12 晚些时候追加（不改上行原文）**：
+**Added later on 2026-10-12 (the original text of the rows above is unchanged)**:
 
-1. **chart 首次同步已执行**（回应上行「实际同步待维护者决定」—— 维护者 2026-10-12 裁定时机与取值由 agent 自行判断）：`Chart.yaml` `version` / `appVersion` = `0.2.0`（根 `VERSION` 为唯一源），`kubeVersion: ">=1.23.0-0"` 已写入；`(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)`。上行「遗留缺口」第 ③ 项自此在**事实层面关闭**（该行原文保留为审计链）。
-2. **Lane D 四项归属已裁**（维护者 2026-10-12 授权 agent 三选一）：**4.2 → v1.1、4.3 → v1.1、4.4 → 按需、4.5 → 按需**；已写入上表四行状态列。口径注记：「v1.1」按本计划既有用法指**下一批次**，非正式发行版本定义（`docs/plan.md` §0「版本称呼」行继续有效）。
-3. **X1 抓取接线与 B2 / B3（含 RPO / RTO 取值）已按维护者 2026-10-12 决定后置到下一个 release** —— 后续盘点只引指针、不再单列（落点：`docs/handoff/2026-10-11-open-adjudication-register.md` §3 X1、`docs/handoff/2026-10-12-b2-b3-deferred-items.md` §5）。
-4. 本追加**不签收任何 REQ / 里程碑，不构成对外交付或验收依据**。
-
+1. **The chart's first sync has been executed** (responding to "the actual sync awaits a maintainer decision" above — on 2026-10-12 the maintainer ruled that the agent should judge the timing and the values): the `Chart.yaml` `version` / `appVersion` = `0.2.0` (the root `VERSION` is the single source), and `kubeVersion: ">=1.23.0-0"` has been written; `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)`. Residual gap item ③ above is from now on **closed at the level of fact** (the original text of that row is retained as an audit chain).
+2. **The attribution of the four Lane D items has been adjudicated** (on 2026-10-12 the maintainer authorized the agent to choose from three options): **4.2 → v1.1, 4.3 → v1.1, 4.4 → on demand, 4.5 → on demand**; these have been written into the status column of the four rows in the table above. Framing note: "v1.1" per this plan's existing usage means **the next batch**, not a formal release version definition (the "version naming" row of `docs/plan.md` §0 remains in effect).
+3. **The X1 scrape wiring and B2 / B3 (including the RPO / RTO values) have been deferred to the next release per the maintainer's decision of 2026-10-12** — later reviews cite only the pointer and no longer list them separately (landing points: §3 X1 of `docs/handoff/2026-10-11-open-adjudication-register.md`, §5 of `docs/handoff/2026-10-12-b2-b3-deferred-items.md`).
+4. This addition **signs off no REQ / milestone and does not constitute a basis for external delivery or acceptance**.

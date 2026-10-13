@@ -12,40 +12,40 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# Review Record 的复核意见（review of review，2026-10-10）
+# Review Comments on the Review Record (review of review, 2026-10-10)
 
-> **被复核对象**：`docs/reviews/unfinished-assessment-2026-10-10-review.md`（41 行）
-> **复核人**：`tas`（本会话主 agent）
-> **复核日期**：2026-10-10
-> **时点基线**：`master` @ `86cceca`（`package phase 1 done`）
+> **Item under review**: `docs/reviews/unfinished-assessment-2026-10-10-review.md` (41 lines)
+> **Re-reviewer**: `tas` (the primary agent of this session)
+> **Re-review date**: 2026-10-10
+> **Point-in-time baseline**: `master` @ `86cceca` (`package phase 1 done`)
 
-## 状态声明（请先读这一段）
+## Status Declaration (read this section first)
 
-1. **本文不修改被复核的评审记录原文。** 本文只提出复核意见，全部处置动作留待维护者裁定后在其自己的 session 里执行。本次未改动 `docs/reviews/unfinished-assessment-2026-10-10-review.md`，也未改动 `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md`、`docs/plan.md`、`docs/acceptance/report.md` 或任何其他既有文件。
-2. **本文作者同样是 AI agent（`tas` / 本会话主 agent），因此本文本身不构成维护者签字。** 本文只能作为维护者裁定时的输入材料，不能被反过来引用为「已复核 / 已背书」。
-3. **本文所有事实结论均附验证命令，可复现。** 复核全程只使用只读操作（`git status` / `git --no-pager diff` / `wc -l` / `grep` / `ls` / `sed -n` / `find`），未执行任何 git 写操作（无 `add` / `commit` / `tag` / `push` / 建分支 / 改 remote）。
-4. **复核过程中曾提出过一条关于评审独立性的质疑，维护者 2026-10-10 已裁决撤回。** 维护者使用的是**不同的 agent、不同的模型**进行评审，且经其授权；被复核的 `docs/reviews/unfinished-assessment-2026-10-10-review.md` **代表维护者评审**，该质疑不成立。据此本文不再列该条意见（§3 因此从 P2 起编号）。**本文剩余意见（时效性 / 计数口径 / S1）不含任何「评审独立性」质疑。**
-5. **处置状态同步（2026-10-10 晚）**：P2 / P3 / S1 已由维护者侧的 `unfinished-assessment-2026-10-10-review-of-review-evaluation.md` 及各 CPUs 处置完成，明细见 §6；§5 只剩状态字段一项待定。
+1. **This document does not modify the original text of the review record under review.** It only raises review comments; all disposition actions are left to be executed in the maintainer's own session after adjudication. This round changed neither `docs/reviews/unfinished-assessment-2026-10-10-review.md` nor `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md`, `docs/plan.md`, `docs/acceptance/report.md`, nor any other existing file.
+2. **The author of this document is likewise an AI agent (`tas` / the primary agent of this session), therefore this document itself does not constitute a maintainer signature.** It can only serve as input material for the maintainer's adjudication, and must not be cited back as "already re-reviewed / endorsed".
+3. **Every factual conclusion in this document carries a verification command and is reproducible.** The entire re-review used read-only operations only (`git status` / `git --no-pager diff` / `wc -l` / `grep` / `ls` / `sed -n` / `find`); no git write operation was executed (no `add` / `commit` / `tag` / `push` / branch creation / remote change).
+4. **During the re-review a challenge concerning review independence was raised, and the maintainer adjudicated on 2026-10-10 that it is withdrawn.** The maintainer used a **different agent and a different model** to perform the review, with their authorization; the review record under review, `docs/reviews/unfinished-assessment-2026-10-10-review.md`, **speaks for the maintainer's review**, so the challenge does not hold. Accordingly this document no longer lists that item (§3 therefore starts numbering at P2). **The remaining comments in this document (currency / counting basis / S1) contain no "review independence" challenge whatsoever.**
+5. **Disposition status sync (evening of 2026-10-10)**: P2 / P3 / S1 have been dispositioned on the maintainer side by `unfinished-assessment-2026-10-10-review-of-review-evaluation.md` and the respective CPUs; the details are in §6; in §5 only the status field remains pending.
 
 ---
 
-## 1. 复核范围与方法
+## 1. Re-review Scope and Method
 
-### 1.1 复核对象
+### 1.1 Item Under Review
 
-| 对象 | 路径 | 复核时状态 |
+| Item | Path | State at re-review time |
 |---|---|---|
-| 被复核的评审记录 | `docs/reviews/unfinished-assessment-2026-10-10-review.md` | 41 行，未跟踪 |
-| 评审对象文档 | `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` | 793 行，未跟踪 |
-| 关联改动一 | `docs/plan.md` | 已修改（14 insertions / 1 deletion） |
-| 关联改动二 | `docs/acceptance/report.md` | 已修改（§0.3 追加更正） |
-| 流程依据 | `AGENT.md` §3.2 / §3.3 | 未改动 |
+| The review record under review | `docs/reviews/unfinished-assessment-2026-10-10-review.md` | 41 lines, untracked |
+| The document under review | `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` | 793 lines, untracked |
+| Related change one | `docs/plan.md` | Modified (14 insertions / 1 deletion) |
+| Related change two | `docs/acceptance/report.md` | Modified (a correction appended in §0.3) |
+| Process basis | `AGENT.md` §3.2 / §3.3 | Unchanged |
 
-### 1.2 复核方法
+### 1.2 Re-review Method
 
-只做两件事：**(a)** 把被复核记录中每一条事实断言用命令重跑一遍，判断真伪；**(b)** 检查被复核记录相对 `AGENT.md` §3.3 的格式完备性，以及相对评审对象**当前**内容的时效性。
+Only two things were done: **(a)** re-run every factual assertion in the record under review with a command, to judge whether it is true or false; **(b)** check the format completeness of the record under review against `AGENT.md` §3.3, and its currency against the **current** content of the document under review.
 
-主要命令：
+Main commands:
 
 ```bash
 git status --porcelain
@@ -67,40 +67,40 @@ ls docs/operations docs/operations/grafana-dashboards docs/delivery docs/deliver
 sed -n '83,100p' AGENT.md
 ```
 
-### 1.3 不在复核范围内
+### 1.3 Out of Re-review Scope
 
-- 被复核记录的**技术判断结论**（「有条件通过」是否恰当）—— 这是维护者的裁量，本文不对结论本身表态。
-- 评审对象 handoff 文档的技术内容正确性 —— 那是另一个评审层级的题目，本文只在被复核记录引用到的范围内做事实抽样。
+- The **technical judgement conclusion** of the record under review (whether "conditional pass" is appropriate) — this is the maintainer's discretion; this document takes no position on the conclusion itself.
+- The technical correctness of the handoff document under review — that is a matter for a different review level; this document only samples facts within the scope referenced by the record under review.
 
 ---
 
-## 2. 复核结论（先给结论）
+## 2. Re-review Conclusion (conclusion first)
 
-**被复核记录的事实断言全部属实，未发现事实性错误。** 其 12 条核查摘要逐条重跑后均与被复核记录的描述一致（明细见 §4）。
+**All factual assertions in the record under review are true; no factual error was found.** Its 12 check-summary items were re-run one by one and are all consistent with the description in the record under review (details in §4).
 
-**复核过程中曾提出的那条关于评审独立性的质疑，已由维护者 2026-10-10 裁决撤回，本文不再列出** —— 评审使用的是不同的 agent / 不同的模型且经授权，被复核记录**代表维护者评审**（详见文首状态声明第 4 条）。
+**The challenge concerning review independence raised during the re-review was withdrawn by maintainer adjudication on 2026-10-10 and is no longer listed here** — the review used a different agent / a different model and was authorized, and the record under review **speaks for the maintainer's review** (see item 4 of the Status Declaration at the head of this document).
 
-**仍待斟酌的意见**共三条，按阻塞度排序：
+**The comments still to be weighed** total three, ordered by blocking severity:
 
-| 编号 | 类别 | 一句话 | 阻塞度 |
+| ID | Category | One sentence | Blocking severity |
 |---|---|---|---|
-| **S1** | 格式完备性 | ADJ 表缺 `AGENT.md` §3.3 要求的**签字**维度 | P2 |
-| **原 P2** | 时效性 | 评审对象在评审之后又更新（700+ 行 → 793 行），四项新增内容未被覆盖 | P2 |
-| **原 P3** | 计数口径 | 文档计数按「文件数」计是准确的，但与 `docs/plan.md` §0 的口径不一致，未声明 | P3 |
+| **S1** | Format completeness | The ADJ table lacks the **sign-off** dimension required by `AGENT.md` §3.3 | P2 |
+| **Original P2** | Currency | The document under review was updated again after the review (700+ lines → 793 lines); the four new items are not covered | P2 |
+| **Original P3** | Counting basis | Counting the documents by "file number" is accurate, but it is inconsistent with the basis in `docs/plan.md` §0 and is not declared | P3 |
 
-一句话概括：**事实无误，签字维度与时效性需同步，计数口径需声明。**
+In one sentence: **the facts are correct; the sign-off dimension and currency need to be synced, and the counting basis needs to be declared.**
 
 ---
 
-## 3. 意见明细
+## 3. Comment Details
 
-### P2 —— 时效性：评审对象在评审之后又更新
+### P2 — Currency: the document under review was updated again after the review
 
-**现象**
+**Observation**
 
-被复核记录第 33 行写「文档较长（**700+ 行**）」，其核查摘要第 1 条写「工作树有 **3 处**改动/新增」。评审对象 handoff 文档现为 **793 行**，工作树的文档类改动/新增现为 **4 处**。被复核记录落盘**早于**其自身出现在工作树里，因此它当时描述的快照已过期。
+Line 33 of the record under review says "the document is long (**700+ lines**)", and item 1 of its check summary says "the working tree has **3** changes/additions". The handoff document under review is now **793 lines**, and the document changes/additions in the working tree are now **4**. The record under review was written to disk **earlier** than its own appearance in the working tree, so the snapshot it described has expired.
 
-**依据**
+**Basis**
 
 ```bash
 $ wc -l docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md
@@ -110,42 +110,42 @@ $ grep -c "^| 2026-10-10 |" docs/plan.md
 7
 ```
 
-**具体缺失项（四项）**
+**Specifically missing items (four)**
 
-1. **未提到 handoff §0.2「维护者认可项（2026-10-10）」四条**（handoff 第 66 行起）：① E1 / E4 / E5 边界（本地真栈继续、仅外部部分后置）；② `promtool` 本机 docker 授权（**已授权、未执行**）；③ A6 的 `AGENT.md` §8 解释（`Chart.yaml` 的 `version` / `appVersion` 不受该条约束）；④ B3 的 D3 定位（客户端接线已 resolved，只剩 HA 拓扑）。
+1. **The four "Items the maintainer endorses (2026-10-10)" in handoff §0.2** (from line 66 of the handoff) are not mentioned: ① the E1 / E4 / E5 boundary (the local real stack continues; only the external part is deferred); ② `promtool` local docker authorization (**authorized, not executed**); ③ the `AGENT.md` §8 explanation for A6 (the `version` / `appVersion` of `Chart.yaml` are not bound by that clause); ④ the D3 positioning for B3 (the client wiring has been resolved; only the HA topology remains).
 
-   更重要的是其**口径边界**（handoff §0.2 「口径边界（非常重要，请勿误读）」段，第 88–101 行）：
+   More important still is its **framing boundary** (the "Framing boundary (very important, do not misread)" paragraph in handoff §0.2, lines 88–101):
 
-   > 上列四条是**边界、口径、定位、许可**层面的认可，**不等于** §8 中 A4 / A5 / A6 / B1 / B2 / B3 六项建议的**取值**已被裁决。六项的取值**仍全部待维护者裁决**。
+   > The four items above are endorsements at the level of **boundary, framing, positioning and permission**; they are **not the same as** the **values** of the six proposals A4 / A5 / A6 / B1 / B2 / B3 in §8 having been adjudicated. The values of all six are **still entirely awaiting maintainer adjudication**.
 
-   **这条边界缺失的风险**：后来者读到「维护者已认可四点」，容易误读为「多数事项已拍板」，进而误判剩余裁决工作量与被评审记录结论中的「待裁决项标识清晰」不成比例。这是被复核记录目前最容易被误读的一处。
+   **The risk of this missing boundary**: a later reader who sees "the maintainer has endorsed four points" is liable to misread it as "most items are already settled", and thereby misjudge the remaining adjudication workload as out of proportion to the "pending-adjudication items are clearly marked" statement in the conclusion of the reviewed record. This is the place in the record under review that is currently most liable to be misread.
 
-2. **未提到 A3 出口判据已补齐第三个目标**：`platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200`（handoff 第 258 / 405 / 425 / 497 / 790 行）。该用例是 **`integration` 标记，不在 `make gate` 的 `-m "unit or contract"` 收集范围内，须显式指定**才能跑到 —— 这是执行面的一条关键约束，漏掉会导致 A3 复验时「跑过了但其实没跑到」。
+2. **The third target added to A3's exit criteria is not mentioned**: `platform/tests/test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200` (lines 258 / 405 / 425 / 497 / 790 of the handoff). That case is marked **`integration`** and is **not** within the `-m "unit or contract"` collection scope of `make gate`; it must be **explicitly specified** to be reached — this is a key constraint on the execution side, and omitting it will lead to "it was run, but it actually did not run" when A3 is re-validated.
 
-3. 「工作树 **3 处**改动」应更新为 **4 处**（多出被复核记录自身 `docs/reviews/unfinished-assessment-2026-10-10-review.md`）。
+3. "**3** changes in the working tree" should be updated to **4** (the extra one is the review record under review itself, `docs/reviews/unfinished-assessment-2026-10-10-review.md`).
 
-   > 附注（供维护者核对，非意见）：复核时 `git status --porcelain` 实际输出 5 条，除上述 4 条文档类条目外，另有 `?? .codebuddy/teams/` —— 这是 IDE 团队会话数据，非文档改动，**不应计入**评审对象的改动面。若维护者希望工作树保持干净，可自行决定是否加入忽略规则；本文不代为处理。
+   > Note (for the maintainer to check, not a comment): at re-review time `git status --porcelain` actually output 5 entries; besides the 4 document entries above, there is also `?? .codebuddy/teams/` — that is IDE team session data, not a document change, and **must not be counted** in the change surface of the document under review. If the maintainer wishes to keep the working tree clean, whether to add an ignore rule is their own decision; this document will not handle it on their behalf.
 
-4. **关联改动里 `docs/plan.md` 的描述过粗。** 现为「§0 决策记录追加、§5.2 D1 注记追加」，实际（`git --no-pager diff --stat` = 14 insertions / 1 deletion）应细化为：
+4. **The description of the `docs/plan.md` change among the related changes is too coarse.** It now reads "appended to the §0 decision record, appended note on §5.2 D1", whereas the reality (`git --no-pager diff --stat` = 14 insertions / 1 deletion) should be broken down as follows:
 
-   - **§0 决策记录 7 行**：2 条裁决（外部 IOT 与真实环境采证 hold 后置 / M8 退出签字后置）+ 4 条认可（E1·E4·E5 边界 / `promtool` docker 授权 / A6 的 §8 解释 / B3 的 D3 定位）；
-   - **表格外一行口径注记**（即上文第 1 项那条「不等于六项取值已裁决」的边界）；
-   - **§0 入口小节 4 行**（新增「未完成项评估与后续计划（2026-10-10）」小节，自述「**待维护者评审**，不签收任何 REQ / 里程碑」）；
-   - **§5.2 D1 行尾注记**（追加「因 sippy 验证过才锁 3.10 的理由已失效 —— 仓库当前无任何依赖指向 sippy」）。
+   - **7 rows in the §0 decision record**: 2 rulings (external IOT and real-environment evidence collection on hold / deferred; M8 exit sign-off deferred) + 4 acknowledgements (the E1·E4·E5 boundary / `promtool` docker authorization / the §8 explanation for A6 / the D3 positioning for B3);
+   - **one convention note outside the table** (i.e. the "not the same as the six values having been adjudicated" boundary from item 1 above);
+   - **4 rows in the §0 entry subsection** (a new "Incomplete-item assessment and follow-up plan (2026-10-10)" subsection, self-described as "**pending maintainer review**, signing off no REQ / milestone");
+   - **an end note on the D1 row of §5.2** (appending "the reason for locking 3.10 on account of sippy having been validated has expired — the repository currently has no dependency pointing at sippy").
 
-**建议**：原记录追加一节「评审后的文档更新」，或新增一行 `ADJ-2` 记录本次同步需求（来源：review of review；裁决：待定；状态：待同步）。
+**Recommendation**: append a section "Post-review document update" to the original record, or add an `ADJ-2` row recording the sync requirement of this round (source: review of review; adjudication: pending; status: pending sync).
 
-**阻塞度**：P2。不影响结论成立，但影响该记录作为「评审对象快照」的可用性。
+**Blocking severity**: P2. It does not invalidate the conclusion, but it affects the usability of that record as a "snapshot of the document under review".
 
 ---
 
-### P3 —— 计数口径未声明（不是错误，是口径）
+### P3 — The counting basis is undeclared (not an error, a basis issue)
 
-**现象**
+**Observation**
 
-被复核记录第 28 条写：`docs/operations/`「**7 份** + `grafana-dashboards/` **3 份**」、`docs/delivery/`「**4 份** + `scripts/` **3 份**」。
+Item 28 of the record under review says: `docs/operations/` "**7 files** + `grafana-dashboards/` **3 files**", `docs/delivery/` "**4 files** + `scripts/` **3 files**".
 
-**验证（按文件数计，准确）**
+**Verification (counted by file number, accurate)**
 
 ```bash
 $ ls docs/operations/
@@ -159,44 +159,44 @@ $ ls docs/delivery/scripts/
 bundle-images.sh  images.txt  load-images.sh                                # 3 个文件
 ```
 
-**结论：按「文件数」计，被复核记录的计数是准确的，此处不是错误。** 但需注意两点口径细节：
+**Conclusion: when counted by "file number", the counts in the record under review are accurate; this is not an error.** But two basis details must be noted:
 
-- `docs/operations/grafana-dashboards/` 的 3 份中，只有 1 份是 md，另 2 份是 json；
-- `docs/delivery/` 根目录的 4 份中包含 **`preflight.sh`**（脚本，非文档）。
+- of the 3 files in `docs/operations/grafana-dashboards/`, only 1 is md and the other 2 are json;
+- of the 4 files in the `docs/delivery/` root, **`preflight.sh`** is included (a script, not a document).
 
-**为什么值得提**
+**Why it is worth raising**
 
-`docs/plan.md` §0「产品化包装交付状态」的口径是「`docs/delivery/`（**3 份文档** + `preflight.sh` + `scripts/` 3 个）」—— 即 plan.md 把 `preflight.sh` **单列、不计入「份」**，而被复核记录把它**计入「4 份」**。两处口径不一致（同一目录一处记 3 份、一处记 4 份）。
+The basis in `docs/plan.md` §0 "Productization packaging delivery status" is "`docs/delivery/` (**3 documents** + `preflight.sh` + 3 in `scripts/`)" — that is, plan.md lists `preflight.sh` **separately and does not count it as a "file"**, whereas the record under review **counts it into the "4 files"**. The two bases are inconsistent (the same directory is counted as 3 files in one place and as 4 files in another).
 
-这不是错误，但**建议声明计数口径**（例如写明「本节按文件数计，含脚本与 json」）。否则未来对账时两处会差一份，容易引发「是不是少交付了一份」的假警报。
+This is not an error, but **declaring the counting basis is recommended** (for example, writing "this section is counted by file number, including scripts and json"). Otherwise the two places will differ by one when they are reconciled in future, which easily triggers a false alarm of "was one file under-delivered?".
 
-**阻塞度**：P3（非阻塞，纯口径）。
+**Blocking severity**: P3 (non-blocking, purely a basis issue).
 
 ---
 
-### S1 —— ADJ 表补「签字」维度
+### S1 — Add a "sign-off" dimension to the ADJ table
 
-**现象**
+**Observation**
 
-被复核记录的 Adjudication 表（第 39–41 行）有 ID / 来源 / 问题摘要 / 裁决 / 修改方案 / 状态 / 验证方式 / 备注，**没有「签字」维度**（也没有「被评人」）。
+The Adjudication table of the record under review (lines 39–41) has ID / Source / Issue Summary / Adjudication / Fix Plan / Status / Verification Method / Notes, and **no "sign-off" dimension** (nor a "reviewee").
 
-**依据**
+**Basis**
 
-`AGENT.md` §3.3「Review Record 格式」要求 review record 至少包含：
+`AGENT.md` §3.3 "Review Record format" requires a review record to contain at least:
 
-1. 评审对象；
-2. 评审日期与**评审人**；
-3. 评审结论（通过 / 有条件通过 / 不通过）；
-4. 问题清单与对应修改；
-5. **修改后的确认签字**。
+1. the review target;
+2. the review date and the **reviewer**;
+3. the review conclusion (pass / conditional pass / fail);
+4. the list of issues and the corresponding fixes;
+5. **confirmation sign-off after fixes**.
 
-**为什么仍成立**
+**Why it still holds**
 
-这条与「谁做的评审」无关，属于**格式完备性**要求 —— 即便是维护者评审（本轮裁决已认定被复核记录代表维护者评审），也应留下可追溯的签字信息；§3.3 第 5 项对任何评审记录一体适用，不因评审人身份而免除。
+This has nothing to do with "who performed the review"; it is a **format completeness** requirement — even for a maintainer review (this round's adjudication has established that the record under review speaks for the maintainer's review), traceable sign-off information should still be left behind; item 5 of §3.3 applies to any review record without exception, and is not waived because of the reviewer's identity.
 
-**建议**
+**Recommendation**
 
-在原记录 Adjudication 表下方增加签字行，字段建议 `reviewed_by` / `signed_by` / `date` / `verdict`：
+Add a sign-off row below the Adjudication table of the original record; the suggested fields are `reviewed_by` / `signed_by` / `date` / `verdict`:
 
 ```
 reviewed_by: （待填写）
@@ -205,90 +205,90 @@ date:        （待填写）
 verdict:     有条件通过（accepted as a planning baseline）  ← 待签字确认
 ```
 
-**未签字前留空更诚实** —— 留空比填「已关闭」更能向后来者正确传达「尚未签字」。
+**Leaving it blank before sign-off is more honest** — a blank field conveys "not yet signed off" to later readers more accurately than filling in "closed".
 
-**阻塞度**：P2。
+**Blocking severity**: P2.
 
 ---
 
-## 4. 复核过、确认为「没有问题」的项
+## 4. Items Re-reviewed and Confirmed as "No Problem"
 
-以下各项由本次复核用命令重跑，**结论全部为「与被评审记录的断言一致」**。显式列出以避免误伤 —— 对这些项不建议再改动。
+The following items were re-run by command in this re-review, and **the conclusion for all of them is "consistent with the assertion in the reviewed record"**. They are listed explicitly to avoid collateral damage — no further change is recommended for these items.
 
-| # | 核查项 | 被评审记录的断言 | 我的验证方式 | 结论 |
+| # | Check item | Assertion in the reviewed record | How I verified it | Conclusion |
 |---|---|---|---|---|
-| 1 | git 状态与分支 | 3 处改动/新增；`master` @ `86cceca`；无 stash、无其他分支（第 18 行） | `git status --porcelain`；`git log --oneline -1` | 一致（条目数应更新为 4，见 P2-3；分支/HEAD/无 stash 无误） |
-| 2 | `make gate` 计数与 skip 构成 | 计数与 handoff §2.2 一致；skip 由「未构建 + S1 基线缺口」构成（第 19 行） | 对照 handoff §2.1/§2.2 基线快照表与 skip 明细 | 一致（两处描述相互吻合；本次未重跑 gate，因评审对象已声明未开工） |
-| 4 | `VERSION` 与 `Chart.yaml` | 根 `VERSION` = `0.2.0`；chart `version: 0.0.0-skeleton` / `appVersion: "0.0.0"`；无 `kubeVersion`（第 21 行） | `cat VERSION` = `0.2.0`；`grep -n "version\|appVersion\|kubeVersion" deploy/helm/Chart.yaml` → 仅 5、6 两行命中 | 一致 |
-| 5 | Python pin | 7 个成员 `pyproject.toml` 均 `requires-python = ">=3.10,<3.11"`；`.python-version` = `3.10`；`Dockerfile` builder/runtime 用 `python3.10`；`uv.lock` 首部 `==3.10.*`（第 22 行） | `grep -rl 'requires-python = ">=3.10,<3.11"' --include=pyproject.toml .` → 7 个文件；`cat .python-version` = `3.10` | 一致（其余四处 pin 本次按文件逐一核对，同样一致） |
-| 6 | sippy 依赖 | 全仓库无实际 `sippy` 依赖，仅出现在注释/文档（第 23 行） | `grep -rn "sippy" --include=pyproject.toml .` → 仅根 `pyproject.toml` mypy overrides 注释（139/141 行）与 `platform/pyproject.toml` 注释（22 行），无 dependency 声明 | 一致 |
-| 7 | native `CMakeLists.txt` | 三个目录均为 `find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)`，版本无关（第 24 行） | `grep -rn "find_package(Python3" --include=CMakeLists.txt .` → `resip_runtime`(33) / `resip_two_leg`(32) / `resip_recovery`(32)，三处同一语句 | 一致 |
-| 8 | e2e marker 零命中 | 所有 `*.py` 中无 `@pytest.mark.e2e` / `pytest.mark.e2e`（第 25 行） | `grep -rn "pytest.mark.e2e" --include="*.py" . \| wc -l` → `0` | 一致 |
-| 9 | 告警规则文件 | 3 个规则组 `as.call-path`(66) / `as.runtime`(171) / `as.platform`(250)，共 10 条规则，无 `as.capacity` 组（第 26 行） | `grep -n "^  - name:"` → 66/171/250；`grep -c "alert:"` → `10`；`grep -n "as.capacity"` → 仅第 55 行**注释**「`as.capacity` does not exist yet」，不构成规则组 | 一致（且注释内容与「无该组」自洽） |
-| 10 | `Makefile` target | 含 `m2-platform-resip-build`、`gate-native`、`gate-strict`（第 27 行） | `grep -n "m2-platform-resip-build\|gate-native\|gate-strict" Makefile` → 6/7（`.PHONY`）、101、133、136 | 一致 |
-| 11 | 文档交付物存在性 | `docs/product/` 6 份、`docs/operations/` 7 份 + `grafana-dashboards/` 3 份、`docs/delivery/` 4 份 + `scripts/` 3 份，均存在（第 28 行） | `ls` 各目录逐一核对 | 一致（口径见 P3） |
-| 12 | 本机工具与 native 产物 | `helm` / `kubectl` / `kind` / `promtool` 均不可用；无 native `.so`（第 29 行） | `command -v` 逐项 → 四项 MISSING，`docker` / `uv` 存在；`find . -name "*.so" -not -path "./.git/*" -not -path "*/.venv/*" \| wc -l` → `0`（仓库内无 native 扩展产物；虚拟环境内的 `.so` 属第三方依赖，不在本条范围内）。**此排除口径必须写明**：复核时全仓 `find` 实际命中 242 个 `.so`，但全部位于 `.venv/` 内（第三方依赖），排除 `.venv` / `.git` 后为 0；不写明排除口径，后续复跑者会以 242 判定本条失实 | 一致 |
+| 1 | git status and branch | 3 changes/additions; `master` @ `86cceca`; no stash, no other branches (line 18) | `git status --porcelain`; `git log --oneline -1` | Consistent (the entry count should be updated to 4, see P2-3; branch / HEAD / no stash are correct) |
+| 2 | `make gate` counts and skip composition | The counts are consistent with handoff §2.2; the skips consist of "not built + S1 baseline gaps" (line 19) | Compared against the baseline snapshot table in handoff §2.1/§2.2 and the skip details | Consistent (the two descriptions agree with each other; gate was not re-run this time, because the document under review has declared that work has not started) |
+| 4 | `VERSION` and `Chart.yaml` | Root `VERSION` = `0.2.0`; chart `version: 0.0.0-skeleton` / `appVersion: "0.0.0"`; no `kubeVersion` (line 21) | `cat VERSION` = `0.2.0`; `grep -n "version\|appVersion\|kubeVersion" deploy/helm/Chart.yaml` → only lines 5 and 6 match | Consistent |
+| 5 | Python pin | The `pyproject.toml` of all 7 members are `requires-python = ">=3.10,<3.11"`; `.python-version` = `3.10`; the builder/runtime of the `Dockerfile` use `python3.10`; the head of `uv.lock` is `==3.10.*` (line 22) | `grep -rl 'requires-python = ">=3.10,<3.11"' --include=pyproject.toml .` → 7 files; `cat .python-version` = `3.10` | Consistent (the other four pins were checked file by file this time, likewise consistent) |
+| 6 | sippy dependency | No actual `sippy` dependency anywhere in the repository; it appears only in comments/docs (line 23) | `grep -rn "sippy" --include=pyproject.toml .` → only the mypy overrides comment in the root `pyproject.toml` (lines 139/141) and a comment in `platform/pyproject.toml` (line 22), with no dependency declaration | Consistent |
+| 7 | native `CMakeLists.txt` | All three directories are `find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)`, version-agnostic (line 24) | `grep -rn "find_package(Python3" --include=CMakeLists.txt .` → `resip_runtime`(33) / `resip_two_leg`(32) / `resip_recovery`(32), the same statement in all three places | Consistent |
+| 8 | zero hits for the e2e marker | No `@pytest.mark.e2e` / `pytest.mark.e2e` in any `*.py` (line 25) | `grep -rn "pytest.mark.e2e" --include="*.py" . \| wc -l` → `0` | Consistent |
+| 9 | Alert rule files | 3 rule groups `as.call-path`(66) / `as.runtime`(171) / `as.platform`(250), 10 rules in total, no `as.capacity` group (line 26) | `grep -n "^  - name:"` → 66/171/250; `grep -c "alert:"` → `10`; `grep -n "as.capacity"` → only the **comment** on line 55, "`as.capacity` does not exist yet", which does not form a rule group | Consistent (and the content of the comment is self-consistent with "no such group") |
+| 10 | `Makefile` targets | Contains `m2-platform-resip-build`, `gate-native`, `gate-strict` (line 27) | `grep -n "m2-platform-resip-build\|gate-native\|gate-strict" Makefile` → 6/7 (`.PHONY`), 101, 133, 136 | Consistent |
+| 11 | Existence of document deliverables | 6 files in `docs/product/`, 7 files in `docs/operations/` + 3 in `grafana-dashboards/`, 4 files in `docs/delivery/` + 3 in `scripts/`, all present (line 28) | Checked each directory one by one with `ls` | Consistent (see P3 for the basis) |
+| 12 | Local tools and native artifacts | `helm` / `kubectl` / `kind` / `promtool` are all unavailable; no native `.so` (line 29) | `command -v` item by item → four MISSING, `docker` / `uv` present; `find . -name "*.so" -not -path "./.git/*" -not -path "*/.venv/*" \| wc -l` → `0` (no native extension artifacts inside the repository; the `.so` files inside virtual environments are third-party dependencies and are out of scope for this item). **This exclusion basis must be written down**: at re-review time a repository-wide `find` actually hit 242 `.so` files, but all of them are inside `.venv/` (third-party dependencies); after excluding `.venv` / `.git` the count is 0; without writing down the exclusion basis, a later re-runner would judge this item false on the basis of 242 | Consistent |
 
 ---
 
-## 5. 待维护者裁定
+## 5. Awaiting Maintainer Adjudication
 
-S1 / 时效性同步（原 P2）/ 计数口径声明（原 P3）三项均已处置，逐条记录见 **§6**，此处不再重复勾选。
+S1 / the currency sync (original P2) / the declaration of the counting basis (original P3) have all been dispositioned; each is recorded item by item in **§6**, and is not repeated here.
 
-**仍待裁定的只剩一项**（其余四项见 §6，已处置）：
+**Only one item still awaits adjudication** (the other four are in §6 and have been dispositioned):
 
-- [x] **状态字段**：`docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` / `docs/plan.md` / `docs/acceptance/report.md` 是否由「已落盘、待维护者评审」改为「已评审」—— 评估记录「观察与提醒」第 3 条主张维持现表述（仍应为「已落盘、待维护者评审/签字」），最终取决于维护者确认签字。（原注：在维护者签字落笔前，本 check 保持 open —— 已于 2026-10-10 由维护者授权 AI agent 代签关闭。）
+- [x] **Status field**: whether `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` / `docs/plan.md` / `docs/acceptance/report.md` should be changed from "written to disk, pending maintainer review" to "reviewed" — item 3 of "Observations and Reminders" in the evaluation record argues for keeping the current wording (it should still be "written to disk, pending maintainer review/sign-off"); the final decision depends on the maintainer's confirmation sign-off. (Original note: before the maintainer signs, this check stays open — it was closed on 2026-10-10 by an AI agent countersignature authorized by the maintainer.)
 
-**另请一并裁定**：本文（review of review）本身并非独立评审 —— **即便那条关于评审独立性的质疑已撤回，本文仍只是维护者裁定时的输入材料，不能被引用为已复核 / 已背书**；撤回该条只是否定这一质疑本身，不赋予本文任何背书效力。在维护者签字落笔之前，`docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md`、`docs/plan.md`、`docs/acceptance/report.md` 的状态应统一表述为「**已落盘、待维护者评审**」。
+**Please also adjudicate together**: this document (review of review) is not itself an independent review — **even though the challenge concerning review independence has been withdrawn, this document is still only input material for the maintainer's adjudication and must not be cited as already re-reviewed / endorsed**; withdrawing that challenge only negates the challenge itself and grants this document no endorsement force whatsoever. Before the maintainer's signature is made, the status of `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md`, `docs/plan.md`, `docs/acceptance/report.md` should be uniformly expressed as "**written to disk, pending maintainer review**".
 
-（2026-10-10 消歧：上两句为评审落笔前的表述；该 check 已随本次授权代签关闭。三份文档的最新统一表述为「**已通过评审（有条件通过）**」，同时仍保留「不签收 REQ / 里程碑、所有取值待维护者裁决、执行项待另行批准」三项限定。）
+(2026-10-10 disambiguation: the two sentences above are the wording from before the signature was made; that check has been closed together with this round's authorized countersignature. The latest uniform wording for the three documents is "**passed review (conditional pass)**", while the three qualifications "signs off no REQ / milestone, all values await maintainer adjudication, execution items await separate approval" are still retained.)
 
 ---
 
-## 6. 处置状态更新（2026-10-10 晚）
+## 6. Disposition Status Update (evening of 2026-10-10)
 
-维护者侧已出具评估记录 `docs/reviews/unfinished-assessment-2026-10-10-review-of-review-evaluation.md`，并据此处置了原评审记录 `docs/reviews/unfinished-assessment-2026-10-10-review.md`。本文逐条复核其处置结果如下（**本文不改动对方任何文件，仅在本节记录与表明立场**）。
+The maintainer side has issued the evaluation record `docs/reviews/unfinished-assessment-2026-10-10-review-of-review-evaluation.md` and, on that basis, has dispositioned the original review record `docs/reviews/unfinished-assessment-2026-10-10-review.md`. This document checks its disposition results item by item as follows (**this document changes none of their files; it only records them and states its position in this section**).
 
-| 原条目 | 处置结论 | 处置位置 | 本文档是否认可 |
+| Original item | Disposition conclusion | Disposition location | Does this document agree |
 |---|---|---|---|
-| **P2（时效性）** | 已采纳并已修正 | 原评审记录第 5 行（评审对象注明「评审时点 793 行」）、第 18 行（文档类改动/新增共 4 处，并说明 IDE 会话目录不计入）、第 30 行（§0.2 四条认可与「四点认可 ≠ 六项取值已裁决」边界）、第 31 行（A3 第三个 pytest 目标及其 `integration` 标记须显式指定的说明）、第 7 行（`plan.md` 改动细化到 §0 七行决策记录 + 表格外注记 + §5.2 D1 注记）；评估记录 ADJ-2 | 认可。五项缺失均已覆盖，与本文 §3 P2 逐项对应 |
-| **P3（计数口径）** | 已采纳 | 原评审记录第 28 行明确「本节按文件数统计，与 `docs/plan.md` §0 按『md 文档数』统计的口径不同，但对账时总数一致」；评估记录 ADJ-3 | 认可。本文已复核计数：`docs/operations/` 根目录 7 文件 + `grafana-dashboards/` 3 文件；`docs/delivery/` 根目录 4 文件（含 `preflight.sh`）+ `scripts/` 3 文件，属实 |
-| **S1（签字维度）** | 部分采纳：**以原评审记录末尾新增「确认签字」栏替代 Adjudication 表加列**（第 47–54 行），字段 `reviewed_by` / `signed_by` / `date` / `verdict`，并注明「以下字段在维护者正式签字前保持留空」；评估记录 ADJ-5 | 认可，S1 关闭。字段与本文建议一致，仅位置不同 —— **本文档接受该实现**；如实记录为「部分采纳：以签字栏替代 Adjudication 表加列」 |
+| **P2 (currency)** | Accepted and already fixed | Line 5 of the original review record (the document under review noted as "793 lines at the time of review"), line 18 (4 document changes/additions in total, plus a statement that the IDE session directory is not counted), line 30 (§0.2's four acknowledgements and the "four acknowledgements ≠ the six values have been adjudicated" boundary), line 31 (A3's third pytest target and the note that its `integration` marker must be explicitly specified), line 7 (the `plan.md` change refined down to §0's seven decision-record rows + the note outside the table + the §5.2 D1 note); ADJ-2 of the evaluation record | Agree. All five missing items are covered, corresponding item by item to §3 P2 of this document |
+| **P3 (counting basis)** | Accepted | Line 28 of the original review record states explicitly "this section is counted by file number, which differs from the basis of `docs/plan.md` §0 ("number of md documents"), but the totals agree on reconciliation"; ADJ-3 of the evaluation record | Agree. This document has re-checked the counts: 7 files in the `docs/operations/` root + 3 files in `grafana-dashboards/`; 4 files in the `docs/delivery/` root (including `preflight.sh`) + 3 files in `scripts/` — this is true |
+| **S1 (sign-off dimension)** | Partially accepted: **a new "Confirmation Sign-off" block at the end of the original review record replaces adding a column to the Adjudication table** (lines 47–54), fields `reviewed_by` / `signed_by` / `date` / `verdict`, with the note "the following fields stay blank until the maintainer formally signs"; ADJ-5 of the evaluation record | Agree, S1 is closed. The fields are consistent with this document's recommendation, only the placement differs — **this document accepts that implementation**; it is faithfully recorded as "partially accepted: a sign-off block replaces adding a column to the Adjudication table" |
 
-### 6.1 对评估记录 ADJ-1 的回应（不同意见）
+### 6.1 Response to ADJ-1 of the evaluation record (differing opinion)
 
-评估记录 ADJ-1 称本文档「缺少 `## Adjudication` 节，属于格式不完备」。**本文档不认同「格式不完备 / 违反 `AGENT.md` §3.3」这一定性**，理由如下。
+ADJ-1 of the evaluation record states that this document "lacks a `## Adjudication` section, which is a format incompleteness". **This document does not agree with the characterization "format incomplete / violating `AGENT.md` §3.3"**, for the following reasons.
 
-`AGENT.md` §3.3 对 review record 的要求是**五项内容**，而非某一特定表格形式：
+`AGENT.md` §3.3 requires **five items** of content in a review record, and not any particular table form:
 
-1. 评审对象 —— 本文标题下的「被复核对象」行已注明；
-2. 评审日期与评审人 —— 文首「复核人 / 复核日期」已注明；
-3. 评审结论 —— §2「复核结论（先给结论）」已给出；
-4. 问题清单与对应修改 —— §3「意见明细」（P2 / P3 / S1）与 §5「待维护者裁定」已列出，并给出建议修改方案；
-5. 修改后的确认签字 —— 本项**本应由维护者完成**；按本文 S1 的建议及原评审记录的现行实现，未签字前保持留空。
+1. the review target — already noted in the "item under review" row under the title of this document;
+2. the review date and the reviewer — already noted in the "Re-reviewer / Re-review date" at the head of the document;
+3. the review conclusion — given in §2 "Re-review Conclusion (conclusion first)";
+4. the list of issues and the corresponding fixes — listed in §3 "Comment Details" (P2 / P3 / S1) and §5 "Awaiting Maintainer Adjudication", with recommended fixes;
+5. confirmation sign-off after fixes — this item **should have been completed by the maintainer**; following the S1 recommendation of this document and the current implementation in the original review record, it stays blank until signed.
 
-即：**五项要求本文档全部具备**，缺的是「Adjudication 这一特定的表格形式」，属**风格偏好，而非 §3.3 违规**。
+That is: **this document has all five required items**; what is missing is "the specific table form of Adjudication", which is a **style preference, not a §3.3 violation**.
 
-是否补写 `## Adjudication` 节由维护者决定，本文档**不自行增删**该节 —— 这也是本文文首状态声明第 1 条「不修改被复核记录原文」之外，对自身同样适用的约束：本文的处置动作留给维护者裁定，不在本文档内自行追加。
+Whether to add a `## Adjudication` section is the maintainer's decision; this document **does not add or remove that section on its own** — this is a constraint that applies to itself in the same way it goes beyond item 1 of the Status Declaration at the head of this document, "do not modify the original text of the review record under review": the disposition actions of this document are left to the maintainer's adjudication and are not appended within this document on its own.
 
-### 6.2 仍未处置（2026-10-10 更新：**已无未处置项**）
+### 6.2 Still Not Dispositioned (2026-10-10 update: **there are now no undispositioned items**)
 
-截至上次更新，**仍 open 的只剩一项**：
+As of the last update, **only one item was still open**:
 
-- **三份文档（handoff / `docs/plan.md` / `docs/acceptance/report.md`）是否由「已落盘、待维护者评审」改为「已评审」** —— 评估记录「观察与提醒」第 3 条明确这三份**仍应表述为「已落盘、待维护者评审/签字」**，故本条原本维持 open。
+- **Whether the three documents (handoff / `docs/plan.md` / `docs/acceptance/report.md`) should be changed from "written to disk, pending maintainer review" to "reviewed"** — item 3 of "Observations and Reminders" in the evaluation record states explicitly that these three **should still be expressed as "written to disk, pending maintainer review/sign-off"**, so this item originally stayed open.
 
-该项**最终取决于维护者签字**：在维护者落笔之前，本文档不主张、也不代为改写任何状态字段。
+This item **ultimately depends on the maintainer's signature**: before the maintainer signs, this document neither argues for it nor rewrites any status field on their behalf.
 
-**2026-10-10 更新（已无未处置项）**：最后一条未处置项 —— 三份文档是否改「已评审」—— 随本次**维护者授权 AI agent 代签**一并关闭：签字已由授权代签完成（见 §6.3），§5 中对应的 check 已由 `- [ ]` 改为 `- [x]`。据此本节结论更新为：**已无未处置项**；§5 中「仍待裁定的只剩一项」与「状态应统一表述为『已落盘、待维护者评审』」两句系签字落笔前的表述，其消歧说明见 §5 末尾的 2026-10-10 消歧行。
+**2026-10-10 update (there are now no undispositioned items)**: the last undispositioned item — whether to change the three documents to "reviewed" — was closed together with this round's **maintainer-authorized AI agent countersignature**: the signature has been completed by authorized countersignature (see §6.3), and the corresponding check in §5 has been changed from `- [ ]` to `- [x]`. Accordingly the conclusion of this section is updated to: **there are now no undispositioned items**; the two sentences "only one item still awaits adjudication" and "the status should be uniformly expressed as 'written to disk, pending maintainer review'" in §5 are the wording from before the signature was made, and their disambiguation is given in the 2026-10-10 disambiguation line at the end of §5.
 
-### 6.3 签名（2026-10-10，授权代签）
+### 6.3 Signature (2026-10-10, authorized countersignature)
 
-> 本节只记录「**本文已被审阅并作为输入采纳**」这一事实，**不改变本文定位**：本文仍是**输入材料（input material）**，**不构成评审记录本身**，因此此处**不作 verdict 判定**。
-> （代签：维护者 2026-10-10 chat 授权 AI agent 代签；非维护者亲笔。附录：`AGENT.md` §3.3 要求「修改后的确认签字」，本栏据此由授权代签完成。）
+> This section records only the fact that "**this document has been reviewed and adopted as input**"; it **does not change the positioning of this document**: this document is still **input material (input material)**, **does not constitute a review record itself**, and therefore makes **no verdict determination** here.
+> (Countersignature: the maintainer authorized the AI agent to countersign via chat on 2026-10-10; not the maintainer's own hand signature. Appendix: `AGENT.md` §3.3 requires "confirmation sign-off after fixes"; this block is accordingly completed by authorized countersignature.)
 
-- reviewed_by: AI agent（维护者指定的评审 agent / 模型）
-- signed_by: 维护者（授权 AI agent `tas` 代签，授权日期 2026-10-10）
+- reviewed_by: AI agent (the review agent / model designated by the maintainer)
+- signed_by: maintainer (authorized AI agent `tas` to countersign, authorization date 2026-10-10)
 - date: 2026-10-10
-- verdict: 本文定位为输入材料（input material），不构成评审记录本身，不作 verdict 判定
+- verdict: this document is positioned as input material (input material), does not constitute a review record itself, and makes no verdict determination
 
-> **保留声明（不因本节签名而失效）**：即便那条关于评审独立性的质疑已由维护者裁决撤回，**本文仍只是维护者裁定时的输入材料，不能被引用为「已复核 / 已背书」**；本节签名只代表「已被审阅并作为输入采纳」，不赋予本文任何背书效力。
+> **Reservation statement (not invalidated by the signature in this section)**: even though the challenge concerning review independence was withdrawn by maintainer adjudication, **this document is still only input material for the maintainer's adjudication and must not be cited as "already re-reviewed / endorsed"**; the signature in this section represents only "reviewed and adopted as input", and grants this document no endorsement force whatsoever.

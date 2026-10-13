@@ -25,7 +25,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | 2 | Python `CallController` | `platform/src/as_platform/sip/call_controller.py`; `platform/tests/test_call_controller.py` |
 | 3 | Minimal native two-leg | `platform/native/resip_two_leg/`; `platform/tests/test_resip_two_leg_integration.py` (`-m integration`; requires `make m7-platform-two-leg-build`) |
 | 4 | D10 honesty | [`m7-d10-status-2026-10-05.md`](m7-d10-status-2026-10-05.md) |
-| 5 | Plan M7 row | **进行中** in [`plan.md`](../plan.md) §4 |
+| 5 | Plan M7 row | **In progress** in [`plan.md`](../plan.md) §4 |
 
 ## What this slice is
 

@@ -12,55 +12,55 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# callload 评审修复 — 裁决记录（2026-10-05）
+# callload Review Remediation — Adjudication Record (2026-10-05)
 
-> 输入：[`callload-m2-m6-m7-demo-branch-review-2026-10-05.md`](callload-m2-m6-m7-demo-branch-review-2026-10-05.md)  
-> 计划：[`../handoff/2026-10-05-callload-review-response-plan.md`](../handoff/2026-10-05-callload-review-response-plan.md)  
-> 验证：本机 `make gate`（964 passed, 2 skipped）；native 集成需 `make m2-platform-resip-build` + `make m2-platform-resip`。
+> Input: [`callload-m2-m6-m7-demo-branch-review-2026-10-05.md`](callload-m2-m6-m7-demo-branch-review-2026-10-05.md)  
+> Plan: [`../handoff/2026-10-05-callload-review-response-plan.md`](../handoff/2026-10-05-callload-review-response-plan.md)  
+> Verification: local `make gate` (964 passed, 2 skipped); native integration requires `make m2-platform-resip-build` + `make m2-platform-resip`.
 
-| ID | 状态 | 证据 |
+| ID | Status | Evidence |
 |----|------|------|
-| F1 | 已修复 | `bind_address`/`advertised_address` 贯穿 C++ + `transport_env.py` |
-| F7 | 已修复 | `AS_TLS_*` / `AS_PEER_*` + `SipStackService.from_env` |
-| F10 | 已修复（内容） | 故事 C 话术 + `pre-m8-demo-review-plan.md` F10 对账段 |
-| F9 | 部分修复 | `native_extensions.py` + 本地 `make m2-platform-resip-build`；**阻塞目标尚未成为必跑门禁** |
-| F4 | 已修复 | `map_outbound_failure_to_inbound_status` + C++ `mapUpstreamFailureStatus` |
-| F3 | 已修复（FORWARD 路径） | `buildUacLegDict` + `sip_stack_service` `uac_leg` |
-| F2 | 已修复 | recovery BYE Contact + `Route` 回放 |
-| F5 | 已修复 | fingerprint map 2048 上限淘汰 |
-| F6 | 部分修复 | connection 注册上限 + dialog 终止注销；无 native transport close 回调 |
-| F8 | 未闭合 | C++ 仍以 cout/cerr 为主；M8 前需 JSON 回调或宏契约 |
-| F11 | 维护者 | 不纳入 agent 队列 |
-| F12–F18 | 已修复 | 见各条目 CHANGELOG 0.2.0 |
+| F1 | Fixed | `bind_address`/`advertised_address` threaded through C++ + `transport_env.py` |
+| F7 | Fixed | `AS_TLS_*` / `AS_PEER_*` + `SipStackService.from_env` |
+| F10 | Fixed (content) | Story C talk track + the F10 reconciliation section of `pre-m8-demo-review-plan.md` |
+| F9 | Partially fixed | `native_extensions.py` + local `make m2-platform-resip-build`; **the blocking target has not yet become a mandatory gate** |
+| F4 | Fixed | `map_outbound_failure_to_inbound_status` + C++ `mapUpstreamFailureStatus` |
+| F3 | Fixed (FORWARD path) | `buildUacLegDict` + `sip_stack_service` `uac_leg` |
+| F2 | Fixed | recovery BYE Contact + `Route` replay |
+| F5 | Fixed | fingerprint map 2048 cap eviction |
+| F6 | Partially fixed | connection registration cap + dialog termination deregistration; no native transport close callback |
+| F8 | Not closed | C++ still uses cout/cerr predominantly; a JSON callback or macro contract is needed before M8 |
+| F11 | Maintainer | not brought into the agent queue |
+| F12–F18 | Fixed | see each entry in CHANGELOG 0.2.0 |
 
-**仍不构成**：M2/M6/M7 里程碑退出、REQ 全绿、客户 NF-1 正式签收。
+**Still does not constitute**: M2/M6/M7 milestone exit, all-green REQ, formal customer NF-1 sign-off.
 
 ---
 
-## 合入 master（2026-10-06）
+## Merged into master (2026-10-06)
 
-| 项 | 状态 |
+| Item | Status |
 |----|------|
-| 工程修复（上表） | 已记录；F8 开放、F6 部分 |
-| F9 阻塞门禁 | **未生效** — blocking 目标（`m2-native-smoke` / `m2-platform-resip`）尚未纳入必跑门禁 |
-| 维护者 merge 清单 | [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md) |
-| 合入 master @ SHA | **`139d299`**（2026-10-06；squash） |
+| Engineering fixes (table above) | Recorded; F8 open, F6 partial |
+| F9 blocking gate | **Not in effect** — the blocking targets (`m2-native-smoke` / `m2-platform-resip`) have not yet been brought into the mandatory gate set |
+| Maintainer merge checklist | [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md) |
+| Merged into master @ SHA | **`139d299`** (2026-10-06; squash) |
 
 ---
 
-## 代签补记（2026-10-12；N2 第 3 项「须同步」之一）
+## Countersign addendum (2026-10-12; one of the "must be synchronized" items of N2 item 3)
 
-> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决。
-> N2 第 3 项（F8）的「须同步」列指向本文件的 **F6 行**，此处补记正式化结果。
-> **本补记不是维护者亲签**；代签总记录见
-> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)。
+> **Authorization source**: on 2026-10-12 the maintainer **explicitly authorized the agent to countersign** the nine written adjudications of M8 N2.
+> The "must be synchronized" column of N2 item 3 (F8) points to the **F6 row** of this file; this addendum formalizes the result.
+> **This addendum is not a maintainer personal signature**; the master countersign record is at
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md).
 
-**上表 F6 行的状态更新**：由「部分修复」**补充**为「**部分修复 + documented limitation 已接受**」。
-签字：**agent 代签（维护者 2026-10-12 授权）**。
+**Status update to the F6 row of the table above**: changed from "partially fixed" to **"partially fixed + documented limitation accepted"** (supplemented, not replaced).
+Signature: **agent countersign (maintainer authorization dated 2026-10-12)**.
 
-**依据（不新造结论）**：N2 第 4 项原文 —— F6 接受 documented limitation
-（长连接无 dialog 终止时只靠 2048 指纹 LRU 与 4096 连接上限）；正式化记录见
-[`m8-phase-a-f6-f8-note-2026-10-06.md`](m8-phase-a-f6-f8-note-2026-10-06.md) §5.1。
+**Basis (no newly invented conclusion)**: the original text of N2 item 4 — F6 accepts the documented limitation
+(a long-lived connection with no dialog termination relies only on the 2048-entry fingerprint LRU and the 4096 connection cap); the formalization record is at
+[`m8-phase-a-f6-f8-note-2026-10-06.md`](m8-phase-a-f6-f8-note-2026-10-06.md) §5.1.
 
-**边界**：**结论不是「已修复」** —— native transport-close 回调**仍然缺席**，
-本补记不改变上表 F6 行的事实描述，只补「风险已接受」这一签字事实。
+**Boundary**: **the conclusion is not "fixed"** — the native transport-close callback is **still absent**;
+this addendum does not change the factual description in the F6 row of the table above, it only adds the signature fact that the risk has been accepted.

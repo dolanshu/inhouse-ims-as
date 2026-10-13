@@ -12,38 +12,38 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# callload 分支评审记录 — M2 后半 / M6 / M7 / Pre-M8 Demo
+# callload Branch Review Record — M2 Second Half / M6 / M7 / Pre-M8 Demo
 
-## 当前状态（Current Status）
+## Current Status
 
-| 项 | 结论 |
+| Item | Conclusion |
 |---|---|
-| 评审日期 | 2026-10-05 |
-| 评审对象 | 分支 `callload`（初评 HEAD `e283538`；合入准备时 HEAD `dc3c951`），范围 merge-base `2318f9c` 起至评审修复提交 |
-| 覆盖工作 | M2 后半（native reSIProcate 产品 runtime / TLS / TCP / 证书轮换 / Sentinel 客户端）、M6（真实 socket 容量 harness + dev-host O1 批次）、M7（E1 契约 / FORWARD 双腿 / D10 checkpoint 恢复 / D11 SDP）、Pre-M8 客户 demo 脚本与计划 |
-| **总体结论** | **有条件复审（Conditional re-review）。** P0/P1 工程修复已落地（见 [`callload-remediation-adjudication-2026-10-05.md`](callload-remediation-adjudication-2026-10-05.md)）；**F8（结构化日志）仍开放**；**F6 仅部分闭合**（无 native transport close 回调）。客户全量 Demo 仍须遵守故事 C M5 对账与 NF-1 边界。 |
-| Gap 状态 | 18 条：**已修复 15**；**部分修复 1**（F6）；**未闭合 1**（F8）；**维护者项 1**（F11，非工程队列）。 |
-| 门禁状态 | 本机实测 `make gate`（修复后）：**964 passed, 2 skipped**（仅剩 derived-baseline 待 M2 probe）；E1/恢复契约在 `make m2-platform-resip` 下以 `AS_REQUIRE_NATIVE_EXTENSIONS=1` 阻塞。 |
-| 主干分歧 | `master` 领先本分支 1 个提交 `04afc5a`（M5 全链评审，结论「不通过」）；**F10 内容面**已在 pre-m8 / story-c 收窄；merge 前须 `merge master` 拉入该评审文件（见 [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md)）。 |
-| 合入 master | **已完成（2026-10-06）** — `master` @ `139d299`；见 [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md)。**不等于**里程碑签收。 |
-| 维护者签收 | 无。本记录不构成 M2/M6/M7 里程碑退出，也不构成 REQ/test-plan 验收。 |
+| Review date | 2026-10-05 |
+| Review target | branch `callload` (initial review HEAD `e283538`; HEAD at merge preparation `dc3c951`), scope from merge-base `2318f9c` through the review remediation commits |
+| Work covered | M2 second half (native reSIProcate product runtime / TLS / TCP / certificate rotation / Sentinel client), M6 (real socket capacity harness + dev-host O1 batch), M7 (E1 contract / FORWARD two legs / D10 checkpoint recovery / D11 SDP), Pre-M8 customer demo script and plan |
+| **Overall conclusion** | **Conditional re-review.** P0/P1 engineering fixes have landed (see [`callload-remediation-adjudication-2026-10-05.md`](callload-remediation-adjudication-2026-10-05.md)); **F8 (structured logging) is still open**; **F6 is only partially closed** (no native transport close callback). The full customer demo must still respect the story C M5 reconciliation and the NF-1 boundary. |
+| Gap status | 18 items: **15 fixed**; **1 partially fixed** (F6); **1 not closed** (F8); **1 maintainer item** (F11, not an engineering-queue item). |
+| Gate status | Locally measured `make gate` (after remediation): **964 passed, 2 skipped** (only the derived-baseline items remain, pending the M2 probe); the E1/recovery contract is blocked under `make m2-platform-resip` with `AS_REQUIRE_NATIVE_EXTENSIONS=1`. |
+| Mainline divergence | `master` leads this branch by 1 commit, `04afc5a` (M5 full-chain review, conclusion "fail"); the **F10 content surface** has been narrowed in pre-m8 / story-c; before merging, `merge master` must pull in that review file (see [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md)). |
+| Merged into master | **Done (2026-10-06)** — `master` @ `139d299`; see [`../handoff/2026-10-06-callload-merge-to-master.md`](../handoff/2026-10-06-callload-merge-to-master.md). This is **not** milestone sign-off. |
+| Maintainer sign-off | None. This record does not constitute M2/M6/M7 milestone exit, nor REQ/test-plan acceptance. |
 
 ---
 
-## 1. 评审元信息
+## 1. Review Metadata
 
-- **评审对象（commit range）**：`2318f9c..e283538`（`master` 与 `callload` 的 merge-base 起）。
+- **Review target (commit range)**: `2318f9c..e283538` (from the merge-base of `master` and `callload`).
   - `6778030` M6 pause, to finish M2 at first
   - `6f64f91` M2 handoff
   - `900d1f0` M2 handoff -2
-  - `b5a81dd` Merge branch 'master' into callload（合入 M5 关门 `2318f9c`）
-  - `e283538` m7 done（单提交 165 文件、+14670 行）
-- **评审日期**：2026-10-05
-- **评审人**：AI agent（TRAE，维护者指派的独立分支评审）
-- **评审方法**：只读核查源码/测试/脚本 + `make gate` 本机实测 + 两个独立验证 subagent 对全部发现逐条交叉验证（共识门槛 2/2 或主审复核后保留）。
-- **证据排除声明**：按维护者要求，本次评审**未采信、未引用** `docs/reviews/` 下任何既有切片评审作为证据；全部结论来自源码、测试、`docs/plan.md`、`docs/acceptance/test-plan.md`、handoff 原文与实测输出。F10 仅陈述「主干存在未合并评审」这一分支事实。
+  - `b5a81dd` Merge branch 'master' into callload (merging the M5 gate closure `2318f9c`)
+  - `e283538` m7 done (single commit, 165 files, +14670 lines)
+- **Review date**: 2026-10-05
+- **Reviewer**: AI agent (TRAE, an independent branch review assigned by the maintainer)
+- **Review method**: read-only inspection of source code/tests/scripts + locally measured `make gate` + two independent verification subagents cross-checking every finding item by item (consensus threshold 2/2, or retained after the lead reviewer's factual correction).
+- **Evidence exclusion statement**: as required by the maintainer, this review **neither accepted nor cited** any pre-existing slice review under `docs/reviews/` as evidence; all conclusions come from source code, tests, `docs/plan.md`, `docs/acceptance/test-plan.md`, the handoff originals and measured output. F10 only states the branch fact that "an unmerged review exists on the mainline".
 
-## 2. 分支做了什么（变更概览）
+## 2. What the Branch Did (Change Overview)
 
 ```mermaid
 flowchart LR
@@ -71,140 +71,140 @@ flowchart LR
   style L fill:#c8e6c9,color:#1a5e20
 ```
 
-| 区域 | 主要新增 |
+| Area | Main additions |
 |---|---|
-| 产品 runtime | `platform/native/resip_runtime/`（C++ 1486 行）、`platform/native/resip_two_leg/`、`platform/native/resip_recovery/`；Python 绑定层 `sip/resip_runtime.py`、`sip/call_controller.py`、`runtime/sip_stack_service.py` |
-| 状态/恢复 | `state/call_checkpoint.py`（owner + generation CAS）、`sip/recovery*.py`、Redis 集成与 D10 harness |
-| M6 | `testbed/load/`（harness.py 1219 行、1353 行测试、5 个测量脚本、REQ-NF-15） |
-| Demo | `scripts/demo-review/`（story-a…e、lib、run-all、bundle fixtures）、`docs/handoff/pre-m8-demo-review-plan.md` |
-| 构建 | vendor 离线 reSIProcate 源码包（30 MB）+ Ubuntu20.04 预构建包（6 MB）、`make m2-native` |
+| Product runtime | `platform/native/resip_runtime/` (1486 lines of C++), `platform/native/resip_two_leg/`, `platform/native/resip_recovery/`; Python binding layer `sip/resip_runtime.py`, `sip/call_controller.py`, `runtime/sip_stack_service.py` |
+| State/recovery | `state/call_checkpoint.py` (owner + generation CAS), `sip/recovery*.py`, Redis integration and the D10 harness |
+| M6 | `testbed/load/` (harness.py 1219 lines, 1353 lines of tests, 5 measurement scripts, REQ-NF-15) |
+| Demo | `scripts/demo-review/` (story-a…e, lib, run-all, bundle fixtures), `docs/handoff/pre-m8-demo-review-plan.md` |
+| Build | vendored offline reSIProcate source package (30 MB) + Ubuntu 20.04 prebuilt package (6 MB), `make m2-native` |
 
-## 3. 正面确认（应予保留）
+## 3. Positive Confirmations (Should Be Preserved)
 
-1. **门禁实测绿**：`make gate` 四步通过，951 passed；决策层保持纯函数、marker 分层未被破坏。
-2. **M6 方法学合规**：harness 走真实 UDP socket（ADR-0014 / REQ-NF-15），产出 `summary.json`/`resources.json`，O1 报告反复标注「dev-host、非对外 SLA」，与 AGENT.md §2 容量红线一致。
-3. **M2 离线构建路径可复现**：vendor 源码按上游 commit `632e215c` 固定并附 `SHA256SUMS`，`make m2-native` 不依赖网络 clone。
-4. **Demo 边界纪律好**：`pre-m8-demo-review-plan.md` §7 主动声明 S-SBC/运营商 PKI、US-3 live trace、主叫/正则 v1.1、HPA/CPS 不承诺、CDR/LI/媒体非目标；脚本统一 `set -euo pipefail`、artifact 落盘、环境缺失显式 SKIP。
-5. **checkpoint 提交安全有工程纵深**：owner 语义 + generation CAS（`save_if_generation`）与生命周期切片均带测试。
+1. **Gate measured green**: all four `make gate` steps passed, 951 passed; the decision layer remains pure functions and the marker layering is not broken.
+2. **M6 methodology is compliant**: the harness uses real UDP sockets (ADR-0014 / REQ-NF-15) and produces `summary.json`/`resources.json`; the O1 report repeatedly marks itself as "dev-host, not an external SLA", consistent with the capacity red lines in AGENT.md §2.
+3. **M2 offline build path is reproducible**: the vendored source is pinned to upstream commit `632e215c` with a `SHA256SUMS`, and `make m2-native` does not depend on a network clone.
+4. **Good demo boundary discipline**: `pre-m8-demo-review-plan.md` §7 proactively declares S-SBC/carrier PKI, US-3 live trace, caller/regex v1.1, no HPA/CPS commitment, and CDR/LI/media as non-goals; the scripts uniformly use `set -euo pipefail`, write artifacts to disk, and emit an explicit SKIP when the environment is missing.
+5. **Checkpoint commit safety has engineering depth**: owner semantics + generation CAS (`save_if_generation`) and the lifecycle slice are both covered by tests.
 
-## 4. 问题清单
+## 4. Issue List
 
-> 严重级别：blocker（阻断合并/客户演示）> major（M8 前必须关闭）> minor > note。
-> 每条均经两个独立验证者读码确认（F13 主审按事实修正措辞后保留）。
+> Severity: blocker (blocks merge/customer demo) > major (must be closed before M8) > minor > note.
+> Every item was confirmed by two independent verifiers reading the code (F13 retained after the lead reviewer corrected the wording to match the facts).
 
-### F1【blocker】产品 native runtime 监听地址与 Contact 全部硬编码 127.0.0.1，无法接收外部 S-SBC 流量
+### F1[blocker]The product native runtime hardcodes 127.0.0.1 for both the listening address and Contact, so it cannot receive external S-SBC traffic
 
-- **证据**：`platform/native/resip_runtime/runtime_module.cxx:1048`（UDP）、`:1063`（TCP）、`:1087-1093`（TLS）三处 `stack.addTransport(..., Data("127.0.0.1"))`；Contact 硬编码于 `:1147`；LISTENING 日志 `:1175-1185`；SDP 模板 `:618-620` 的 `o=/c=` 也是 127.0.0.1。transport config 解析中无任何 bind/interface 字段。
-- **为什么是问题**：容器/Pod 中只能接收环回流量，产品形态下 S-SBC 不可达，直接使 REQ-S-2（TLS 对端服务）、REQ-NF-9（独立部署可达）失去验收前提。所有 runtime 集成测试因只打 loopback 而无法暴露。
-- **修复建议**：从 transport config 注入监听地址（Python 侧 env，如 `AS_SIP_BIND_ADDRESS` 默认 `0.0.0.0` + `AS_SIP_ADVERTISED_ADDRESS`），C++ 读取后绑定并生成 Contact/SDP；补非环回绑定集成测（docker network/双地址）。
+- **Evidence**: `platform/native/resip_runtime/runtime_module.cxx:1048` (UDP), `:1063` (TCP), `:1087-1093` (TLS) — three occurrences of `stack.addTransport(..., Data("127.0.0.1"))`; Contact hardcoded at `:1147`; LISTENING log at `:1175-1185`; the SDP template `o=/c=` at `:618-620` are also 127.0.0.1. The transport config parsing has no bind/interface field at all.
+- **Why it is a problem**: inside a container/pod only loopback traffic can be received, so in the product form S-SBC is unreachable, which directly removes the acceptance premise of REQ-S-2 (TLS peer service) and REQ-NF-9 (reachability of an independent deployment). All runtime integration tests fail to expose it because they only hit loopback.
+- **Fix suggestion**: inject the listening address from the transport config (env on the Python side, e.g. `AS_SIP_BIND_ADDRESS` defaulting to `0.0.0.0` plus `AS_SIP_ADVERTISED_ADDRESS`), let C++ read it and generate Contact/SDP; add a non-loopback binding integration test (docker network / dual addresses).
 
-### F2【major】Recovery TU 转发上游 BYE 时 Contact 硬编码 127.0.0.1，且不回放 checkpoint 中的 route_set
+### F2[major]The Recovery TU hardcodes Contact to 127.0.0.1 when forwarding an upstream BYE, and does not replay route_set from the checkpoint
 
-- **证据**：`platform/native/resip_recovery/recovery_module.cxx:241-258`（`handleUpstreamBye` 拼 `sip:as@127.0.0.1:<port>`）；checkpoint 明明解析了 `routeSet`（`:42`、`:150`）但 BYE 不写 Route 头。
-- **为什么是问题**：重启后 Pod IP 不是环回；带 Record-Route 的对话 BYE 将 misroute，后续 in-dialog 请求按错误 Contact 回来。直接削弱 REQ-NF-1「kill 后上游 BYE 仍正确路由」的 M8 验收。
-- **修复建议**：Contact 用实际/通告地址；出腿 BYE 携带 checkpoint route_set；新增「带 Record-Route 的恢复 BYE」集成测试。
+- **Evidence**: `platform/native/resip_recovery/recovery_module.cxx:241-258` (`handleUpstreamBye` builds `sip:as@127.0.0.1:<port>`); the checkpoint clearly parses `routeSet` (`:42`, `:150`) but the BYE writes no Route header.
+- **Why it is a problem**: after a restart the pod IP is not loopback; the BYE of a dialog with Record-Route will misroute, and subsequent in-dialog requests come back to the wrong Contact. This directly weakens the M8 acceptance of REQ-NF-1 "after kill, the upstream BYE is still routed correctly".
+- **Fix suggestion**: use the actual/advertised address in Contact; have the outbound-leg BYE carry the checkpoint route_set; add an integration test for "recovery BYE with Record-Route".
 
-### F3【major】写入 Redis 的 UAC leg checkpoint 是硬编码占位，不是真实出腿对话状态
+### F3[major]The UAC leg checkpoint written to Redis is a hardcoded placeholder, not the real outbound-leg dialog state
 
-- **证据**：`platform/src/as_platform/runtime/sip_stack_service.py:227-246`，`_on_dialog_established` 自行编造 `local_tag="as-uac-local"`、`remote_tag="peer-remote"`、`route_set=()`、`local_cseq=3`、`remote_cseq=1` 与随机 call_id。
-- **为什么是问题**：真实出腿 Call-ID/tag/CSeq 应由 DUM UAC dialog 产生。恢复后下游按 tag/CSeq 无法关联，预期 481/丢包；D10 harness 证明的是「机制链」而非真实对话恢复。
-- **修复建议**：FORWARD UAC dialog 建立后经回调把真实出腿标识与 route set 回传 Python 再落 checkpoint；恢复集成测断言下游真实接受 BYE，而非仅日志匹配。
+- **Evidence**: `platform/src/as_platform/runtime/sip_stack_service.py:227-246`, where `_on_dialog_established` fabricates `local_tag="as-uac-local"`, `remote_tag="peer-remote"`, `route_set=()`, `local_cseq=3`, `remote_cseq=1` and a random call_id.
+- **Why it is a problem**: the real outbound Call-ID/tag/CSeq should be produced by the DUM UAC dialog. After recovery the downstream cannot correlate by tag/CSeq, so 481/packet loss is expected; what the D10 harness demonstrates is the "mechanism chain", not real dialog recovery.
+- **Fix suggestion**: once the FORWARD UAC dialog is established, feed the real outbound identifiers and route set back to Python via a callback and then persist the checkpoint; the recovery integration test should assert that the downstream really accepts the BYE, not merely that the logs match.
 
-### F4【major】下游非 486 失败一律映射 502，违反 REQ-F-10（480/408 须透传）
+### F4[major]Every downstream non-486 failure is mapped to 502, violating REQ-F-10 (480/408 must be passed through)
 
-- **证据**：`runtime_module.cxx:838`（`downstreamStatus == 486 ? 486 : 502`）；`platform/src/as_platform/sip/call_controller.py:19-20,97-103` 同一逻辑，且 `platform/tests/test_call_controller.py:133` 的 `test_outbound_non486_final_maps_to_502` 把错误行为固化。
-- **为什么是问题**：test-plan §REQ-F-10 明确要求 486/480/408 等向上游原样转发，不得改成其他码。
-- **修复建议**：透传可安全转发的 4xx/5xx/6xx（至少 408/480/486/503/504），仅对真正无对应语义的内部错误用 502；同步改写该单测并补契约用例。
+- **Evidence**: `runtime_module.cxx:838` (`downstreamStatus == 486 ? 486 : 502`); `platform/src/as_platform/sip/call_controller.py:19-20,97-103` has the same logic, and `test_outbound_non486_final_maps_to_502` at `platform/tests/test_call_controller.py:133` locks in the wrong behaviour.
+- **Why it is a problem**: test-plan §REQ-F-10 explicitly requires 486/480/408 and similar codes to be forwarded upstream unchanged, and not rewritten to another code.
+- **Fix suggestion**: pass through the 4xx/5xx/6xx codes that are safe to forward (at least 408/480/486/503/504), and use 502 only for genuinely internal errors that have no corresponding semantics; rewrite that unit test accordingly and add contract cases.
 
-### F5【major】TLS peer fingerprint 缓存只增不清，长期运行无界增长
+### F5[major]The TLS peer fingerprint cache is only added to and never evicted, so it grows without bound over long runs
 
-- **证据**：`runtime_module.cxx:94-130`（`peerFingerprints` / `peerFingerprintsByEndpoint` 仅在 `storePeerFingerprint` 写入）、`:180-220` 每次握手写入；无 close 回调、TTL 或容量上限。
-- **为什么是问题**：S-SBC 长会话频繁重连时 map 持续膨胀，lookup 退化；M6/O1 的长稳压测没有观测目标侧内存，不会暴露。
-- **修复建议**：connection 关闭时回调查删；过渡期加容量上限/LRU；加一条长跑内存断言。
+- **Evidence**: `runtime_module.cxx:94-130` (`peerFingerprints` / `peerFingerprintsByEndpoint` are written only by `storePeerFingerprint`), `:180-220` writes on every handshake; there is no close callback, TTL or capacity cap.
+- **Why it is a problem**: with frequent reconnects from long-lived S-SBC sessions the map keeps swelling and lookups degrade; the M6/O1 long stability stress run does not observe target-side memory, so it will not expose this.
+- **Fix suggestion**: look up and delete on connection close via a callback; during the transition add a capacity cap/LRU; add a long-run memory assertion.
 
-### F6【major】connection_id 只注册不注销，证书轮换 overlap 的 legacy 集合语义失真且无界
+### F6[major]connection_id is registered but never deregistered, so the legacy set semantics of the certificate-rotation overlap are distorted and unbounded
 
-- **证据**：`platform/src/as_platform/sip/resip_runtime.py:251` 每个 INVITE 调 `register_connection`，全仓库无任何 `unregister_connection` 调用方（`sip/ingress.py:128-132` 提供了注销入口却无人调用）；`_registered_connection_ids`/`_legacy_connection_ids`（`ingress.py:47-48,91,151-153`）。
-- **为什么是问题**：legacy 集合本应表示「轮换窗口开始前已存在的连接」，实际累积为「历史上所有连接」，REQ-S-3 双证重叠期的旧证宽限判定会错误地长期放行；集合本身无界。
-- **修复建议**：C++ transport 关闭/销毁时回调 Python 注销；短期改为按 peer endpoint 的滑动窗口并加上限。
+- **Evidence**: `platform/src/as_platform/sip/resip_runtime.py:251` calls `register_connection` for every INVITE, and there is no caller of `unregister_connection` anywhere in the repo (`sip/ingress.py:128-132` provides the deregistration entry point but nobody calls it); `_registered_connection_ids`/`_legacy_connection_ids` (`ingress.py:47-48,91,151-153`).
+- **Why it is a problem**: the legacy set should represent "connections that already existed before the rotation window opened", but in reality it accumulates "all connections in history", so the old-certificate grace judgement during the dual-certificate overlap of REQ-S-3 will wrongly keep passing for a long time; the set itself is unbounded.
+- **Fix suggestion**: have C++ call back into Python to deregister when the transport closes/is destroyed; in the short term switch to a sliding window per peer endpoint with a cap.
 
-### F7【major】SipStackService.from_env 不加载任何生产 TLS/peer-policy/监听配置，默认 seam 证书为空且只信环回
+### F7[major]SipStackService.from_env loads no production TLS/peer-policy/listening configuration at all; the default seam certificate is empty and only loopback is trusted
 
-- **证据**：`runtime/sip_stack_service.py:63-75`（`_default_transport_seam`：cert/key 路径空串、allowed_addresses 仅本机）、`:136-165` `from_env` 不解析任何相关环境变量。
-- **为什么是问题**：Helm/Secret 注入的证书与运营商 trunk 白名单在产品进程里无处读取；外部流量按 fail-closed 全部拒绝。与 F1 共同构成「runtime 只能在演示机 loopback 工作」的根因。
-- **修复建议**：增加 `AS_TLS_CERT_PATH/KEY_PATH/CA_PATH`、`AS_PEER_ALLOWED_ADDRESSES`、`AS_PEER_ALLOWED_CERT_FINGERPRINTS`、bind/advertised address 的 env 解析与校验；空证书 + TLS 启用时 fail-closed 启动失败并给清晰日志。
+- **Evidence**: `runtime/sip_stack_service.py:63-75` (`_default_transport_seam`: cert/key paths are empty strings, allowed_addresses only covers the local host), `:136-165` — `from_env` parses none of the relevant environment variables.
+- **Why it is a problem**: the certificates injected by Helm/Secret and the carrier trunk allowlist have nowhere to be read in the product process; external traffic is rejected wholesale by fail-closed. Together with F1 this forms the root cause of "the runtime only works on the demo machine's loopback".
+- **Fix suggestion**: add env parsing and validation for `AS_TLS_CERT_PATH/KEY_PATH/CA_PATH`, `AS_PEER_ALLOWED_ADDRESSES`, `AS_PEER_ALLOWED_CERT_FINGERPRINTS`, and bind/advertised address; with an empty certificate and TLS enabled, fail closed at startup and emit a clear log.
 
-### F8【major】C++ 诊断全部 std::cout/cerr 文本输出，不满足 REQ-NF-13 结构化日志
+### F8[major]All C++ diagnostics are plain std::cout/cerr text output, which does not satisfy the REQ-NF-13 structured logging requirement
 
-- **证据**：`runtime_module.cxx` 约 20 处，如 `:784,815,827,842,866,923,1175-1194`（cout）与 `:535,594,791,871,928,1014`（cerr）。
-- **为什么是问题**：无 timestamp/level/trace_id/call_id/direction 字段（REQ-NF-13 要求 JSON 且可与 metrics/trace 关联）；客户日志平台无法解析。
-- **修复建议**：经回调把事件交还 Python 侧统一结构化日志，或封装含级别与 call_id 的 C++ 日志宏并定义字段契约；M8 前补字段断言。
+- **Evidence**: about 20 sites in `runtime_module.cxx`, e.g. `:784,815,827,842,866,923,1175-1194` (cout) and `:535,594,791,871,928,1014` (cerr).
+- **Why it is a problem**: there are no timestamp/level/trace_id/call_id/direction fields (REQ-NF-13 requires JSON that can be correlated with metrics/trace); the customer's log platform cannot parse it.
+- **Fix suggestion**: hand the events back to the Python side through a callback for unified structured logging, or wrap a C++ logging macro carrying level and call_id and define the field contract; add field assertions before M8.
 
-### F9【major】`make gate` 不构建 native 扩展，核心产品 SIP 路径测试静默 skip，门禁不守门
+### F9[major]`make gate` does not build the native extensions, so core product SIP path tests silently skip and the gate guards nothing
 
-- **证据**：本机 `make gate` 实测 **10 skipped**：`test_e1_contract_resip_runtime.py` 3、`test_e1_contract_resip_runtime_full.py` 4（S1–S4）、`test_sip_recovery.py` 1 均因 `_resip_runtime`/`_resip_recovery` 未构建跳过（跳过语句见 `test_e1_contract_resip_runtime_full.py:44-48`）。
-- **为什么是问题**：M2 后半/M7 的主要交付（产品栈 S1–S4、TLS、恢复）在没有 .so 时一律 skip，门禁照样全绿——AGENT.md §9 要求首个引入某层测试的里程碑把该层改阻塞；当前等于核心能力无阻塞验证。
-- **修复建议**：`make gate` 增加 native build 步骤（或独立必跑目标），关键 E1/恢复测试在扩展缺失时按里程碑策略 fail 而非 skip；demo 冒烟前打印扩展版本/sha。
+- **Evidence**: a local `make gate` measured **10 skipped**: 3 in `test_e1_contract_resip_runtime.py`, 4 in `test_e1_contract_resip_runtime_full.py` (S1–S4), and 1 in `test_sip_recovery.py`, all skipped because `_resip_runtime`/`_resip_recovery` are not built (the skip statement is at `test_e1_contract_resip_runtime_full.py:44-48`).
+- **Why it is a problem**: the main M2-second-half/M7 deliverables (product stack S1–S4, TLS, recovery) are all skipped when there is no .so, yet the gate stays green — AGENT.md §9 requires the first milestone that introduces tests for a layer to make that layer blocking; right now the core capability has no blocking verification.
+- **Fix suggestion**: add a native build step to `make gate` (or a separate mandatory target), make the key E1/recovery tests fail instead of skip when the extensions are missing, per the milestone policy; print the extension version/sha before the demo smoke run.
 
-### F10【major】分支未合入主干 `04afc5a` 的 M5 全链「不通过」评审即继续叠加 M6/M7，客户故事 C 未对账
+### F10[major]The branch kept stacking M6/M7 without merging the mainline commit `04afc5a` whose M5 full-chain review is a "fail", and the customer story C was not reconciled
 
-- **证据**：`git log callload..master` 仅 `04afc5a M5 review`（merge-base `2318f9c`）；该提交新增 `docs/reviews/m5-full-chain-review-2026-10-05.md`，结论为「不通过，建议撤销/降级 M5 工程关门签字」。本分支的客户 Demo 计划 §3.5/故事 C 仍把告警规则集、缩容判据、Helm 生产形态作为交付能力演示（`scripts/demo-review/story-c.sh:62-70`）。
-- **为什么是问题**：在该评审未合并、未裁决前，对客户演示同一批 M5 工件存在「演示被独立评审判定为不生效能力」的实质风险；长期分叉也会在合并时丢评审记录。
-- **修复建议**：先合入/ Rebase 主干，对该 M5 评审逐条对账（接受/驳回/修复），再决定故事 C 的话术与演示范围；合并前保持分支不得删除该文件。
+- **Evidence**: `git log callload..master` shows only `04afc5a M5 review` (merge-base `2318f9c`); that commit adds `docs/reviews/m5-full-chain-review-2026-10-05.md`, whose conclusion is "fail, recommend revoking/downgrading the M5 engineering gate sign-off". §3.5/story C of the customer demo plan on this branch still presents the alerting rule set, scale-down criteria and the Helm production form as delivered capabilities (`scripts/demo-review/story-c.sh:62-70`).
+- **Why it is a problem**: while that review is unmerged and unadjudicated, demonstrating the same batch of M5 artefacts to the customer carries the substantive risk that "the demo is judged by an independent review to be a non-working capability"; long-term divergence will also lose the review record at merge time.
+- **Fix suggestion**: merge/rebase the mainline first, reconcile the M5 review item by item (accept/reject/fix), and only then decide the story C talk track and demo scope; keep the branch from deleting that file before the merge.
 
-### F11【major】提交粒度与提交信息违反 AGENT.md §11，评审/bisect/回滚不可行
+### F11[major]Commit granularity and commit messages violate AGENT.md §11, making review/bisect/rollback infeasible
 
-- **证据**：`e283538 m7 done` 单提交携带 165 文件 +14670 行，混合 M2/M6/M7/demo 四条工作线；5 个提交信息（`m7 done`、`M2 handoff -2`、`M6 pause, to finish M2 at first` 等）均不符合 Conventional Commits（`feat/fix/...` + scope）。
-- **为什么是问题**：无法按 ADR/REQ 追溯单个行为改动，无法 revert 单一能力，本次评审只能整体读 diff；AGENT.md §11 要求一次 commit 一个逻辑改动。
-- **修复建议**：后续提交严格拆分并写 conventional message + REQ/ADR 引用；既有历史的处理（是否在合并前重组）由维护者逐次显式决定，agent 不擅自改写历史、不 force-push。
+- **Evidence**: the single commit `e283538 m7 done` carries 165 files and +14670 lines, mixing four work lines (M2/M6/M7/demo); the 5 commit messages (`m7 done`, `M2 handoff -2`, `M6 pause, to finish M2 at first`, etc.) all fail Conventional Commits (`feat/fix/...` + scope).
+- **Why it is a problem**: individual behaviour changes cannot be traced to an ADR/REQ, a single capability cannot be reverted, and this review could only read the diff as a whole; AGENT.md §11 requires one logical change per commit.
+- **Fix suggestion**: split subsequent commits strictly and write conventional messages with REQ/ADR references; how existing history is handled (whether to restructure it before the merge) is an explicit per-instance maintainer decision — the agent will not rewrite history or force-push on its own.
 
-### F12【minor】as_load CLI 只要 1 通 established 即返回 0，压测高失败率被退出码掩盖
+### F12[minor]The as_load CLI returns 0 as soon as a single session is established, so a high load-test failure rate is masked by the exit code
 
-- **证据**：`testbed/load/src/as_load/__main__.py:57`（`return 0 if summary["counts"]["established_sessions"] else 1`）。
-- **为什么是问题**：60000 尝试只成功 1 通也返回 0；作为 REQ-NF-15 证据工具，自动化消费方会被误导（现有 M6 shell 脚本另作了 `>=1` 判断，属部分缓解）。
-- **修复建议**：增加 `--min-success-rate`/`--max-unresolved` 判定并在错误计数非零时非零退出；summary 中显式输出成功率。
+- **Evidence**: `testbed/load/src/as_load/__main__.py:57` (`return 0 if summary["counts"]["established_sessions"] else 1`).
+- **Why it is a problem**: 60000 attempts with only 1 success still returns 0; as the evidence tool for REQ-NF-15 this misleads automated consumers (the existing M6 shell script makes a separate `>=1` check, which is a partial mitigation).
+- **Fix suggestion**: add `--min-success-rate`/`--max-unresolved` judgements and exit non-zero when the error count is non-zero; output the success rate explicitly in the summary.
 
-### F13【minor】run-all-automated 收尾统一输出 OK，不区分 通过/跳过/失败
+### F13[minor]run-all-automated always prints OK at the end, without distinguishing pass/skip/fail
 
-- **证据**：`scripts/demo-review/run-all-automated.sh:27-36`（Redis 不可达 SKIP story-d 后仍 `run-all-automated: OK`；kind 缺失的 SKIP 在 story-c.sh:30-37 内同理）。
-- **为什么是问题**：办方会前冒烟可能把「D/C 整场没跑」误读为全绿；plan §4 所称「A/B/D/E 全自动路径已跑通」依赖本机恰好具备 Redis/native 工具链。
-- **修复建议**：增加严格模式参数（`--require-redis/--require-kind/--require-native`），结尾汇总 `PASS n / SKIP m(列名) / FAIL f` 并写入 artifact summary。
+- **Evidence**: `scripts/demo-review/run-all-automated.sh:27-36` (after Redis is unreachable and story-d is SKIPped it still prints `run-all-automated: OK`; the SKIP for a missing kind behaves the same way at story-c.sh:30-37).
+- **Why it is a problem**: the organizer may read "D/C did not run at all" as all-green in the pre-meeting smoke; the "the A/B/D/E fully automated path has been run through" claim in plan §4 depends on the local machine happening to have Redis/a native toolchain.
+- **Fix suggestion**: add a strict-mode flag (`--require-redis/--require-kind/--require-native`), and print a final summary `PASS n / SKIP m(names) / FAIL f` written into the artifact summary.
 
-### F14【minor】M6 测量脚本输出目录硬编码 /tmp，不可配置、无保留策略
+### F14[minor]M6 measurement scripts hardcode the output directory /tmp, with no configurability and no retention policy
 
-- **证据**：`testbed/load/scripts/m6-product-runtime-smoke.sh:72`、`m6-o1-formal-report.sh:259`。
-- **修复建议**：支持 `AS_M6_OUTPUT_ROOT`（默认 /tmp），启动前校验可写；正式批次归档/防覆盖。
+- **Evidence**: `testbed/load/scripts/m6-product-runtime-smoke.sh:72`, `m6-o1-formal-report.sh:259`.
+- **Fix suggestion**: support `AS_M6_OUTPUT_ROOT` (default /tmp) and validate writability before starting; archive formal batches / prevent overwriting.
 
-### F15【minor】VERSION/CHANGELOG 未随本批产品交付更新，DoD 未闭合
+### F15[minor]VERSION/CHANGELOG were not updated with this batch of product deliverables, so the DoD is not closed
 
-- **证据**：`git diff master..callload -- VERSION CHANGELOG.md` 无变更；唯一 pyproject 改动是 ruff exclude 注释。
-- **为什么是问题**：AGENT.md §14 DoD 要求「有 CHANGELOG 条目；交付内容变化则产品版本号 bump」。本分支首次交付可运行产品 SIP runtime、恢复能力与容量 harness。
-- **修复建议**：M8 候选打包前统一补 CHANGELOG 与 VERSION bump，并与 `tests/test_version_consistency.py` 对齐。
+- **Evidence**: `git diff master..callload -- VERSION CHANGELOG.md` shows no change; the only pyproject change is a ruff exclude comment.
+- **Why it is a problem**: the AGENT.md §14 DoD requires "a CHANGELOG entry; bump the product version when the delivered content changes". This branch delivers, for the first time, a runnable product SIP runtime, recovery capability and a capacity harness.
+- **Fix suggestion**: add the CHANGELOG entry and the VERSION bump uniformly before the M8 candidate is packaged, aligned with `tests/test_version_consistency.py`.
 
-### F16【minor】CallController 恢复方法缺单元层覆盖
+### F16[minor]The CallController recovery methods lack unit-level coverage
 
-- **证据**：`platform/tests/test_call_controller.py` 10 个用例（`:37-209`）不覆盖 `restore_from_checkpoint` / `route_in_dialog_bye`；目前仅由集成/恢复切片间接覆盖。
-- **修复建议**：补 unit：恢复后双腿关联可查、重复恢复幂等/报错、未知 call_id 路由返回 None。
+- **Evidence**: the 10 cases in `platform/tests/test_call_controller.py` (`:37-209`) do not cover `restore_from_checkpoint` / `route_in_dialog_bye`; at present they are only indirectly covered by the integration/recovery slice.
+- **Fix suggestion**: add unit tests: two-leg correlation is queryable after recovery, repeated recovery is idempotent/errors, routing an unknown call_id returns None.
 
-### F17【note】vendor 预构建包可移植性窄且携带作者机构建路径，36 MB 二进制入库
+### F17[note]The vendored prebuilt package has narrow portability, carries the author's build paths, and puts 36 MB of binaries into the repo
 
-- **证据**：`testbed/simulators/resip-probe/vendor/`（源码 tar 30 MB、prebuilt 6 MB、`SHA256SUMS`）；handoff `docs/handoff/2026-10-04-m2.md` 记载 prebuilt 含绝对 RUNPATH `/tmp/as-resiprocate-m2-build-20261004`、CMake cache 绝对路径，仅 Ubuntu20.04/OpenSSL 1.1。
-- **修复建议**：保留源码包（离线构建价值明确）；评估 prebuilt 改走 release artifact/对象存储而非长期 git 历史；或在 vendor/README 标注保质期与重建命令（当前已有部分说明，需加失效日期）。
+- **Evidence**: `testbed/simulators/resip-probe/vendor/` (source tar 30 MB, prebuilt 6 MB, `SHA256SUMS`); handoff `docs/handoff/2026-10-04-m2.md` records that the prebuilt contains the absolute RUNPATH `/tmp/as-resiprocate-m2-build-20261004` and absolute CMake cache paths, and only supports Ubuntu 20.04 / OpenSSL 1.1.
+- **Fix suggestion**: keep the source package (its offline-build value is clear); evaluate moving the prebuilt to a release artifact/object store instead of long-term git history; or note the shelf life and rebuild command in vendor/README (some notes already exist; an expiry date is still needed).
 
-### F18【minor】Demo 计划承诺 487 场景但五个一键故事均不执行 S4
+### F18[minor]The demo plan promises a 487 scenario, but none of the five one-click stories execute S4
 
-- **证据**：`pre-m8-demo-review-plan.md` §3.1/§5「信令半天：…486/487」；`test_e1_contract_resip_runtime_full.py:185` 存在真实 UDP 的 `test_e1_s4_caller_cancel_returns_487`，但 story-a…e 脚本均不调用它。
-- **修复建议**：在故事 B 或新增信令半场脚本中加入 S4 一键步骤，或从场次表中删除 487 承诺，避免现场无证据。
+- **Evidence**: §3.1/§5 of `pre-m8-demo-review-plan.md` "signalling half-day: …486/487"; `test_e1_contract_resip_runtime_full.py:185` has a real-UDP `test_e1_s4_caller_cancel_returns_487`, but the story-a…e scripts never call it.
+- **Fix suggestion**: add a one-click S4 step to story B or to a new signalling half-day script, or delete the 487 promise from the session agenda to avoid having no evidence on the day.
 
-## 5. M8 前处置优先级
+## 5. Pre-M8 Disposition Priority
 
-| 优先级 | 条目 | 理由 |
+| Priority | Items | Rationale |
 |---|---|---|
-| P0（客户 Demo / 合并前） | F1、F7、F10 | 决定产品进程能否离开 loopback 被 S-SBC 访问；决定故事 C 是否可对客户讲 |
-| P1（M8 验收硬门槛） | F2、F3、F4、F9、F6、F5 | REQ-NF-1、REQ-F-10、REQ-S-3 的证据真实性，以及门禁对产品路径的实际覆盖 |
-| P2（打包前） | F8、F11、F15、F12、F13、F14、F16、F18、F17 | 可观测性、工程卫生、证据链与 demo 可重复性 |
+| P0 (customer demo / before merge) | F1, F7, F10 | Determines whether the product process can leave loopback and be reached by S-SBC; determines whether story C can be told to the customer |
+| P1 (hard gate for M8 acceptance) | F2, F3, F4, F9, F6, F5 | Truthfulness of the REQ-NF-1, REQ-F-10 and REQ-S-3 evidence, and the gate's actual coverage of the product path |
+| P2 (before packaging) | F8, F11, F15, F12, F13, F14, F16, F18, F17 | Observability, engineering hygiene, the evidence chain and demo repeatability |
 
-## 6. 实测记录（2026-10-05，本机）
+## 6. Measurement Record (2026-10-05, local machine)
 
 ```text
 $ make gate
@@ -220,27 +220,27 @@ SKIP 原因分布：
   test_derived_baseline.py                 ×2  Route/Record-Route 待 M2 probe 补
 ```
 
-本结果只是本地门禁证据（AGENT.md §9）；未运行 `make m2-platform-resip-build` 后的集成层，未运行 PG/Redis/kind/性能批次。
+This result is only local gate evidence (AGENT.md §9); the integration layer after `make m2-platform-resip-build` was not run, and neither were the PG/Redis/kind/performance batches.
 
 ## Adjudication
 
-| ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
+| ID | Source | Issue summary | Adjudication | Remediation plan | Status | Verification method | Remarks |
 |---|---|---|---|---|---|---|---|
-| F1 | 本评审；runtime_module.cxx | native runtime 监听/Contact/SDP 硬编码 127.0.0.1 | 采纳 | `bind_address`/`advertised_address` 配置化 | **已修复** | `transport_env.py` + C++ transport config | blocker |
-| F2 | 本评审；recovery_module.cxx | 恢复 BYE Contact/route_set | 采纳 | Contact 从 checkpoint URI；Route 回放 | **已修复** | recovery_module.cxx | major |
-| F3 | 本评审；sip_stack_service.py | UAC checkpoint 占位 | 采纳 | FORWARD 路径 `uac_leg` native 回传 | **已修复** | accept-all harness 仍可有占位腿 | major |
-| F4 | 本评审；runtime + call_controller | 非 486 → 502 | 采纳 | REQ-F-10 透传集 | **已修复** | `test_call_controller.py` | major |
-| F5 | 本评审；runtime_module.cxx | fingerprint 无界 | 采纳 | 2048 上限淘汰 | **已修复** | C++ storePeerFingerprint | major |
-| F6 | 本评审；ingress/resip_runtime | connection 只注册不注销 | 采纳 | 上限 + 终止注销 | **部分修复** | 缺 transport close 回调 | major |
-| F7 | 本评审；sip_stack_service | from_env 不加载 TLS/peer | 采纳 | `transport_env.py` | **已修复** | `test_transport_env.py` | major |
-| F8 | 本评审；runtime_module.cxx | cout/cerr 非结构化 | 采纳 | Python JSON 回调或宏 | **未闭合** | M8 前 | major |
-| F9 | 本评审；gate skip | native 不测仍绿 | 采纳 | gate 增加 native build 步骤 + `AS_REQUIRE_NATIVE_EXTENSIONS` | **部分修复** | `native_extensions.py` | major |
-| F10 | 本评审；story-c / M5 评审 | Demo 与 M5 未对账 | 采纳（内容） | 故事 C L1 话术 | **已修复** | pre-m8 + story-c 横幅 | major |
-| F11 | 本评审；提交粒度 | Conventional Commits | 维护者 | 历史不重组 | **维护者** | — | major |
-| F12 | 本评审；as_load | 退出码误导 | 采纳 | `--min-success-rate` 等 | **已修复** | `as_load/__main__.py` | minor |
-| F13 | 本评审；run-all-automated | SKIP 仍 OK | 采纳 | PASS/SKIP/FAIL + `--strict` | **已修复** | `run-all-automated.sh` | minor |
-| F14 | 本评审；m6 scripts | /tmp 硬编码 | 采纳 | `AS_M6_OUTPUT_ROOT` | **已修复** | m6-*.sh | minor |
-| F15 | 本评审；VERSION | 未 bump | 采纳 | 0.2.0 + CHANGELOG | **已修复** | VERSION/CHANGELOG | minor |
-| F16 | 本评审；CallController | 恢复缺单测 | 采纳 | restore/route_bye 用例 | **已修复** | `test_call_controller.py` | minor |
-| F17 | 本评审；vendor | prebuilt 保质期 | 部分采纳 | vendor README 段 | **已修复（文档）** | 迁出 git 维护者决策 | note |
-| F18 | 本评审；487 / S4 | demo 未跑 S4 | 采纳 | story-b 步骤 4 | **已修复** | `story-b.sh` | minor |
+| F1 | This review; runtime_module.cxx | native runtime listening/Contact/SDP hardcoded to 127.0.0.1 | Accepted | configurate `bind_address`/`advertised_address` | **Fixed** | `transport_env.py` + C++ transport config | blocker |
+| F2 | This review; recovery_module.cxx | recovery BYE Contact/route_set | Accepted | Contact from the checkpoint URI; Route replay | **Fixed** | recovery_module.cxx | major |
+| F3 | This review; sip_stack_service.py | UAC checkpoint placeholder | Accepted | native return of `uac_leg` on the FORWARD path | **Fixed** | the accept-all harness may still have a placeholder leg | major |
+| F4 | This review; runtime + call_controller | non-486 → 502 | Accepted | REQ-F-10 pass-through set | **Fixed** | `test_call_controller.py` | major |
+| F5 | This review; runtime_module.cxx | unbounded fingerprint | Accepted | 2048 cap eviction | **Fixed** | C++ storePeerFingerprint | major |
+| F6 | This review; ingress/resip_runtime | connections only registered, never deregistered | Accepted | cap + deregistration on termination | **Partially fixed** | missing transport close callback | major |
+| F7 | This review; sip_stack_service | from_env loads no TLS/peer config | Accepted | `transport_env.py` | **Fixed** | `test_transport_env.py` | major |
+| F8 | This review; runtime_module.cxx | cout/cerr are not structured | Accepted | Python JSON callback or macro | **Not closed** | before M8 | major |
+| F9 | This review; gate skip | native untested yet still green | Accepted | gate native build step + `AS_REQUIRE_NATIVE_EXTENSIONS` | **Partially fixed** | `native_extensions.py` | major |
+| F10 | This review; story-c / M5 review | demo and M5 not reconciled | Accepted (content) | story C L1 talk track | **Fixed** | pre-m8 + story-c banner | major |
+| F11 | This review; commit granularity | Conventional Commits | Maintainer | history not restructured | **Maintainer** | — | major |
+| F12 | This review; as_load | misleading exit code | Accepted | `--min-success-rate` etc. | **Fixed** | `as_load/__main__.py` | minor |
+| F13 | This review; run-all-automated | SKIP still prints OK | Accepted | PASS/SKIP/FAIL + `--strict` | **Fixed** | `run-all-automated.sh` | minor |
+| F14 | This review; m6 scripts | /tmp hardcoded | Accepted | `AS_M6_OUTPUT_ROOT` | **Fixed** | m6-*.sh | minor |
+| F15 | This review; VERSION | not bumped | Accepted | 0.2.0 + CHANGELOG | **Fixed** | VERSION/CHANGELOG | minor |
+| F16 | This review; CallController | recovery lacks unit tests | Accepted | restore/route_bye cases | **Fixed** | `test_call_controller.py` | minor |
+| F17 | This review; vendor | prebuilt shelf life | Partially accepted | vendor README section | **Fixed (documentation)** | moving it out of git is a maintainer decision | note |
+| F18 | This review; 487 / S4 | demo does not run S4 | Accepted | story-b step 4 | **Fixed** | `story-b.sh` | minor |

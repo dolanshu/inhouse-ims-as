@@ -5,135 +5,136 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# B2 / B3 延后项登记（requirement + ADR 起草，下个 phase 实现）
+# B2 / B3 Deferred Items Register (requirement + ADR drafting, implemented next phase)
 
-> **落盘日期：2026-10-12。状态：已登记，未起草，未实现。**
+> **Landed: 2026-10-12. Status: registered, not drafted, not implemented.**
 >
-> **维护者 2026-10-12 决定**：B2 / B3 的 requirement 与 ADR 起草**属大工程，本轮不做**，
-> **单独留 item，后续做**；**功能实现放在下个 phase，当前不做**。
+> **Maintainer decision 2026-10-12**: drafting the requirement and ADR for B2 / B3 **is major work and is not done this round**;
+> it is **kept as a separate item to be done later**; **feature implementation goes into the next phase and is not done now**.
 >
-> **本文件是这两个 item 的仓内追踪载体**（本项目无外部 issue 跟踪，仓内文档即追踪系统 ——
-> 与 A4-3「独立 issue」以 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)
-> 为载体的裁决口径一致）。
+> **This file is the in-repo tracking carrier for these two items** (this project has no external issue tracker; in-repo documents are the tracking system ——
+> consistent with the adjudication stance taken for A4-3 "separate issue", which uses
+> [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md) as its carrier).
 >
-> **本文件不签收任何 REQ，不启动任何实现，不构成对外承诺。**
+> **This file signs off no REQ, starts no implementation, and constitutes no external commitment.**
 
 ---
 
-## 0. 先说清 B2 / B3 到底处于什么状态
+## 0. First, What State B2 / B3 Are Actually In
 
-这两项常被误读为「还没裁决」。**不是**——**取值早已裁决完毕**，缺的是**工程落地**：
+These two items are often misread as "not yet adjudicated". **They are not** — **the values have long since been adjudicated**; what is missing is **engineering implementation**:
 
-| 项 | 已裁决的取值 | 裁决出处 | 当前状态 |
+| Item | Adjudicated value | Adjudication source | Current status |
 |---|---|---|---|
-| **B2** | O4＝默认保留 **10 天**、部署可配；D5＝**in-cluster PostgreSQL**；Redis 继续用于 runtime checkpoint | §0-A.6 **G6 / B2 + D5**（2026-10-10 裁决，2026-10-11 同步到 `plan.md` §5） | **取值已裁**，轨迹存储 / 查询 / 删除**实现未落** |
-| **B3** | O5＝**站点内 N+1 + 跨站 1+1 warm standby**；D3＝**Redis primary/replica + Sentinel**（ADR-0008） | §0-A.6 **G7 / B3 + D3**（2026-10-10 裁决） | **取值已裁**，Sentinel **实现未落**；**RPO / RTO 数值仍未裁** |
+| **B2** | O4 = default retention **10 days**, deployment-configurable; D5 = **in-cluster PostgreSQL**; Redis continues to serve runtime checkpoint | §0-A.6 **G6 / B2 + D5** (adjudicated 2026-10-10, synced to `plan.md` §5 on 2026-10-11) | **value adjudicated**; trace storage / query / delete **not implemented** |
+| **B3** | O5 = **in-site N+1 + cross-site 1+1 warm standby**; D3 = **Redis primary/replica + Sentinel** (ADR-0008) | §0-A.6 **G7 / B3 + D3** (adjudicated 2026-10-10) | **value adjudicated**, Sentinel **not implemented**; **RPO / RTO numbers still not adjudicated** |
 
-**因此本 item 的内容是「把已裁的取值变成可实现的工程」，不是「再来一次裁决」。**
-
----
-
-## 1. Item B2 · 呼叫轨迹保留与存储
-
-### 1.1 要交付什么
-
-| # | 交付物 | 说明 |
-|---|---|---|
-| 1 | **requirement** | 轨迹存储 / 查询 / 删除三条能力的需求条目；含保留期语义（**清理触发点**与**时间起算口径**——裁决时明确标注为「实现细节待定义」） |
-| 2 | **ADR** | D5 已定为 in-cluster PostgreSQL，但「in-cluster」的部署形态（StatefulSet？已有 `deploy/compose` 的 PG 还是 chart 内新起？）、备份策略、与 ADR-0026（D12 集群内 PG/Redis）的关系，都需一条 ADR 定夺 |
-| 3 | 实现（**下个 phase**） | 存储 / 查询 / 删除 + 清理触发 |
-
-### 1.2 已知的前置事实（起草时要用）
-
-- `docs/product/security-privacy.md` §2 / §3.1 与 `docs/operations/backup-restore.md` §1 的「待 D5 裁决」表述，
-  已于 2026-10-11 按追加方式同步为「取值已裁、实现未落」（register §2 P3）。
-- `security-privacy.md` §4.1 记录的「**chart 无备份 Job**」这一事实**未变** —— 备份恢复方案因此仍未闭合。
-  起草 ADR 时必须处理这一点，否则 ADR 会与仓库事实冲突。
-- 裁决原文写明「**实现未落**」，且「不得标为已解决」。
-
-### 1.3 阻塞的下游（起草完成后可解锁）
-
-- `docs/product/security-privacy.md` 的 PDPO 保留期限与存储方案（当前写不出「系统按 10 天清理」）
-- `docs/product/ne-datasheet.md` 若有相关表述
-- 包装交付物中任何依赖「轨迹可查询」的描述
+**Therefore the content of this item is "turn the adjudicated values into implementable engineering", not "adjudicate once more".**
 
 ---
 
-## 2. Item B3 · Redis HA 与容灾
+## 1. Item B2 · Call Trace Retention and Storage
 
-### 2.1 要交付什么
+### 1.1 What Must Be Delivered
 
-| # | 交付物 | 说明 |
+| # | Deliverable | Explanation |
 |---|---|---|
-| 1 | **requirement** | 容灾能力需求；含 **RPO / RTO 数值**——**裁决明确未裁此值**，requirement 阶段必须补上，否则无法验收 |
-| 2 | **ADR** | D3 已选 Redis primary/replica + Sentinel（ADR-0008），但 ADR-0008 是否覆盖 **Sentinel 的具体拓扑**（几个 Sentinel、quorum、与 K8s 调度的关系）需确认；若不足，需新 ADR 或修订 |
-| 3 | 实现（**下个 phase**） | Sentinel 部署与故障切换验证 |
+| 1 | **requirement** | requirement entries for the three capabilities of trace storage / query / delete; including retention-period semantics (**cleanup trigger point** and **time-origin definition** — explicitly marked at adjudication time as "implementation detail to be defined") |
+| 2 | **ADR** | D5 has been settled as in-cluster PostgreSQL, but the deployment shape of "in-cluster" (StatefulSet? reuse the PG in the existing `deploy/compose`, or start a new one inside the chart?), the backup strategy, and the relationship to ADR-0026 (D12 in-cluster PG/Redis) all need an ADR to settle |
+| 3 | Implementation (**next phase**) | storage / query / delete + cleanup trigger |
 
-### 2.2 已知的前置事实（起草时要用）
+### 1.2 Known Preconditions (needed when drafting)
 
-- D3 的**客户端接线**已于 2026-10-05 resolved（`m2-d3-sentinel-adjudication-2026-10-05.md`）；
-  当前未决的**只剩 HA 拓扑**。
-- 裁决明确「**不承诺机架 / AZ 级容错**」——requirement 不得写成机架级容灾。
-- `docs/operations/backup-restore.md` 的 RPO / RTO 与 HA 章节，已于 2026-10-11 同步为「取值已裁、实现未落」。
-- `plan.md` §5.2 D3 行与 §5.1 O5 行均带行内注记，起草时以那里为准。
+- The "pending D5 adjudication" wording in `docs/product/security-privacy.md` §2 / §3.1 and `docs/operations/backup-restore.md` §1
+  was synced on 2026-10-11, as an addendum, to "value adjudicated, implementation not landed" (register §2 P3).
+- The fact recorded in `security-privacy.md` §4.1 that the "**chart has no backup Job**" is **unchanged** — the backup/restore solution therefore remains unclosed.
+  This point must be addressed when drafting the ADR, otherwise the ADR will conflict with repo facts.
+- The adjudication original text states "**implementation not landed**" and that it "must not be marked as resolved".
 
-### 2.3 阻塞的下游
+### 1.3 Blocked Downstream Items (unblocked once drafting completes)
 
-- `docs/operations/backup-restore.md` 的 RPO / RTO 数值（当前为空）
+- The PDPO retention period and storage scheme in `docs/product/security-privacy.md` (currently unable to state "the system cleans up after 10 days")
+- `docs/product/ne-datasheet.md` if it contains related wording
+- Any packaging deliverable description that depends on "traces are queryable"
+
+---
+
+## 2. Item B3 · Redis HA and Disaster Recovery
+
+### 2.1 What Must Be Delivered
+
+| # | Deliverable | Explanation |
+|---|---|---|
+| 1 | **requirement** | disaster recovery capability requirement; including **RPO / RTO numbers** — **the adjudication explicitly did not settle these values**, and they must be added during the requirement phase, otherwise acceptance is impossible |
+| 2 | **ADR** | D3 has chosen Redis primary/replica + Sentinel (ADR-0008), but whether ADR-0008 covers the **concrete Sentinel topology** (how many Sentinels, quorum, relationship to K8s scheduling) must be confirmed; if insufficient, a new ADR or a revision is needed |
+| 3 | Implementation (**next phase**) | Sentinel deployment and failover verification |
+
+### 2.2 Known Preconditions (needed when drafting)
+
+- The **client wiring** for D3 was resolved on 2026-10-05 (`m2-d3-sentinel-adjudication-2026-10-05.md`);
+  the only thing currently undecided is the **HA topology**.
+- The adjudication explicitly says "**no rack / AZ-level fault tolerance is promised**" — the requirement must not be written as rack-level disaster recovery.
+- The RPO / RTO and HA sections of `docs/operations/backup-restore.md` were synced on 2026-10-11 to "value adjudicated, implementation not landed".
+- The `plan.md` §5.2 D3 row and §5.1 O5 row both carry inline notes; those are authoritative when drafting.
+
+### 2.3 Blocked Downstream Items
+
+- The RPO / RTO numbers in `docs/operations/backup-restore.md` (currently empty)
 - `docs/product/security-privacy.md` §4.1
-- 任何对外材料中的可用性承诺
+- Any availability commitment in external material
 
 ---
 
-## 3. 为什么本轮不做（如实记录）
+## 3. Why This Is Not Done This Round (recorded faithfully)
 
-1. **属需求级工作**：按 `AGENT.md` §3，需走 requirement → ADR → HLD/LLD → 契约 → 代码+测试 → 验收项 + review record。
-   requirement 与 ADR 的**起草**本身就需要先读全部相关正本（ADR-0008、ADR-0026、M2 D3 裁决、两份下游文档），
-   不是一次指令可完成的。
-2. **B2 与 B3 相互牵连**：轨迹存储选 in-cluster PostgreSQL，而 PG 的高可用形态又与 D12（ADR-0026）和
-   B3 的容灾基线（跨站 1+1 warm standby）相关。分开起草会产生两份互相冲突的 ADR。
-3. **维护者已明确**：本轮只留 item，功能下个 phase 实现。
-
----
-
-## 4. 启动条件（下次开工前先确认）
-
-- [ ] 维护者授权启动 requirement 起草
-- [ ] **B3 的 RPO / RTO 数值**已有取值（否则 requirement 无处落验收标准）
-- [ ] 确认 B2 的 PG 部署形态与 ADR-0026 的关系（修订还是新 ADR）
-- [ ] 确认 B2 / B3 是否**合并**为一份「状态与持久化」requirement + ADR，还是分开
+1. **It is requirement-level work**: per `AGENT.md` §3, it must go through requirement → ADR → HLD/LLD → contract → code + tests → acceptance items + review record.
+   The **drafting** of the requirement and ADR itself requires first reading all relevant primary documents (ADR-0008, ADR-0026, the M2 D3 adjudication, the two downstream documents),
+   which cannot be completed by a single instruction.
+2. **B2 and B3 are entangled**: trace storage selects in-cluster PostgreSQL, while the high-availability shape of PG is in turn related to D12 (ADR-0026)
+   and to B3's disaster recovery baseline (cross-site 1+1 warm standby). Drafting them separately would produce two mutually conflicting ADRs.
+3. **The maintainer has been explicit**: this round only records the items; the feature is implemented next phase.
 
 ---
 
-## 5. 后置到下一个 release（2026-10-12 晚些时候追加）
+## 4. Start Conditions (confirm before kicking off next time)
 
-> **维护者 2026-10-12 决定**：B2 / B3 的 requirement 与 ADR 起草（**含 B3 的 RPO / RTO 取值**）
-> **整体留到下一个 release**；本轮不启动，**以后不再单独提出**
-> （与 [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md)
-> §12「已裁不做登记区」同口径：后续状态盘点一律只引指针，不逐项复述）。
-
-- 本文 §0–§4 的全部内容**继续有效**，作为下一个 release 启动时的输入；
-- §4 的四项启动条件**原样保留** —— 下一个 release 开工前先逐项确认，未确认不得启动；
-- **RPO / RTO 数值的裁定一并后置** —— 它属对外可用性承诺，须维护者取值，不由 agent 代裁；
-- **重启时机**：维护者在下一个 release 排期时明确；届时在本文**追加**重启记录，不改写本文。
-
-> **去向指针（2026-10-13 追加；上方第 5 节原文一律保留不改）**：本文的后置登记统一收口于
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) —— **B2**（O4＝默认保留 10 天、部署可配，
-> D5＝in-cluster PostgreSQL；轨迹存储 / 查询 / 删除实现未落）见 **§4-1**；**B3**（O5 / D3 取 Redis primary/replica + Sentinel，
-> 实现未落）见 **§4-2**；**本文 §4 的四项启动条件**原样保留为该文档 **§4.3**，未确认不得启动；
-> **RPO / RTO 取值**属对外可用性承诺、仍须维护者取值，登记为该文档 **§7-4**。
-> 本文 §0–§4 的全部内容**继续有效**，作为下一个 release 启动时的输入；重启记录届时在该文档对应行**追加**，不改写本节。
+- [ ] The maintainer authorizes starting the requirement drafting
+- [ ] The **B3 RPO / RTO numbers** have values (otherwise the requirement has nowhere to put acceptance criteria)
+- [ ] Confirm the PG deployment shape for B2 and its relationship to ADR-0026 (revision or a new ADR)
+- [ ] Confirm whether B2 / B3 should be **merged** into one "state and persistence" requirement + ADR, or kept separate
 
 ---
 
-**落盘日期：2026-10-12。状态：已登记，未起草，未实现。**
-（关联：[`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §4 B2 / B3；
-上游裁决：`docs/plan.md` §0 决策记录表 G6 / G7 行。
-本文件不签收任何 REQ、不启动任何实现，不构成对外承诺。）
+## 5. Deferred to the Next Release (added later on 2026-10-12)
+
+> **Maintainer decision 2026-10-12**: drafting the requirement and ADR for B2 / B3 (**including the B3 RPO / RTO values**)
+> is **deferred in its entirety to the next release**; not started this round, and **it will not be raised separately again**
+> (same stance as §12 "adjudicated-but-not-done register area" of
+> [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md):
+> subsequent status inventories only cite the pointer and never restate item by item).
+
+- All content of §0–§4 of this document **remains in effect** as input when the next release starts;
+- The four start conditions of §4 are **retained verbatim** — confirm each one before the next release starts work; no start without confirmation;
+- **Adjudicating the RPO / RTO values is deferred as well** — it is an external availability commitment and must be valued by the maintainer, not adjudicated by the agent;
+- **Restart timing**: set by the maintainer when scheduling the next release; at that point, **append** the restart record to this document without rewriting it.
+
+> **Destination pointer (added 2026-10-13; the original text of section 5 above is retained unchanged)**: the deferred registrations in this document are uniformly consolidated in
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) — **B2** (O4 = default 10-day retention, deployment-configurable,
+> D5 = in-cluster PostgreSQL; trace storage / query / delete not implemented) see **§4-1**; **B3** (O5 / D3 selects Redis primary/replica + Sentinel,
+> not implemented) see **§4-2**; **the four start conditions of §4 of this document** are retained verbatim as **§4.3** of that document, no start without confirmation;
+> the **RPO / RTO values** are an external availability commitment and must still be valued by the maintainer, registered as **§7-4** of that document.
+> All content of §0–§4 of this document **remains in effect** as input when the next release starts; the restart record will be **appended** to the corresponding row of that document at that time, without rewriting this section.
+
+---
+
+**Landed: 2026-10-12. Status: registered, not drafted, not implemented.**
+(Related: [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §4 B2 / B3;
+upstream adjudication: the G6 / G7 rows of the §0 decision record table in `docs/plan.md`.
+This file signs off no REQ, starts no implementation, and constitutes no external commitment.)

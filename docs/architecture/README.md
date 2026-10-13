@@ -12,99 +12,117 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 架构入口（Architecture entry）
+# Architecture entry
 
-> **本文是 `docs/architecture/` 的入口与优先级说明，只做四件事**：文档地图与优先级、交付边界、
-> 证据分级、当前已知待确认项。**本文不裁决任何未决项。**
-> 落盘日期 2026-10-11，**状态：已落盘，待维护者评审**。
+> **This document is the entry point and priority statement for
+> `docs/architecture/`; it does exactly four things**: a document map with
+> priorities, a delivery boundary, an evidence-grading scheme, and currently known
+> open items. **This document resolves no open item.**
+> Landed date 2026-10-11, **status: landed, pending maintainer review**.
 
-## 1. 文档地图与优先级
+## 1. Document map and priorities
 
-**规范文档 = [`hld.md`](./hld.md) / [`lld.md`](./lld.md)。**
+**Normative documents = [`hld.md`](./hld.md) / [`lld.md`](./lld.md).**
 
-| 文档 | 地位 |
+| Document | Status |
 |---|---|
-| [`hld.md`](./hld.md) | **规范文档**（高层设计） |
-| [`lld.md`](./lld.md) | **规范文档**（低层设计） |
-| [`adr/`](./adr/) | 决策记录；入口是 [`adr/README.md`](./adr/README.md) 的注册表。ADR 记录**为什么**这样决定，不替代 HLD / LLD |
-| [`新系统整体架构.md`](./新系统整体架构.md) | **参考与背景材料**，无规范效力 |
-| [`reSIProcate.md`](./reSIProcate.md) | **参考与背景材料**（SIP 栈选型背景） |
-| [`resiprocate-dum-b2bua.md`](./resiprocate-dum-b2bua.md) | **参考与背景材料**（DUM 协议机制背景） |
-| [`call-state-recovery-options.md`](./call-state-recovery-options.md) | **参考与背景材料**（呼叫状态恢复方案比较，与 ADR-0023 同主题） |
-| [`容量量级估算.md`](./容量量级估算.md) | **参考与背景材料**（容量估算方法，**不含对外承诺数字**） |
+| [`hld.md`](./hld.md) | **Normative document** (high-level design) |
+| [`lld.md`](./lld.md) | **Normative document** (low-level design) |
+| [`adr/`](./adr/) | Decision records; the entry point is the registry at [`adr/README.md`](./adr/README.md). ADRs record **why** a decision was made; they do not replace HLD / LLD |
+| [`system-architecture.md`](./system-architecture.md) | **Reference and background material**, no normative force |
+| [`reSIProcate.md`](./reSIProcate.md) | **Reference and background material** (SIP-stack selection background) |
+| [`resiprocate-dum-b2bua.md`](./resiprocate-dum-b2bua.md) | **Reference and background material** (DUM protocol-mechanism background) |
+| [`call-state-recovery-options.md`](./call-state-recovery-options.md) | **Reference and background material** (call-state recovery options comparison, same topic as ADR-0023) |
+| [`capacity-estimate.md`](./capacity-estimate.md) | **Reference and background material** (capacity-estimation method, **containing no externally-committed numbers**) |
 
-**冲突消解规则（不含混）：**
+**Conflict-resolution rule (unambiguous):**
 
-> **若上述「参考与背景材料」与 HLD / LLD 冲突，一律以 HLD / LLD 为准。**
-> 参考材料与 ADR 之间冲突时：ADR 说明决策理由，**实现口径以 HLD / LLD 为准**；
-> 三者都不一致时，属**待确认项**，按 §4 上报，**不得由读者自行择一**。
+> **If any of the above "reference and background material" conflicts with HLD /
+> LLD, HLD / LLD always win.**
+> When reference material conflicts with an ADR: the ADR explains the decision
+> rationale, but **the implementation criterion follows HLD / LLD**;
+> when all three disagree, it is an **open item** to be escalated per §4 — **the
+> reader must not pick one unilaterally**.
 
-**同源重叠提示：** `reSIProcate.md` / `resiprocate-dum-b2bua.md` / ADR-0019·0022 同源；
-`新系统整体架构.md` 与 `hld.md` 体量相当且同为全架构叙述；`call-state-recovery-options.md` 与 ADR-0023
-同主题。重复不是三个真相来源 —— **规范效力只在 HLD / LLD**。
+**Same-source overlap note:** `reSIProcate.md` / `resiprocate-dum-b2bua.md` / ADR-0019·0022 share a source;
+`system-architecture.md` and `hld.md` are comparable in size and both are full-architecture
+narratives; `call-state-recovery-options.md` and ADR-0023 are the same topic. Duplication is
+not three sources of truth — **normative force lives only in HLD / LLD**.
 
-## 2. 交付边界
+## 2. Delivery boundary
 
-判定线（[`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7.1）：
+The decision line ([`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7.1):
 
-> **这份资产会不会到客户手上？会 → 交付产品；不会，只有我们自己用 → 脚手架。**
-> 灰色地带的第二判据：**客户会不会为它向我们提工单？会 → 交付产品；永远不会 → 脚手架。**
-> **脚手架产出的是仪器读数，交付产品是那份质检报告。**
+> **Will this asset reach the customer? Yes → deliverable product; no, we use it
+> only ourselves → scaffolding.**
+> Second criterion for the gray zone: **will the customer file a ticket with us
+> about it? Yes → deliverable product; never → scaffolding.**
+> **Scaffolding produces instrument readings; the deliverable product is the
+> quality-inspection report.**
 
-| 类别 | 资产 | 约束 |
+| Category | Asset | Constraint |
 |---|---|---|
-| **交付产品** | `deploy/helm/`（chart + values + templates）、容器镜像、`deploy/alerts/` 告警规则、`docs/product/`、`docs/operations/`、`docs/delivery/` | 进入交付包，对客户负责 |
-| **脚手架** | `deploy/kind/` 全部脚本、`testbed/` 仿真与压测资产、`docs/plan.md`、`docs/handoff/`、ADR | **不得用于客户生产**，不进入交付包 |
+| **Deliverable product** | `deploy/helm/` (chart + values + templates), container images, `deploy/alerts/` alert rules, `docs/product/`, `docs/operations/`, `docs/delivery/` | Enters the delivery package; accountable to the customer |
+| **Scaffolding** | all `deploy/kind/` scripts, `testbed/` simulation and load-test assets, `docs/plan.md`, `docs/handoff/`, ADR | **Must not be used in customer production**; does not enter the delivery package |
 
-**落地与索引：** [`../delivery/install-guide.md`](../delivery/install-guide.md) §2 交付清单，
-以及该文件 `:19`（kind 自签证书「只是先例，**不是交付物**」）、`:91`（kind / lab 装法
-**「不得用于客户生产」**）。**那是该判定线的既有落地，本次是追认既有事实，不是新决策。**
+**Landing and index:** [`../delivery/install-guide.md`](../delivery/install-guide.md) §2 delivery checklist,
+and that file's `:19` (kind self-signed cert "is only a precedent, **not a deliverable**"),
+`:91` (kind / lab install
+**"must not be used in customer production"**). **That is the existing landing of
+the decision line; this document only ratifies an existing fact, not a new
+decision.**
 
-**生产形态：** Helm-only，不写 Operator，不产生第二套安装器（ADR-0013；
-[`../delivery/install-guide.md`](../delivery/install-guide.md) `:5` 已声明此硬边界）。
+**Production form:** Helm-only; no Operator, no second installer (ADR-0013;
+[`../delivery/install-guide.md`](../delivery/install-guide.md) `:5` already declares this hard boundary).
 
-## 3. 证据分级
+## 3. Evidence grading
 
-**三类，引用任何一条都必须用三元组 `(结论, 证据文件, 日期)`**，不允许裸句
-「chart-check 通过」这类无主体句式；机器见 [`docs/environments.md`](../environments.md)（文档中禁止匿名的「本机」）。
+**Three classes; any citation must use the triplet `(conclusion, evidence file,
+date)`** — bare sentences like "chart-check passed" with no subject are not
+allowed; see [`docs/environments.md`](../environments.md) (the document forbids anonymous "this machine").
 
-| # | 类别 | 含义 | 仓库内实例 | 所在目录 |
+| # | Class | Meaning | In-repo instance | Directory |
 |---|---|---|---|---|
-| **①** | **交付产品质量证据** | 交付产品（chart / 镜像 / 告警规则 / 文档）的质量校验产物 | `PASS-chart-check-2026-10-05.txt`、`PASS-alert-check-2026-10-05.txt`、`PASS-gate-2026-10-05.txt` | `docs/acceptance/artifacts/m5/2026-10-05/`（索引与易误读说明见该目录 [`README.md`](../acceptance/artifacts/m5/README.md)） |
-| **②** | **对外履约依据** | **我们用内部脚手架产出的、对外的履约依据；不是客户验收项**，客户不签该 transcript。客户会追问的是「chart 能否装起来、升级是否掉话」，不会追问 kind 脚本 | 7.2d 等 kind 集群 transcript；M5 关门条件里的「控制面集群部署证明（含 7.2d）」 | 产物散落在 `docs/acceptance/` 与 handoff 记录中；生产方是脚手架 `deploy/kind/`。**性质裁定见** register §7.3 |
-| **③** | **失败 / fail-closed 记录** | 文件名前缀 `FAILCLOSED-`，**不是通过证据**。它的价值在于证明「无集群 / 缺前置条件时显式失败」这一行为存在 | `FAILCLOSED-m5-strict-context-2026-10-05.txt`（`M5_STRICT=1` 且无 `kind-as-m5`，**exit=1**） | `docs/acceptance/artifacts/m5/2026-10-05/` |
+| **①** | **Deliverable product quality evidence** | Quality-check artifacts of the deliverable product (chart / image / alert rules / docs) | `PASS-chart-check-2026-10-05.txt`, `PASS-alert-check-2026-10-05.txt`, `PASS-gate-2026-10-05.txt` | `docs/acceptance/artifacts/m5/2026-10-05/` (index and easy-to-misread notes in that directory's [`README.md`](../acceptance/artifacts/m5/README.md)) |
+| **②** | **Externally-binding basis** | **Basis for external commitments that we produce using internal scaffolding; not a customer acceptance item** — the customer does not sign that transcript. What the customer will press on is "can the chart install, does upgrade drop calls", not the kind scripts | kind-cluster transcripts such as 7.2d; "control-plane cluster deployment proof (incl. 7.2d)" in the M5 closure conditions | Artifacts scattered in `docs/acceptance/` and handoff records; produced by the scaffolding `deploy/kind/`. **Nature adjudication in register §7.3** |
+| **③** | **Failure / fail-closed record** | File-name prefix `FAILCLOSED-`, **not a pass evidence**. Its value is in proving that "explicit failure when no cluster / prerequisites missing" behavior exists | `FAILCLOSED-m5-strict-context-2026-10-05.txt` (`M5_STRICT=1` and no `kind-as-m5`, **exit=1**) | `docs/acceptance/artifacts/m5/2026-10-05/` |
 
-**三条硬规则：**
+**Three hard rules:**
 
-1. **文件名即结论** —— `docs/acceptance/artifacts/**` 强制前缀 `PASS-` / `FAILCLOSED-`，
-   格式 `<结论>-<被验项>-<日期>.txt`。
-2. **本目录内 `Fail` / `ERROR` 字样属正常语义，不得据此判定文件失败；一律以文件名前缀为准。**
-   （例：`PASS-chart-check-2026-10-05.txt` 中的 `[INFO] Fail: tls.enabled=true requires tls.secretName`
-   是 chart-check 对 fail-closed 渲染的**预期断言**。）
-3. **skip 不是通过证据** —— `PASS-gate-2026-10-05.txt` 含 2 条 SKIPPED，引用时须一并说明 skip 构成。
+1. **The file name is the conclusion** — `docs/acceptance/artifacts/**` enforces the
+   prefix `PASS-` / `FAILCLOSED-`, format `<conclusion>-<checked-item>-<date>.txt`.
+2. **`Fail` / `ERROR` text inside this directory is normal semantics; do not judge
+   the file as failed on that basis; always defer to the file-name prefix.**
+   (Example: `[INFO] Fail: tls.enabled=true requires tls.secretName` inside
+   `PASS-chart-check-2026-10-05.txt` is a chart-check **expected assertion** of a
+   fail-closed render.)
+3. **skip is not pass evidence** — `PASS-gate-2026-10-05.txt` contains 2 SKIPPED
+   entries; citation must state the skip composition alongside.
 
-依据与批准记录：register §7.4（四层证据机制）。回归守卫：`tests/test_evidence_discipline.py`。
+Basis and approval record: register §7.4 (four-tier evidence mechanism). Regression
+guard: `tests/test_evidence_discipline.py`.
 
-## 4. 当前已知待确认项
+## 4. Currently known open items
 
-**本节只列不裁决。** 每项链到 register；**未获维护者裁决前不得由读者自行择一**。
+**This section only lists, does not resolve.** Each item links to the register;
+**the reader must not pick one unilaterally before the maintainer resolves it**.
 
-| 项 | 状态 | 链到 |
+| Item | Status | Links to |
 |---|---|---|
-| ADR-0023 正文与注册表曾漂移（注册表记 `draft` / 正文记 `proposed`） | **已修** —— 以正文为准，注册表已改为 `proposed`，依据与日期注记在 [`adr/README.md`](./adr/README.md) 注册表下方 | register §1 S1 表；注记见 adr/README.md |
-| **G3 / A5** 监控接线（annotation vs ServiceMonitor / PodMonitor） | 待运营商 monitoring-integration 标准输入，**当前不改 chart** | register §3 X1 |
-| **D3** HA 拓扑 | Redis **客户端接线已于 2026-10-05 resolved**；未决的**只剩 HA 拓扑**（N+1 vs N+M、Sentinel vs Cluster 等） | register §2 P2 / `../plan.md` §0 决策表 |
-| **O5** 容灾等级 | 站点内 N+1、跨站 1+1 warm standby 已裁（G7）；**不承诺机架/AZ 级容错**，RTO / RPO 数值未裁决 | register §2 P2 |
-| **O4 / D5** 取值 | 已裁但**实现未落**：O4 默认保留 10 天且部署可配、D5 选 in-cluster PostgreSQL；轨迹存储 / 查询 / 删除能力**本次不实现**，下游文档仍 stale | register §2 P2 / P3 |
-| **P4** 告警规则新组校验 | 2026-10-10 新增的 `as.runtime` / `as.platform` **至今未被 promtool 校验过**（需运行 promtool，本次未运行）。`deploy/alerts/` 属交付产品，校验责任不因证据来自脚手架而悬空 | register §7.5 |
-| **G9-b / G9-c** | 机器能力定义已有载体（`docs/environments.md`）但**未代裁**；集群级验证是否必须每台机器 / 每个 PR 都能跑，仍未裁决 | register §1 G9 |
-| **S1** 五层文档体系全链路整理 | **未授权、未启动** | register §4 S1 |
+| ADR-0023 body and registry once drifted (registry said `draft` / body said `proposed`) | **Fixed** — body wins; registry changed to `proposed`, with basis and date note under [`adr/README.md`](./adr/README.md) below the registry | register §1 S1 table; note in adr/README.md |
+| **G3 / A5** monitoring wiring (annotation vs ServiceMonitor / PodMonitor) | Pending operator monitoring-integration standard input, **chart not changed now** | register §3 X1 |
+| **D3** HA topology | Redis **client wiring resolved 2026-10-05**; the only remaining open item is the HA topology (N+1 vs N+M, Sentinel vs Cluster, etc.) | register §2 P2 / `../plan.md` §0 decision table |
+| **O5** DR tier | In-site N+1, cross-site 1+1 warm standby already decided (G7); **no rack/AZ-level fault-tolerance commitment**, RTO / RPO values not yet decided | register §2 P2 |
+| **O4 / D5** values | Decided but **implementation not landed**: O4 default retains 10 days and is deployment-configurable, D5 selects in-cluster PostgreSQL; trace storage / query / deletion capability **not implemented this round**, downstream docs still stale | register §2 P2 / P3 |
+| **P4** new alert-rule-group validation | The `as.runtime` / `as.platform` added 2026-10-10 **have not been validated by promtool yet** (needs promtool to run; not run this round). `deploy/alerts/` is a deliverable product; validation responsibility does not float just because the evidence comes from scaffolding | register §7.5 |
+| **G9-b / G9-c** | Machine-capability definitions already have a home (`docs/environments.md`) but **not yet substituted-decided**; whether cluster-level verification must run on every machine / every PR is still undecided | register §1 G9 |
+| **S1** five-tier document-system full-chain cleanup | **Unauthorized, not started** | register §4 S1 |
 
-## 5. 相关入口
+## 5. Related entries
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| [`../environments.md`](../environments.md) | 环境登记表 —— 引用环境必须用表中的名字 |
-| [`../acceptance/artifacts/m5/README.md`](../acceptance/artifacts/m5/README.md) | 证据索引 + 三件容易被误读的事 |
-| [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) | 裁决与遗留问题登记（§7 = 2026-10-11 裁决落盘） |
-| [`../README.md`](../README.md) | `docs/` 总导航 |
+| [`../environments.md`](../environments.md) | Environment registry — referenced environments must use the names in the table |
+| [`../acceptance/artifacts/m5/README.md`](../acceptance/artifacts/m5/README.md) | Evidence index + three easy-to-misread things |
+| [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) | Adjudication and open-issue register (§7 = 2026-10-11 adjudication landing) |
+| [`../README.md`](../README.md) | `docs/` master navigation |

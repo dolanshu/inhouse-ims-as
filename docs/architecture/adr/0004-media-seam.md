@@ -12,75 +12,202 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0004：不做媒体；保留一个媒体 seam 并写明触发条件
+# ADR-0004: No media; keep one media seam and write down its trigger conditions
 
 - **Status**: accepted
 - **Date**: 2026-09-30
-- **Decides**: §0 账本条目 11 —— 媒体：不碰媒体，保留 seam 与触发条件
-- **回应 REQ**: REQ-NF-6, REQ-F-4
+- **Decides**: §0 ledger entry 11 — media: do not touch media; keep the seam and trigger conditions
+- **Responds to REQ**: REQ-NF-6, REQ-F-4
 
 ---
 
-## Context（背景）
+## Context
 
-`AGENT.md` §2 把"不做媒体"直接列为非目标，措辞是穷举式的、不留解释空间：**「不做媒体。没有 RTP、没有转码、没有 DTMF、没有 MRF、没有媒体锚定。保留一个 seam 并写明触发条件（ADR-0004）。」** 五项否定覆盖了媒体面的全部能力：传输（RTP）、处理（转码）、交互（DTMF）、资源（MRF）、拓扑（锚定）。这不是"暂不实现"，而是对边界的划定 —— §2 的每一项都是经过决策的结果，不是疏漏。
+`AGENT.md` §2 lists "no media" directly as a non-goal, in exhaustive phrasing that
+leaves no room for interpretation: **"No media. No RTP, no transcoding, no DTMF,
+no MRF, no media anchoring. Keep one seam and write down its trigger conditions
+(ADR-0004)."** The five negatives cover every capability of the media plane:
+transport (RTP), processing (transcoding), interaction (DTMF), resources (MRF),
+topology (anchoring). This is not "not implemented yet" but a boundary drawn —
+every item in §2 is a decided outcome, not an omission.
 
-这条边界由两件事共同决定，两件事都来自同一个事实：我们部署在运营商网络**之外**（`AGENT.md` §1、架构文档 §1.1）。
+This boundary is decided by two things, both stemming from the same fact: we are
+deployed **outside** the operator network (`AGENT.md` §1, architecture document
+§1.1).
 
-**第一，三角路由。** 媒体流天然走最短路径：主叫侧网元的 RTP 直接流向被叫侧网元。我们一旦做媒体中继，媒体就必须从网内绕出到我们的节点、再绕回网内 —— 出网一次、入网一次。代价是双倍的：带宽上，同一份语音流要在运营商的网络边界上走两遍，网间链路的带宽成本直接翻倍；时延上，多出的两跳（出网、入网）叠加排队与处理时延，直接加进端到端语音时延预算。语音对时延的容忍度远低于信令：一通呼叫的 SIP 建立可以容忍百毫秒级，媒体上的额外时延是用户能直接听出来的。为了一个我们并不需要的能力去恶化语音质量，收益为负。
+**First, the triangular route.** Media flows naturally along the shortest path: the
+caller-side network element's RTP flows directly to the callee-side network
+element. Once we act as a media relay, the media must route out of the network to
+our node and then back into the network — out once, in once. The cost is doubled:
+in bandwidth, the same voice stream crosses the operator's network boundary twice,
+directly doubling the inter-network link bandwidth cost; in latency, the extra two
+hops (out, in) stack queuing and processing latency directly onto the end-to-end
+voice latency budget. Voice tolerates latency far less than signaling does: a
+call's SIP setup can tolerate hundreds of milliseconds, but extra media latency is
+something the user hears directly. Worsening voice quality for a capability we do
+not even need is negative-return.
 
-**第二，合规。** 网外节点处理用户语音，触碰的是合法监听与隐私合规的边界。语音内容（通信内容）在网内有明确的法定采集主体与程序；让一个网外的第三方 AS 承载语音流，等于把一个本应在网内闭合的合规问题搬到网外，引入跨主体、跨法域的暴露面。这一条与 `AGENT.md` §2 的另一项非目标是同一类判断 —— 「不做合法监听（LI）。IRI 属于网内网元；让第三方 AS 介入会引入跨法域暴露（ADR-0016）」：能力所在的位置决定了合规责任的位置，不是加密或审计手段能抵消的。
+**Second, compliance.** An out-of-network node processing user voice touches the
+boundary of lawful interception and privacy compliance. Voice content
+(communication content) has a clear statutory collection subject and procedure
+within the network; letting an out-of-network third-party AS carry the voice stream
+moves a compliance problem that should stay closed within the network out to
+outside it, introducing a cross-subject, cross-jurisdiction exposure surface. This
+point is the same kind of judgment as another non-goal in `AGENT.md` §2 — "no
+lawful interception (LI). IRI belongs to in-network network elements; letting a
+third-party AS get involved would introduce cross-jurisdiction exposure (ADR-0016)":
+where the capability sits determines where the compliance responsibility sits, and
+no encryption or audit measure can offset that.
 
-但"不做媒体"不等于"媒体需求不存在"。反诈场景里最典型的一条是**放音提示**：判定一通呼叫为诈骗后，向主叫播放一段提示音。这个需求是真实的，只是它的正确承担者不是我们 —— 架构文档 §9.1 已经把它钉死：**应由网内 MRF（媒体资源功能）播放，我们只给判决**。MRF 在网内，不存在三角路由，也不存在网外合规问题；我们要做的只是通过信令把判决告诉运营商侧（608 / 路由指示），由网内网元去触发放音。我们的产出是判决，不是声波。
+But "no media" does not mean "no media need exists". The most typical case in
+anti-fraud is **playing a prompt**: after judging a call to be fraud, play a
+prompt tone to the caller. This need is real; it just isn't ours to carry — architecture
+document §9.1 has already nailed it down: **it should be played by the in-network
+MRF (Media Resource Function); we only give the decision.** The MRF is in-network,
+so there is no triangular route and no out-of-network compliance problem; all we
+do is tell the operator side via signaling (608 / routing indication), and the
+in-network network element triggers the prompt playback. Our output is a decision,
+not a sound wave.
 
-由此，"不做媒体"与"媒体需求将来可能出现"这两件事必须同时被表达：能力不做，但**触发它的条件要写清楚**，否则要么将来悄悄实现（绕过 ADR 与需求流程），要么将来重新争论一遍（决策没有沉淀）。这就是 seam 的全部意义 —— 它不是一段待实现的代码，是一条写明了开关条件的边界声明。
+Thus "no media" and "media needs may appear in future" must be expressed together:
+we do not build the capability, but **the conditions that would trigger it must be
+written down** — otherwise it will either be quietly implemented in future
+(bypassing the ADR and requirements process) or re-argued from scratch (the
+decision was not crystallized). This is the whole meaning of the seam — it is not a
+piece of code waiting to be implemented, but a boundary statement with its switch
+conditions written down.
 
-## Decision（决策）
+## Decision
 
-- **内核不实现任何媒体能力。** 没有 RTP 传输与收发、没有编解码转换（转码）、没有 DTMF 的采集与生成、没有媒体锚定（不成为 RTP 的中间节点）、不部署也不实现 MRF。这一条是能力清单式的排除，不是优先级排序 —— 它们不在待办列表上。
-- **SDP 必须逐字节透传（REQ-F-4）。** 上游 INVITE 携带的 SDP offer 原样传递到下游对端，下游 200 OK 携带的 SDP answer 原样传回上游。我们不改写 offer/answer 中的任何字段：不增删编解码、不改端口与地址、不改 `o=` / `c=` 行。透传是"不做媒体"在信令侧的可验证形式 —— 一旦开始改写 SDP，就等于开始参与媒体协商。
-- **保留一个媒体 seam：接口定义 + 触发条件，生产实现为空壳。** seam 的两部分同等重要，缺一半就退化成"留了个口子随时可以钻"：
-  - **触发条件**（唯一的启用条件）：出现**放音 / 录音 / 转码 / DTMF** 需求。这四类之外的一切理由（性能优化、拓扑简化、"顺手做一下"）都不构成触发。
-  - **启用方式**：触发条件成立时，必须**重新走 ADR 与需求流程** —— 新写 ADR 裁决、需求条目进 PRD、走 `AGENT.md` §3 的完整文档链。不得在实现里悄悄启用，也不得因为"seam 已经在那儿"就把它当成既有授权。seam 是**预留的论证入口**，不是预留的许可。
-- **放音 / 录音等媒体动作由运营商网内 MRF 执行，我们只通过信令给出判决。** 我们不编排 MRF、不代理媒体、不持有媒体资源。需要放音时，AS 的产出是判决书与信令指示（例如 608 / 路由），由网内网元决定如何找 MRF。
+- **The kernel implements no media capability whatsoever.** No RTP transport or
+  send/receive, no codec conversion (transcoding), no DTMF capture or generation,
+  no media anchoring (not becoming an intermediate RTP node), no deployment or
+  implementation of MRF. This is a capability-list exclusion, not a priority
+  ordering — they are not on the to-do list.
+- **SDP must pass through byte-for-byte (REQ-F-4).** The SDP offer carried by the
+  upstream INVITE is passed verbatim to the downstream peer; the SDP answer carried
+  by the downstream 200 OK is passed verbatim back to the upstream. We rewrite no
+  field in the offer/answer: no add/remove codecs, no change to ports and
+  addresses, no change to `o=` / `c=` lines. Transparency is the verifiable form of
+  "no media" on the signaling side — once we start rewriting SDP, we are
+  participating in media negotiation.
+- **Keep one media seam: an interface definition + trigger conditions, with the
+  production implementation being an empty shell.** Both parts of the seam are
+  equally important; lose either half and it degrades into "left a hole anyone can
+  slip through":
+  - **Trigger conditions** (the only enablement condition): the appearance of a
+    **playback / recording / transcoding / DTMF** need. Nothing outside these four
+    categories (performance optimization, topology simplification, "just do it
+    while we're at it") constitutes a trigger.
+  - **How to enable**: when the trigger condition holds, one **must re-run the ADR
+    and requirements process** — write a new ADR for the decision, add the
+    requirement item to the PRD, and walk the full document chain of `AGENT.md` §3.
+    Do not quietly enable it in the implementation, and do not treat "the seam is
+    already there" as pre-existing authorization. The seam is a **reserved
+    argumentation entry point, not a reserved permission**.
+- **Playback / recording and other media actions are performed by the operator's
+  in-network MRF; we only give the decision via signaling.** We do not orchestrate
+  the MRF, do not proxy media, do not hold media resources. When playback is needed,
+  the AS's output is the decision document and the signaling indication (e.g., 608 /
+  routing), and the in-network network element decides how to find the MRF.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **规避三角路由。** 媒体流保持在网内最短路径上，不为我们的存在付出双倍带宽与额外时延。这一条不是性能优化，是"不引入一项我们无法承受的代价"。
-- **规避网外语音合规风险。** 用户语音不经过我们的节点，合法监听与隐私合规的边界保持在网内闭合，不因我们的部署位置而被重新打开。
-- **内核保持简单、可测。** 媒体面（RTP 收发、抖动缓冲、编解码、DTMF、资源调度）是 SIP AS 中最庞大也最难在无真实网络环境下验证的部分。排除它之后，内核只剩信令与判决，测试可以在没有真实媒体设备的情况下完成。这也正是 `AGENT.md` §5 能把"决策模块是纯函数"写成硬规则的前提之一。
-- **SDP 透传是可验证的。** 逐字节透传能写成断言，而不是"基本没改"这种无法验证的承诺。
+- **Avoid the triangular route.** The media stream stays on the in-network shortest
+  path, paying no double bandwidth or extra latency for our existence. This is not
+  a performance optimization — it is "do not introduce a cost we cannot bear".
+- **Avoid out-of-network voice compliance risk.** User voice does not pass through
+  our nodes; the lawful-interception and privacy-compliance boundary stays closed
+  within the network and is not reopened by our deployment position.
+- **Keep the kernel simple and testable.** The media plane (RTP send/receive,
+  jitter buffer, codec, DTMF, resource scheduling) is the largest and hardest part
+  of a SIP AS to verify without a real network. Excluding it leaves the kernel with
+  only signaling and decision; tests can be completed without real media equipment.
+  This is also one of the premises that lets `AGENT.md` §5 write "the decision
+  module is a pure function" as a hard rule.
+- **SDP transparency is verifiable.** Byte-for-byte pass-through can be written as
+  an assertion, not an unverifiable promise like "basically unchanged".
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **需要放音 / 录音的场景我们无法自行满足。** 反诈提示音是最典型的例子：判决是我们的，声音不是。这类场景必须依赖运营商网内的 MRF，而我们与 MRF 之间只有信令关系。这条依赖必须写进与运营商的接口约定里 —— 它是**交付边界**，不是"以后会补的功能"。如果某个客户的方案里没有可用的网内 MRF，那么放音类需求在该交付中就是不可满足的，这个结论应当在方案阶段就说清，而不是在实现阶段发现。
-- **seam 长期空置有"没人敢删"的成本。** 一个只为将来预留的接口定义，在它没有触发条件的那些年里只产生维护成本（读者要理解它、审稿人要判断它是否被误用），却没有任何收益。接受：这个成本低于"将来悄悄实现"或"将来重新争论"的成本。删掉 seam 同样需要走 ADR 流程 —— 它既然是决策的一部分，就不能被静默移除。
-- **seam 当前只有文档形态。** 截至目前内核代码中没有媒体相关模块，本 ADR 确立的是语义与触发条件，不虚构一段已存在的接口实现。
+- **We cannot satisfy playback / recording scenarios on our own.** The anti-fraud
+  prompt tone is the most typical example: the decision is ours, the sound is not.
+  Such scenarios must rely on the operator's in-network MRF, and we have only a
+  signaling relationship with the MRF. This dependency must be written into the
+  interface agreement with the operator — it is a **delivery boundary**, not a
+  "feature we'll fill in later". If a customer's solution has no usable in-network
+  MRF, then playback-type needs are unsatisfiable in that delivery; this conclusion
+  should be stated at the solution stage, not discovered at the implementation
+  stage.
+- **A long-idle seam has the cost of "no one dares delete it".** An interface
+  definition reserved only for the future produces only maintenance cost (readers
+  must understand it, reviewers must judge whether it is misused) for the years it
+  has no trigger condition, yet yields no benefit. Accepted: this cost is lower than
+  the cost of "quietly implementing it in future" or "re-arguing it in future".
+  Deleting the seam also requires walking the ADR process — since it is part of the
+  decision, it cannot be silently removed.
+- **The seam currently exists only as documentation.** As of now there is no
+  media-related module in the kernel code; this ADR establishes semantics and
+  trigger conditions, and does not fabricate an already-existing interface
+  implementation.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 自建 MRF / 媒体中继（我们锚定 RTP） | 三角路由：媒体绕出网再绕回，带宽翻倍 + 时延增加，直接恶化语音质量；且网外节点处理用户语音涉及合法监听与隐私合规边界（架构文档 §9.1） |
-| 借用运营商网内 MRF，但由我们编排（即本决策） | 采纳。MRF 在网内，无三角路由、无网外合规问题；我们只给判决与信令指示，不承担媒体资源 |
-| 由业务方自行处理媒体 | 业务方正是为了不碰 SIP 与媒体才使用我们（第三方 AS 的价值就在于替业务方处理协议与判决）；把媒体推回给业务方等于否定了产品的存在理由 |
-| 部分参与媒体（只改写 SDP、不中继 RTP） | 改写 SDP 即参与媒体协商，与 REQ-F-4 的逐字节透传直接冲突；且"部分参与"的边界会持续被侵蚀 —— 一旦开始改 `c=` 行，下一步就是锚定 |
+| Build our own MRF / media relay (we anchor RTP) | Triangular route: media routes out then back, doubling bandwidth + adding latency, directly worsening voice quality; and an out-of-network node processing user voice touches the lawful-interception and privacy-compliance boundary (architecture document §9.1) |
+| Borrow the operator's in-network MRF but orchestrate it ourselves (i.e., this decision) | Adopted. The MRF is in-network, with no triangular route and no out-of-network compliance problem; we only give the decision and signaling indication, and hold no media resources |
+| Let the business party handle media itself | The business party uses us precisely to avoid touching SIP and media (the value of a third-party AS is to handle protocol and decision on the business party's behalf); pushing media back to the business party negates the product's reason to exist |
+| Partially participate in media (only rewrite SDP, do not relay RTP) | Rewriting SDP means participating in media negotiation, directly conflicting with REQ-F-4's byte-for-byte pass-through; and the boundary of "partial participation" would keep eroding — once you start changing the `c=` line, the next step is anchoring |
 
-## Evidence（证据）
+## Evidence
 
-- `AGENT.md` §2 非目标原文：「不做媒体。没有 RTP、没有转码、没有 DTMF、没有 MRF、没有媒体锚定。保留一个 seam 并写明触发条件（ADR-0004）。」
-- 架构文档 §9.1「媒体：不碰，但留口」：seam 的触发条件写作「出现放音/录音/转码/DTMF 需求」，并给出理由 —— 「网外第三方 AS 做媒体中继是**三角路由**（媒体绕出网再绕回，带宽翻倍 + 时延增加），且网外节点处理用户语音涉及合法监听与隐私合规；反诈若要放音提示，应由**网内 MRF 播放**，AS 只给判决。」架构文档 §2 表格亦记「媒体：无 RTP，SDP 原样透传」。
-- PRD REQ-NF-6（不做媒体）原文：「不实现 RTP、不做转码、不处理 DTMF、不做媒体锚定、不部署 MRF。保留一个扩展接口定义（出现放音/录音/转码/DTMF 需求时才启用），生产实现为空壳。理由：网外第三方 AS 做媒体中继是三角路由（媒体绕出网再绕回，带宽翻倍 + 时延增加），且网外节点处理用户语音涉及合法监听与隐私合规。」
-- PRD REQ-F-4（SDP 完全透传）原文：「上游 INVITE 带的 SDP offer …… 必须原样传递到下游对端；下游 200 OK 带的 SDP answer，必须原样传回上游。我们不在应用服务器层做媒体锚定 …… 保留一个扩展接口定义（出现放音/录音/转码/DTMF 需求时才启用），生产实现为空壳。媒体锚定如果未来需要放音/录音/转码，由运营商网内的 MRF 执行，我们只通过信令告诉运营商侧该找 MRF。」
-- PRD §1 非目标压缩版：「媒体处理如果未来需要放音/录音/转码，触发后由运营商网内的 MRF（媒体资源功能）执行，我们只给判决。」
-- 基线 S1 的 SDP 逐字节透传断言：`testbed/simulators/tests/test_derived_baseline.py` 的 `test_req_f4_invite_body_crosses_unchanged`（INVITE 的 SDP offer 逐字节不变）与 `test_req_f4_answer_body_crosses_unchanged`（200 OK 的 SDP answer 逐字节不变）。
-- 实现证据（seam 的接口定义、SDP 透传在真实栈上的断言）随触发条件成立时一并落地；当前 `platform/src` 下无媒体相关模块。
+- `AGENT.md` §2 non-goal original: "No media. No RTP, no transcoding, no DTMF, no
+  MRF, no media anchoring. Keep one seam and write down its trigger conditions
+  (ADR-0004)."
+- Architecture document §9.1 "Media: don't touch, but leave an opening": the seam's
+  trigger condition is written as "playback/recording/transcoding/DTMF need
+  appears", with the rationale — "an out-of-network third-party AS doing media relay
+  is a **triangular route** (media routes out then back, doubling bandwidth + adding
+  latency), and an out-of-network node processing user voice touches lawful
+  interception and privacy compliance; if anti-fraud needs a playback prompt, it
+  should be **played by the in-network MRF**, and the AS only gives the decision."
+  Architecture document §2 table also records "Media: no RTP, SDP passed through
+  verbatim".
+- PRD REQ-NF-6 (no media) original: "Do not implement RTP, do not do transcoding,
+  do not process DTMF, do not do media anchoring, do not deploy MRF. Keep one
+  extension-interface definition (enabled only when a playback/recording/transcoding/
+  DTMF need appears), with the production implementation being an empty shell.
+  Rationale: an out-of-network third-party AS doing media relay is a triangular
+  route (media routes out then back, doubling bandwidth + adding latency), and an
+  out-of-network node processing user voice touches lawful interception and privacy
+  compliance."
+- PRD REQ-F-4 (SDP fully transparent) original: "The SDP offer carried by the
+  upstream INVITE … must be passed verbatim to the downstream peer; the SDP answer
+  carried by the downstream 200 OK must be passed verbatim back to the upstream. We
+  do not do media anchoring at the application-server layer … keep one
+  extension-interface definition (enabled only when a playback/recording/transcoding/
+  DTMF need appears), with the production implementation being an empty shell. If
+  media anchoring is needed in future for playback/recording/transcoding, it is
+  performed by the operator's in-network MRF, and we only tell the operator side via
+  signaling to find the MRF."
+- PRD §1 non-goal compressed version: "If media processing needs playback/recording/
+  transcoding in future, after triggering it is performed by the operator's
+  in-network MRF (Media Resource Function); we only give the decision."
+- Baseline S1's SDP byte-for-byte pass-through assertions:
+  `testbed/simulators/tests/test_derived_baseline.py`'s
+  `test_req_f4_invite_body_crosses_unchanged` (INVITE's SDP offer unchanged
+  byte-for-byte) and `test_req_f4_answer_body_crosses_unchanged` (200 OK's SDP
+  answer unchanged byte-for-byte).
+- Implementation evidence (the seam's interface definition, and SDP pass-through
+  assertions on the real stack) lands together when the trigger condition holds;
+  currently there is no media-related module under `platform/src`.
 
-## Related（相关）
+## Related
 
-- [ADR-0016](0016-in-boundary-security.md) 边界内安全：不做 LI、不做计费 —— 与本 ADR 同源于"网外部署的合规边界"
-- [ADR-0003](0003-s-sbc-transparent-bridge.md) 单一 ISC 接入语义：S-SBC 是透明桥接，媒体的网内/网外差异由它吸收
-- PRD REQ-F-4（SDP 完全透传）、REQ-NF-6（不做媒体）
-- [`../新系统整体架构.md`](../新系统整体架构.md) §9.1 媒体：不碰，但留口
+- [ADR-0016](0016-in-boundary-security.md) in-boundary security: no LI, no billing — shares with this ADR the origin of "compliance boundary of out-of-network deployment"
+- [ADR-0003](0003-s-sbc-transparent-bridge.md) single ISC access semantics: the S-SBC is a transparent bridge; the in-network/out-of-network media difference is absorbed by it
+- PRD REQ-F-4 (SDP fully transparent), REQ-NF-6 (no media)
+- [`../system-architecture.md`](../system-architecture.md) §9.1 Media: don't touch, but leave an opening

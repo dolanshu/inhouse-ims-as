@@ -12,70 +12,70 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 Phase A F6/F8 记录（2026-10-06）
+# M8 Phase A F6/F8 Record (2026-10-06)
 
-> 上游：[`callload-remediation-adjudication-2026-10-05.md`](callload-remediation-adjudication-2026-10-05.md)
-> （F6 `部分修复`，F8 `未闭合`）。本记录不改写该文件，只记录新状态。
-> 计划依据：[`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md) §4 Phase A（A-2/A-3）。
+> Upstream: [`callload-remediation-adjudication-2026-10-05.md`](callload-remediation-adjudication-2026-10-05.md)
+> (F6 `部分修复`, F8 `未闭合`). This record does not rewrite that file; it only records the new status.
+> Plan basis: [`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md) §4 Phase A (A-2/A-3).
 
-## 1. 评审对象
+## 1. Review Target
 
-M8 Phase A 项 A-2（F8：结构化 SIP 运行时日志）与 A-3（F6：transport close 回调尾项），
-分支 `master`，交付物见 §4。
+M8 Phase A item A-2 (F8: structured SIP runtime logging) and A-3 (F6: transport close callback tail item),
+branch `master`; deliverables see §4.
 
-## 2. 评审日期与评审人
+## 2. Review Date and Reviewer
 
-- 日期：2026-10-06
-- 评审人：agent（writing subagent；待维护者 adjudication 确认）
+- Date: 2026-10-06
+- Reviewer: agent (writing subagent; pending maintainer adjudication confirmation)
 
-## 3. 评审结论
+## 3. Review Conclusion
 
-| ID | 结论 | 新状态 |
+| ID | Verdict | New Status |
 |----|------|--------|
-| F8 | 有条件通过 | `字段契约已落地`：`resip_runtime_log_contract.py` + 契约测试 + acceptance 契约文档 + `emit_native_log_event` JSON 富化；C++→Python JSON 回调 defer 到 post-RC（计划允许的二选一路径） |
-| F6 | 有条件通过（documented limitation，接受风险待裁决） | `documented limitation`：注册上限 + dialog 终止注销已验证存在；native transport-close 回调缺席是设计现状（reSIProcate Transport close hook 未接入，RC 范围外）；连接经 dialog 终止回收 + 指纹 LRU 淘汰兜底 |
+| F8 | conditional pass | `字段契约已落地`: `resip_runtime_log_contract.py` + contract tests + acceptance contract doc + `emit_native_log_event` JSON enrichment; C++→Python JSON callback deferred to post-RC (one of the two alternative paths the plan allows) |
+| F6 | conditional pass (documented limitation, risk acceptance pending adjudication) | `documented limitation`: registration cap + dialog-termination deregistration verified to exist; the absence of a native transport-close callback is the current design state (reSIProcate Transport close hook not wired in, outside RC scope); connections are reclaimed via dialog-termination recycling + fingerprint LRU eviction as a fallback |
 
-## 4. 发现的问题清单与对应修改
+## 4. List of Issues Found and Corresponding Fixes
 
-1. **F8 — C++ 仍以 cout/cerr 为主。** 修改：冻结 `RESIP_RUNTIME_*` 行为字段契约
-   （`platform/src/as_platform/sip/resip_runtime_log_contract.py`，`# See ADR-0005`/`# See ADR-0019`），
-   `platform/tests/test_resip_runtime_log_contract.py`（13 例，格式漂移即红），
-   `docs/acceptance/m8-resip-runtime-log-contract.md`（中英文：字段表/示例/富化说明），
-   `resip_runtime.py` +~30 行 `emit_native_log_event` JSON 富化。REQ-NF-13 断言挂此契约。
-2. **F6 — 无 native transport-close 回调。** 核查（`runtime_module.cxx` 全文 grep）：
-   无 `onConnectionClosed` / `ConnectionTerminated` / Transport close 回调接入。
-   现状：指纹表 2048 上限 LRU 淘汰（`ListenerState::storePeerFingerprint`，
-   已补 `// See ADR-0019` 注释说明 close 回调缺席）；`TransportIngressGate`
-   连接注册 4096 上限溢出减半（`ingress.py::register_connection`）；
-   注销路径为 dialog 终止 piggyback（C++ `onTerminated` → Python terminated 回调 →
-   `ResipRuntimeListener.notify_leg_terminated` → `on_connection_closed` 即
-   `gate.unregister_connection`，见 `sip_stack_service.py` 接线）。
-   长连接无 dialog 终止时仅靠上限淘汰回收——RC 接受为已知局限，不做 reSIProcate
-   Transport close hook（超出 RC 范围）。
-3. **REQ 影响：** 无直接 numbered-REQ 断言受影响（transport hygiene，非编号 REQ 条目）；
-   作为 M8 退出评审的 operational note 记录。
+1. **F8 — C++ still relies mainly on cout/cerr.** Fix: freeze the `RESIP_RUNTIME_*` behavioural field contract
+   (`platform/src/as_platform/sip/resip_runtime_log_contract.py`, `# See ADR-0005`/`# See ADR-0019`),
+   `platform/tests/test_resip_runtime_log_contract.py` (13 cases; any format drift turns it red),
+   `docs/acceptance/m8-resip-runtime-log-contract.md` (Chinese + English: field table/examples/enrichment notes),
+   `resip_runtime.py` +~30 lines of `emit_native_log_event` JSON enrichment. The REQ-NF-13 assertion hangs off this contract.
+2. **F6 — no native transport-close callback.** Checked (full-text grep of `runtime_module.cxx`):
+   no `onConnectionClosed` / `ConnectionTerminated` / Transport close callback wiring.
+   Current state: fingerprint table 2048-cap LRU eviction (`ListenerState::storePeerFingerprint`,
+   a `// See ADR-0019` comment was added noting the missing close callback); `TransportIngressGate`
+   connection registration 4096 cap with halving on overflow (`ingress.py::register_connection`);
+   the deregistration path piggybacks on dialog termination (C++ `onTerminated` → Python terminated callback →
+   `ResipRuntimeListener.notify_leg_terminated` → `on_connection_closed`, i.e.
+   `gate.unregister_connection`; see the wiring in `sip_stack_service.py`).
+   Long-lived connections without dialog termination are reclaimed only by the cap/eviction fallback — RC accepts this as a known limitation; no reSIProcate
+   Transport close hook is implemented (outside RC scope).
+3. **REQ impact:** no direct numbered-REQ assertion is affected (transport hygiene, not a numbered REQ entry);
+   recorded as an operational note of the M8 exit review.
 
-## 5. 修改后的确认签字
+## 5. Post-Fix Confirmation Sign-off
 
-| 项 | 签字 | 日期 | 备注 |
+| Item | Signature | Date | Notes |
 |----|------|------|------|
-| F8 字段契约 + 测试绿 | agent 自检（`make gate` 层见 handoff 报告） | 2026-10-06 | 待维护者 adjudication |
-| F6 documented limitation + 风险接受 | 待维护者裁决 | | RC 放行条件 |
+| F8 field contract + tests green | agent self-check (the `make gate` layer is in the handoff report) | 2026-10-06 | pending maintainer adjudication |
+| F6 documented limitation + risk acceptance | pending maintainer adjudication | | RC release condition |
 
-### 5.1 代签填写（2026-10-12；§5 表原文保留不改，本节在其后追加填写结果）
+### 5.1 Countersigned Fill-In (2026-10-12; the §5 table text above is preserved unchanged, this section appends the fill-in results)
 
-> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决
-> （N2 第 3、4 项的正本即本文件 §5；代签总记录见
-> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)）。
-> **本节不是维护者亲签**：每项标注「agent 代签」并附依据。
+> **Authorization source**: the maintainer **explicitly authorized agent countersigning on 2026-10-12** for the nine written adjudications of M8's N2
+> (the authoritative originals of N2 items 3 and 4 are §5 of this file; the full countersign record see
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)).
+> **This section is not the maintainer's own signature**: each item is marked "agent countersigned" and carries its basis.
 
-| N2 # | 项 | 填写的签字 | 日期 | 依据（不新造结论，只正式化既有结论） |
+| N2 # | Item | Signature Filled In | Date | Basis (no new conclusions invented, only existing conclusions formalized) |
 |---|---|---|---|---|
-| **3** | F8 字段契约 + 测试绿 | **接受「字段契约已落地」**；C++→Python JSON 回调 **defer 到 post-RC**（计划允许的二选一路径）。签字：**agent 代签（维护者 2026-10-12 授权）** | 2026-10-12 | 本文件 §「结论」表 F8 行原文即「有条件通过：`字段契约已落地`……C++→Python JSON 回调 defer 到 post-RC」；冻结的 `RESIP_RUNTIME_*` 行为字段契约与契约测试已落 |
-| **4** | F6 documented limitation + 风险接受 | **接受 documented limitation**：注册上限 + dialog 终止注销已验证存在；native transport-close 回调缺席是设计现状（reSIProcate Transport close hook 未接入，**RC 范围外**）；连接经 dialog 终止回收 + 指纹 LRU（2048）淘汰兜底，连接上限 4096。签字：**agent 代签（维护者 2026-10-12 授权）** | 2026-10-12 | 本文件 §「结论」表 F6 行原文即「有条件通过（documented limitation，接受风险待裁决）」；§「修改」第 2 条的 `runtime_module.cxx` 全文 grep 核查结论 |
+| **3** | F8 field contract + tests green | **Accept "字段契约已落地"**; C++→Python JSON callback **deferred to post-RC** (one of the two alternative paths the plan allows). Signature: **agent countersigned (maintainer authorized on 2026-10-12)** | 2026-10-12 | The F8 row of the "Conclusion" table in this file reads verbatim "conditional pass: `字段契约已落地`……C++→Python JSON 回调 defer 到 post-RC"; the frozen `RESIP_RUNTIME_*` behavioural field contract and its contract tests have landed |
+| **4** | F6 documented limitation + risk acceptance | **Accept the documented limitation**: registration cap + dialog-termination deregistration verified to exist; the absence of a native transport-close callback is the current design state (reSIProcate Transport close hook not wired in, **outside RC scope**); connections are reclaimed via dialog-termination recycling + fingerprint LRU (2048) eviction fallback, connection cap 4096. Signature: **agent countersigned (maintainer authorized on 2026-10-12)** | 2026-10-12 | The F6 row of the "Conclusion" table in this file reads verbatim "conditional pass (documented limitation, risk acceptance pending adjudication)"; the full-text grep check conclusion for `runtime_module.cxx` in item 2 of the "Fixes" section |
 
-**边界（不得据本节推出过度结论）**
+**Boundaries (no over-conclusions may be derived from this section)**
 
-1. F6 的接受结论**不是「已修复」** —— 是 documented limitation，native transport-close 回调**仍然缺席**。
-2. F8 的 C++→Python JSON 回调**仍未做**，已 defer 到 post-RC；本节不把它记为完成。
-3. 本节只处理 N2 第 3、4 项；其余七项的正本在别处。
+1. F6's acceptance conclusion **is not "fixed"** —— it is a documented limitation; the native transport-close callback **is still absent**.
+2. F8's C++→Python JSON callback **is still not implemented**, it is deferred to post-RC; this section does not record it as complete.
+3. This section only handles N2 items 3 and 4; the authoritative originals of the remaining seven items are elsewhere.

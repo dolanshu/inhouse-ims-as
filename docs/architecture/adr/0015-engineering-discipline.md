@@ -12,80 +12,80 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0015：研发模式 —— 分层 TDD、ADR 制度化、四层测试门禁
+# ADR-0015: Engineering discipline — layered TDD, ADR institutionalization, four-tier test gate
 
 - **Status**: accepted
 - **Date**: 2026-09-30
-- **Decides**: §0 账本条目 17 —— 研发模式：分层 TDD + ADR 制度化 + 四层测试门禁
-- **回应 REQ**: REQ-G-3, REQ-G-4
+- **Decides**: §0 ledger item 17 — engineering discipline: layered TDD + ADR institutionalization + four-tier test gate
+- **Responds to REQ**: REQ-G-3, REQ-G-4
 
 ---
 
-## Context（背景）
+## Context
 
-本项目的代码有两类，它们的测试成本结构完全不同。**判决逻辑是纯函数**：`AGENT.md` §5 规定「产出判决的模块里不能有 socket、不能有时钟、不能有全局状态」—— 输入确定、无 IO、无时间依赖，TDD 在这里最便宜也最有效。而**协议 / 接入层**依赖真实 socket、真实栈行为与时序，为它写严格的红-绿-重构循环成本高、回报低：架构文档 §11.3 对此的结论是「契约测试 + 仿真集成测试为主，不做严格 TDD」。用一个统一的测试策略覆盖这两类代码，必然是其中一类被过度要求、另一类被放任。
+This project's code falls into two categories with completely different testing cost structures. **Decision logic is pure functions**: `AGENT.md` §5 mandates that "modules producing decisions must have no sockets, no clock, no global state" — deterministic input, no IO, no time dependence, where TDD is cheapest and most effective. The **protocol / ingress layer**, by contrast, depends on real sockets, real stack behavior, and timing; writing strict red-green-refactor cycles for it is costly with low payoff — architecture doc §11.3 concludes "contract tests + simulation integration tests primarily, no strict TDD." A single unified test strategy across both categories inevitably over-requires one tier and under-requires the other.
 
-第二个事实决定了纪律必须以机器而非自觉来落地：**本项目的代码大部分由 AI agent 产出**（`AGENT.md` §10）。`AGENT.md` §10 的第一条硬规则是「AI 生成的代码过**完全相同**的门禁。不会因为是生成的就降低标准」。人的注意力是稀缺资源，它应当集中在"这个决策对不对"，而不是"这段格式对不对"；格式、类型、分层这些必须交给门禁。
+A second fact dictates that discipline must be enforced by machine, not by conscience: **most of this project's code is produced by AI agents** (`AGENT.md` §10). The first hard rule of `AGENT.md` §10 is "AI-generated code passes the **exact same** gate. No lowering the bar just because it was generated." Human attention is a scarce resource that should focus on "is this decision correct," not "is this formatting correct"; formatting, types, and layering must be delegated to the gate.
 
-第三个事实是决策本身的半衰期。ADR 注册表开篇就写着：**「没有 ADR 的决策，是要被重新争论的决策。」** 一个没有被记录的架构决策，不会消失，只会在下一次有人碰到它时被重新讨论一遍 —— 通常是在没有原始约束信息的情况下。因此"ADR 制度化"不是文档工作，它是把决策成本一次性付清。
+A third fact is the half-life of decisions themselves. The ADR registry opens with: **"A decision without an ADR is a decision to be re-argued."** An unrecorded architectural decision does not disappear; it merely gets re-discussed the next time someone hits it — usually without the original constraint context. So "ADR institutionalization" is not paperwork; it amortizes the decision cost once and for all.
 
-`AGENT.md` §6 已经给出了分层与 marker 的骨架，`AGENT.md` §9 给出了门禁的定义，`docs/plan.md` §2.4 给出了四层门禁的表，架构文档 §11.2 / §11.3 给出了分层图与开发模式表。本 ADR 把这几处已经分散生效的纪律收成一条有后果的决策，并明确它们的边界（尤其是"哪些不在门禁内"）。
+`AGENT.md` §6 already gives the layering and marker skeleton, `AGENT.md` §9 defines the gate, `docs/plan.md` §2.4 gives the four-tier gate table, and architecture doc §11.2 / §11.3 give the layering diagram and development-mode table. This ADR consolidates these already-scattered disciplines into one decision with consequences, and clarifies their boundaries (especially "what is outside the gate").
 
-## Decision（决策）
+## Decision
 
-- **① 分层测试与 marker：`unit` / `contract` / `integration` / `e2e` / `performance`。决策逻辑层强制 TDD（红 - 绿 - 重构）；协议 / 接入层以契约测试 + 仿真集成为主，不做严格 TDD。** 分层不是优先级，是不同的证据类型：单元证明判决对，契约证明各实现一致，集成证明能对仿真对等端工作，e2e 证明完整流程含错误分支，性能证明容量边界。
-- **② 每个架构决策必须在 ADR 中有记录；没有 ADR 的决策等于没有发生过。** ADR 与它所授权的改动**一起**写，不事后补、不批量补；ADR 必须写明它接受的缺口（空的 consequences 节等于没分析完）；推翻一个决策意味着写一个新的 ADR，并在同一次改动里更新架构文档。
-- **③ 四层测试门禁：① fast → ② integration → ③ e2e → ④ performance。** 本地 `make gate` 必须全绿才能提交；`--no-verify` 及其等价物禁止（`AGENT.md` §11）。本地门禁的结论只覆盖它实际跑过的东西（`AGENT.md` §9）。
-- **④ 不显而易见的代码必须标注 ADR**：`# See ADR-00NN`，让审稿人能从代码一步走到理由（REQ-G-3）。AST 扫描（检查这条标注）在 `make gate` 四步之外单独执行，可用 `make gate-strict` 触发。
-- **引入某一层首个用例的里程碑，必须同步把该层改为阻塞。** 否则该层形同虚设。
+- **① Layered testing and markers: `unit` / `contract` / `integration` / `e2e` / `performance`. The decision-logic layer mandates TDD (red-green-refactor); the protocol / ingress layer uses contract tests + simulation integration primarily, not strict TDD.** Layering is not a priority ordering but a different evidence type: unit proves the decision is correct, contract proves each implementation agrees, integration proves it works against a simulated peer, e2e proves the full flow including error branches, performance proves capacity boundaries.
+- **② Every architectural decision must be recorded in an ADR; a decision without an ADR never happened.** The ADR is written **together with** the change it authorizes — not retrofitted, not batched. The ADR must state the gap it accepts (an empty Consequences section means the analysis is unfinished); overturning a decision means writing a new ADR and updating the architecture doc in the same change.
+- **③ Four-tier test gate: ① fast → ② integration → ③ e2e → ④ performance.** Local `make gate` must be fully green to commit; `--no-verify` and its equivalents are forbidden (`AGENT.md` §11). The local gate's conclusion only covers what it actually ran (`AGENT.md` §9).
+- **④ Non-obvious code must cite its ADR**: `# See ADR-00NN`, so a reviewer can step from code to rationale in one hop (REQ-G-3). The AST scan (checking this annotation) runs separately from the four `make gate` steps and can be triggered with `make gate-strict`.
+- **The milestone that introduces the first use case for any tier must simultaneously make that tier blocking.** Otherwise the tier is decorative.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **质量门禁统一。** `make gate` 是提交的唯一门禁，固定跑同一组检查、同一顺序（`ruff format --check` → `ruff check` → `mypy` → pytest unit+contract），不存在第二套标准。
-- **TDD 的投入落在回报最高的地方。** 判决逻辑强制 TDD；协议层不被强推，省下的成本投向契约与仿真 —— 后者才是协议层真正的风险所在。
-- **决策可追溯，代码可追因。** ADR 让"为什么是这样"有据可查；`# See ADR-00NN` 让审稿人从一行不直观的代码一步走到那条 ADR，而不是自己猜。
-- **AI 产出的代码与人工代码同标准。** 门禁对来源不敏感，只检查产物 —— 这正是 AI 辅助能在本项目被大规模使用的前提。
-- **分层让慢测试不阻塞快反馈。** 容量层按需手动运行，不进提交门禁。
+- **Unified quality gate.** `make gate` is the only gate for commits, always running the same checks in the same order (`ruff format --check` → `ruff check` → `mypy` → pytest unit+contract) — no second standard.
+- **TDD investment lands where the payoff is highest.** Decision logic mandates TDD; the protocol layer is not forced, and the saved cost goes into contracts and simulation — which is where the protocol layer's real risk lies.
+- **Decisions are traceable, code is attributable.** ADRs make "why it is this way" documented; `# See ADR-00NN` lets a reviewer step from one non-obvious line of code to that ADR instead of guessing.
+- **AI-produced code meets the same standard as human code.** The gate is source-agnostic and only checks the artifact — which is the premise for AI assistance being used at scale in this project.
+- **Layering keeps slow tests from blocking fast feedback.** The capacity tier runs on demand manually and is not in the commit gate.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **四层门禁只有在每层真正阻塞时才有意义。** 引入某层首个用例的里程碑必须同步改为阻塞，否则该层只是装饰。当前层③ e2e 与层④ performance 仍无用例、不阻塞；层② integration 已随首个用例（`platform/tests/test_telemetry_export_integration.py`）改为阻塞。**这是一条需要持续执行的纪律，不是一次性动作。**
-- **`make gate` 四步不含 AST 扫描。** 因此"ADR 标注"这一条在本地快速门禁里不被强制，只在 `make gate-strict` 中检查（REQ-G-3 明确这一归属）。接受：换本地快速反馈；代价是标错漏标在本地不会被拦。
-- **分层 marker 依赖人工正确打标。** 打错层的测试会跑到错误的门禁层（例如把慢的集成测试打成 `unit`），既拖慢快层、又让集成层空过。marker 本身没有自动校验。
-- **ADR 制度化的成本是实打实的。** 每个决策都要写一份带 consequences 的文档；为了赶进度而跳过它，正是"决策被重新争论"的来源。本批 ADR（0008 / 0012 / 0013 / 0014 / 0015）本身就是这条纪律的滞后产物 —— 它们在架构文档 §0 账本里早已存在，但 ADR 缺位，属于 `AGENT.md` §7「不事后补，也不批量补」的反例，记录在案。
-- **`--no-verify` 被禁止意味着门禁挡住时必须修原因，而不是绕过。** 在紧急修复场景下这会增加时间成本。接受：被绕过的门禁等于没有门禁。
+- **The four-tier gate only matters when each tier actually blocks.** The milestone introducing a tier's first use case must simultaneously make it blocking, otherwise the tier is merely decoration. Tier ③ e2e and tier ④ performance still have no use cases and do not block; tier ② integration became blocking with its first use case (`platform/tests/test_telemetry_export_integration.py`). **This is a discipline requiring continuous execution, not a one-time action.**
+- **`make gate`'s four steps do not include the AST scan.** Therefore the "ADR annotation" rule is not enforced in the local fast gate, only in `make gate-strict` (REQ-G-3 explicitly assigns it here). Accepted: trade fast local feedback; the cost is that mis-annotations or omissions are not caught locally.
+- **Layering markers rely on humans marking them correctly.** A test tagged in the wrong tier runs in the wrong gate tier (e.g., a slow integration test tagged `unit`), slowing the fast tier while letting the integration tier pass through empty. There is no automatic validation of markers.
+- **The cost of ADR institutionalization is real.** Every decision requires a document with Consequences; skipping it to catch up on schedule is exactly the source of "decisions being re-argued." This batch of ADRs (0008 / 0012 / 0013 / 0014 / 0015) are themselves lagging products of this discipline — they already existed in architecture doc §0 ledger but lacked ADRs, an anti-pattern against `AGENT.md` §7 "no retrofitting, no batching," recorded here.
+- **`--no-verify` being forbidden means a blocking gate must be fixed at the cause, not bypassed.** In emergency-fix scenarios this adds time cost. Accepted: a bypassed gate is no gate.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 所有层强制 TDD | 协议 / 接入层 TDD 成本高、回报低（架构文档 §11.3）；它会把成本从真正的高风险处（契约与仿真）挤走 |
-| 所有层都不强制 TDD（测试跟着实现补） | 判决逻辑是纯函数，TDD 在那儿最便宜；放弃它等于在最便宜的地方放弃质量 |
-| 只做一层（全量跑一次） | 慢测试阻塞快反馈；容量跑每次提交会拖死合并，且容量结论本就不是提交门禁该管的事 |
-| 只有远端门禁、不要本地门禁 | 反馈周期从分钟级拉到"push 之后"；且本地不绿就提交会把远端当成调试器 |
-| 决策靠口头 / PR 描述，不强制 ADR | 没有 ADR 的决策会被重新争论（ADR 注册表开篇）；推翻一个决策时无处追责、无处对比 |
-| 分层 TDD + ADR 制度化 + 四层测试门禁（本决策） | 采纳 |
+| Mandate TDD for all tiers | Protocol / ingress TDD is costly with low payoff (architecture doc §11.3); it displaces cost from the real high-risk area (contracts and simulation) |
+| No TDD mandate for any tier (tests follow implementation) | Decision logic is pure functions where TDD is cheapest; abandoning it means abandoning quality where it is cheapest |
+| Single tier (run everything once) | Slow tests block fast feedback; running capacity every commit kills merge throughput, and capacity conclusions are not a commit-gate concern anyway |
+| Remote gate only, no local gate | Feedback cycle goes from minutes to "after push"; and committing ungreen locally turns the remote into a debugger |
+| Decisions by word-of-mouth / PR description, no enforced ADR | A decision without an ADR gets re-argued (ADR registry opening); overturning a decision has no accountability or comparison point |
+| Layered TDD + ADR institutionalization + four-tier test gate (this decision) | Adopted |
 
-## Evidence（证据）
+## Evidence
 
-- `AGENT.md` §6 测试策略表原文（逐行）：「决策逻辑 | `unit` | **强制 TDD**，红 - 绿 - 重构。TDD 的回报就在这里。」「契约 | `contract` | 声明式用例，放在 `testbed/contracts/`，对**每一个**实现重放」「协议 / 接入 | `integration` | 契约测试 + 仿真对等端；不做严格 TDD —— 成本高、回报低」「完整流程 | `e2e` | 完整呼叫 + 错误分支，含控制台」「容量 | `performance` | 只用真实 socket。绝不要靠驱动回调来测 —— 那测的是业务逻辑，不是系统（ADR-0014）」。
-- `AGENT.md` §9 门禁原文：「`make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。四步固定，AST 扫描**不在 gate 内**。」「**AST 扫描归属**：AST 扫描（检查不显而易见的代码是否标注 ADR，对应 REQ-G-3）在 `make gate` **之外**单独执行（ADR-0015）。用 `make gate-strict` 目标触发（`make gate` 四步 + AST 扫描）。」「本地门禁不绿，什么都不能提交。**本地门禁的结论只覆盖它实际跑过的东西**：绝不要把本地重跑的结果表述成比它更强的验证通过。」「**首个引入某层测试的里程碑必须同步确认该层已在对应目标中生效。**」
-- `Makefile` 定义：`gate: lint type test-unit`，其中 `lint` = `ruff format --check .` + `ruff check .`，`type` = `uv run mypy`，`test-unit` = `uv run pytest -m "unit or contract" -q`。文件头注释：「3rdparty-as — the local gate.」「`make gate` is layer ① — lint, type, then unit/contract tests, in that order.」
-- `docs/plan.md` §2.4「四层测试门禁（ADR-0015）」表：① fast `unit or contract`（`make gate` / `make test`）、② integration（在 ① 之后）、③ e2e（在 ② 之后）、④ performance（按需 / 手动）。同节进展原文：「`integration` 层首个用例已引入（`platform/tests/test_telemetry_export_integration.py`，真 socket 验证遥测导出不阻塞），层② 已同步改为阻塞；层③ e2e 与层④ performance 仍无用例，不阻塞。」
-- 架构文档 §11.3「开发模式（Q16 = A）」表原文：「**业务决策层**（`routing/engine`、`screening`）| **强制 TDD**，Red-Green-Refactor | 纯函数，TDD 收益最高、成本最低」「**协议/接入层** | 契约测试 + 仿真集成测试为主 | 不做严格 TDD，成本高收益低」「**设计决策** | **ADR 制度化** | 本次每一项决策都落 ADR」。§11.2 四层门禁图标注 ①「分钟级 · 必过」。
-- 架构文档 §0 决策账本条目 17 原文：「研发模式 | 分层 TDD + ADR 制度化 + 四层测试门禁」。
-- PRD REQ-G-3（不显而易见的代码必须标注对应 ADR）原文：「不显而易见的代码（不读上下文看不懂为什么这么写的）必须有注释指向对应的架构决策……必须在代码行末标注 `# See ADR-00NN`。审稿人从代码一步走到理由，不是自己猜。AST 扫描在 `make gate` 之外单独执行……」
-- PRD REQ-G-4（`make gate` 必须全绿才能提交）原文：「`make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。本地门禁不绿，什么都不能提交。`--no-verify` 及其等价物禁止。」
-- `AGENT.md` §11 Git 规则原文：「**不跳过 hook。** `--no-verify` 及其等价物禁止。如果 hook 挡住了 commit，去修原因。」§10 第 1 条：「AI 生成的代码过**完全相同**的门禁。不会因为是生成的就降低标准。」
-- `docs/architecture/adr/README.md` 规则原文：「ADR 与它所授权的改动**一起**写，不事后、不最后批量补。没有 ADR 的决策，是要被重新争论的决策。」「**ADR 必须写明它接受了什么。** …… 没有 consequences 节的 ADR 是宣传。」「**代码指向它的 ADR。** 一行不显而易见的代码带 `# See ADR-00NN`」。
+- `AGENT.md` §6 testing-strategy table verbatim (line by line): "Decision logic | `unit` | **mandatory TDD**, red-green-refactor. TDD pays off here." "Contract | `contract` | declarative use cases, placed in `testbed/contracts/`, replayed against **every** implementation." "Protocol / ingress | `integration` | contract tests + simulated peer; no strict TDD — costly, low payoff." "Full flow | `e2e` | full call + error branches, including console." "Capacity | `performance` | real sockets only. Never test by driving callbacks — that tests business logic, not the system (ADR-0014)."
+- `AGENT.md` §9 gate verbatim: "`make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest (unit/contract tiers). Four steps fixed; AST scan is **not** inside the gate." "**AST scan assignment**: the AST scan (checking whether non-obvious code cites an ADR, per REQ-G-3) runs **outside** `make gate` separately (ADR-0015). Trigger via the `make gate-strict` target (`make gate`'s four steps + AST scan)." "Local gate not green, nothing commits. **The local gate's conclusion only covers what it actually ran**: never present a local re-run's result as stronger verification than it is." "**The milestone introducing a tier's first test must simultaneously confirm that tier is active in the corresponding target.**"
+- `Makefile` definitions: `gate: lint type test-unit`, where `lint` = `ruff format --check .` + `ruff check .`, `type` = `uv run mypy`, `test-unit` = `uv run pytest -m "unit or contract" -q`. File header comment: "3rdparty-as — the local gate." "`make gate` is tier ① — lint, type, then unit/contract tests, in that order."
+- `docs/plan.md` §2.4 "Four-tier test gate (ADR-0015)" table: ① fast `unit or contract` (`make gate` / `make test`), ② integration (after ①), ③ e2e (after ②), ④ performance (on demand / manual). Same-section progress verbatim: "the `integration` tier's first use case has been introduced (`platform/tests/test_telemetry_export_integration.py`, real-socket verification that telemetry export does not block), tier ② has simultaneously become blocking; tier ③ e2e and tier ④ performance still have no use cases and do not block."
+- Architecture doc §11.3 "Development mode (Q16 = A)" table verbatim: "**Business decision layer** (`routing/engine`, `screening`) | **mandatory TDD**, Red-Green-Refactor | pure functions, TDD highest payoff lowest cost." "**Protocol/ingress layer** | contract tests + simulation integration primarily | no strict TDD, high cost low payoff." "**Design decisions** | **ADR institutionalization** | every decision here lands an ADR." §11.2 four-tier gate diagram annotation ① "minutes-scale · must pass."
+- Architecture doc §0 decision ledger item 17 verbatim: "Engineering discipline | layered TDD + ADR institutionalization + four-tier test gate."
+- PRD REQ-G-3 (non-obvious code must cite its ADR) verbatim: "Non-obvious code (code you cannot understand why it is written that way without reading context) must carry a comment pointing to the corresponding architectural decision… must annotate `# See ADR-00NN` at the end of the code line. Reviewer steps from code to rationale, not guessing. The AST scan runs outside `make gate` separately…"
+- PRD REQ-G-4 (`make gate` must be green to commit) verbatim: "`make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest (unit/contract tiers). Local gate not green, nothing commits. `--no-verify` and its equivalents are forbidden."
+- `AGENT.md` §11 Git rules verbatim: "**Do not skip hooks.** `--no-verify` and its equivalents are forbidden. If a hook blocks the commit, fix the cause." §10 rule 1: "AI-generated code passes the **exact same** gate. No lowering the bar just because it was generated."
+- `docs/architecture/adr/README.md` rules verbatim: "Write the ADR **together with** the change it authorizes — no retrofitting, no final batch. A decision without an ADR is a decision to be re-argued." "**An ADR must state what it accepts.** … an ADR without a Consequences section is propaganda." "**Code points to its ADR.** A non-obvious line carries `# See ADR-00NN`."
 
-## Related（相关）
+## Related
 
-- [ADR-0012](0012-cross-implementation-parity.md) 语言无关契约 —— `contract` 层的判据来源
-- [ADR-0014](0014-three-layer-testbed.md) 三层 testbed —— `integration` 与 `performance` 层的载体
-- [`../新系统整体架构.md`](../新系统整体架构.md) §11.2 四层测试门禁、§11.3 开发模式
-- `AGENT.md` §6 测试策略、§9 门禁、§10 AI 辅助、§11 Git 规则（**仓库红线，本 ADR 是对它们的归档，不是替代**）
-- PRD REQ-G-3（ADR 标注）、REQ-G-4（`make gate` 门禁）
-- 层③ e2e 与层④ performance **仍无用例**、不阻塞；改为阻塞的时点分别为 M3 与 M6
+- [ADR-0012](0012-cross-implementation-parity.md) language-agnostic contracts — the criterion source for the `contract` tier
+- [ADR-0014](0014-three-layer-testbed.md) three-layer testbed — the carrier for the `integration` and `performance` tiers
+- [`../system-architecture.md`](../system-architecture.md) §11.2 four-tier test gate, §11.3 development mode
+- `AGENT.md` §6 testing strategy, §9 gate, §10 AI assistance, §11 Git rules (**repo red line; this ADR archives them, does not replace them**)
+- PRD REQ-G-3 (ADR annotation), REQ-G-4 (`make gate` gate)
+- Tier ③ e2e and tier ④ performance **still have no use cases** and do not block; the points at which they become blocking are M3 and M6 respectively

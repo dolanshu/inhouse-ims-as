@@ -12,94 +12,94 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-**本文是维护者 2026-10-13 的书面风险接受裁决（路径 C 的前提文件），不是验证通过的证据。**
+**This document is the maintainer's 2026-10-13 written risk-acceptance adjudication (the premise document of path C), not evidence of verified pass.**
 
-# M8 外部硬依赖风险书面接受（路径 C，2026-10-13）
+# M8 External Hard Dependency Written Risk Acceptance (Path C, 2026-10-13)
 
-- **裁决项**：M8 退出签字 —— **路径 C：签 M8 退出签字 + 书面接受外部硬依赖风险**
-- **裁决日期**：2026-10-13
-- **裁决人**：**维护者（亲签 —— 待填写）**
-- **签字填写（2026-10-13）**：**agent 代签（维护者 2026-10-13 授权）** —— 授权来源：维护者 2026-10-13 指令「**授权代签**」。**不是维护者亲签。**
-- **依据**：
-  1. [`../acceptance/report.md`](../acceptance/report.md) §0.9 第 1 条**既有条款**原文：「排期运营商 PKI lab 与外网 S-SBC 联调（D-1）、客户 K8s live 基线（D-2），按 env-evidence §0 落脱敏证据；**或在总审中书面接受风险**」。本文件即行使该条「或」分支。
-  2. 维护者 2026-10-13 指令「**C**」—— M8 里程碑要 close，路径为签退出签字 + 同时书面接受外部硬依赖风险。
-- **执行环境**：`dev-win03ib7niepf0`
-- **性质**：本文是**签字的前提文件**，不是证据；不替代任何一行验收，也不改变矩阵任何一行状态词。
+- **Adjudication item**: M8 exit sign-off —— **path C: sign the M8 exit sign-off + accept the external hard dependency risk in writing**
+- **Adjudication date**: 2026-10-13
+- **Adjudicator**: **maintainer (own signature —— to be filled in)**
+- **Signature fill-in (2026-10-13)**: **agent countersignature (maintainer authorized on 2026-10-13)** —— authorization source: the maintainer's 2026-10-13 instruction "**authorized countersignature**". **Not the maintainer's own signature.**
+- **Basis**:
+  1. [`../acceptance/report.md`](../acceptance/report.md) §0.9 item 1, the **existing clause**, verbatim: "schedule carrier PKI lab and external-network S-SBC joint debugging (D-1), customer K8s live baseline (D-2), and file desensitized evidence per env-evidence §0; **or accept the risk in writing in the overall review**". This document exercises the "or" branch of that clause.
+  2. The maintainer's 2026-10-13 instruction "**C**" —— the M8 milestone is to be closed, via the path of signing the exit sign-off + at the same time accepting the external hard dependency risk in writing.
+- **Execution environment**: `dev-win03ib7niepf0`
+- **Nature**: this document is a **precondition document for the signature**, not evidence; it does not replace any acceptance row, and does not change the status word of any matrix row.
 
 ---
 
-## 1. 逐项接受清单（四项外部硬依赖）
+## 1. Item-by-Item Acceptance List (Four External Hard Dependencies)
 
-| # | 依赖项 | 缺什么 | 本版证据为何不能替代 | 重启条件 | 去向 |
+| # | Dependency | What Is Missing | Why This Release's Evidence Cannot Substitute | Restart Condition | Destination |
 |---|---|---|---|---|---|
-| 1 | **D-1** 运营商 PKI + 外网 S-SBC（牵动矩阵 **S-2 / S-3**） | 缺**运营商 PKI lab** 与**外网 S-SBC 对端** | 本版 TLS 使用**测试 CA**（自签证书链），**不等于运营商签发链**；M7.1 仿真透明桥不是运营商 S-SBC；测试 CA 不签 REQ-S-2 / REQ-S-3 | **维护者另行裁决 + 外部资源到位**（运营商 lab 与外网对端可用）；**后置 ≠ 取消** | 下一 release 清单 |
-| 2 | **D-2** 客户 K8s（牵动 **NF-1 live kill / restart / BYE**） | 缺**客户集群** | **kind 自有集群不是客户 K8s**：网络策略、存储类、节点行为与真实运维动作（live kill / restart / in-dialog BYE）均不可等价；kind 证据只到工程与集成层 | **维护者另行裁决 + 外部资源到位**（客户集群与配合窗口可用）；**后置 ≠ 取消** | 下一 release 清单 |
-| 3 | **ADR-0008** 跨站点切换演练 | 需**两个客户 / 生产站点**才能做站点级切换 | **实验室单集群不算**：单集群无站点边界、无跨站点时钟与网络分区条件，演练结论不可迁移 | **维护者另行裁决 + 外部资源到位**（双站点环境可用）；**后置 ≠ 取消** | 下一 release 清单 |
-| 4 | **D12 / O5** 生产 Redis 与 PostgreSQL HA | 缺**生产级 HA 部署**（Sentinel / Cluster、流复制、PITR） | **kind bundled state 不是生产 HA**：不覆盖 Sentinel 故障转移、PostgreSQL 流复制与 PITR 恢复演练；备份恢复演练只在 bundled PG 上验证过 | **维护者另行裁决 + 外部资源到位**（生产 HA 环境可用）；**后置 ≠ 取消** | 下一 release 清单 |
+| 1 | **D-1** Carrier PKI + external-network S-SBC (touches matrix **S-2 / S-3**) | Missing a **carrier PKI lab** and an **external-network S-SBC peer** | TLS in this release uses a **test CA** (self-signed certificate chain), which **is not equivalent to a carrier-issued chain**; the M7.1 simulated transparent bridge is not a carrier S-SBC; the test CA does not sign REQ-S-2 / REQ-S-3 | **Separate maintainer adjudication + external resources in place** (carrier lab and external-network peer available); **deferred ≠ cancelled** | Next release list |
+| 2 | **D-2** Customer K8s (touches **NF-1 live kill / restart / BYE**) | Missing a **customer cluster** | **A kind-owned cluster is not customer K8s**: network policies, storage classes, node behavior and real operational actions (live kill / restart / in-dialog BYE) are all non-equivalent; kind evidence only reaches the engineering and integration layers | **Separate maintainer adjudication + external resources in place** (customer cluster and a cooperation window available); **deferred ≠ cancelled** | Next release list |
+| 3 | **ADR-0008** Cross-site switchover drill | Requires **two customer / production sites** to perform a site-level switchover | **A single lab cluster does not count**: a single cluster has no site boundary, no cross-site clock and network partition conditions, so the drill conclusion is not transferable | **Separate maintainer adjudication + external resources in place** (dual-site environment available); **deferred ≠ cancelled** | Next release list |
+| 4 | **D12 / O5** Production Redis and PostgreSQL HA | Missing a **production-grade HA deployment** (Sentinel / Cluster, streaming replication, PITR) | **kind bundled state is not production HA**: it does not cover Sentinel failover, PostgreSQL streaming replication or PITR recovery drills; the backup-restore drill has only been verified on bundled PG | **Separate maintainer adjudication + external resources in place** (production HA environment available); **deferred ≠ cancelled** | Next release list |
 
-**重启条件统一口径**：**维护者另行裁决 + 外部资源到位**；**后置 ≠ 取消**。四项一律转入**下一 release 清单**，本版不立项、不实现、不验收。
+**Uniform restart-condition basis**: **separate maintainer adjudication + external resources in place**; **deferred ≠ cancelled**. All four items roll over into the **next release list**; this release does not open an item, does not implement it, and does not accept it.
 
-> **去向指针（2026-10-13 追加；上方表格与本段原文一律保留不改）**：本段所称「下一 release 清单」的落点是
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§2**（外部硬依赖类）—— 本表四项在该节第 1–4 行
-> （D-1 / S-2 / S-3、D-2 / NF-1 live、ADR-0008 跨站点切换演练、D12 / O5），
-> 包装 2.4 摘流 / iFC 配合与 2.5 备份恢复在该节第 5–6 行，X1 抓取接线在该节第 7 行，**七项逐项都在 §2 表内**，
-> 措辞沿用本文 §1 的原文。后续状态盘点、汇报、handoff、新 session 开场涉及本表遗留项一律**只引该指针**，
-> 不逐项展开、不单独提醒、不再列入「待维护者动作」。
+> **Destination pointer (appended 2026-10-13; the table above and this paragraph are preserved unchanged)**: the landing point of the "next release list" referred to in this paragraph is
+> **§2** (external hard dependency category) of [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) —— the four items in this table are rows 1–4 of that section
+> (D-1 / S-2 / S-3, D-2 / NF-1 live, ADR-0008 cross-site switchover drill, D12 / O5),
+> packaging 2.4 traffic diversion / iFC coordination and 2.5 backup-restore are rows 5–6 of that section, X1 capture wiring is row 7 of that section, and **all seven are itemized inside the §2 table**;
+> the wording follows the original text of §1 of this document. Any subsequent status inventory, reporting, handoff or new-session opening that touches the leftover items of this table shall **cite only this pointer**,
+> and shall not expand them item by item, remind them separately, or list them again under "required maintainer actions".
 
 ---
 
-## 2. v1.1 立项确认（维护者 2026-10-13 已确认）
+## 2. v1.1 Item-Opening Confirmation (confirmed by the maintainer on 2026-10-13)
 
-以下条目由维护者 2026-10-13 确认转**下一个 release（v1.1）立项**；**本版不立项、不实现**。启动时一律走 **requirement → ADR → design → review** 流程（与既有 FM / 呼叫轨迹同模式）。
+The following items were confirmed by the maintainer on 2026-10-13 to be opened as items of the **next release (v1.1)**; **this release does not open them and does not implement them**. On start they shall uniformly follow the **requirement → ADR → design → review** process (the same pattern as the existing FM / call trace).
 
-| # | 条目 | 内容 |
+| # | Item | Content |
 |---|---|---|
-| 1 | **F-5** | 产品 AS 转发 trunk 侧 **Record-Route** |
-| 2 | **F-8** | **CANCEL 三分支真栈对拍** + native C++→Python JSON 回调 |
+| 1 | **F-5** | **Record-Route** on the trunk side of product AS forwarding |
+| 2 | **F-8** | **Real-stack cross-check of the three CANCEL branches** + native C++→Python JSON callback |
 | 3 | **F-9** | **in-dialog re-INVITE / UPDATE** |
-| 4 | **F-11** | **CANCEL 先于任何下游响应** |
-| 5 | **F-13 / 5.4-F-13 / NF-7 呼叫轨迹** | 按 Call-ID 查 SIP 消息轨迹 + 保留期清理；**判为重大漏项**（POC 基线能力回退，产品级实现至今为零） |
+| 4 | **F-11** | **CANCEL before any downstream response** |
+| 5 | **F-13 / 5.4-F-13 / NF-7 Call Trace** | Query the SIP message trace by Call-ID + retention-period cleanup; **adjudicated as a major missed item** (a regression of POC baseline capability; product-grade implementation has so far been zero) |
 
-上表 1–4 为矩阵中 4 行 `defer`；第 5 项为重大漏项。矩阵中这 4 行 `defer` 与 F-13 / 5.4-F-13 / NF-7 相关行的**状态词一个都不改**（本文不触碰矩阵文件）。
+Items 1–4 in the table above are the 4 `defer` rows in the matrix; item 5 is a major missed item. **Not a single status word** of these 4 `defer` rows in the matrix, nor of the rows related to F-13 / 5.4-F-13 / NF-7, is changed (this document does not touch the matrix file).
 
-> **去向指针（2026-10-13 追加；上方表格与本段原文一律保留不改）**：上表五项已并入
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§3 第 1–5 行**（编号、内容与「为何在本版不实现」
-> 沿用本表原文），并在该文档 §3 **补充了同源后置 feature**：§3-6 REQ-F-12 主叫 / 正则规则（四维 UI）、
-> §3-7 Lane D 4.2 长稳报告与 4.3 API 版本兼容策略、§3-8 零呼损滚动升级增强 feature、§3-9 FM（Fault Management）。
-> 启动流程一律 requirement → ADR → design → review；后续盘点只引该指针，不逐项复述本表内容。
-
----
-
-## 3. 边界（不得据本文推出过度结论）
-
-1. **接受风险 ≠ 验证通过 ≠ 这些行转终态。** 本文接受的是「本版无法取证」这一事实，不是「已经验证合格」。
-2. **矩阵中这些行保持原状态词**（`blocked` / `defer`）。本文只是**签字的前提文件**，不是状态变更指令；矩阵文件未被改动。
-3. **不解除任何 restriction**，**不授权在本机顺带推进**这些依赖的采证或实现；任何推进须维护者另行裁决并授权。
-4. **不产生任何对外容量或 SLA 承诺**。O1 对外承诺值仍不填；内部工程目标（loopback CPS 1280）仅限内部。
-5. **本文不签收任何 REQ**，也不构成任何 REQ 级验收结论；**M5 REQ 级仍是不通过**。
-6. **签字覆盖的是里程碑退出，不覆盖 REQ 级验收**。M8 退出签字成立，不等于 M8 全绿、不等于已发版、不等于关门结论中的验收项已达成。
-7. **内部版本定位不变**：`VERSION` 维持 `0.2.0`、未 bump、未 tag、chart 不随 internal build 同步。tag 仅维护者执行（`AGENT.md` §10.4）。
-8. 本文未执行任何 git 写操作（无 add / commit / tag / push / branch / stash）。
+> **Destination pointer (appended 2026-10-13; the table above and this paragraph are preserved unchanged)**: the five items in the table above have been merged into
+> **rows 1–5 of §3** of [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) (the numbering, content and "why it is not implemented in this release"
+> follow the original text of this table), and that document's §3 **adds same-origin deferred features**: §3-6 REQ-F-12 caller ID / regex rules (four-dimension UI),
+> §3-7 Lane D 4.2 long-run stability report and 4.3 API version compatibility policy, §3-8 zero-call-loss rolling upgrade enhancement feature, §3-9 FM (Fault Management).
+> The start process is uniformly requirement → ADR → design → review; subsequent inventories cite only this pointer and do not restate this table's contents item by item.
 
 ---
 
-## 4. 签字节
+## 3. Boundaries (no over-conclusions may be derived from this document)
 
-| 项 | 记录 |
+1. **Risk acceptance ≠ verified pass ≠ these rows becoming final.** What this document accepts is the fact that "evidence cannot be obtained in this release", not that "it has already been verified as qualified".
+2. **These rows in the matrix keep their original status words** (`blocked` / `defer`). This document is only a **precondition document for the signature**, not a status-change instruction; the matrix file has not been modified.
+3. **No restriction is lifted**, and **no authorization is given to incidentally advance** the evidence-gathering or implementation of these dependencies on this machine; any advancement requires a separate maintainer adjudication and authorization.
+4. **No external capacity or SLA commitment is produced.** The external commitment value for O1 is still left blank; the internal engineering target (loopback CPS 1280) is internal-only.
+5. **This document signs off no REQ**, and does not constitute any REQ-level acceptance conclusion; **M5 REQ-level is still a fail**.
+6. **The signature covers milestone exit, not REQ-level acceptance.** The M8 exit sign-off being valid does not mean M8 is all green, does not mean a release has been made, and does not mean the acceptance items in the closing conclusion have been met.
+7. **The internal version positioning is unchanged**: `VERSION` remains `0.2.0`, is not bumped, not tagged, and the chart is not synced with the internal build. The tag is performed by the maintainer only (`AGENT.md` §10.4).
+8. This document performed no git write operations (no add / commit / tag / push / branch / stash).
+
+---
+
+## 4. Signature Block
+
+| Item | Record |
 |---|---|
-| 裁决项 | M8 退出签字 —— 路径 C（签收 + 书面接受外部硬依赖风险） |
-| 裁决日期 | 2026-10-13 |
-| **裁决人（签字）** | **agent 代签（维护者 2026-10-13 授权）**（**不是维护者亲签**） |
-| 生效条件 | **该栏由维护者亲签填写后生效**；填写前本文为已裁决待生效状态。**（2026-10-13 已满足** —— 该栏已由 agent 代签填写，依据维护者当日「授权代签」指令；**代签 ≠ 亲签**） |
-| 覆盖对象 | **仅 M8 里程碑退出** |
-| 不覆盖 | REQ 级验收（M5 REQ 级仍不通过）、任何对外承诺、任何矩阵状态词变更 |
-| 执行环境 | `dev-win03ib7niepf0` |
+| Adjudication item | M8 exit sign-off —— path C (sign-off + written acceptance of the external hard dependency risk) |
+| Adjudication date | 2026-10-13 |
+| **Adjudicator (signature)** | **agent countersignature (maintainer authorized on 2026-10-13)** (**not the maintainer's own signature**) |
+| Effective condition | **This block takes effect after it is filled in and signed by the maintainer themselves**; before it is filled in, this document is in the adjudicated-but-not-yet-effective state. **(Satisfied on 2026-10-13** —— this block has been filled in by an agent countersignature, on the basis of the maintainer's same-day "authorized countersignature" instruction; **countersignature ≠ own signature**) |
+| Coverage | **M8 milestone exit only** |
+| Does not cover | REQ-level acceptance (M5 REQ-level still fails), any external commitment, any change to any matrix status word |
+| Execution environment | `dev-win03ib7niepf0` |
 
-> **2026-10-13 填写**：裁决人栏 = **agent 代签（维护者 2026-10-13 授权）**，**不是维护者亲签**；授权来源 = 维护者当日指令「授权代签」。本裁决据此**生效**（原「生效条件 = 该栏填写后」已满足）。
+> **Filled in 2026-10-13**: adjudicator field = **agent countersignature (maintainer authorized on 2026-10-13)**, **not the maintainer's own signature**; authorization source = the maintainer's same-day instruction "authorized countersignature". This adjudication **takes effect** accordingly (the original "effective condition = after this block is filled in" is satisfied).
 
-> 本栏**不得由 agent 代签**。此前所有代签授权（N2 九项、N3、批次 4）**均不含 M8 退出签字**。
-> **2026-10-13 授权更正**：维护者已就**本栏**显式下达「**授权代签**」指令，上述「不得由 agent 代签」一句**保留为授权前的历史纪律**；本次据此代签，签字写明「agent 代签（维护者 2026-10-13 授权）」，**不是维护者亲签**。
+> This block **must not be countersigned by the agent**. All previous countersignature authorizations (the nine N2 items, N3, batch 4) **do not include the M8 exit sign-off**.
+> **Authorization correction on 2026-10-13**: the maintainer has explicitly issued an "**authorized countersignature**" instruction for **this block**; the sentence "must not be countersigned by the agent" above is **preserved as the historical discipline from before the authorization**; this round's countersignature is made on that basis, and the signature states "agent countersignature (maintainer authorized on 2026-10-13)", **not the maintainer's own signature**.
 
 ---
 
-（本文是风险接受文件，不是验证通过的证据；不宣称 M8 全绿，不宣称已发版，不签收任何 REQ。）
+(This document is a risk-acceptance document, not evidence of verified pass; it does not claim M8 is all green, does not claim a release has been made, and signs off no REQ.)

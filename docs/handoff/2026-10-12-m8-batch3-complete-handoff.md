@@ -5,102 +5,102 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 批次 3「kind/sim 证据」完成交接（2026-10-12）
+# M8 Batch 3 "kind/sim Evidence" Completion Handoff (2026-10-12)
 
-## 0. 本文性质与边界
+## 0. Nature and Scope of This Document
 
-- 本文是 [`2026-10-12-m8-batch3-prompt.md`](2026-10-12-m8-batch3-prompt.md) 的完成交接，配套评审记录
-  [`../reviews/m8-batch3-kind-sim-evidence-review-2026-10-12.md`](../reviews/m8-batch3-kind-sim-evidence-review-2026-10-12.md)。
-- **不签收任何 REQ、不改变 `docs/acceptance/m8-test-plan-matrix.md` 状态、不改 report.md；不构成容量/SLA/RPO/RTO 承诺。**
-- 环境：`dev-win03ib7niepf0`；工具 `tools/bin`（kind 0.24.0 / kubectl 1.31.4 / helm 3.16.4）。
-- **未执行任何 git 写操作**；所有改动留在工作树，提交切分由维护者决定。
+- This document is the completion handoff for [`2026-10-12-m8-batch3-prompt.md`](2026-10-12-m8-batch3-prompt.md), paired with the review record
+  [`../reviews/m8-batch3-kind-sim-evidence-review-2026-10-12.md`](../reviews/m8-batch3-kind-sim-evidence-review-2026-10-12.md).
+- **It signs off no REQ, changes no state in `docs/acceptance/m8-test-plan-matrix.md`, and changes no report.md; it constitutes no capacity/SLA/RPO/RTO commitment.**
+- Environment: `dev-win03ib7niepf0`; tools `tools/bin` (kind 0.24.0 / kubectl 1.31.4 / helm 3.16.4).
+- **No git write operation was performed**; all changes remain in the work tree, and splitting them into commits is the maintainer's decision.
 
-## 1. 完成清单（7/7）与证据三元组
+## 1. Completion Checklist (7/7) and Evidence Triples
 
-| 项 | 结论 | 证据（三元组） |
+| Item | Verdict | Evidence (triple) |
 |---|---|---|
-| F-15 真 AS 全栈（含 NF-10） | 已验证（PASS） | (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt, 2026-10-12) |
-| NF-2 双 Deployment 隔离 | 已验证（PASS） | (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt, 2026-10-12) |
-| NF-9 命名空间隔离 | 已验证（PASS） | (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt, 2026-10-12) |
-| NF-4 滚动零丢失 | **失败已登记（FAILCLOSED，不是通过证据）** | (失败已登记, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt, 2026-10-12) |
-| NF-5 UDP/TCP/TLS 一致性 | 已验证（PASS） | (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt, 2026-10-12) |
-| 2.5 备份恢复演练 | 已验证（PASS，耗时为量级非承诺） | (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt, 2026-10-12) |
-| P0 缺陷修复（取证中发现） | 已验证（PASS） | (已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-config-service-auth-distribution-409-fix-2026-10-12.txt, 2026-10-12) |
+| F-15 Real AS Full Stack (incl. NF-10) | verified (PASS) | (verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt, 2026-10-12) |
+| NF-2 Dual Deployment Isolation | verified (PASS) | (verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt, 2026-10-12) |
+| NF-9 Namespace Isolation | verified (PASS) | (verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt, 2026-10-12) |
+| NF-4 Rolling Zero Loss | **failure registered (FAILCLOSED, not pass evidence)** | (failure registered, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt, 2026-10-12) |
+| NF-5 UDP/TCP/TLS Consistency | verified (PASS) | (verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt, 2026-10-12) |
+| 2.5 Backup Restore Drill | verified (PASS, elapsed time is order of magnitude, not a commitment) | (verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt, 2026-10-12) |
+| P0 Defect Fix (found during evidence collection) | verified (PASS) | (verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-config-service-auth-distribution-409-fix-2026-10-12.txt, 2026-10-12) |
 
-索引已更新：docs/acceptance/artifacts/m5/README.md（+7 行，FAILCLOSED 行标注「**不是通过证据**」）。
+Index updated: docs/acceptance/artifacts/m5/README.md (+7 lines, the FAILCLOSED line is marked "**not pass evidence**").
 
-## 2. 关键结果摘要
+## 2. Summary of Key Results
 
-- **F-15/NF-10**：两批健康→自动 applied（order_rev=5）→显式 apply 幂等 200；末批不健康→自动 rolled_back（rolled_back_to=1, health check failed）；首批后手动 rollback（rolled_back_to=2）。fleet-a 集群内真实收到 notify；「只通知首批」为设计行为。fleet 为协议 stub（AS 无 notify/bundle 接收端）。
-- **NF-2**：删 translation 并重建窗口 anti-fraud 42/42 ×200，身份不变。
-- **NF-9**：ns-A 停 PG+删两个 AS Deployment 期间 ns-B 58/58 ×200、7 Pod 身份不变；ns-A helm 恢复。
-- **NF-4**：350 呼/轮 ×2 轮，分别 347/346 建立；timeout_invite 3/4、bye_sip_481 6/7、timeout_bye 4/3、unresolved 10/10。根因：单副本 headless 切换窗口 + DUM 对话态仅在进程内存。**待维护者裁决**。
-- **NF-5**：UDP/TCP/TLS 三轮均 200×9、404×3、603×3，unresolved=0；TLS 为测试 CA。
-- **2.5**：pg_dump 0.259s / cp 0.143s / drop+create 1.123s / pg_restore 0.704s（rc=0，stderr 0）/ config-service 重启 5.252s；12 项计数+三角色一致；审计 append-only 8 项守卫按拒；登录 200、rules rows=2、审计续写。
-- **P0**：auth 模式分发必 409，删冗余 idle 检查（净 -10 行）+ 2 个端到端回归。
+- **F-15/NF-10**: first batch healthy → auto-applied (order_rev=5) → explicit apply idempotent 200; last batch unhealthy → auto rolled_back (rolled_back_to=1, health check failed); manual rollback after the first batch (rolled_back_to=2). fleet-a genuinely received notify inside the cluster; "notify the first batch only" is by design. fleet is a protocol stub (AS has no notify/bundle receiver).
+- **NF-2**: during the delete-and-recreate window of translation, anti-fraud was 42/42 ×200 with unchanged identity.
+- **NF-9**: while ns-A had PG stopped and both AS Deployments deleted, ns-B was 58/58 ×200 with 7 Pod identities unchanged; ns-A restored via helm.
+- **NF-4**: 350 calls/round ×2 rounds, 347/346 established respectively; timeout_invite 3/4, bye_sip_481 6/7, timeout_bye 4/3, unresolved 10/10. Root cause: single-replica headless handover window + DUM dialog state held only in process memory. **Awaiting maintainer adjudication**.
+- **NF-5**: all three rounds over UDP/TCP/TLS gave 200×9, 404×3, 603×3, unresolved=0; TLS used the test CA.
+- **2.5**: pg_dump 0.259s / cp 0.143s / drop+create 1.123s / pg_restore 0.704s (rc=0, stderr 0) / config-service restart 5.252s; 12 counters plus three roles consistent; the 8 audit append-only guards all rejected as expected; login 200, rules rows=2, audit continued appending.
+- **P0**: distribution in auth mode always returned 409; the redundant idle check was removed (net -10 lines) plus 2 end-to-end regressions.
 
-## 3. 代码/文件改动清单（均未提交）
+## 3. Code/File Change List (all uncommitted)
 
-| 文件 | 改动 | 来源 |
+| File | Change | Origin |
 |---|---|---|
-| services/config-service/src/as_config_service/api.py | 删 require_idle_distribution_connection 及 4 处调用（-10 行） | 本批 P0 修复 |
-| services/config-service/tests/test_postgres_auth_api_integration.py | +212 行（PgHarness 扩 store；2 个真实 PG/HTTPS/CSRF 分发回归） | 本批 P0 修复 |
-| testbed/sim-platform/Dockerfile.product | bullseye→bookworm（OpenSSL 3 事实注释） | 本批 NF-5 取证前置 |
-| testbed/e2e/test_s1_replay_contract.py | ruff format 纯格式塌行 | 本批门禁修复（批次2 提交带入的不合规） |
-| platform/tests/test_req_f6_f7_rule_priority_integration.py | except socket.timeout → TimeoutError（等价） | 同上 |
-| platform/tests/test_req_f11_cancel_race_integration.py | 去无占位符 f-string 前缀（F541） | 同上 |
-| docs/acceptance/artifacts/m5/2026-10-12/*.txt（7 份新证据） | 见 §1 | 本批 |
-| docs/acceptance/artifacts/m5/README.md | +7 行索引 | 本批 |
-| docs/reviews/m8-batch3-kind-sim-evidence-review-2026-10-12.md | 新增 | 本批 |
-| docs/handoff/2026-10-12-m8-batch3-complete-handoff.md | 本文件 | 本批 |
+| services/config-service/src/as_config_service/api.py | removed require_idle_distribution_connection and its 4 call sites (-10 lines) | P0 fix in this batch |
+| services/config-service/tests/test_postgres_auth_api_integration.py | +212 lines (PgHarness store extension; 2 real PG/HTTPS/CSRF distribution regressions) | P0 fix in this batch |
+| testbed/sim-platform/Dockerfile.product | bullseye→bookworm (OpenSSL 3 factual note) | prerequisite for NF-5 evidence in this batch |
+| testbed/e2e/test_s1_replay_contract.py | ruff format pure-format line collapse | gate fix in this batch (non-compliance brought in by the batch 2 commit) |
+| platform/tests/test_req_f6_f7_rule_priority_integration.py | except socket.timeout → TimeoutError (equivalent) | same as above |
+| platform/tests/test_req_f11_cancel_race_integration.py | removed f-string prefix without placeholders (F541) | same as above |
+| docs/acceptance/artifacts/m5/2026-10-12/*.txt (7 new evidence files) | see §1 | this batch |
+| docs/acceptance/artifacts/m5/README.md | +7 index lines | this batch |
+| docs/reviews/m8-batch3-kind-sim-evidence-review-2026-10-12.md | new | this batch |
+| docs/handoff/2026-10-12-m8-batch3-complete-handoff.md | this file | this batch |
 
-非本批、本批未触碰：`.dockerignore`（批次 1 遗留修改）、`docs/handoff/2026-10-12-m8-batch5-prompt.md`（未跟踪，维护者预置的下一批提示词）、`docs/intro.md`（未跟踪，来源不明）。
+Not part of this batch, untouched by this batch: `.dockerignore` (leftover change from batch 1), `docs/handoff/2026-10-12-m8-batch5-prompt.md` (untracked, the next-batch prompt preset by the maintainer), `docs/intro.md` (untracked, origin unknown).
 
-## 4. 验证结果
+## 4. Verification Results
 
-- `make gate`（2026-10-12 本机，exit 0）：ruff format 546 files already formatted；ruff check All checks passed；mypy Success 90 files；pytest `-m "unit or contract"` **1140 passed, 227 deselected, 11 warnings**。
-- `uv run pytest tests/test_evidence_discipline.py -q`：**117 passed**。
-- config-service 全量（compose PG12.22 :55432，AS_PG_TEST_DSN 指定，凭据不入库）：**629 passed, 3 skipped**（wal_level=replica / PG 版本环境限制）。
-- 原始取证记录留存于执行机临时目录（不入库）：/tmp/m8b3/（f15-run4.log、nf2-redrill.log、nf9-redrill.log、nf4.log、nf4-run2.log、nf5.log、drill2/、gate3.log 等）。
+- `make gate` (2026-10-12, local machine, exit 0): ruff format 546 files already formatted; ruff check All checks passed; mypy Success 90 files; pytest `-m "unit or contract"` **1140 passed, 227 deselected, 11 warnings**.
+- `uv run pytest tests/test_evidence_discipline.py -q`: **117 passed**.
+- config-service full run (compose PG12.22 :55432, AS_PG_TEST_DSN specified, credentials not committed): **629 passed, 3 skipped** (wal_level=replica / PG version environment limits).
+- Raw evidence records are kept in a temporary directory on the execution host (not committed): /tmp/m8b3/ (f15-run4.log, nf2-redrill.log, nf9-redrill.log, nf4.log, nf4-run2.log, nf5.log, drill2/, gate3.log, etc.).
 
-## 5. 集群现场状态
+## 5. In-Situ Cluster State
 
-- **kind-as-m5**：ns `as-m5` release `as`（revision 4+，helm upgrade 恢复后全栈 Running，migrate Completed；fleet-a/fleet-b 协议 stub 保留）；ns `as-m5b` release `asb` 独立全栈保留。清理方式：`kubectl --context kind-as-m5 delete deploy fleet-a fleet-b -n as-m5`；整个第二全栈可 `helm --kube-context kind-as-m5 -n as-m5b uninstall asb`。
-- **kind-as-m71**：ims-sim（scscf/ssbc-north/ssbc-south/uas/call-load）与 as-sut（bookworm 基底色 as-sut:dev，单架构 postgres:12.22 / redis 转存镜像，Calico v3.28.2 本地 -kind 镜像）全部 Running/migrate Completed。call-load UI 经 `kubectl -n ims-sim port-forward svc/ims-sim-ui 8088:8088` 访问。
-- 本地 compose：as-m4b8-dev-postgres-1（PG12.22 :55432）、as-redis-test :6379、as-pg15-test :55434 仍在运行。
+- **kind-as-m5**: ns `as-m5` release `as` (revision 4+, full stack Running after helm upgrade restore, migrate Completed; fleet-a/fleet-b protocol stubs retained); ns `as-m5b` release `asb` retains an independent full stack. Cleanup: `kubectl --context kind-as-m5 delete deploy fleet-a fleet-b -n as-m5`; the whole second full stack can be removed with `helm --kube-context kind-as-m5 -n as-m5b uninstall asb`.
+- **kind-as-m71**: ims-sim (scscf/ssbc-north/ssbc-south/uas/call-load) and as-sut (bookworm base image as-sut:dev, single-architecture postgres:12.22 / redis re-hosted image, Calico v3.28.2 local -kind images) are all Running/migrate Completed. The call-load UI is reachable via `kubectl -n ims-sim port-forward svc/ims-sim-ui 8088:8088`.
+- Local compose: as-m4b8-dev-postgres-1 (PG12.22 :55432), as-redis-test :6379, as-pg15-test :55434 are still running.
 
-## 6. 待维护者事项
+## 6. Items Awaiting the Maintainer
 
-1. **B3-02 NF-4 裁决**：FAILCLOSED 是否立项（StateStore/S-SBC 透明桥、多副本对话归属、或维护窗口操作口径）；裁决前矩阵维持 blocked。
-2. **B3-04**：config-service 单连接 PG 重启后不自动重连（500→重启恢复）是否立项。
-3. **工作树处置**：§3 改动如何切分提交（含批次 2 提交带入的 3 处 lint/格式修复、批次 1 遗留 .dockerignore、两个未跟踪 docs 文件）。
-4. 评审记录 Adjudication 13 行中 B3-01/02/04 标「待维护者确认/待裁决」，请逐行给最终裁决。
-5. `docs/handoff/2026-10-12-m8-batch5-prompt.md` 已在工作树中，下一批启动前请确认其内容。
+1. **B3-02 NF-4 adjudication**: whether FAILCLOSED becomes a tracked project (StateStore/S-SBC transparent bridge, multi-replica dialog ownership, or maintenance-window operating stance); the matrix stays blocked until adjudicated.
+2. **B3-04**: whether config-service not auto-reconnecting after a single-connection PG restart (500 → recovery on restart) becomes a tracked project.
+3. **Work tree disposition**: how to split the §3 changes into commits (including the 3 lint/format fixes brought in by the batch 2 commit, the leftover .dockerignore from batch 1, and the two untracked docs files).
+4. In the review record's Adjudication section, rows B3-01/02/04 are marked "awaiting maintainer confirmation/adjudication"; please give a final verdict row by row.
+5. `docs/handoff/2026-10-12-m8-batch5-prompt.md` is already in the work tree; please confirm its content before the next batch starts.
 
-> **去向指针（2026-10-13 追加；上方五项待维护者事项原文一律保留不改）**：本节尚未闭合的几项去向为 ——
-> **第 1 项**（B3-02 FAILCLOSED 是否立项为零呼损滚动升级增强）已转 v1.1 立项，见
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§3-8**（REQ-NF-4 本版按「接受实测呼损」签 pass，
-> **非**「零丢失已达成」）；**第 2 / 4 项**（B3-04 config-service 单连接重连、评审记录 Adjudication 行的最终裁决）
-> 随该节一并计入 v1.1 排期，归属 **§3**；**第 3 / 5 项**（工作树提交切分、`batch5-prompt.md` 等未跟踪 / 无归属文件）
-> 见 **§5-6**（以 `git status` 现场为准，不逐项固化）。
-> 后续状态盘点、汇报、handoff、新 session 开场涉及本节遗留项一律**只引该指针**，不逐项展开、不再列入「待维护者动作」。
+> **Destination pointer (added 2026-10-13; the five maintainer items above are retained verbatim and unchanged)**: the destinations of the items in this section that have not yet been closed are ——
+> **Item 1** (whether B3-02 FAILCLOSED becomes a tracked project as zero-call-loss rolling upgrade enhancement) has been moved to v1.1 as a tracked project, see
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§3-8** (REQ-NF-4 signs pass in this version on the basis of "accept measured call loss",
+> **not** "zero loss achieved"); **items 2 / 4** (B3-04 config-service single-connection reconnect, the final verdicts for the review record Adjudication rows)
+> are scheduled into v1.1 together with that section and belong to **§3**; **items 3 / 5** (work tree commit split, unattributed/untracked files such as `batch5-prompt.md`)
+> see **§5-6** (the on-site `git status` is authoritative; items are not frozen one by one).
+> Any subsequent status inventory, report, handoff, or new-session opening that touches the leftovers of this section must **only cite this pointer**; do not expand them item by item and do not list them again as "maintainer actions".
 
-## 7. 纪律执行声明
+## 7. Discipline Compliance Declaration
 
-- 主 agent 未直接写任何文件；全部文件改动经 general-purpose writing subagent 落盘并以 git status/diff 逐项核对；同一工作树同时仅一个 writing subagent。
-- 无 git add/commit/tag/push/branch；无 REQ 签收、无矩阵/report 计数改动；证据文件无凭据/token/cookie；FAILCLOSED 已在 m5 README 索引标注「不是通过证据」。
+- The main agent wrote no file directly; all file changes were landed via a general-purpose writing subagent and verified item by item with git status/diff; only one writing subagent ran in the same work tree at any time.
+- No git add/commit/tag/push/branch; no REQ sign-off, no matrix/report count changes; evidence files contain no credentials/token/cookie; FAILCLOSED is marked "not pass evidence" in the m5 README index.
 
-## 8. 2026-10-12 维护者追加裁决：NF-4 签收 pass（接受实测呼损）
+## 8. Maintainer Adjudication Added 2026-10-12: NF-4 Signed as pass (Measured Call Loss Accepted)
 
-- 裁决（原话要点）：当前 release 接受该呼损程度；NF-4 mark pass；呼损在今后 release 通过 feature 做 enhancement。
-- 口径：滚动升级行为已实测验证 + 在途呼损范围（UDP 两轮：受影响 13/14 呼、unresolved 各 10）被接受 = pass；**不是零丢失已达成**。
-- 已落盘：PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt（含完整机理与候选增强方向）；FAILCLOSED 原始记录追加裁决指针、保留不改事实；m5 README 索引两行；矩阵 REQ-NF-4 行转 pass + 文末追加裁定节（pass 16→17、blocked 7→6）；plan.md §0 决策行；review record B3-02 关闭。
-- 「滚动零呼损」为今后 release 增强 feature，本版不立项（与 FM、呼叫轨迹同流程）。
-- 本节追加后未执行任何 git 写操作。
+- Adjudication (key points, original wording): the current release accepts this degree of call loss; NF-4 marked pass; the call loss will be addressed in future releases as a feature enhancement.
+- Stance: rolling upgrade behaviour verified by measurement + the accepted scope of in-flight call loss (UDP two rounds: 13/14 calls affected, unresolved 10 each) = pass; this is **not** zero loss achieved.
+- Landed: PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt (with full mechanism and candidate enhancement directions); the original FAILCLOSED record has the adjudication pointer appended, with the facts retained unchanged; two lines in the m5 README index; the matrix REQ-NF-4 row flipped to pass + an adjudication section appended at the end of the document (pass 16→17, blocked 7→6); the plan.md §0 decision row; review record B3-02 closed.
+- "Rolling upgrade zero call loss" is a future-release enhancement feature and is not tracked as a project in this version (same process as FM and call tracing).
+- No git write operation was performed after this section was added.

@@ -12,56 +12,56 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M4 控制台鉴权与审计、D7 裁决评审记录
+# M4 Console Authentication and Audit, D7 Adjudication Review Record
 
-> 评审对象：`services/console/src/as_console/access.py` 与其测试；`docs/architecture/adr/0021-runtime-override-granularity.md`、`platform/src/as_platform/gating/overrides.py` 与其测试
-> 评审日期：2026-09-28
-> 评审人：AI agent（实跑门禁 + 对照 REQ-S-4、ADR-0016、ADR-0020、AGENT.md §13/§15）
-> 评审结论：**通过** —— 控制台鉴权审计落地、D7 已按 AGENT.md §15 写 ADR 裁决并移出未决清单；M4 判为**已完成**，PostgreSQL 接线转入 M5
+> Review object: `services/console/src/as_console/access.py` and its tests; `docs/architecture/adr/0021-runtime-override-granularity.md`, `platform/src/as_platform/gating/overrides.py` and its tests
+> Review date: 2026-09-28
+> Reviewer: AI agent (actually ran the gate + cross-checked REQ-S-4, ADR-0016, ADR-0020, AGENT.md §13/§15)
+> Review verdict: **pass** — console authentication and audit are landed, and D7 has been resolved by writing an ADR adjudication per AGENT.md §15 and removed from the undecided list; M4 is judged **complete**, and PostgreSQL wiring moves to M5
 
-## 门禁证据
+## Gate evidence
 
-| 项 | 结果 |
+| Item | Result |
 |---|---|
 | `uv run ruff format --check .` | 134 files already formatted |
 | `uv run ruff check .` | All checks passed! |
 | `uv run mypy` | Success: no issues found in 30 source files |
 | `uv run pytest -m "unit or contract" -q` | 309 passed, 2 skipped |
 | `uv run pytest -m integration -q` | 3 passed |
-| TDD | 两个模块均先红（`ModuleNotFoundError`）后绿 |
+| TDD | Both modules went red first (`ModuleNotFoundError`), then green |
 
-## 评审发现
+## Review findings
 
-| # | 发现 | 裁决 |
+| # | Finding | Adjudication |
 |---|---|---|
-| P1 | 权限矩阵参数化 20 组合，并带"矩阵覆盖全部角色与权限"的防空洞守卫 | 接受：防止新增权限时矩阵静默失效 |
-| P2 | 无角色 / 未知角色一律拒绝（fail-closed），不抛异常 | 接受：未知角色不应成为绕过检查的路径 |
-| P3 | `authorize_and_audit` 把判定与审计绑在一起，且**拒绝也留痕** | 接受：这正是 REQ-S-4「每个控制台操作都要鉴权并审计」的可测表达 |
-| P4 | `AuditRecord` 为 frozen | 接受：审计证据不应可事后改写 |
-| P5 | `may_approve` 双人原则：提交者不能审批自己的变更，且仍需具备 `APPROVE_CHANGE` | 接受：与 ADR-0006 的审批留痕语义一致 |
-| P6 | D7 按 AGENT.md §15 走"写 ADR + 移动 plan.md 那一行"的正当流程解决，而非悄悄消化 | 接受：未决项不得静默消失 |
-| P7 | 运行态覆盖用稳定哈希（FNV-1a 32）而非随机/时钟，保证脑裂窗口下判定幂等 | 接受：直接回应风险 R5 与未决 D3 |
-| P8 | `enabled=False` 优先于百分比；无命中返回 `None` 而非 `True` | 接受：显式关闭与 fail-closed 的语义一致 |
-| P9 | 时间全程由调用方注入，两模块均无时钟 / 无 socket | 接受：保持纯函数（AGENT.md §5） |
+| P1 | The permission matrix parameterizes 20 combinations and carries an anti-hollow guard that "the matrix covers all roles and permissions" | Accepted: prevents the matrix from silently going stale when a new permission is added |
+| P2 | No role / unknown role is always rejected (fail-closed) and raises no exception | Accepted: an unknown role must not become a path for bypassing checks |
+| P3 | `authorize_and_audit` binds the decision and the audit together, and **leaves a trail even on rejection** | Accepted: this is exactly the testable expression of REQ-S-4 "every console operation must be authenticated and audited" |
+| P4 | `AuditRecord` is frozen | Accepted: audit evidence must not be rewritable after the fact |
+| P5 | `may_approve` two-person principle: a submitter cannot approve their own change, and must still hold `APPROVE_CHANGE` | Accepted: consistent with the approval-trail semantics of ADR-0006 |
+| P6 | D7 was resolved through the proper channel per AGENT.md §15 — "write an ADR + move that line in plan.md" — rather than being quietly swallowed | Accepted: undecided items must not vanish silently |
+| P7 | Runtime overrides use a stable hash (FNV-1a 32) rather than randomness / the clock, guaranteeing idempotent adjudication within a split-brain window | Accepted: directly answers risk R5 and the undecided D3 |
+| P8 | `enabled=False` takes precedence over the percentage; no hit returns `None` rather than `True` | Accepted: consistent with the semantics of explicit off and fail-closed |
+| P9 | Time is injected by the caller throughout; neither module has a clock / socket | Accepted: preserves purity (AGENT.md §5) |
 
-## M4 完成裁决（重要）
+## M4 completion adjudication (important)
 
-| 项 | 裁决 |
+| Item | Adjudication |
 |---|---|
-| M4 是否完成 | **判为已完成** —— 治理闭环（编辑 → 审批 → 分发 → 上报版本 → 回滚）、开关走流水线 + 两态测试、控制台鉴权与审计，均已落地并有测试证据 |
-| PostgreSQL 版 `VersionStore` | **转入 M5**，理由：它属于部署与运维形态的一部分，与 Helm / 高可用同批接线；当前以 `InMemoryVersionStore` + Protocol 保证契约可测 |
-| 这样做的风险 | 治理闭环尚未在真实数据库上验证；M5 必须补一条针对真实 PG 的 integration 用例，并把该闭环端到端跑通，否则 M5 不得判完成 |
-| 未决项变化 | D7 已裁决（ADR-0021）；O1（容量）、O5（容灾等级）、D3（Redis 接线与幂等）仍开放 |
+| Is M4 complete | **Judged complete** — the governance loop (edit → approve → distribute → report version → rollback), toggles going through the pipeline + both-state tests, and console authentication and audit are all landed with test evidence |
+| PostgreSQL-backed `VersionStore` | **Moved to M5**, rationale: it is part of the deployment and operations shape and is wired together with Helm / high availability; at present the contract is kept testable via `InMemoryVersionStore` + Protocol |
+| Risk of doing so | The governance loop is not yet verified against a real database; M5 must add an integration use case against real PG and run that loop end to end, otherwise M5 must not be judged complete |
+| Change in undecided items | D7 is adjudicated (ADR-0021); O1 (capacity), O5 (disaster recovery level), D3 (Redis wiring and idempotency) remain open |
 
-## 确认签字
+## Confirmation sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 通过；M4 判为已完成 |
-| 门禁 | 全绿（309 passed / 2 skipped；integration 3 passed） |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | Approved; recorded by AI agent per maintainer authorization in chat (2026-10-04). Historical M4a slice only; superseded by M4b scope. |
+| Review verdict | Pass; M4 judged complete |
+| Gate | Fully green (309 passed / 2 skipped; integration 3 passed) |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer signature | Approved; recorded by AI agent per maintainer authorization in chat (2026-10-04). Historical M4a slice only; superseded by M4b scope. |
 
-## 范围修正（2026-10-01）
+## Scope correction (2026-10-01)
 
-本评审原始范围是访问策略代码与 D7 裁决；未审查或交付前端 UI，也未进行 UI 验收。保留上述历史发现，但其整体 M4 closure 结论已由用户 2026-10-01 的决定 supersede：M4 仍未完成，须待强制 M4b operator UI 按 [`plan.md`](../plan.md) 和 [`acceptance/test-plan.md`](../acceptance/test-plan.md) 中 REQ-F-12/13/14/15、REQ-S-4 的现有标准验收通过。
+The original scope of this review was the access-policy code and the D7 adjudication; it neither reviewed nor delivered the front-end UI, and no UI acceptance was performed. The historical findings above are preserved, but its overall M4 closure conclusion is superseded by the user's 2026-10-01 decision: M4 is still not complete, and must wait until the mandatory M4b operator UI passes acceptance against the existing criteria in [`plan.md`](../plan.md) and [`acceptance/test-plan.md`](../acceptance/test-plan.md) for REQ-F-12/13/14/15 and REQ-S-4.

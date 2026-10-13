@@ -12,43 +12,43 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M7.1 产品 AS 联调记录（2026-10-07）
+# M7.1 product AS joint-debugging record (2026-10-07)
 
-> **工程关门（2026-10-07）。** 对照计划 §9。下面是关门所用的这一次 kind 运行。
+> **Engineering close-out (2026-10-07).** Measured against plan §9. Below is the single kind run used for the close-out.
 >
-> 路径是页面 / call load → 仿真 S-CSCF → 仿真北向 S-SBC → **产品 Helm AS** → 仿真南向 S-SBC → 被叫。
-> 测试 CA 不是运营商 PKI。REQ-S-2 / REQ-S-3 不因本文签 pass。页面没有登录，不签 REQ-S-4。
-> 下面的次数和时延只描述这一次运行，不是容量承诺。
-> 不提交证书、私钥、pcap。
+> The path is page / call load → simulated S-CSCF → simulated northbound S-SBC → **product Helm AS** → simulated southbound S-SBC → callee.
+> The test CA is not an operator PKI. REQ-S-2 / REQ-S-3 are not signed as pass because of this document. The page has no login, so REQ-S-4 is not signed.
+> The counts and latencies below describe only this run; they are not a capacity commitment.
+> No certificates, private keys, or pcaps are committed.
 
-## 环境
+## Environment
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 集群 | kind `as-m71`，Calico v3.28.2，单节点 |
-| `ims-sim` | 仿真 S-CSCF、北向/南向 S-SBC、被叫、call load 页面。镜像 `ims-sim:dev` |
-| `as-sut` | `deploy/helm` release `as-sut`，Deployment `as-sut-translation`。镜像 `as-sut:dev`（带本机编好的 `_resip_runtime`）。Redis `as-sut-redis` 在跑。规则来自 `AS_RULESET_JSON`，不是 config-service 下发 |
-| 安装 | `bash testbed/sim-platform/kind-up.sh`，产品 values 在 `testbed/sim-platform/values-product-as.yaml`（不写进生产默认 values） |
+| Cluster | kind `as-m71`, Calico v3.28.2, single node |
+| `ims-sim` | Simulated S-CSCF, northbound/southbound S-SBC, callee, call load page. Image `ims-sim:dev` |
+| `as-sut` | `deploy/helm` release `as-sut`, Deployment `as-sut-translation`. Image `as-sut:dev` (with `_resip_runtime` compiled locally). Redis `as-sut-redis` is running. Rules come from `AS_RULESET_JSON`, not pushed down by config-service |
+| Installation | `bash testbed/sim-platform/kind-up.sh`; product values in `testbed/sim-platform/values-product-as.yaml` (not written into the production default values) |
 
-F1 / F2 走产品内核的 FORWARD / BLOCK（603），和第一版呼叫类型一致。反诈限频是另一个进程，会抢同一 SIP 端口，这次没有另起。
+F1 / F2 go through the product kernel's FORWARD / BLOCK (603), consistent with the first version's call types. Anti-fraud rate limiting is a separate process and would contend for the same SIP port; it was not started for this run.
 
-## 呼叫
+## Calls
 
-从 `call-load` pod 调页面 API。每种传输约 3 秒、5 次/秒，五种类型各 3 次。T4 无匹配规则，404。F2 是 603，没有改成 608。接通的对话（T1 / T5 / F1）BYE 都是 2xx，`unresolved` 为 0。产品把入腿 BYE 转到出腿。404 / 603 不建立对话，没有 BYE。
+The page API is called from the `call-load` pod. For each transport about 3 seconds, 5 calls/second, three calls for each of the five types. T4 has no matching rule, 404. F2 is 603, not changed to 608. For established dialogs (T1 / T5 / F1) the BYE is 2xx in every case, with `unresolved` = 0. The product forwards the inbound-leg BYE to the outbound leg. 404 / 603 establish no dialog, so there is no BYE.
 
-| 传输 | 结果 | 拆除 |
+| Transport | Result | Teardown |
 |---|---|---|
-| UDP | 200×9，404×3，603×3 | BYE 2xx，unresolved 0 |
-| TCP | 200×9，404×3，603×3 | BYE 2xx，unresolved 0 |
-| TLS | 200×9，404×3，603×3。T1 出腿 `sips:013800138000@ssbc-south…:5061` | BYE 2xx，unresolved 0 |
+| UDP | 200×9, 404×3, 603×3 | BYE 2xx, unresolved 0 |
+| TCP | 200×9, 404×3, 603×3 | BYE 2xx, unresolved 0 |
+| TLS | 200×9, 404×3, 603×3. T1 outbound leg `sips:013800138000@ssbc-south…:5061` | BYE 2xx, unresolved 0 |
 
-修之前：UDP / TCP 的 BYE 是 415，因为 call load 在空的 ACK / BYE 上带了 `Content-Type: application/sdp`，产品只接受 INVITE 上的这个类型。TLS 的 BYE 超时，因为三种传输同时开着时 Contact 仍指向 5060，下一跳用 TLS 去连明文端口。次数不是容量承诺。
+Before the fix: the BYE for UDP / TCP was 415, because the call load put `Content-Type: application/sdp` on the empty ACK / BYE, while the product only accepts that type on INVITE. The TLS BYE timed out because when all three transports were open at once the Contact still pointed at 5060, so the next hop tried to connect over TLS to a cleartext port. The counts are not a capacity commitment.
 
-## 直达被网络策略丢掉
+## Direct calls dropped by network policy
 
-这是期望行为，不是缺陷。`call-load` 向产品 Pod 的 UDP 5060 发 INVITE，2 秒内没有 SIP 响应（`TimeoutError`）。产品没有回 403。北向 S-SBC 的 INVITE 能到产品并得到上述响应。产品入向策略只放行北向 S-SBC；call load 的出向只放行 S-CSCF。
+This is expected behaviour, not a defect. `call-load` sends an INVITE to the product Pod's UDP 5060 and gets no SIP response within 2 seconds (`TimeoutError`). The product does not return 403. An INVITE from the northbound S-SBC reaches the product and gets the responses above. The product's inbound policy only allows the northbound S-SBC; the call load's outbound policy only allows the S-CSCF.
 
-## 关门之后
+## After close-out
 
-1. **重评 demo，把故事接到这个平台。** 执行单是 [`../handoff/2026-10-07-demo-on-m71-platform-plan.md`](../handoff/2026-10-07-demo-on-m71-platform-plan.md)。关门当时规则仍是 `AS_RULESET_JSON`。其后第 2 步把信令改到测试页；第 3 步（2026-10-08）把判决规则改成 config-service 编译 bundle，进程读 `AS_CONFIG_BUNDLE_PATH`。改号表仍是 `AS_TRANSLATION_RULES_JSON`。生产默认 values 和发布 Dockerfile 没改。
-2. **发布镜像带上 SIP 监听，放在重新打开 M8 之前。** `deploy/docker/Dockerfile` 仍是 M5 进程壳，不绑定 SIP。`as-sut:dev` 只用于这个 kind 实验。
+1. **Re-evaluate the demo and hook the story to this platform.** The execution ticket is [`../handoff/2026-10-07-demo-on-m71-platform-plan.md`](../handoff/2026-10-07-demo-on-m71-platform-plan.md). At close-out the rules were still `AS_RULESET_JSON`. Step 2 afterwards moved signalling to the test page; step 3 (2026-10-08) changed the decision rules to a config-service compiled bundle, with the process reading `AS_CONFIG_BUNDLE_PATH`. The number-translation table is still `AS_TRANSLATION_RULES_JSON`. Production default values and the release Dockerfile are unchanged.
+2. **Ship the image with the SIP listener included, before M8 is reopened.** `deploy/docker/Dockerfile` is still the M5 process shell and does not bind SIP. `as-sut:dev` is only for this kind experiment.

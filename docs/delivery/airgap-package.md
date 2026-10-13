@@ -12,79 +12,81 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 离线安装包（air-gapped）— 交付物 3.2
+# Air-gapped installation package — deliverable 3.2
 
-> **产品**：In-house IMS Application Server，**已正式采用为产品/文档描述名**（G8-2；非商标 / 非品牌宣称；3GPP Third-Party AS role；命名状态见 [`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3）。命名边界：chart name / 镜像名 / OTel 服务名保持 `3rdparty-as` 不变。
+> **Product**: In-house IMS Application Server, **officially adopted as the product / documentation descriptor name** (G8-2; not a trademark / not a branding claim; 3GPP Third-Party AS role; naming status see [`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3). Naming boundary: chart name / image name / OTel service name remain `3rdparty-as`.
 >
-> **交付物**：3.2 离线安装包（air-gapped）
-> **状态**：脚本与本文已落盘；**未在真实客户环境执行过**（M8 真实集群证据 7.2d blocked，`docs/plan.md` §5.4）。本文不含任何容量数字 —— O1 容量目标未裁决（`AGENT.md` §2）。
-> **生产形态**：**Helm-only**（ADR-0013）；范围按评审 **G-P1-7**（[`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md)）收窄。
-> **目标环境**：客户机房（air-gapped，无外网）。镜像与 chart 通过介质人工传递。
+> **Deliverable**: 3.2 air-gapped installation package
+> **Status**: the scripts and this document are on disk; **never executed in a real customer environment** (M8 real-cluster evidence 7.2d blocked, `docs/plan.md` §5.4). This document contains no capacity figures — the O1 capacity target is undecided (`AGENT.md` §2).
+> **Production form**: **Helm-only** (ADR-0013); scope narrowed per review **G-P1-7** ([`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md)).
+> **Target environment**: the customer's machine room (air-gapped, no external network). Images and the chart are carried by hand on media.
 >
-> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
+> **B6 review status**: this document has a review record from the B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (first review 2026-10-12) and §7 (closed-loop re-review 2026-10-12); **the conclusion awaits maintainer confirmation** and until then must not be used as a basis for external delivery or acceptance (`AGENT.md` §3.3).
 
-## 1. 范围与非范围
+## 1. Scope and non-scope
 
-### 范围（只做这五件事）
+### Scope (these five things only)
 
-镜像同步（`docker pull` + `docker save` → `images/*.tar`）、依赖镜像清单（`scripts/images.txt`）、校验和（`SHA256SUMS` + `MANIFEST.txt`）、`helm package`（产物按 Chart.yaml 的 name/version 命名，当前为 `3rdparty-as-0.0.0-skeleton.tgz`）、离线加载脚本（`scripts/load-images.sh`：校验和 → 导入镜像 → 安装前置检查）。
+Image mirroring (`docker pull` + `docker save` → `images/*.tar`), the dependent image inventory (`scripts/images.txt`), checksums (`SHA256SUMS` + `MANIFEST.txt`), `helm package` (artifacts named per the name/version in Chart.yaml, currently `3rdparty-as-0.0.0-skeleton.tgz`), and the offline loading script (`scripts/load-images.sh`: checksums → import images → installation pre-checks).
 
-> **注记（2026-10-13 追加）**：上段安装包产物名中的 `0.0.0-skeleton` 在事实层面已过期（chart 已于 2026-10-12 首次同步到 `0.2.0`），处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+> **Note (added 2026-10-13)**: the `0.0.0-skeleton` in the package artifact name in the paragraph above is factually stale (the chart was first synced to `0.2.0` on 2026-10-12); the handling of this (keep the original text + add this note) is in [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1, pending a maintainer decision on whether to sync it.
 
-### 非范围（明确不做）
+### Non-scope (explicitly not done)
 
-| 非范围声明 | 原因 / 依据 |
+| Non-scope statement | Reason / basis |
 |---|---|
-| **不产生 Helm 之外的第二套安装形态**（没有在线安装器、没有独立 `install.sh`、没有第二套 manifest 模板） | ADR-0013；评审 G-P1-7。安装形态只有 `helm upgrade --install` 一种 |
-| **不做私有 registry 自动同步** | 本仓库侧没有镜像自动同步链路；镜像同步是交付团队在受控联网侧的一次性动作 |
-| **不替代客户内网 registry** | 若客户已有内网 registry，正确做法是把镜像推进客户 registry 再让 values 指向它；本包是"没有 registry 时的兜底路径" |
-| **不做配置数据迁移 / 不做数据库初始化** | 配置版本是 PostgreSQL 里的行（ADR-0006），schema 迁移由 `as-config-migrate` 走 owner DSN 完成（见 [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md)） |
-| **不含任何容量 / 性能数字** | O1 未裁决（`AGENT.md` §2）。本包不声明 CPS、并发、时延、资源规格 |
-| **不含测试床 / 仿真器；不做备份恢复方案** | ADR-0014：testbed 不是 v1 交付物；备份恢复属交付物 2.5（`docs/operations/backup-restore.md`），依赖真实集群演练，当前 blocked |
-| **不替代部署前环境校验** | 那是交付物 3.1 [`preflight.sh`](./preflight.sh) |
+| **Does not produce a second installation form outside Helm** (no online installer, no standalone `install.sh`, no second set of manifest templates) | ADR-0013; review G-P1-7. There is exactly one installation form, `helm upgrade --install` |
+| **Does not do automatic private-registry mirroring** | This repository has no automatic image-mirroring chain; image mirroring is a one-off action performed by the delivery team on the controlled networked side |
+| **Does not replace the customer's internal registry** | If the customer already has an internal registry, the correct approach is to push the images into the customer registry and point values at it; this package is the "fallback path for when there is no registry" |
+| **Does not do configuration data migration / database initialisation** | The configuration version is a row in PostgreSQL (ADR-0006); schema migration is done by `as-config-migrate` over the owner DSN (see [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md)) |
+| **Contains no capacity / performance figures** | O1 is undecided (`AGENT.md` §2). This package makes no claim about CPS, concurrency, latency, or resource specifications |
+| **Contains no testbed / emulator; provides no backup and restore plan** | ADR-0014: the testbed is not a v1 deliverable; backup and restore belong to deliverable 2.5 (`docs/operations/backup-restore.md`), depend on a real-cluster drill and are currently blocked |
+| **Does not replace pre-deployment environment validation** | That is deliverable 3.1, [`preflight.sh`](./preflight.sh) |
 
-## 2. 交付物清单
+## 2. Deliverable inventory
 
-| 文件 | 位置 | 用途 | 前置条件 |
+| File | Location | Purpose | Prerequisites |
 |---|---|---|---|
-| `preflight.sh` | `docs/delivery/` | 部署前一键环境校验（交付物 3.1） | `kubectl` + `helm` 3.x |
-| `airgap-package.md` | `docs/delivery/` | 本文：离线包制作与使用说明 | 无 |
-| `install-guide.md` | `docs/delivery/` | 交付清单 + 镜像同步 + `helm install` 命令序列 | 无（与本文互链） |
-| `scripts/images.txt` | `docs/delivery/scripts/` | 依赖镜像清单模板 | 按客户 registry 与交付版本改写 |
-| `scripts/bundle-images.sh` | `docs/delivery/scripts/` | **联网侧**：镜像同步 + 校验和 + `helm package` | `docker`、可访问上游 registry、`helm` 3.x |
-| `scripts/load-images.sh` | `docs/delivery/scripts/` | **离线侧**：校验和验证 + 镜像导入 + 安装前置检查 | `sha256sum`；`--load` 需 `docker`，否则按提示在节点侧用 `ctr` / `crictl` |
-| `deploy/alerts/as-alerts.yaml` + `deploy/alerts/README.md` | `deploy/alerts/` | 告警规则（3 组 10 条；G9-a 判定为交付产品） | `promtool check rules` 2026-10-11 通过（(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)，`SUCCESS: 10 rules found`）；**抓取接线未闭合（X1）需向客户说明** —— 标准部署下 `as_*` 序列不会被 Prometheus 采集 |
-| `3rdparty-as-0.0.0-skeleton.tgz`（当前实际产物名） | `bundle-images.sh` 产出 | Helm chart 包（唯一安装形态）；`helm package` 按 Chart.yaml 的 name/version 命名，与根 `VERSION` 0.2.0 未同步 | chart 能通过 `make chart-check`；版本一致性用 [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check` 校验（只读，drift 即 exit 1），首次 `--apply` 待维护者决定 |
+| `preflight.sh` | `docs/delivery/` | One-shot pre-deployment environment validation (deliverable 3.1) | `kubectl` + `helm` 3.x |
+| `airgap-package.md` | `docs/delivery/` | This document: how to produce and use the offline package | None |
+| `install-guide.md` | `docs/delivery/` | Delivery checklist + image mirroring + `helm install` command sequence | None (cross-links this document) |
+| `scripts/images.txt` | `docs/delivery/scripts/` | Dependent image inventory template | Rewrite per the customer registry and the delivery version |
+| `scripts/bundle-images.sh` | `docs/delivery/scripts/` | **Networked side**: image mirroring + checksums + `helm package` | `docker`, access to the upstream registry, `helm` 3.x |
+| `scripts/load-images.sh` | `docs/delivery/scripts/` | **Offline side**: checksum verification + image import + installation pre-checks | `sha256sum`; `--load` needs `docker`, otherwise use `ctr` / `crictl` on the node as instructed |
+| `deploy/alerts/as-alerts.yaml` + `deploy/alerts/README.md` | `deploy/alerts/` | Alert rules (3 groups, 10 rules; judged by G9-a to be a delivery product) | `promtool check rules` passed on 2026-10-11 ((verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11), `SUCCESS: 10 rules found`); **the scrape wiring is not closed (X1) and must be explained to the customer** — under a standard deployment the `as_*` series will not be collected by Prometheus |
+| `3rdparty-as-0.0.0-skeleton.tgz` (the actual current artifact name) | Produced by `bundle-images.sh` | Helm chart package (the only installation form); `helm package` names it per the name/version in Chart.yaml, which is not synced with the root `VERSION` 0.2.0 | The chart must pass `make chart-check`; version consistency is verified with [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check` (read-only, exits 1 on drift); the first `--apply` is a maintainer decision |
 
-Helm 参数与渲染行为的唯一权威是 [`../../deploy/helm/README.md`](../../deploy/helm/README.md)。本文**不重复**参数表。
+The single authority on Helm parameters and rendering behaviour is [`../../deploy/helm/README.md`](../../deploy/helm/README.md). This document **does not repeat** the parameter table.
 
-## 3. 联网侧制作流程
+## 3. Production flow on the networked side
 
 ```mermaid
 flowchart LR
-  A["1 改写 images.txt"] --> B["2 构建/拉取产品镜像"]
+  A["1 Rewrite images.txt"] --> B["2 Build/pull the product image"]
   B --> C["3 bundle-images.sh"]
   C --> D["4 images/*.tar"]
   C --> E["4 SHA256SUMS"]
   C --> F["4 chart tgz"]
-  D --> G["5 传输介质"]
+  D --> G["5 Transfer media"]
   E --> G
   F --> G
-  G --> H["6 离线侧 load-images.sh"]
+  G --> H["6 load-images.sh on the offline side"]
 ```
 
-### 步骤
+### Steps
 
-1. **改写 `scripts/images.txt`**：把 `registry.example.com` 换成实际来源（或用 `--repository` 在脚本侧重打标签），把 `<VERSION>` 换成交付版本（与根 `VERSION` 一致，`AGENT.md` §8）。禁止在清单里写凭据。
-2. **准备产品镜像**：本仓库不发布镜像，需先构建（context 为**仓库根目录**）：
+1. **Rewrite `scripts/images.txt`**: replace `registry.example.com` with the actual source (or use `--repository` to re-tag on the script side), and replace `<VERSION>` with the delivery version (consistent with the root `VERSION`, `AGENT.md` §8). Never write credentials into the inventory.
+
+2. **Prepare the product image**: this repository does not publish images, so they must be built first (context is the **repository root**):
 
    ```sh
    docker build -t <registry>/3rdparty-as:<VERSION> -f deploy/docker/Dockerfile .
    docker build -t <registry>/3rdparty-as-config-service:<VERSION> -f deploy/docker/config-service.Dockerfile .
    ```
 
-   或直接 `docker pull` 已发布到（客户可达的）registry 的镜像。
-3. **执行打包**：
+   Or `docker pull` the images already published to a registry the customer can reach.
+
+3. **Run the packaging**:
 
    ```sh
    docs/delivery/scripts/bundle-images.sh \
@@ -92,59 +94,62 @@ flowchart LR
      --out ./airgap-out
    ```
 
-   常用变体：按客户 registry 重打标签 `--repository registry.customer.internal/as --tag-prefix rel-`（加 `--push` 才推 registry，否则目标标签只存在于制作机本地并写进 tar）；指定平台 `--platform linux/amd64`；只做镜像不做 chart `--skip-helm-package`。加 `--dry-run` 先看计划。
-4. **产物**（`./airgap-out`）：
+   Common variants: re-tag for the customer registry with `--repository registry.customer.internal/as --tag-prefix rel-` (add `--push` to push to the registry, otherwise the target tags exist only locally on the packaging machine and are written into the tar); specify the platform with `--platform linux/amd64`; images only without the chart with `--skip-helm-package`. Add `--dry-run` first to see the plan.
+
+4. **Artifacts** (`./airgap-out`):
 
    ```text
    airgap-out/
-   ├── images/<image>-<tag>-<platform>.tar   docker save 归档
-   ├── 3rdparty-as-0.0.0-skeleton.tgz        helm package 产物（按 Chart.yaml 命名；与根 VERSION 0.2.0 未同步）
-   ├── SHA256SUMS                            每个 tar 与 tgz 的 sha256
-   └── MANIFEST.txt                          镜像/tag/digest/tar/sha256/生成时间(UTC)/工具版本
+   ├── images/<image>-<tag>-<platform>.tar   docker save archive
+   ├── 3rdparty-as-0.0.0-skeleton.tgz        helm package artifact (named per Chart.yaml; not synced with root VERSION 0.2.0)
+   ├── SHA256SUMS                            sha256 of each tar and tgz
+   └── MANIFEST.txt                          image/tag/digest/tar/sha256/generation time (UTC)/tool version
    ```
 
-   注：未传 `--platform` 时，tar 文件名中的平台后缀实为 `unspecified`（`bundle-images.sh` 的实际行为）。
+   Note: when `--platform` is not passed, the platform suffix in the tar filename is in fact `unspecified` (the actual behaviour of `bundle-images.sh`).
 
-5. **传输介质与校验要求**：
-   - 整个 `airgap-out` 目录一起拷贝（缺任一文件都会让离线侧中止）；介质按客户安全规范处理（加密介质、离线登记）。本包**不含**任何凭据、证书或私钥，Secret 由客户侧按 §4 单独准备。
-   - 传输后在**联网侧**再跑一次 `cd airgap-out && sha256sum -c SHA256SUMS`，把输出随介质一起交给客户，用于区分"传输损坏"与"制作错误"。
+5. **Transfer media and verification requirements**:
+   - Copy the whole `airgap-out` directory together (a missing file makes the offline side abort); handle the media per the customer's security rules (encrypted media, offline registration). This package contains **no** credentials, certificates or private keys — Secrets are prepared separately on the customer side per §4.
+   - After transfer, run `cd airgap-out && sha256sum -c SHA256SUMS` **on the networked side** one more time and hand the output to the customer together with the media, so that "transfer corruption" can be distinguished from "packaging error".
 
-## 4. 离线侧安装流程
+## 4. Installation flow on the offline side
 
-1. **核验 `SHA256SUMS`（第一步，不匹配必须中止）**：
+1. **Verify `SHA256SUMS` (first step, must abort on mismatch)**:
 
    ```sh
    cd airgap-in && sha256sum -c SHA256SUMS
    ```
 
-   或直接用脚本（它把校验和放在所有动作之前）：
+   Or use the script directly (it places checksum verification before every other action):
 
    ```sh
    docs/delivery/scripts/load-images.sh --bundle ./airgap-in --verify-only \
      --namespace as-prod --context <customer-cluster-context>
    ```
 
-2. **导入镜像**：
+2. **Import the images**:
 
    ```sh
    docs/delivery/scripts/load-images.sh --bundle ./airgap-in --load --namespace as-prod
    ```
 
-   - 目标机有 `docker`：`docker load -i`（多节点集群需在**每个会调度 AS Pod 的节点**导入，或把镜像推进客户内网 registry 后让 values 指向它）。
-   - 目标机只有 containerd：脚本不代跑节点命令，会打印逐节点指令，由客户执行：
-     `sudo ctr -n k8s.io images import airgap-in/images/<tar>` 或 `sudo crictl images import ...`。
-   - 导入后确认 tags 与 `values.image.tag` / `services.configService.image.tag` 完全一致，`image.pullPolicy` 为 `IfNotPresent`（chart 默认值）。
-3. **准备值文件与 Secret**（chart 只引用、不创建客户凭据；键名口径见 [`../../deploy/helm/README.md`](../../deploy/helm/README.md)）：
+   - The target machine has `docker`: `docker load -i` (in a multi-node cluster the image must be imported on **every node that will schedule AS Pods**, or pushed into the customer's internal registry with values pointing at it).
+   - The target machine only has containerd: the script does not run node commands on your behalf, it prints the per-node instructions for the customer to execute:
+     `sudo ctr -n k8s.io images import airgap-in/images/<tar>` or `sudo crictl images import ...`.
+   - After importing, confirm that the tags match `values.image.tag` / `services.configService.image.tag` exactly and that `image.pullPolicy` is `IfNotPresent` (the chart default).
 
-   | Secret | 键 | 何时需要 |
+3. **Prepare the values file and Secrets** (the chart only references customer credentials, it never creates them; for the key names see [`../../deploy/helm/README.md`](../../deploy/helm/README.md)):
+
+   | Secret | Keys | When needed |
    |---|---|---|
-   | 客户 PKI TLS Secret | `tls.crt` / `tls.key` / `ca.crt` | `tls.enabled=true`（默认）→ **必需** |
-   | PostgreSQL 凭据 Secret | `CONFIG_DB_USER`、`CONFIG_DB_PASSWORD`、`CONFIG_DB_OWNER_PASSWORD`、`POSTGRES_SUPERUSER_PASSWORD`、`REDIS_PASSWORD` | `stateStores.enabled=true` 且 `bootstrapDevCredentials=false` → **必需** |
-   | config-service 运行时 Secret | `AS_CONFIG_DSN`（**`as_config_web` 登录**）、`AS_AUDIT_RESOURCE_HMAC_KEY_B64` | `services.configService.enabled=true` → **必需** |
-   | migrate owner DSN Secret | `AS_CONFIG_OWNER_DSN` | `stateStores.migrateJob.enabled=true` → **必需** |
+   | Customer PKI TLS Secret | `tls.crt` / `tls.key` / `ca.crt` | `tls.enabled=true` (default) → **required** |
+   | PostgreSQL credentials Secret | `CONFIG_DB_USER`, `CONFIG_DB_PASSWORD`, `CONFIG_DB_OWNER_PASSWORD`, `POSTGRES_SUPERUSER_PASSWORD`, `REDIS_PASSWORD` | `stateStores.enabled=true` and `bootstrapDevCredentials=false` → **required** |
+   | config-service runtime Secret | `AS_CONFIG_DSN` (the **`as_config_web` login**), `AS_AUDIT_RESOURCE_HMAC_KEY_B64` | `services.configService.enabled=true` → **required** |
+   | migrate owner DSN Secret | `AS_CONFIG_OWNER_DSN` | `stateStores.migrateJob.enabled=true` → **required** |
 
-   `AS_CONFIG_OWNER_DSN` **只**用于人工/Job 执行的迁移，**绝不**进入 Helm values、chart 管理的 Secret 或 web Pod；`AS_CONFIG_DSN` 的登录必须能被 `SET ROLE` 到预置的 `NOLOGIN` 运行时角色（角色由 DBA 预置，chart 不建角色）。
-4. **安装**（参数口径以 [`../../deploy/helm/README.md`](../../deploy/helm/README.md) 为准；完整命令序列见 [`install-guide.md`](./install-guide.md)）：
+   `AS_CONFIG_OWNER_DSN` is used **only** for migrations run manually or by the Job; it **must never** enter Helm values, chart-managed Secrets or the web Pod. The `AS_CONFIG_DSN` login must be able to `SET ROLE` into the pre-provisioned `NOLOGIN` runtime role (roles are pre-provisioned by the DBA; the chart does not create roles).
+
+4. **Install** (for the parameters see [`../../deploy/helm/README.md`](../../deploy/helm/README.md); for the complete command sequence see [`install-guide.md`](./install-guide.md)):
 
    ```sh
    helm upgrade --install as ./airgap-in/<chart>.tgz \
@@ -156,62 +161,64 @@ flowchart LR
      --set sip.peerAllowlist=<s-sbc-cidrs>
    ```
 
-   提示：chart 有三条 **fail-closed** 守卫（[`../../deploy/helm/templates/validate-install.yaml`](../../deploy/helm/templates/validate-install.yaml)）：`tls.enabled` 无 `secretName`、`sip.peerAllowlist` 为空、`stateStores.enabled` 时缺 `postgres.secretName` —— 缺项会在**渲染阶段**失败，而不是带着空证书上线。
-5. **schema 迁移（启用 config-service / 内建状态存储时）**：按 [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) 执行 `as-config-migrate`（owner DSN）+ `as-config-bootstrap-admin`；用 `stateStores.migrateJob` 时按 runbook 等待 Job 完成。
-6. **验收检查**：Pod 与 Endpoint 就绪、`/health/live` 与 `/health/ready`、`as_state_store_available`（仅当 `REDIS_URL` 非空时产出；序列不存在 ≠ 0）、控制台 HTTPS 与同源 `/internal/v1`。
+   Tip: the chart has three **fail-closed** guards ([`../../deploy/helm/templates/validate-install.yaml`](../../deploy/helm/templates/validate-install.yaml)): `tls.enabled` without `secretName`, an empty `sip.peerAllowlist`, and a missing `postgres.secretName` when `stateStores.enabled` — a missing item fails at the **render stage** rather than going live with an empty certificate.
 
-## 5. 校验和与供应链
+5. **Schema migration (when config-service / built-in state stores are enabled)**: run `as-config-migrate` (owner DSN) plus `as-config-bootstrap-admin` per [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md); when using `stateStores.migrateJob`, wait for the Job to complete as the runbook states.
 
-校验风格沿用 [`../../deploy/kind/m5-lib.sh`](../../deploy/kind/m5-lib.sh) 的 `m5_verify_ingress_manifest` 守卫：校验清单（`SHA256SUMS`）与被校验对象分离，不匹配即 `exit 1`，不做"警告后继续"。
+6. **Acceptance checks**: Pods and Endpoints ready, `/health/live` and `/health/ready`, `as_state_store_available` (emitted only when `REDIS_URL` is non-empty; a missing series ≠ 0), console HTTPS and same-origin `/internal/v1`.
 
-| 步骤 | 校验什么 | 不校验的后果 |
+## 5. Checksums and supply chain
+
+The verification style follows the `m5_verify_ingress_manifest` guard in [`../../deploy/kind/m5-lib.sh`](../../deploy/kind/m5-lib.sh): the verification manifest (`SHA256SUMS`) is kept separate from the objects being verified, a mismatch is `exit 1`, and there is no "warn and continue".
+
+| Step | What is verified | Consequence of not verifying |
 |---|---|---|
-| 联网侧产出 | `sha256sum` 写入 `SHA256SUMS`；`MANIFEST.txt` 记录来源、工具版本、生成时间 | 制作错误无法与传输损坏区分 |
-| 传输交接 | 双方各跑一次 `sha256sum -c` | 把损坏的镜像装进客户环境，且事后难以定界 |
-| 离线侧第一步 | `load-images.sh` 先校验再导入 | 损坏镜像进入节点 containerd 镜像库，之后无法追责 |
-| chart 包 | 与镜像 tar 同进 `SHA256SUMS` | chart 被替换等于换了一套未评审的安装形态 |
+| Networked-side artifact | `sha256sum` written into `SHA256SUMS`; `MANIFEST.txt` records the source, tool versions and generation time | Packaging errors cannot be distinguished from transfer corruption |
+| Transfer handover | Both sides run `sha256sum -c` once | Corrupted images get installed into the customer environment and are hard to demarcate afterwards |
+| First step on the offline side | `load-images.sh` verifies before importing | Corrupted images enter the node's containerd image store, after which there is no accountability |
+| Chart package | Enters `SHA256SUMS` alongside the image tars | A substituted chart amounts to a set of unreviewed installation forms |
 
-**离线无外网时 tag 与 digest 的处理**：
+**Handling tags and digests when offline with no external network**:
 
-- **tag 仍要写对**：离线环境无法 pull，`image.tag` 与实际导入的 tag 必须逐字一致；不一致只会得到 `ImagePullBackOff`。
-- **优先按 digest 固定**：`images.txt` 支持 `repository:tag@sha256:...`。写法先例见 [`../../deploy/kind/manifests/ingress-nginx-kind-deploy.yaml`](../../deploy/kind/manifests/ingress-nginx-kind-deploy.yaml)（`image: registry.k8s.io/...@sha256:...`）。生产请按客户实际使用的版本与 digest 填写；kind 那份是开发用清单，不是生产取值来源。
-- **重打标签会改变 digest**：用 `--repository` / `--tag-prefix` 重打标签后 digest 会变（内容相同、引用不同）。此时以 `MANIFEST.txt` 中 `docker inspect` 记录的 `RepoDigests` 为准，并记录本次交付的映射关系。
-- **多架构**：`docker save` 的一个 tar 只承载一个平台。按平台分别打包（`--platform linux/amd64`、`--platform linux/arm64`），文件名带平台后缀，逐平台各自校验。
+- **Tags still have to be right**: in an offline environment you cannot pull, so `image.tag` and the tag actually imported must match character for character; a mismatch gets you nothing but `ImagePullBackOff`.
+- **Prefer pinning by digest**: `images.txt` supports `repository:tag@sha256:...`. See [`../../deploy/kind/manifests/ingress-nginx-kind-deploy.yaml`](../../deploy/kind/manifests/ingress-nginx-kind-deploy.yaml) for a precedent (`image: registry.k8s.io/...@sha256:...`). In production, fill in the version and digest the customer actually uses; the kind one is a development manifest, not a source of production values.
+- **Re-tagging changes the digest**: after re-tagging with `--repository` / `--tag-prefix` the digest changes (same content, different reference). In that case, trust the `RepoDigests` recorded by `docker inspect` in `MANIFEST.txt` and record the mapping for this delivery.
+- **Multi-architecture**: one `docker save` tar carries only one platform. Package per platform (`--platform linux/amd64`, `--platform linux/arm64`), put the platform suffix in the filename, and verify each platform separately.
 
-## 6. 依赖镜像清单（`images.txt`）
+## 6. Dependent image inventory (`images.txt`)
 
-| 条目 | 需要条件 | 默认值依据 |
+| Entry | Required when | Basis for the default |
 |---|---|---|
-| `<registry>/3rdparty-as:<VERSION>` | 始终需要 | `values.yaml` 的 `image.repository` 默认 `registry.example.com/3rdparty-as` |
-| `<registry>/3rdparty-as-config-service:<VERSION>` | 启用 `services.configService` | `values.yaml` 的 `services.configService.image.repository` 默认 `registry.example.com/3rdparty-as-config-service` |
-| `postgres:12.22` | `stateStores.enabled=true`（内建治理库） | 与 `values.yaml` 的 `stateStores.postgres.image` 默认值一致 |
-| `redis:7-alpine` | `stateStores.enabled=true`（内建运行态存储） | 与 `values.yaml` 的 `stateStores.redis.image` 默认值一致 |
-| ingress-nginx controller / kube-webhook-certgen | 集群无 ingress-nginx 且启用 config-service Ingress | 本 chart 的 Ingress 模板只支持 ingress-nginx（`className` 必须为 `nginx`）；**生产按客户 ingress 版本与 digest 填写**，kind 开发用固定清单见上 |
+| `<registry>/3rdparty-as:<VERSION>` | Always | `values.yaml`'s `image.repository` defaults to `registry.example.com/3rdparty-as` |
+| `<registry>/3rdparty-as-config-service:<VERSION>` | `services.configService` is enabled | `values.yaml`'s `services.configService.image.repository` defaults to `registry.example.com/3rdparty-as-config-service` |
+| `postgres:12.22` | `stateStores.enabled=true` (built-in governance store) | Matches the default of `stateStores.postgres.image` in `values.yaml` |
+| `redis:7-alpine` | `stateStores.enabled=true` (built-in runtime store) | Matches the default of `stateStores.redis.image` in `values.yaml` |
+| ingress-nginx controller / kube-webhook-certgen | The cluster has no ingress-nginx and the config-service Ingress is enabled | This chart's Ingress template only supports ingress-nginx (`className` must be `nginx`); **in production, fill in per the customer's ingress version and digest** — the fixed kind development inventory is above |
 
-清单格式：每行 `repository:tag[@sha256:...]`，`#` 起注释（可到行尾），空行忽略。模板头部注释写明"禁止提交真实凭据/地址"与两种改写方式（改文件 / 用 `--repository` 重打标签）。
+Inventory format: each line is `repository:tag[@sha256:...]`, `#` starts a comment (to end of line), blank lines are ignored. The template header comment states "never commit real credentials/addresses" and the two ways to rewrite it (edit the file / re-tag with `--repository`).
 
-## 7. 已知缺口与注意
+## 7. Known gaps and cautions
 
-| # | 缺口 / 注意 | 影响与处置 |
+| # | Gap / caution | Impact and handling |
 |---|---|---|
-| 1 | **Chart 版本与根 `VERSION` 不同步** | `VERSION` 是 release 版本唯一来源（`AGENT.md` §8）；chart 的 `version` / `appVersion` 当前仍是骨架值；打包前跑 [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check`（只读，drift 即 exit 1），首次 `--apply` 的时机与取值由维护者另行决定 |
-| 2 | **chart 无 `kubeVersion` 声明** | Helm 不会替你挡住太老的集群。`preflight.sh` 按模板实际使用的 API 推导下限（默认 1.23，依据见该脚本注释）并探测 API 可用性 |
-| 3 | **镜像仓库地址需客户内网 registry** | `registry.example.com` 是占位地址，不可拉取；air-gapped 场景要么用本包导入节点，要么把镜像推进客户内网 registry |
-| 4 | **镜像 digest 与多架构** | 见 §5；跨架构需分别打包并分别校验 |
-| 5 | **离线机需自带 `helm`（3.x）、`kubectl`、`sha256sum`** | 本包不提供这些二进制的离线分发；`load-images.sh` 会明确报缺哪个 |
-| 6 | **`useCases[].resources` 默认为空** | chart 不渲染 requests/limits。本包不做容量校验，也不给推荐值（O1 未裁决） |
-| 7 | **`stateStores.bootstrapDevCredentials` 是 dev/kind 专用** | 生产 values 必须为 `false` 且使用客户托管 Secret，否则等于把开发口令带上生产 |
-| 8 | **Redis HA 拓扑（O5 / D3）取值已裁，实现未落** | 取值已裁（G7：primary/replica + Sentinel，ADR-0008，不选 Redis Cluster；RPO / RTO 数值仍未裁）；chart 仍单副本渲染，failover 实测行为无证据 —— 内建 Redis 是单副本，不是 HA；本包不解决 |
-| 9 | **本包未经真实客户环境验证** | 7.2d 真实集群证据仍 blocked（`docs/plan.md` §5.4）。首次交付建议先在客户 lab 集群走一遍完整流程并留证 |
+| 1 | **Chart version is not synced with the root `VERSION`** | `VERSION` is the single source of the release version (`AGENT.md` §8); the chart's `version` / `appVersion` are still skeleton values; before packaging run [`../../scripts/sync-chart-version.sh`](../../scripts/sync-chart-version.sh) `--check` (read-only, exits 1 on drift); the timing and values of the first `--apply` are a separate maintainer decision |
+| 2 | **The chart has no `kubeVersion` declaration** | Helm will not stop a too-old cluster for you. `preflight.sh` derives a lower bound from the APIs the templates actually use (default 1.23, rationale in that script's comments) and probes API availability |
+| 3 | **Image registry address needs the customer's internal registry** | `registry.example.com` is a placeholder address and cannot be pulled; in an air-gapped scenario either import onto nodes with this package or push the images into the customer's internal registry |
+| 4 | **Image digests and multi-architecture** | See §5; across architectures the images must be packaged and verified separately |
+| 5 | **The offline machine must bring its own `helm` (3.x), `kubectl`, `sha256sum`** | This package does not provide offline distribution of these binaries; `load-images.sh` states clearly which one is missing |
+| 6 | **`useCases[].resources` defaults to empty** | The chart renders no requests/limits. This package performs no capacity validation and gives no recommended values (O1 undecided) |
+| 7 | **`stateStores.bootstrapDevCredentials` is for dev/kind only** | Production values must be `false` and use customer-managed Secrets, otherwise development passwords go to production |
+| 8 | **Redis HA topology (O5 / D3) values are decided but the implementation is not landed** | Values are decided (G7: primary/replica + Sentinel, ADR-0008, Redis Cluster not chosen; RPO / RTO figures still undecided); the chart still renders a single replica, and there is no evidence for measured failover behaviour — the built-in Redis is a single replica, not HA; this package does not solve that |
+| 9 | **This package has not been validated in a real customer environment** | 7.2d real-cluster evidence is still blocked (`docs/plan.md` §5.4). For the first delivery it is recommended to walk the complete flow once on the customer's lab cluster and keep the evidence |
 
-## 8. 与其它文档的边界
+## 8. Boundaries against other documents
 
-| 主题 | 权威文档 | 本文 |
+| Topic | Authoritative document | This document |
 |---|---|---|
-| Helm 参数、values 语义、渲染守卫、fail-closed 行为 | [`../../deploy/helm/README.md`](../../deploy/helm/README.md) | 只引用，不复制参数表 |
-| 交付清单、镜像同步、`helm install` 命令序列 | [`install-guide.md`](./install-guide.md)（同批次交付物） | 给出离线包制作/使用流程 |
-| 部署前环境校验 | [`preflight.sh`](./preflight.sh) + [`README.md`](./README.md) | §4 第 1 步引用 |
-| 迁移 / owner DSN / 备份恢复 | [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) | §4 第 5 步引用 |
-| 故障定界与告警处置 | [`../operations/`](../operations/) | 不重复 |
+| Helm parameters, values semantics, render guards, fail-closed behaviour | [`../../deploy/helm/README.md`](../../deploy/helm/README.md) | References only, does not copy the parameter table |
+| Delivery checklist, image mirroring, `helm install` command sequence | [`install-guide.md`](./install-guide.md) (a deliverable from the same batch) | Gives the offline package production/usage flow |
+| Pre-deployment environment validation | [`preflight.sh`](./preflight.sh) + [`README.md`](./README.md) | Referenced in §4 step 1 |
+| Migration / owner DSN / backup and restore | [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) | Referenced in §4 step 5 |
+| Fault demarcation and alert handling | [`../operations/`](../operations/) | Not repeated |
 
-**追溯**：交付物 3.2（[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第三批）；范围收窄依据 G-P1-7；Helm-only 依据 ADR-0013；评审记录 [`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md)。
+**Traceability**: deliverable 3.2 ([`../product-packaging-plan.md`](../product-packaging-plan.md) §1, third batch); scope narrowing per G-P1-7; Helm-only per ADR-0013; review record [`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md).

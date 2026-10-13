@@ -12,110 +12,110 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M5 REQ 级验收评审记录（M8 发布候选，Phase B 最小集）
+# M5 REQ-Level Acceptance Review Record (M8 Release Candidate, Phase B Minimum Set)
 
-- **评审对象（object）**：M5 里程碑 **REQ 级**验收（为 M8 test-plan 勾选提供口径），范围 = REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ-NF-13 / REQ-NF-14 + 7.2d ingress/trusted-proxy 关门条件。输入：[`m5-full-chain-review-2026-10-05.md`](m5-full-chain-review-2026-10-05.md)（结论：不通过）、[`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md) §4 Phase B。
-- **评审日期（date）**：2026-10-06
-- **评审人（reviewer）**：AI agent（维护者缺席期间用户指令 self-decision；**维护者会签待补**，本记录不替代维护者签字）。
-- **评审结论（conclusion）**：**有条件通过（工程切片）/ REQ 级不通过，10 项 defer**。M5 工程切片（chart 部署形态、draining/缩容机制接线、kind 部署证据）可进入 M8 引用；M5 **REQ 级不通过**，不得宣称为 REQ 全绿；下表 10 项明确 defer，其余全链 Major/Minor 仍按全链评审 §7 跟踪（见 §5）。
+- **Review target (object)**: M5 milestone **REQ-level** acceptance (providing the basis for M8 test-plan checkmarks); scope = REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ-NF-13 / REQ-NF-14 + the 7.2d ingress/trusted-proxy gate-closure conditions. Inputs: [`m5-full-chain-review-2026-10-05.md`](m5-full-chain-review-2026-10-05.md) (conclusion: fail)、[`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md) §4 Phase B.
+- **Review date (date)**: 2026-10-06
+- **Reviewer (reviewer)**: AI agent (per user instruction, self-decision while the maintainer was absent; **the maintainer's countersignature is still outstanding**; this record does not replace maintainer sign-off).
+- **Review conclusion (conclusion)**: **conditional pass (engineering slice) / fail at the REQ level, 10 items deferred**. The M5 engineering slice (chart deployment shape, draining/scale-down mechanism wiring, kind deployment evidence) may be referenced by M8; M5 **fails at the REQ level** and must not be claimed as all-REQ-green; the 10 items in the table below are explicitly deferred, and all remaining full-chain Major/Minor items continue to be tracked per full-chain review §7 (see §5).
 
 ---
 
-## 1. Phase B 自决策记录（B-1 / B-2 / B-3，会签待补）
+## 1. Phase B self-decision record (B-1 / B-2 / B-3, countersignature outstanding)
 
-| ID | 自决策 | 理由 |
+| ID | Self-decision | Rationale |
 |----|--------|------|
-| **B-1** | 只执行 **MINIMAL M5.1**：Helm fail-open 修补（H-1…H-4）+ chart-check onprem 矩阵 + K-1/K-2 fail-closed 加固 + HLD/LLD M5 delta + ADR-0008 amendment + REQ 链注记。全量告警/指标接线（C-1…C-5）、OTLP exporter（C-7）、缩容守卫参控（C-6）、NetworkPolicy egress、resources/probes 全部 **DEFER 到 RC 后** | RC 不得宣称 M5 REQ 绿；工程切片证据足以支撑部署形态举证，全链修复超出 RC 窗口 |
-| **B-2** | **维持** 2026-10-04 M5 工程关门签字（不撤销、不改写历史），但将其含义明确**降级**为`工程关门（非REQ验收）` | 避免重写历史；工程关门与 REQ 验收是两回事，本记录首次把这句话写进评审结论 |
-| **B-3** | 故事 C 保持 **L1（F10）**：只展示 chart/alerts **形态** + kind 摘要，不得表述为"M5 全链已验收"或"生产告警/缩容已闭环" | 依据 [`pre-m8-demo-review-plan.md`](../handoff/pre-m8-demo-review-plan.md) F10 对账段；在全链结论翻转前口径不变 |
+| **B-1** | Execute only **MINIMAL M5.1**: Helm fail-open fixes (H-1…H-4) + chart-check onprem matrix + K-1/K-2 fail-closed hardening + HLD/LLD M5 delta + ADR-0008 amendment + REQ chain annotations. Full alerting/metrics wiring (C-1…C-5), OTLP exporter (C-7), scale-down guard parameterization (C-6), NetworkPolicy egress, resources/probes are all **DEFERRED until after the RC** | The RC must not claim M5 REQ green; the engineering-slice evidence is sufficient to substantiate the deployment shape, and full-chain remediation exceeds the RC window |
+| **B-2** | **Uphold** the 2026-10-04 M5 engineering-gate sign-off (not revoked, history not rewritten), but explicitly **downgrade** its meaning to `engineering closure (not REQ acceptance)` | Avoid rewriting history; engineering closure and REQ acceptance are two different things, and this record is the first to write that sentence into a review conclusion |
+| **B-3** | Story C stays at **L1 (F10)**: show only the chart/alerts **shape** + a kind digest; it must not be stated as "M5 full chain has been accepted" or "production alerting/scale-down has been closed" | Per the reconciliation paragraph of F10 in [`pre-m8-demo-review-plan.md`](../handoff/pre-m8-demo-review-plan.md); the wording is unchanged until the full-chain conclusion is flipped |
 
-## 2. B-4 — 7.2d 需求链缺口登记
+## 2. B-4 — Registering the 7.2d requirement-chain gap
 
-- 7.2d（ingress/trusted-proxy）是 M5 三大关门条件之一，但在 PRD 中**无对应 REQ 来源**（全链 R-1：REQ-S-2 是 SIP 信令 TLS，REQ-S-4 只讲鉴权与审计，均不覆盖控制台 HTTPS 重定向 / `X-Forwarded-Proto` 信任 / ingress proxy CIDR 白名单）。
-- 本记录将其登记为**无源关门条件（sourceless gate condition）**：`test-plan.md` §1.4（M4b-7.2d preflight）只作为部署前检查执行，**不产生 REQ 通过项**；补 REQ 或 ADR 修正由维护者在 M8 阶段 C 前裁决。
+- 7.2d (ingress/trusted-proxy) is one of M5's three gate-closure conditions, but in the PRD it has **no corresponding REQ source** (full-chain R-1: REQ-S-2 is SIP signaling TLS, REQ-S-4 only covers authentication and auditing; neither covers console HTTPS redirect / `X-Forwarded-Proto` trust / ingress proxy CIDR allowlist).
+- This record registers it as a **sourceless gate condition**: `test-plan.md` §1.4 (M4b-7.2d preflight) is executed only as a pre-deployment check and **produces no REQ pass item**; adding a REQ or correcting via ADR is for the maintainer to adjudicate before M8 phase C.
 
-## 3. B-5 — 范围说明
+## 3. B-5 — Scope statement
 
-- `chart-check` 进入 `make gate`（阻塞式 ① fast 层）已在 **Phase A** 完成，本任务不再动门禁。
-- 本任务的 B-5 落点是 **onprem values 可渲染**：`values-onprem.example.yaml` 置非空占位 secretName + `config-service-deployment.yaml` fail 信息指向示例文件 + chart-check 新增 onprem 矩阵（H-2 验证）。
+- Folding `chart-check` into `make gate` (blocking ① fast layer) was already completed in **Phase A**; this task does not touch the gate again.
+- The landing point of B-5 in this task is **renderable onprem values**: non-empty placeholder secretName in `values-onprem.example.yaml` + the fail message in `config-service-deployment.yaml` pointing at the example file + a new onprem matrix in chart-check (H-2 verification).
 
-## 4. B-6 — REQ 追溯注记
+## 4. B-6 — REQ traceability annotations
 
-- 全链 R-2：5 份 M5 验收/runbook 文档与 `report.md` M5 段 **REQ-\* 引用数为 0**。本记录恢复该链接，M5 工程切片追溯到：**REQ-NF-3**（水平扩展/draining/缩容机制）、**REQ-NF-4**（ISSU draining 语义）、**REQ-NF-9**（单租户 on-prem Helm 交付）、**REQ-NF-13**（指标/health 端点形态）、**REQ-NF-14**（告警规则集形态，仅形态）、**7.2d**（无源关门条件，见 B-4）。
-- 追溯止于"工程切片"等级，不构成上述 REQ 的通过判定。
+- Full-chain R-2: the 5 M5 acceptance/runbook documents and the M5 section of `report.md` have **REQ-\* reference count = 0**. This record restores that linkage; the M5 engineering slice traces back to: **REQ-NF-3** (horizontal scaling / draining / scale-down mechanism)、**REQ-NF-4** (ISSU draining semantics)、**REQ-NF-9** (single-tenant on-prem Helm delivery)、**REQ-NF-13** (metrics/health endpoint shape)、**REQ-NF-14** (alert rule set shape, shape only)、**7.2d** (sourceless gate condition, see B-4).
+- Traceability stops at the "engineering slice" level and does not constitute a pass determination for the above REQs.
 
-## 5. 本次最小集做了什么 / 明确没做什么
+## 5. What this minimum set did / explicitly did not do
 
-已做（本任务 diff）：H-1（`secret.yaml` else 分支补全 key + stateStores 生产组合 `fail`）、H-2（onprem 示例占位 + chart-check onprem 矩阵）、H-3（`tls.secretName` 为空 `fail`）、H-4（`peerAllowlist` 为空 `fail` + `sip.allowEmptyAllowlistForTest` 测试逃生）、K-1（ingress/verify 脚本 WARN→FAIL）、K-2（HPA 守卫校验 helm exit code + onprem 渲染断言 exit code）、HLD/LLD `Amendment 2026-10-06`、ADR-0008 SPoF 缺口 amendment、ADR-0013 amendment 注记。
+Done (this task's diff): H-1 (complete the keys in the `secret.yaml` else branch + `fail` for the stateStores production combination), H-2 (onprem example placeholder + chart-check onprem matrix), H-3 (`fail` when `tls.secretName` is empty), H-4 (`fail` when `peerAllowlist` is empty + `sip.allowEmptyAllowlistForTest` test escape hatch), K-1 (ingress/verify script WARN→FAIL), K-2 (HPA guard validates the helm exit code + onprem render assertion exit code), HLD/LLD `Amendment 2026-10-06`, an ADR-0008 SPoF-gap amendment, ADR-0013 amendment annotations.
 
-明确没做（仍 open，全链 §7 原文为准）：告警 C-4/C-5 minor、模拟 seam C-8、配置崩溃路径 C-10、版本 store 零测试 C-11、H-5/H-6/H-7/H-9/H-10、K-3…K-6、R-1…R-9（含 R-3 容量口径互斥、R-6 证据 gitignore），以及下表 10 项正式 defer。
+Explicitly not done (still open; the full-chain §7 text governs): alert C-4/C-5 minor, simulated seam C-8, config crash path C-10, zero tests for the version store C-11, H-5/H-6/H-7/H-9/H-10, K-3…K-6, R-1…R-9 (including R-3 capacity-criteria mutual exclusion and R-6 evidence gitignore), plus the 10 formal deferrals in the table below.
 
-## 6. Defer 清单（10 项；REQ 级不通过的构成项）
+## 6. Defer list (10 items; the constituents of the REQ-level fail)
 
-| # | 全链 ID | 内容 | plan §5 对应 / 拟新增行 |
+| # | Full-chain ID | Content | Corresponding plan §5 / proposed new row |
 |---|---------|------|--------------------------|
-| 1 | C-1 | 告警 6 条死规则（4 指标不存在 + 2 零调用点） | §5.3 PM/AM（告警生命周期需求待补）＋ §4.4.3（容量类告警 M6 后）；拟新增 `M5D-1` |
-| 2 | C-2 | `clamp_min` 数学错误（低话务全量故障不触发） | §5.1 O1（阈值须 M6 实测）；拟新增 `M5D-1` |
-| 3 | C-3 | telemetry 阈值 `> 0` 语义不符 | §5.1 O1；拟新增 `M5D-1` |
-| 4 | C-6 | 缩容守卫死配置（读入只 log，不参与判定） | ADR-0020/M7 actuation 未决；拟新增 `M5D-2`（守卫参控 + 开/关两态行为测试） |
-| 5 | C-7 | OTLP 导出空壳（NoOp sink，入队即丢） | §5.3 PM（OTel traces/logs 未落地）；拟新增 `M5D-3` |
-| 6 | C-9 | 指标零生产调用点（response/rule_hit/telemetry_dropped 永不递增） | M7 E1（真呼叫计数走信令路径）；拟新增 `M5D-1` |
-| 7 | H-8 | NetworkPolicy 无 Egress、源标签过宽 | §5.1 D12/O5（HA/拓扑客户 SLA）；拟新增 `M5D-4` |
-| 8 | H-11 | 无 resources（BestEffort）、AS 无 startupProbe、config-service tcpSocket 探针 | §5.1 O1/M6（sizing 下游于实测）；拟新增 `M5D-5` |
-| 9 | A-2 | 跨站点切换演练未做（ADR-0008 指派给 M5） | §5.1 O5（容灾等级客户 SLA）；拟新增 `M5D-6` |
-| 10 | T-1 | feature 开关无开/关两态行为测试 | ADR-0020 默认态/灰度策略未决；拟新增 `M5D-2` |
+| 1 | C-1 | 6 dead alert rules (4 metrics do not exist + 2 zero call sites) | §5.3 PM/AM (alert lifecycle requirement to be added) + §4.4.3 (capacity-class alerting after M6); propose new `M5D-1` |
+| 2 | C-2 | `clamp_min` math error (does not fire on a full outage at low traffic) | §5.1 O1 (thresholds must be measured at M6); propose new `M5D-1` |
+| 3 | C-3 | The telemetry threshold `> 0` semantics do not match | §5.1 O1; propose new `M5D-1` |
+| 4 | C-6 | Dead scale-down guard configuration (read in but only logged, not used in the decision) | ADR-0020/M7 actuation undecided; propose new `M5D-2` (guard parameterization + behavior tests for both on and off states) |
+| 5 | C-7 | OTLP export is an empty shell (NoOp sink, dropped on enqueue) | §5.3 PM (OTel traces/logs not implemented); propose new `M5D-3` |
+| 6 | C-9 | Metrics have zero production call sites (response/rule_hit/telemetry_dropped never increment) | M7 E1 (real call counting goes through the signaling path); propose new `M5D-1` |
+| 7 | H-8 | NetworkPolicy has no Egress, and the source selector is too broad | §5.1 D12/O5 (HA/topology customer SLA); propose new `M5D-4` |
+| 8 | H-11 | No resources (BestEffort), no startupProbe on AS, config-service tcpSocket probe | §5.1 O1/M6 (sizing depends on measurement); propose new `M5D-5` |
+| 9 | A-2 | Cross-site switchover drill not performed (ADR-0008 assigned it to M5) | §5.1 O5 (DR level customer SLA); propose new `M5D-6` |
+| 10 | T-1 | The feature switch has no behavior tests for the on and off states | ADR-0020 default state / canary strategy undecided; propose new `M5D-2` |
 
-拟新增 plan §5 行（`M5D-1`…`M5D-6`）的落定由维护者执行——本任务不改 `plan.md`（维护者拥有计划编辑权），上表即提议的行内容。
+The finalization of the proposed plan §5 rows (`M5D-1`…`M5D-6`) is performed by the maintainer — this task does not modify `plan.md` (the maintainer owns plan editing); the table above is the proposed row content.
 
-## 7. B-7 — 复评声明
+## 7. B-7 — Re-review statement
 
-- 本记录为 M5 的 **REQ 级复评**（相对全链"不通过"与 2026-10-04"工程关门"）：结论是有条件通过（工程切片）/ REQ 级不通过。
-- M5 REQ 级要翻转为通过，须关闭上表 10 项（或维护者书面接受为风险/移出 v1），并由维护者在本记录会签栏签字；签字前任何"全 REQ 绿"表述均属违规。
+- This record is the **REQ-level re-review** of M5 (relative to the full-chain "fail" and the 2026-10-04 "engineering closure"): the conclusion is conditional pass (engineering slice) / fail at the REQ level.
+- For M5 to flip to pass at the REQ level, the 10 items in the table above must be closed (or accepted in writing by the maintainer as risk / moved out of v1), and the maintainer must sign the countersignature field of this record; before that signature, any "all REQ green" statement is a violation.
 
 ---
 
-## 确认（confirmation）
+## Confirmation
 
-| 项 | 记录 |
+| Item | Record |
 |---|------|
-| 评审结论 | 有条件通过（工程切片）/ REQ 级不通过，10 项 defer（§6） |
-| 自决策 | B-1（最小 M5.1）/ B-2（维持工程关门并降级含义）/ B-3（故事 C 保持 L1）——维护者会签待补 |
-| 维护者确认 | **待签字**（本栏须由维护者填写；本记录不构成 REQ 级通过，也不撤销既有关门记录） |
-| 输入评审 | [`m5-full-chain-review-2026-10-05.md`](m5-full-chain-review-2026-10-05.md)（不通过，维持有效；本记录是其 Phase B 复评，不是推翻） |
-| 未采信证据 | `docs/reviews/` 下所有 `m5-*` 工程关门评审记录（沿用全链证据排除声明） |
+| Review conclusion | Conditional pass (engineering slice) / fail at the REQ level, 10 items deferred (§6) |
+| Self-decisions | B-1 (minimal M5.1) / B-2 (uphold engineering closure and downgrade its meaning) / B-3 (story C stays at L1) — the maintainer's countersignature is still outstanding |
+| Maintainer confirmation | **Awaiting sign-off** (this field must be filled in by the maintainer; this record does not constitute a REQ-level pass, nor does it revoke any existing closure record) |
+| Input review | [`m5-full-chain-review-2026-10-05.md`](m5-full-chain-review-2026-10-05.md) (fail, remains in effect; this record is its Phase B re-review, not a refutation) |
+| Evidence not accepted | All `m5-*` engineering-closure review records under `docs/reviews/` (following the full-chain evidence-exclusion statement) |
 
 ---
 
-## 9. N2 第 2 项代签 + M5D 行落定（2026-10-12；§1 与 §6 原文保留不改）
+## 9. Proxy signature for N2 item 2 + finalization of the M5D rows (2026-10-12; §1 and §6 text preserved unchanged)
 
-> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决
-> （N2 第 2 项正本即本文件；代签总记录见
-> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)）。
-> **本节不是维护者亲签**，每项标注「agent 代签」并附依据。
+> **Authorization source**: on 2026-10-12 the maintainer **explicitly authorized the agent to sign on their behalf** for M8's nine written N2 adjudications
+> (the canonical text of N2 item 2 is this very file; the overall proxy-signature record is
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)).
+> **This section is not a maintainer's personal signature**; each item is marked "signed by the agent on behalf" with its basis attached.
 
-### 9.1 B-1 / B-2 / B-3 会签（原「维护者会签待补」）
+### 9.1 Countersignature of B-1 / B-2 / B-3 (originally "the maintainer's countersignature is still outstanding")
 
-| 自决策 | 代签结论 | 依据 |
+| Self-decision | Proxy-signature conclusion | Basis |
 |---|---|---|
-| **B-1** 只执行 **MINIMAL M5.1**（H-1…H-4 修补 + chart-check onprem 矩阵 + K-1/K-2 fail-closed 加固 + HLD/LLD delta + ADR-0008 amendment + REQ 链注记）；全量告警/指标接线（C-1…C-5）、OTLP exporter（C-7）、缩容守卫参控（C-6）、NetworkPolicy egress、resources/probes **全部 DEFER 到 RC 后** | **确认**。签字：**agent 代签（维护者 2026-10-12 授权）** | 本文件 §1 B-1 行原文及其依据栏（RC 不得宣称 M5 REQ 绿；工程切片证据足以支撑部署形态举证） |
-| **B-2** **维持** 2026-10-04 M5 工程关门签字（不撤销、不改写历史），含义明确**降级**为「工程关门（非 REQ 验收）」 | **确认**。签字：同上 | 本文件 §1 B-2 行原文及其依据栏 |
-| **B-3** 故事 C 保持 **L1（F10）**：只展示 chart/alerts **形态** + kind 摘要，不得表述为「M5 全链已验收」或「生产告警/缩容已闭环」 | **确认**。签字：同上 | 本文件 §1 B-3 行原文及其依据栏；`pre-m8-demo-review-plan.md` F10 对账段 |
+| **B-1** Execute only **MINIMAL M5.1** (H-1…H-4 fixes + chart-check onprem matrix + K-1/K-2 fail-closed hardening + HLD/LLD delta + ADR-0008 amendment + REQ chain annotations); full alerting/metrics wiring (C-1…C-5), OTLP exporter (C-7), scale-down guard parameterization (C-6), NetworkPolicy egress, resources/probes are all **DEFERRED until after the RC** | **Confirmed**. Signature: **signed by the agent on behalf (maintainer authorization of 2026-10-12)** | The verbatim text of the §1 B-1 row in this file and its basis column (the RC must not claim M5 REQ green; the engineering-slice evidence suffices to substantiate the deployment shape) |
+| **B-2** **Uphold** the 2026-10-04 M5 engineering-closure sign-off (not revoked, history not rewritten), with its meaning explicitly **downgraded** to "engineering closure (not REQ acceptance)" | **Confirmed**. Signature: same as above | The verbatim text of the §1 B-2 row in this file and its basis column |
+| **B-3** Story C stays at **L1 (F10)**: show only the chart/alerts **shape** + a kind digest; it must not be stated as "M5 full chain has been accepted" or "production alerting/scale-down has been closed" | **Confirmed**. Signature: same as above | The verbatim text of the §1 B-3 row in this file and its basis column; the F10 reconciliation paragraph of `pre-m8-demo-review-plan.md` |
 
-### 9.2 M5D-1…M5D-6 行落定（N2 第 8 项）
+### 9.2 Finalization of the M5D-1…M5D-6 rows (N2 item 8)
 
-本文件 §6 表「拟新增 `plan.md` §5 行（`M5D-1`…`M5D-6`）的落定由维护者执行——本任务不改 `plan.md`」。
-**维护者 2026-10-12 授权代签后，该落定已执行**，六行写入 `docs/plan.md` §5，映射沿用 §6 表的提议：
+§6 of this file states: "the finalization of the proposed `plan.md` §5 rows (`M5D-1`…`M5D-6`) is performed by the maintainer — this task does not modify `plan.md`".
+**After the maintainer authorized the proxy signature on 2026-10-12, that finalization has been executed**: the six rows were written into §5 of `docs/plan.md`, with the mapping taken from the proposals in the §6 table:
 
-| 行 | 聚合的 defer 项 | 内容 |
+| Row | Aggregated defer items | Content |
 |---|---|---|
-| `M5D-1` | C-1、C-2、C-3、C-9 | 告警规则与指标阈值/调用点（`clamp_min` 数学错误、telemetry 阈值 `> 0` 语义、指标零生产调用点、告警死规则） |
-| `M5D-2` | C-6、T-1 | 缩容守卫参控 + feature 开关开/关两态行为测试 |
-| `M5D-3` | C-7 | OTLP 导出（当前为 NoOp sink，入队即丢） |
-| `M5D-4` | H-8 | NetworkPolicy Egress 与源标签收窄 |
-| `M5D-5` | H-11 | resources 请求/限制、AS startupProbe、config-service 探针语义 |
-| `M5D-6` | A-2 | 跨站点切换演练（ADR-0008 指派给 M5） |
+| `M5D-1` | C-1、C-2、C-3、C-9 | Alert rules and metric thresholds/call sites (`clamp_min` math error, telemetry threshold `> 0` semantics, zero production call sites for metrics, dead alert rules) |
+| `M5D-2` | C-6、T-1 | Scale-down guard parameterization + behavior tests for the feature switch in both the on and off states |
+| `M5D-3` | C-7 | OTLP export (currently a NoOp sink, dropped on enqueue) |
+| `M5D-4` | H-8 | NetworkPolicy Egress and narrowing of the source selector |
+| `M5D-5` | H-11 | resources requests/limits, AS startupProbe, config-service probe semantics |
+| `M5D-6` | A-2 | Cross-site switchover drill (ADR-0008 assigned it to M5) |
 
-六行均标为**移出 v1**（不纳入 v1 范围），并各附其来源 defer 项与阻塞的 O/D 编号。
+All six rows are marked as **moved out of v1** (not included in v1 scope), and each carries its source defer items and the blocking O/D numbers.
 
-**边界**：M5D 行落定**不等于** M5 REQ 通过 —— 按 N2 原文，M5D-1…M5D-6 只是**移出 v1**；
-复评结论（REQ 级不通过）不变。
+**Boundary**: finalizing the M5D rows **does not equal** an M5 REQ pass —— per the N2 text, M5D-1…M5D-6 are merely **moved out of v1**;
+the re-review conclusion (fail at the REQ level) is unchanged.

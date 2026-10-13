@@ -12,104 +12,104 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 批次 6「文档与报告」完成交接（2026-10-12）
+# M8 Batch 6 "Documentation and Reports" Completion Handoff (2026-10-12)
 
-## 0. 本文性质与边界
+## 0. Nature and Boundaries of This Document
 
-本文为 M8 批次 6 完成交接。批次 6 是 M8 六批拆分中的**最后一批**，依赖批次 1–5 的产出；配套评审记录：`docs/reviews/m8-batch6-docs-report-review-2026-10-12.md`。
+This is the M8 batch 6 completion handoff. Batch 6 is the **final batch** of the six-batch split of M8 and depends on the output of batches 1–5; the accompanying review record is `docs/reviews/m8-batch6-docs-report-review-2026-10-12.md`.
 
-- **本版定位**：内部版本 —— function 完整 + 模拟器证据 + 可重复构建工件。**不是 M8 退出签字**，不构成发版。
-- **本批次不签收任何 REQ**、不改矩阵状态（矩阵终态由批次 4 代签节落地）、**不改 `docs/plan.md`**、不改 `VERSION` / `CHANGELOG.md`。
-- **不宣称 M8 全绿、不宣称已发版**；「内部版收尾完成」≠「M8 退出签字」。
-- **执行环境**：`dev-win03ib7niepf0`（已登记于 `docs/environments.md`）。
-- **未执行任何 git 写操作**，全部改动留工作树，由维护者切分提交。
+- **Positioning of this version**: internal version — functionally complete + simulator evidence + reproducible build artifacts. **Not the M8 exit sign-off**; it does not constitute a release.
+- **This batch signs off no REQ**, does not change matrix status (the matrix final state is landed by the batch 4 counter-signature section), **does not change `docs/plan.md`**, and does not change `VERSION` / `CHANGELOG.md`.
+- **No claim that M8 is fully green, no claim that a release has been made**; "internal version wrap-up complete" ≠ "M8 exit sign-off".
+- **Execution environment**: `dev-win03ib7niepf0` (already registered in `docs/environments.md`).
+- **No git write operation was performed**; all changes remain in the working tree for the maintainer to split into commits.
 
-## 1. 完成清单（6/6）与三元组
+## 1. Completion List (6/6) and Triples
 
-| 项 | 落点文件 | 三元组（结论, 证据, 日期） |
+| Item | Landing file | Triple (conclusion, evidence, date) |
 |---|---|---|
-| **E-1** 计数同步 | `docs/acceptance/report.md` +35 行（内部版抬头 6 行 + §0.10「计数同步与内部版收尾声明」29 行） | (已验证, `docs/acceptance/report.md` §0.10, 2026-10-13) |
-| **E-2** 版本与变更记录 | `VERSION` = `0.2.0`；`CHANGELOG.md` `[0.2.0]` 节内已有 `### Internal build (2026-10-12)` 子节 | (已确认、**未改动**, `VERSION` / `CHANGELOG.md`, 2026-10-12) |
-| **E-3** `plan.md` §0 / §4 M8 行 | `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md`（36 行） | (**只出草案**、`docs/plan.md` 未改, `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md`, 2026-10-12) |
-| **E-4** 内部版收尾评审 | `docs/reviews/m8-internal-release-exit-review-2026-10-12.md`（113 行） | (已验证, `docs/reviews/m8-internal-release-exit-review-2026-10-12.md`, 2026-10-12) |
-| **E-5** 里程碑退出评审追加 | `docs/reviews/m8-exit-review-2026-10-06.md` §3.2（+19 行） | (已验证, `docs/reviews/m8-exit-review-2026-10-06.md` §3.2, 2026-10-12) |
-| **E-6** 打包复检 | `docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt`（74 行）+ 索引 +1 行 | (已验证, `docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt`, 2026-10-12) |
+| **E-1** Count synchronization | `docs/acceptance/report.md` +35 lines (internal version header 6 lines + 29 lines in §0.10 "count synchronization and internal version wrap-up statement") | (verified, `docs/acceptance/report.md` §0.10, 2026-10-13) |
+| **E-2** Version and change log | `VERSION` = `0.2.0`; the `[0.2.0]` section of `CHANGELOG.md` already contains a `### Internal build (2026-10-12)` subsection | (confirmed, **unchanged**, `VERSION` / `CHANGELOG.md`, 2026-10-12) |
+| **E-3** `plan.md` §0 / §4 M8 row | `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md` (36 lines) | (**draft only**, `docs/plan.md` unchanged, `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md`, 2026-10-12) |
+| **E-4** Internal version wrap-up review | `docs/reviews/m8-internal-release-exit-review-2026-10-12.md` (113 lines) | (verified, `docs/reviews/m8-internal-release-exit-review-2026-10-12.md`, 2026-10-12) |
+| **E-5** Milestone exit review append | `docs/reviews/m8-exit-review-2026-10-06.md` §3.2 (+19 lines) | (verified, `docs/reviews/m8-exit-review-2026-10-06.md` §3.2, 2026-10-12) |
+| **E-6** Packaging re-check | `docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt` (74 lines) + index +1 line | (verified, `docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt`, 2026-10-12) |
 
-- E-2 说明：`VERSION` 已裁定不 bump，维持 `0.2.0`；`CHANGELOG.md` 的 internal build 子节已存在（含「这是内部版本，不是发行版」、镜像 tag 格式、chart 不同步、本版定位四项），**不重复追加**。
-- E-3 说明：草案含三项建议（§0 当前进行中步骤单元格追加句、§0 产品决策记录新增一行、§4 M8 行状态列建议值）与边界；**`docs/plan.md` 未被改动**，最终表述由维护者确认。
+- E-2 note: `VERSION` has been adjudicated as not bumped and stays `0.2.0`; the internal build subsection of `CHANGELOG.md` already exists (containing four items: "this is an internal version, not a release", the image tag format, chart not synchronized, and this version's positioning), so **nothing is appended again**.
+- E-3 note: the draft contains three suggestions (§0 current in-progress step cell append sentence, §0 product decision record new row, §4 M8 row status column suggested value) plus boundaries; **`docs/plan.md` was not modified**, and the final wording is confirmed by the maintainer.
 
-## 2. 关键结果摘要
+## 2. Summary of Key Results
 
-- **report.md 计数同步**：现行值 **pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0，合计 49 行**（取值依据 = `docs/acceptance/m8-test-plan-matrix.md`「M8 批次4 终态化代签（2026-10-13）」节第四节）。§0.5 原文的 2026-10-06 历史值（pass 9 / fail 0 / blocked 12 / n-a 4 / open 24）**保留不改**，以「原文保留、追加更正」方式处理。全部 `pass` 口径为「**工程证据接受**」，为 agent 代签（维护者授权），**不是维护者亲签**。
-- **M8 行不签收**：`docs/reviews/m8-exit-review-2026-10-06.md` §3.2 中 **M8 状态 =「内部版本，不签收」，签字 =「未签 —— 维护者待签」**；M1/M2/M6/M7 维持「工程完成（agent 代签，维护者 2026-10-12 授权）」。
-- **E-6 八项实测**：版本一致性、证据纪律守卫、`make gate`、镜像重建、脱敏复检、SIP 监听运行时、Helm 可重复渲染、环境变量逐条核对 —— **六项通过 + 一项偏差**（镜像 digest 与批次 1 不一致，已按计划记录新 digest `sha256:63ba8f4df78d5853e70451cc0e2a12e691f2c38facc800e2135d71c7018ecfdb`；差异在 manifest 层：buildx v0.31.1 本次产出带 attestation 的 manifest list，`{{.Id}}` 取 manifest list digest；各层 CACHED 说明层内容未变。**不宣称内容变化，也不宣称与批次 1 逐字节一致**）。
-- **环境变量 16 个逐条核对无漂移**：实现侧 `platform/src/as_platform/`（`runtime/transport_env.py` 为主入口）读取 `AS_SIP_*` / `AS_TLS_*` / `AS_PEER_*` 共 16 个；覆盖度 `platform/README.md` 16/16、`docs/operations/runbook-l2.md` 3/16、`docs/delivery/install-guide.md` 1/16、根 `README.md` 0/16。反向核对中文档出现的 `AS_SIP_NEXT_HOP` / `_PORT` / `_TLS_PORT` 不在 `platform/src`，但实现于 `apps/translation/src/as_translation/outbound.py:44/:48/:50`，**不是漂移、不是错名**。根 `README.md` 缺 env 表为既有文档缺口（非阻塞，`report.md` §0.7 已登记），本批次不补。
+- **report.md count synchronization**: current values **pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0, 49 rows in total** (basis = section 4 of the "M8 batch 4 finalization counter-signature (2026-10-13)" section of `docs/acceptance/m8-test-plan-matrix.md`). The 2026-10-06 historical values in the original §0.5 text (pass 9 / fail 0 / blocked 12 / n-a 4 / open 24) are **retained unchanged**, handled in the "keep the original text, append a correction" manner. The entire `pass` basis is "**engineering evidence accepted**", counter-signed by the agent (maintainer authorization), **not the maintainer's own signature**.
+- **The M8 row is not signed off**: in **§3.2** of `docs/reviews/m8-exit-review-2026-10-06.md`, **M8 status = "internal version, not signed off", signature = "unsigned — pending maintainer signature"**; M1/M2/M6/M7 keep "engineering complete (counter-signed by agent, maintainer authorization 2026-10-12)".
+- **Eight measured items in E-6**: version consistency, evidence discipline guard, `make gate`, image rebuild, sanitization re-check, SIP listening runtime, Helm reproducible rendering, environment variable item-by-item check — **six passed + one deviation** (the image digest differs from batch 1; the new digest `sha256:63ba8f4df78d5853e70451cc0e2a12e691f2c38facc800e2135d71c7018ecfdb` was recorded as planned; the difference is at the manifest layer: buildx v0.31.1 produced a manifest list with attestation this time, and `{{.Id}}` takes the manifest list digest; the CACHED status of each layer shows the layer contents are unchanged. **We do not claim a content change, and we do not claim byte-for-byte identity with batch 1**).
+- **16 environment variables checked item by item with no drift**: the implementation side `platform/src/as_platform/` (with `runtime/transport_env.py` as the main entry point) reads 16 in total from `AS_SIP_*` / `AS_TLS_*` / `AS_PEER_*`; coverage `platform/README.md` 16/16, `docs/operations/runbook-l2.md` 3/16, `docs/delivery/install-guide.md` 1/16, root `README.md` 0/16. The reverse check shows that the `AS_SIP_NEXT_HOP` / `_PORT` / `_TLS_PORT` appearing in the documentation are not in `platform/src` but are implemented in `apps/translation/src/as_translation/outbound.py:44/:48/:50`, so **this is not drift and not a wrong name**. The missing env table in the root `README.md` is a pre-existing documentation gap (non-blocking, registered in §0.7 of `report.md`); this batch does not fill it.
 
-## 3. 改动文件清单（本批次 8 个文件，对应 E-1~E-6 六项；均未提交）
+## 3. List of Changed Files (8 files in this batch, corresponding to the six items E-1~E-6; all uncommitted)
 
-| 文件 | 改动 |
+| File | Change |
 |---|---|
-| `docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt` | **新增** 74 行证据（E-6） |
-| `docs/reviews/m8-internal-release-exit-review-2026-10-12.md` | **新增** 113 行（E-4） |
-| `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md` | **新增** 36 行草案（E-3；`docs/plan.md` **未改**） |
-| `docs/reviews/m8-batch6-docs-report-review-2026-10-12.md` | **新增** 评审记录 |
-| `docs/handoff/2026-10-12-m8-batch6-complete-handoff.md` | **新增** 本交接 |
-| `docs/acceptance/report.md` | **追加 +35 行**（抬头 6 + §0.10 二十九），纯追加零删除（E-1） |
-| `docs/reviews/m8-exit-review-2026-10-06.md` | **追加 +19 行**（§3.2）（E-5） |
-| `docs/acceptance/artifacts/m5/README.md` | **追加 +1 行**索引（E-6 证据登记） |
+| `docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt` | **New** 74-line evidence file (E-6) |
+| `docs/reviews/m8-internal-release-exit-review-2026-10-12.md` | **New** 113 lines (E-4) |
+| `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md` | **New** 36-line draft (E-3; `docs/plan.md` **unchanged**) |
+| `docs/reviews/m8-batch6-docs-report-review-2026-10-12.md` | **New** review record |
+| `docs/handoff/2026-10-12-m8-batch6-complete-handoff.md` | **New** handoff (this document) |
+| `docs/acceptance/report.md` | **Appended +35 lines** (header 6 + §0.10 twenty-nine), pure append with zero deletions (E-1) |
+| `docs/reviews/m8-exit-review-2026-10-06.md` | **Appended +19 lines** (§3.2) (E-5) |
+| `docs/acceptance/artifacts/m5/README.md` | **Appended +1 line** of index (E-6 evidence registration) |
 
-**非本批次、勿混入本批次提交**（本批次 agent 未触碰以下四项）：
+**Not part of this batch; do not mix into this batch's commit** (this batch's agent did not touch the following four):
 
-- `.dockerignore` —— 批次 1 遗留改动。
-- `.gitignore` 与 `docs/intro.md` —— 维护者自身改动。
-- `.codebuddy/teams/...` —— IDE 未跟踪目录。
+- `.dockerignore` — leftover change from batch 1.
+- `.gitignore` and `docs/intro.md` — the maintainer's own changes.
+- `.codebuddy/teams/...` — an untracked IDE directory.
 
-**观察项**：上述本批次文件在核对时处于**已暂存（staged）**状态（`git status --short` 显示为 `A` / `M` 且位于第一列）。本批次 agent **未执行任何 git 写操作**，该暂存态**不是本批次产生**（同工作树内另有维护者的并发改动）。提交拆分由维护者决定。
+**Observation**: the batch's files listed above were in a **staged** state when verified (`git status --short` shows `A` / `M` in the first column). This batch's agent **performed no git write operation**, and that staged state **was not produced by this batch** (there are concurrent maintainer changes in the same working tree). The commit split is decided by the maintainer.
 
-## 4. 验证结果
+## 4. Verification Results
 
-执行环境 `dev-win03ib7niepf0`。
+Execution environment `dev-win03ib7niepf0`.
 
-| 项 | 命令 | 结果 |
+| Item | Command | Result |
 |---|---|---|
-| 门禁 | `make gate` | `1174 passed, 249 deselected, 11 warnings`，四步 exit 0 |
-| 版本一致性守卫 | `uv run pytest tests/test_version_consistency.py -q` | `9 passed`，exit 0 |
-| 证据纪律守卫 | `uv run pytest tests/test_evidence_discipline.py -q` | 新增证据后 `137 passed`（执行 E-6 时为 `135 passed`；+2 来自新增证据使根守卫参数化用例增加，属预期） |
-| Helm 可重复渲染 | `make chart-check`（`tools/bin/helm` 3.16.4） | `chart-check: OK` |
-| 镜像重建 | `docker build -t as-platform:0.2.0-internal-20261012 -f deploy/docker/Dockerfile .` | exit 0（全部步骤 CACHED，2.5s） |
-| 脱敏复检 | 镜像内 `find /app` + `grep -ri password\|passwd\|secret` | 无敏感文件、无含口令日志 → PASS |
-| SIP 监听运行时 | `docker run --rm -e AS_SIP_ACCEPT_ALL_INVITES=1 -e AS_SIP_UDP_PORT=5060 …` | `RESIP_RUNTIME_LISTENING address=127.0.0.1 advertised=127.0.0.1 udp_port=5060` |
+| Gate | `make gate` | `1174 passed, 249 deselected, 11 warnings`, four steps exit 0 |
+| Version consistency guard | `uv run pytest tests/test_version_consistency.py -q` | `9 passed`, exit 0 |
+| Evidence discipline guard | `uv run pytest tests/test_evidence_discipline.py -q` | `137 passed` after adding the new evidence (`135 passed` when E-6 was executed; the +2 comes from the new evidence increasing the root guard's parameterized cases, which is expected) |
+| Helm reproducible rendering | `make chart-check` (`tools/bin/helm` 3.16.4) | `chart-check: OK` |
+| Image rebuild | `docker build -t as-platform:0.2.0-internal-20261012 -f deploy/docker/Dockerfile .` | exit 0 (all steps CACHED, 2.5s) |
+| Sanitization re-check | `find /app` + `grep -ri password\|passwd\|secret` inside the image | No sensitive files, no password-bearing logs → PASS |
+| SIP listening runtime | `docker run --rm -e AS_SIP_ACCEPT_ALL_INVITES=1 -e AS_SIP_UDP_PORT=5060 …` | `RESIP_RUNTIME_LISTENING address=127.0.0.1 advertised=127.0.0.1 udp_port=5060` |
 
-> **计数自增说明**：根守卫按证据文件参数化，新增证据会使计数自增。执行 E-6 时 `make gate` = `1174 passed, 249 deselected`、`tests/test_evidence_discipline.py` = `135 passed`；本批次新增 `PASS-e6-packaging-recheck-2026-10-12.txt` 后收尾复跑为 `make gate` = `1176 passed, 249 deselected`（exit 0）、`tests/test_evidence_discipline.py` = `137 passed`、`tests/test_version_consistency.py` = `9 passed`。证据文件内**保留执行时快照**，不回改数字。
+> **Note on self-incrementing counts**: the root guard is parameterized by evidence file, so adding evidence makes the counts self-increment. When E-6 was executed, `make gate` = `1174 passed, 249 deselected` and `tests/test_evidence_discipline.py` = `135 passed`; after this batch added `PASS-e6-packaging-recheck-2026-10-12.txt`, the wrap-up re-run gives `make gate` = `1176 passed, 249 deselected` (exit 0), `tests/test_evidence_discipline.py` = `137 passed`, `tests/test_version_consistency.py` = `9 passed`. **The evidence file retains the snapshot from execution time**; the numbers are not retroactively edited.
 
-## 5. 待维护者事项
+## 5. Items Pending the Maintainer
 
-1. **`docs/plan.md` §0 / §4 M8 行最终表述确认** —— 草案见 `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md`（本批次未改 `plan.md`）。
-2. **外部硬依赖排期或书面接受风险** —— D-1（运营商 PKI + 外网 S-SBC）、D-2（客户 K8s）、ADR-0008 跨站点演练、D12/O5 生产 HA。
-3. **4 行 `defer`（F-5 / F-8 / F-9 / F-11）与 F-13 / NF-7 呼叫轨迹的 v1.1 立项**。
-4. **镜像 digest 口径** —— 是否统一 buildx 构建方式以复现批次 1 的 digest 形态（`sha256:8f2e1b9465d96a8cb7b9cab286e687a52621f136b570f521df15f6f9112da7c8`），或书面接受「以 manifest list digest 为准」的新口径。
-   （**2026-10-13 已裁决：选②**，书面接受 manifest list digest 新口径，不重跑构建）
-5. **根 `README.md` 环境变量表缺口是否补** —— 当前 0/16 覆盖，非阻塞，`report.md` §0.7 已登记。
-6. **M8 退出签字仍后置** —— 本批次仅完成内部版收尾，未签 M8。
-   （**2026-10-13 已按路径 C 处理**：M8 退出签字由维护者签收，含书面接受外部硬依赖风险；签字栏待其亲签，见 `docs/reviews/m8-exit-review-2026-10-06.md` §3.3）
-7. **commit 拆分与 tag** —— 仅维护者执行（`AGENT.md` §10.4）；内部版本不打 tag。
+1. **Final wording confirmation for the `docs/plan.md` §0 / §4 M8 row** — the draft is at `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md` (this batch did not change `plan.md`).
+2. **Scheduling of external hard dependencies or written risk acceptance** — D-1 (carrier PKI + external-network S-SBC), D-2 (customer K8s), the ADR-0008 cross-site drill, D12/O5 production HA.
+3. **v1.1 initiation for the 4 `defer` rows (F-5 / F-8 / F-9 / F-11) and the F-13 / NF-7 call traces**.
+4. **Image digest basis** — whether to unify the buildx build method to reproduce the digest shape of batch 1 (`sha256:8f2e1b9465d96a8cb7b9cab286e687a52621f136b570f521df15f6f9112da7c8`), or to accept in writing the new basis of "the manifest list digest governs".
+   (**Adjudicated 2026-10-13: option ② chosen**, accepting in writing the new manifest list digest basis; the build is not re-run)
+5. **Whether to fill the environment variable table gap in the root `README.md`** — currently 0/16 coverage, non-blocking, registered in §0.7 of `report.md`.
+6. **The M8 exit sign-off is still deferred** — this batch only completed the internal version wrap-up and did not sign M8.
+   (**Handled on 2026-10-13 via path C**: the M8 exit sign-off is signed off by the maintainer, including written acceptance of external hard dependency risk; the signature block awaits their personal signature, see §3.3 of `docs/reviews/m8-exit-review-2026-10-06.md`)
+7. **Commit split and tag** — executed only by the maintainer (`AGENT.md` §10.4); no tag for the internal version.
 
-> **去向指针（2026-10-13 追加；上方七项待维护者事项原文一律保留不改）**：本节尚未闭合的几项去向为 ——
-> **第 1 项**：`docs/plan.md` §0 / §4 M8 行最终表述草案是否合并 →
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§5-3**（草案载体 = `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md`，待维护者确认表述后合并）；
-> **第 2 项**：四项外部硬依赖（D-1 / D-2 / ADR-0008 演练 / D12-O5）的排期 —— 已按路径 C 书面接受风险、
-> 保持 `blocked` 转下一 release → 同文档 **§2**（重启 = 维护者另行裁决 + 外部资源到位，后置 ≠ 取消）；
-> **第 3 项**：4 行 `defer`（F-5 / F-8 / F-9 / F-11）与 F-13 / NF-7 呼叫轨迹的 v1.1 立项 → 同文档 **§3 第 1–5 行**；
-> **第 6 项**：M8 退出签字栏现为 **agent 代签（维护者 2026-10-13 授权）**、**不是维护者亲签** → 同文档 **§7-1**；
-> **第 7 项**：commit 拆分与 tag（仅维护者执行） → 同文档 **§5-6**。
-> 后续状态盘点、汇报、handoff、新 session 开场涉及本节遗留项一律**只引该指针**，不逐项展开、不再列入「待维护者动作」。
+> **Destination pointer (appended 2026-10-13; the original text of the seven items above is retained unchanged)**: the destinations of the items in this section that are not yet closed are —
+> **Item 1**: whether the final wording draft for the `docs/plan.md` §0 / §4 M8 row is merged →
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§5-3** (draft carrier = `docs/acceptance/m8-plan-m8-row-draft-2026-10-12.md`, to be merged after the maintainer confirms the wording);
+> **Item 2**: scheduling of the four external hard dependencies (D-1 / D-2 / ADR-0008 drill / D12-O5) — the risk has been accepted in writing via path C and they stay
+> `blocked` and carry over to the next release → same document **§2** (restart = separate maintainer adjudication + external resources in place; deferred ≠ cancelled);
+> **Item 3**: v1.1 initiation for the 4 `defer` rows (F-5 / F-8 / F-9 / F-11) and the F-13 / NF-7 call traces → same document **§3 rows 1–5**;
+> **Item 6**: the M8 exit signature block is now **counter-signed by agent (maintainer authorization 2026-10-13)**, **not the maintainer's own signature** → same document **§7-1**;
+> **Item 7**: commit split and tag (executed only by the maintainer) → same document **§5-6**.
+> Subsequent status reviews, reports, handoffs, and new session openings that touch the leftover items in this section always **cite only that pointer**, do not itemize, and no longer list them as "actions for the maintainer".
 
-## 6. 纪律执行声明
+## 6. Discipline Compliance Statement
 
-- 主 agent 未直接写任何仓库文件；本工作树同时只有一个 writing subagent，且两个 writer **串行**（前一个关闭后才启动这一个）。
-- **未执行任何 git 写操作**（无 add / commit / tag / push / branch / 改 remote / stash）；全部改动留工作树。
-- 不改代码、不改矩阵状态、不改 `docs/plan.md`、不改 `VERSION` / `CHANGELOG.md`。
-- **不签收任何 REQ、不签 M8 里程碑签字**；不宣称 M8 全绿、不宣称已发版。
-- 证据无凭据 / token / DSN / cookie；脱敏复检已确认镜像内无敏感文件与含口令日志。
-- 三元组与环境名齐备：证据一律 `(结论, 证据文件, 日期)`，环境名一律 `dev-win03ib7niepf0`，未出现匿名的「本机」。
-- 沿用既有编号体系（E-1~E-6、N2/N3/N4、D4-01…、B5-04、O1/O4/O5、D1~D12、G1–G8），未发明新编号。
+- The main agent did not write any repository file directly; only one writing subagent existed at a time in this working tree, and the two writers were **serial** (this one started only after the previous one closed).
+- **No git write operation was performed** (no add / commit / tag / push / branch / remote change / stash); all changes remain in the working tree.
+- No code changes, no matrix status changes, no `docs/plan.md` changes, no `VERSION` / `CHANGELOG.md` changes.
+- **No REQ is signed off and the M8 milestone signature is not signed**; no claim that M8 is fully green, no claim that a release has been made.
+- Evidence contains no credentials / tokens / DSNs / cookies; the sanitization re-check has confirmed no sensitive files or password-bearing logs inside the image.
+- Triples and environment names are complete: evidence always reads `(conclusion, evidence file, date)`, the environment name is always `dev-win03ib7niepf0`, and no anonymous "this machine" ever appears.
+- The existing numbering system is reused (E-1~E-6, N2/N3/N4, D4-01…, B5-04, O1/O4/O5, D1~D12, G1–G8); no new numbering was invented.

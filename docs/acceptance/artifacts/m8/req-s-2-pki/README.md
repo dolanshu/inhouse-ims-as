@@ -1,17 +1,17 @@
-# REQ-S-2 现场证据（restriction：Close 前不采证）
+# REQ-S-2 on-site evidence (restriction: no collection before Close)
 
-> **状态**：restriction（2026-10-07）。Close 前不做真实运营商 S-SBC / 运营商 PKI 采证。本目录保持空白。
-> 需求：`docs/acceptance/test-plan.md` §3 REQ-S-2；记录：`docs/acceptance/m8-environment-evidence.md` D-1。
+> **Status**: restriction (2026-10-07). No real operator S-SBC / operator PKI evidence collection before Close. This directory stays empty.
+> Requirement: `docs/acceptance/test-plan.md` §3 REQ-S-2; recording: `docs/acceptance/m8-environment-evidence.md` D-1.
 
-## 采证时应提交的文件（脱敏）
+## Files to submit when collecting evidence (redacted)
 
-1. `README.md`（本文件更新为采证记录）：采证日期、环境（运营商 PKI lab 名称打码）、执行人、被测版本 tag、runbook 版本。
-2. `tls-handshake.transcript.md`：AS→S-SBC TLS 建链命令 transcript（目标地址/端口打码），结论为建链成功。
-3. `plaintext-rejected.transcript.md`：明文 5060 连接被拒绝的命令 transcript（失败摘录）。
-4. `pki-chain.txt`：`openssl verify -CAfile <打码路径>` 结论摘录 + `openssl x509 -noout -subject -issuer -dates`
-   元数据输出（序列号/指纹打码或截断，不贴证书明文）。
+1. `README.md` (this file updated to the collection record): collection date, environment (operator PKI lab name masked), executor, tested version tag, runbook version.
+2. `tls-handshake.transcript.md`: AS→S-SBC TLS handshake command transcript (target address/port masked), verdict is handshake success.
+3. `plaintext-rejected.transcript.md`: command transcript of plaintext 5060 connection being rejected (failure excerpt).
+4. `pki-chain.txt`: `openssl verify -CAfile <masked path>` verdict excerpt + `openssl x509 -noout -subject -issuer -dates`
+   metadata output (serial/fingerprint masked or truncated, no certificate plaintext pasted).
 
-## 禁止提交
+## Prohibited from submission
 
-**不得提交密钥、证书明文、真实抓包**（`*.key` / `*.pem` 真实内容 / `*.pcap` / `*.pcapng` /
-含口令或真实号码的日志）。违例文件会被 `.gitignore` 拦截或须在评审中直接拒绝入库。
+**Do not submit private keys, certificate plaintext, or real captures** (`*.key` / `*.pem` real content / `*.pcap` / `*.pcapng` /
+logs containing passwords or real numbers). Violating files will be blocked by `.gitignore` or must be directly rejected from the repo during review.

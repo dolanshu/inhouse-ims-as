@@ -12,78 +12,78 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0006：配置治理 —— PostgreSQL 版本库 + 变更单状态机，而非 GitOps
+# ADR-0006: Configuration governance — PostgreSQL version store + change-order state machine, not GitOps
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §0 账本条目 13 —— 配置治理：PostgreSQL 版本库 + 变更单状态机，而非 GitOps
-- **回应 REQ**: REQ-NF-10, REQ-F-12, REQ-F-14, REQ-G-1
+- **Decides**: §0 ledger entry 13 — configuration governance: PostgreSQL version store + change-order state machine, not GitOps
+- **Responds to REQ**: REQ-NF-10, REQ-F-12, REQ-F-14, REQ-G-1
 
 ---
 
-## Context（背景）
+## Context
 
-配置变更这件事上，两条约束从相反方向夹住了设计空间。
+On the subject of configuration changes, two constraints squeeze the design space from opposite directions.
 
-第一条来自交付形态。`AGENT.md` §2 把"配置不走 GitOps"直接列为非目标，理由写得不含糊：**「不能要求运营商运维人员为了改一个号段去学 Git；版本存为 PostgreSQL 中的行，藏在变更单状态机之后（ADR-0006）。变更路径：控制台 / 内部 API 提交变更单 → 审批 → 服务写入 PostgreSQL → 灰度分发。不是运维直接 UPDATE 数据库，也不是用 git 仓库管理配置。」** 这条非目标不是对 Git 这种工具本身的评价，而是对使用者的判断：改号段是运营商运维人员的日常工作，把这件事的前提设成"会用 Git、会提 PR"，等于把产品的可用性押在客户侧人员技能上，这在 on-prem 交付里不可接受。
+The first comes from the delivery form. `AGENT.md` §2 lists "configuration does not go through GitOps" directly as a non-goal, with an unambiguous reason: **"Operator operations staff cannot be required to learn Git just to change a number range; versions are stored as rows in PostgreSQL, hidden behind the change-order state machine (ADR-0006). Change path: console / internal API submits a change order → approval → service writes to PostgreSQL → canary distribution. It is not operations directly UPDATE-ing the database, nor managing configuration with a git repository."** This non-goal is not a judgment on Git as a tool itself, but a judgment about the users: changing number ranges is the daily work of operator operations staff, and making the premise of that task "knows Git, can open a PR" stakes the product's usability on customer-side personnel skills, which is unacceptable in on-prem delivery.
 
-第二条来自变更本身的风险。配置不是静态文本，它是判决行为的输入：一条号段规则写错，后果是全量呼叫被误判或全量拒答。因此配置变更必须可版本化、可追溯、可灰度、可回滚（REQ-NF-10 原文：「配置变更必须经过审批流程。变更必须可版本化、可追溯、可灰度发布、可回滚。不要求运维人员为改配置去学 Git。」）。这不是"最好有"，而是运营商验收时会逐条问的东西：谁在什么时候、依据哪个变更单、把什么改成了什么。
+The second comes from the risk of the change itself. Configuration is not static text; it is the input to decision behavior: one wrong number-range rule causes all calls to be misjudged or all rejected. Configuration changes must therefore be versionable, traceable, canary-deployable, and rollback-able (REQ-NF-10 verbatim: "Configuration changes must go through an approval process. Changes must be versionable, traceable, releasable via canary, and rollback-able. Operations staff are not required to learn Git to change configuration."). This is not "nice to have" — it is what the operator will ask about item by item at acceptance: who, when, under which change order, changed what into what.
 
-这两条合起来排掉了两个极端。一端是 Git 仓库：版本、diff、回滚语义都是现成的，但它与 §2 非目标直接冲突，等于为了拿到版本语义而引入一整套运维人员不该被要求掌握的工具链。另一端是运维直接 UPDATE 数据库：没有版本、没有审批、没有审计，改错了既不知道改了什么也回不去。可用区间在两者之间 —— 版本语义要自建，但变更入口必须是运维人员已经在用的形态（控制台 / 内部 API）。
+Together these two eliminate two extremes. One end is a git repository: versioning, diff, and rollback semantics all come ready-made, but it directly conflicts with the §2 non-goal — gaining version semantics at the price of an entire toolchain that operations staff should not be required to master. The other end is operations directly UPDATE-ing the database: no version, no approval, no audit; when something is changed wrongly, you neither know what was changed nor can you go back. The usable range lies between the two — version semantics must be built in-house, but the change entry point must take the form operations staff already use (console / internal API).
 
-还有一个横向约束：ADR-0020 已裁决 feature 开关**复用**同一条治理流水线，而不是另开通道。这意味着这条流水线从一开始就要同时容纳两类配置 —— 规则（声明式数据，判据本身）与开关（能力启停）—— 并且对二者的版本、审批、灰度、回滚语义完全一致。流水线不是为规则设计的、附带支持开关，而是二者的共同通道。
+There is also a cross-cutting constraint: ADR-0020 has already decided that feature switches **reuse** the same governance pipeline rather than opening a separate channel. This means the pipeline must accommodate two classes of configuration from the start — rules (declarative data, the criteria themselves) and switches (capability on/off) — with completely identical versioning, approval, canary, and rollback semantics for both. The pipeline is not designed for rules with switches tacked on; it is the common channel for both.
 
-归属问题已经由 ADR-0007 裁决：治理态落在 PostgreSQL，运行态落在 Redis。本 ADR 不重复论证存储选型，只定义治理态在 PG 里的形态与变更如何流过它。
+Ownership has already been decided by ADR-0007: governance state lands in PostgreSQL, runtime state in Redis. This ADR does not re-argue the storage selection; it only defines the form of governance state in PG and how changes flow through it.
 
-## Decision（决策）
+## Decision
 
-- **PostgreSQL 版本库：每一份配置是一个不可变版本行。** 新版本**追加写**，旧版本不覆盖、不 UPDATE、不删除。每一行带版本号、配置内容、提交人、提交时间；历史版本永久可读，diff 与回滚都基于版本行计算，不依赖额外的事实源。规则的"当前生效版本"是版本库上的一个标记，而不是某一行被改写的结果。
-- **变更单状态机：`draft → submitted → approved → distributing → applied`，旁路是 `rejected` 与 `rolled_back`。** 变更单是配置的**唯一**写入路径，任何版本行的产生都必须能追溯到一个已经走完状态机的变更单。**审批人与审批时间必须落库**（REQ-F-14）—— 审批不是流程中的一个口头环节，是一条带责任人和时间戳的记录；审批通过才写新版本，未通过的版本不存在。
-- **灰度分发：分批通知 AS 实例加载新版本，每批有健康检查。** 分发不是"写库即生效"，也不是一次广播到全量副本：按批推进，每批加载后检查实例健康，健康才推进下一批。分发异常或健康检查失败时**自动回滚到上一版本**，回滚动作本身同样落审计。全流程（提交、审批、分发、回滚）的审计记录落 PG。
-- **版本上报：AS 实例上报自己已应用的版本。** 内核已有契约模型 —— `platform/src/as_platform/api/contract.py` 中的 `ConfigBundle`（下发给用例进程的配置版本，含 `version` 与 `rules`）与 `AppliedVersionReport`（实例加载后回报，含 `case`、`version`、`applied_at`）。有了上报，"配置面认为生效的版本"与"运行态实际生效的版本"可以对齐，而不是靠写库时间推断。这也是 ISSU 期间判断新旧版本规则兼容性的依据。
-- **控制台不直接写库。** 所有配置变更经变更单，无旁路 —— 控制台是变更单的提交入口，不是版本库的写入口。这一条同时是 REQ-S-4（控制台鉴权与审计）能成立的前提：如果绕过变更单直达数据库，审计链上就会缺一段，鉴权也就无从附着。
-- **feature 开关是一类配置版本，走同一条流水线**（ADR-0020）。开关不新开通道、不新建版本库、不新建审批链：它与规则同为版本化配置，经历同样的变更单 → 审批 → 写 PG → 灰度分发 → 回滚。
+- **PostgreSQL version store: each configuration is an immutable version row.** New versions are **appended**; old versions are never overwritten, UPDATE-ed, or deleted. Each row carries a version number, configuration content, submitter, and submission time; historical versions are permanently readable, and both diff and rollback are computed over version rows, without depending on any additional source of truth. A rule's "currently effective version" is a marker on the version store, not the result of some row being rewritten.
+- **Change-order state machine: `draft → submitted → approved → distributing → applied`, with side paths `rejected` and `rolled_back`.** The change order is the **only** write path for configuration; the creation of any version row must be traceable to a change order that has already completed the state machine. **The approver and approval time must be persisted** (REQ-F-14) — approval is not a verbal step in a process, but a record with an owner and a timestamp; a new version is written only after approval passes, and unapproved versions do not exist.
+- **Canary distribution: notify AS instances to load the new version in batches, with a health check per batch.** Distribution is neither "effective once written" nor a single broadcast to all replicas: advance batch by batch, and after each batch loads, check instance health before advancing to the next batch. On distribution anomalies or health-check failures, **automatically roll back to the previous version**, and the rollback action itself is likewise audited. Audit records for the whole flow (submission, approval, distribution, rollback) land in PG.
+- **Version reporting: AS instances report the version they have applied.** The kernel already has the contract model — `ConfigBundle` in `platform/src/as_platform/api/contract.py` (the configuration version delivered to use-case processes, containing `version` and `rules`) and `AppliedVersionReport` (returned by the instance after loading, containing `case`, `version`, `applied_at`). With reporting, "the version the control plane believes is effective" and "the version actually effective at runtime" can be aligned, rather than inferred from write-to-store time. This is also the basis for judging old/new version rule compatibility during ISSU.
+- **The console does not write to the store directly.** All configuration changes go through change orders, with no bypass — the console is the submission entry point for change orders, not a write entry point for the version store. This is also the precondition for REQ-S-4 (console authentication and audit) to hold: if the change order is bypassed to reach the database directly, a segment is missing from the audit chain, and authentication has nothing to attach to.
+- **Feature switches are a class of configuration version, going through the same pipeline** (ADR-0020). Switches do not open a new channel, do not create a new version store, do not create a new approval chain: like rules, they are versioned configuration undergoing the same change order → approval → write PG → canary distribution → rollback.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **可审计、可追溯。** 版本行自带提交人与时间，变更单自带审批人与审批时间，分发与回滚各自留记录。事发后可以逐字复现"谁在什么时候依据什么把什么改成了什么"，不需要从日志里拼。
-- **可回滚，且回滚是廉价的。** 回滚不是"把数据改回去"，而是把生效标记移回上一个不可变版本行；上一版本始终完整存在，不存在"回滚需要先重建历史"的问题。分发期异常还能自动回滚。
-- **可灰度。** 分批 + 健康检查把一次错误变更的爆炸半径限制在第一批，而不是全量副本。
-- **运维不需要学 Git。** 变更入口是控制台与内部 API，版本、审批、回滚这些语义由系统承担，不转嫁给使用者 —— 这是 §2 非目标的直接兑现。
-- **开关与规则共用一套治理。** 不存在第二套交付形态：没有 GitOps、没有第二套版本库、没有第二套审批链（ADR-0020 的收益直接来自此处）。
+- **Auditable, traceable.** Version rows carry submitter and time; change orders carry approver and approval time; distribution and rollback each leave records. After an incident, "who changed what into what, when, under what" can be reproduced verbatim, without stitching together logs.
+- **Rollback-able, and rollback is cheap.** Rollback is not "changing the data back" but moving the effective marker back to the previous immutable version row; the previous version always exists intact, so there is no "rollback requires rebuilding history first" problem. Anomalies during distribution can also be rolled back automatically.
+- **Canary-deployable.** Batches + health checks limit the blast radius of one bad change to the first batch, not all replicas.
+- **Operations do not need to learn Git.** The change entry point is the console and internal API; versioning, approval, and rollback semantics are borne by the system, not shifted onto the user — this is the direct fulfillment of the §2 non-goal.
+- **Switches and rules share one governance.** There is no second delivery form: no GitOps, no second version store, no second approval chain (ADR-0020's benefit comes directly from here).
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **PostgreSQL 成为治理态的单点。** 它的可用性直接等价于"能不能改配置"。故障降级模式是可描述的（PG 不可用时不能改配置，但存量呼叫继续跑，因为运行态不依赖 PG —— ADR-0007 已确立），但这不是"没有单点"，而是"这个单点的代价被限制在治理面"。**M5 的高可用设计必须覆盖它**，本 ADR 不解决。
-- **状态机与灰度分发是新增的复杂度。** 变更单状态机、分批调度、健康检查、自动回滚、版本上报，这些都是 Git 仓库"免费"提供、而这里要自己实现的东西。接受：这部分复杂度换来的正是"运维不需要学 Git"。
-- **灰度粒度与配置 schema 仍未决。** 按号段、按呼叫、按用户还是按百分比灰度（未决项 D7），以及配置本身的 schema 形态，都还没有定稿。它们必须在控制面详细设计之前定下来 —— 灰度粒度决定了分发单元与回滚单元，也决定了 `AppliedVersionReport` 的聚合口径。
-- **审计数据的保留期未定。** 审计链的价值依赖它能被回看多久，而这个期限尚未裁决（与未决项 O4 呼叫轨迹保留期同属保留策略问题）。保留期不定不影响机制落地，但影响 PG 容量规划。
+- **PostgreSQL becomes a single point of governance state.** Its availability is directly equivalent to "can configuration be changed". The failure degradation mode is describable (when PG is unavailable, configuration cannot be changed, but existing calls keep running because runtime state does not depend on PG — already established by ADR-0007), but this is not "no single point" — it is "this single point's cost is confined to the governance plane". **M5's high-availability design must cover it**; this ADR does not solve it.
+- **The state machine and canary distribution are new complexity.** The change-order state machine, batch scheduling, health checks, automatic rollback, and version reporting are all things a git repository provides "for free" that must be implemented by hand here. Accepted: this complexity is exactly what buys "operations do not need to learn Git".
+- **Canary granularity and configuration schema remain undecided.** Canary by number range, by call, by user, or by percentage (open item D7), as well as the schema form of the configuration itself, are not yet finalized. They must be settled before the control-plane detailed design — canary granularity determines the distribution unit and the rollback unit, and also the aggregation basis of `AppliedVersionReport`.
+- **The retention period of audit data is undecided.** The value of the audit chain depends on how far back it can be reviewed, and that period has not yet been decided (the same retention-policy problem as open item O4 call-trace retention). An undecided retention period does not block the mechanism, but it affects PG capacity planning.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| GitOps（git 仓库管配置） | 与 `AGENT.md` §2 非目标直接冲突：不能要求运营商运维人员为了改一个号段去学 Git；且自建 Git 的成本不在部署而在运维（Gitea 仍要 HA/备份/升级/用户体系，GitLab CE 是为一个配置版本库引入分布式系统） |
-| 运维直接 UPDATE 数据库 | 无版本（改完就不知道改了什么）、无审批（谁批准的不落库）、无审计（不可追溯）、不可回滚（旧值已被覆盖）。REQ-NF-10 四项要求全部不满足 |
-| K8s ConfigMap + 滚动更新 | 没有审批语义也没有版本语义：ConfigMap 只有"当前值"，无法回答"上一版是什么、谁批的"；且回滚粒度是部署（一次发布）而不是配置（一条规则），为改一条号段做一次回滚部署不可接受 |
-| 配置中心类产品（Nacos / Apollo 等） | 新增外部依赖与一整套独立运维面（部署、升级、备份、用户体系），与单租户 on-prem 交付形态冲突；且它自带的服务发现与配置推送语义远超出这里需要的范围 |
+| GitOps (git repository manages configuration) | Directly conflicts with the `AGENT.md` §2 non-goal: operator operations staff cannot be required to learn Git just to change a number range; and the cost of self-hosting Git lies not in deployment but in operations (Gitea still needs HA/backup/upgrade/user system; GitLab CE is introducing a distributed system for one configuration version store) |
+| Operations directly UPDATE the database | No version (once changed, you no longer know what was changed), no approval (approver not persisted), no audit (not traceable), not rollback-able (old value already overwritten). None of REQ-NF-10's four requirements is met |
+| K8s ConfigMap + rolling update | No approval semantics and no version semantics: ConfigMap has only "the current value" and cannot answer "what was the previous version, who approved it"; and the rollback granularity is a deployment (one release) rather than configuration (one rule) — doing a rollback deployment to change one number range is unacceptable |
+| Configuration-center products (Nacos / Apollo, etc.) | New external dependency and an entire independent operational surface (deployment, upgrade, backup, user system), conflicting with the single-tenant on-prem delivery form; and its built-in service discovery and configuration push semantics far exceed what is needed here |
 
-## Evidence（证据）
+## Evidence
 
-- `AGENT.md` §2 非目标原文：「配置不走 GitOps。不能要求运营商运维人员为了改一个号段去学 Git；版本存为 PostgreSQL 中的行，藏在变更单状态机之后（ADR-0006）。变更路径：控制台 / 内部 API 提交变更单 → 审批 → 服务写入 PostgreSQL → 灰度分发。不是运维直接 UPDATE 数据库，也不是用 git 仓库管理配置。」
-- PRD REQ-NF-10（配置不走 GitOps：可版本化、可追溯、可灰度、可回滚）、REQ-F-12（规则 CRUD）、REQ-F-14（审批流程）、REQ-G-1（每个 feature 必须显式裁决 enablement）、REQ-S-4（控制台鉴权与审计）。
-- ADR-0007 已裁决治理态落在 PostgreSQL、运行态落在 Redis；本 ADR 在同一套机制内定义治理态的形态，不重复论证选型。
-- ADR-0020 已裁决 feature 开关复用本条变更流水线，不新开通道。
-- 内核契约已就位：`platform/src/as_platform/api/contract.py` 的 `ConfigBundle`（`version` + `rules`，下发给用例进程的配置版本）与 `AppliedVersionReport`（`case` + `version` + `applied_at`，实例加载后回报）。
-- 实现证据（版本行 schema、状态机迁移实现、分批分发与健康检查、自动回滚）待 M4 落地后补。
+- `AGENT.md` §2 non-goal verbatim: "Configuration does not go through GitOps. Operator operations staff cannot be required to learn Git just to change a number range; versions are stored as rows in PostgreSQL, hidden behind the change-order state machine (ADR-0006). Change path: console / internal API submits a change order → approval → service writes to PostgreSQL → canary distribution. It is not operations directly UPDATE-ing the database, nor managing configuration with a git repository."
+- PRD REQ-NF-10 (configuration does not go through GitOps: versionable, traceable, canary-deployable, rollback-able), REQ-F-12 (rule CRUD), REQ-F-14 (approval process), REQ-G-1 (every feature must have enablement explicitly decided), REQ-S-4 (console authentication and audit).
+- ADR-0007 has already decided governance state lands in PostgreSQL and runtime state in Redis; this ADR defines the form of governance state within the same mechanism, without re-arguing the selection.
+- ADR-0020 has already decided feature switches reuse this change pipeline, without opening a new channel.
+- Kernel contracts are in place: `ConfigBundle` in `platform/src/as_platform/api/contract.py` (`version` + `rules`, the configuration version delivered to use-case processes) and `AppliedVersionReport` (`case` + `version` + `applied_at`, returned by the instance after loading).
+- Implementation evidence (version-row schema, state-machine migration implementation, batch distribution and health check, automatic rollback) to be added after M4 lands.
 
-## Related（相关）
+## Related
 
-- [ADR-0007](0007-data-plane-split.md) 数据面拆分：Redis 存运行态，PostgreSQL 存治理态
-- [ADR-0020](0020-feature-capability-gating.md) Feature 能力门控：复用本条配置治理变更流水线
-- REQ-S-4 控制台鉴权与审计 —— 本 ADR 的"无旁路"是其前提
-- 未决项 D7（灰度粒度：号段 / 呼叫 / 用户 / 百分比，与配置 schema）
-- 未决项 O4（呼叫轨迹保留期）—— 与审计保留期同属保留策略问题
-- [`../新系统整体架构.md`](../新系统整体架构.md) §5 控制面：规则治理与变更流水线
+- [ADR-0007](0007-data-plane-split.md) Data-plane split: Redis holds runtime state, PostgreSQL holds governance state
+- [ADR-0020](0020-feature-capability-gating.md) Feature capability gating: reuses this configuration-governance change pipeline
+- REQ-S-4 Console authentication and audit — this ADR's "no bypass" is its precondition
+- Open item D7 (canary granularity: number range / call / user / percentage, and configuration schema)
+- Open item O4 (call-trace retention period) — the same retention-policy problem as audit retention
+- [`../system-architecture.md`](../system-architecture.md) §5 control plane: rule governance and the change pipeline

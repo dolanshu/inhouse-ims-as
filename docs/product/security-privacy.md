@@ -12,294 +12,293 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# In-house IMS Application Server —— 安全与隐私合规说明（PDPO）
+# In-house IMS Application Server — Security and Privacy Compliance Statement (PDPO)
 
-> **状态块（阅读本文前先看这里）**
+> **Status block (read this first)**
 >
-> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS。git repo 名：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**（`../plan.md` §0「产品决策记录」G8 行）。
->   - **2026-10-10 追加（G8，已同步；上文原文保留不改）**：描述名 `In-house IMS Application Server` 已**正式采用为描述名**（非商标 / 非品牌），「文档暂用名」这一限定**已过时**；repo rename `inhouse-ims-as` 维护者报告**已完成**，故「拟改为」这一未决措辞同样过时。**边界**：chart name / 镜像名 / OTel 服务名仍为 `3rdparty-as`，**本次未改 remote 与本地路径**。落地见 `../plan.md` §0 决策记录 G8 行与 [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7。**「本文不是法律意见」的定位不变。**
-> - **本文件归属**：`../product-packaging-plan.md` §1 第三批交付物 **3.4（安全合规说明 / PDPO）**。按该计划 §3.2 属 **B 类**：**保留期限部分被 O4 / D5 阻塞**。
->   - **2026-10-10 追加（G6，已同步；上文原文保留不改）**：O4 / D5 的**取值已裁** —— 保留期**默认 10 天、部署可配**；存储选型 **in-cluster PostgreSQL**。因此本行「阻塞」的含义已从「等裁决」变为「等实现」：**轨迹存储 / 查询 / 删除能力本次不实现**，本文**不得**表述成「系统已按 10 天清理」。落地见 `../plan.md` §0 决策记录 G6 / B2 + D5 行与 register §7。
-> - **⚠️ 本文不是法律意见。** 本文是工程与交付侧的合规**说明材料**，供客户安全与合规部门评审用；PDPO 的适用性判定、角色界定（data processor / data controller）与最终合规结论**由客户与其法务作出**。
-> - **⚠️ 本文不写任何保留天数或时间期限**（评审 **G-P1-8**、**G-P1-5**）：**呼叫轨迹保留期（O4）与轨迹存储选型（D5）的取值均已裁（G6，2026-10-10）—— 默认 10 天、部署可配；in-cluster PostgreSQL**（`../plan.md` §0 决策记录 G6 行；§5.1 O4、§5.2 D5）；**实现未落**，本文**不得**表述成「系统已按 10 天清理」。ADR-0017 决策 ④ 明确「机制先落地、数值不落地」—— 写一个默认值出来，等于替客户回答了一个合规问题；且轨迹存储 / 查询 / 删除能力当前不存在。因此 §2 的保留期列一律写「**待 O4 裁决后填入**」，存储列写「**待 D5 裁决**」。
->   - **2026-10-10 追加（G6，已同步；上文原文保留不改）**：上句的前提「二者均未裁决」**已被推翻** —— 裁决给出的默认值为 **10 天且部署可配**。但**本文 §2 的保留期列与 §3.1 的「待 O4 裁决后填入」仍保持原样**：因为轨迹存储 / 查询 / 删除**当前无实现**，写下一个天数会让客户误以为系统已具备该清理行为。**待填入的是「实现落地后的口径」，不是「裁决取值」**；待 OP-SEC 与客户确认的具体范围亦**未**因此闭合。
-> - **⚠️ 渗透测试尚未执行**：仓库内**无任何渗透测试产物**（核查方式见 §7）。§7 只写**建议范围、前置条件、期望交付物与出口标准**。
-> - **⚠️ 依赖漏洞扫描：仓库内无现成扫描产物**（核查方式见 §6）。四层测试门禁中**没有** SCA / 镜像扫描 / SBOM 步骤。§6 写现状与计划，不虚构结果。
-> - **本文不含任何容量 / 性能数字**：O1 未裁决（`../plan.md` §5.1），`AGENT.md` §2 在实测裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延数字。
-> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
+> - **Product name**: `In-house IMS Application Server`, **formally adopted as the product / document description name** (G8-2; **not a trademark / not a brand claim**), first occurrence labeled 3GPP Third-Party AS role, hereafter abbreviated in-house AS. git repo name: the maintainer has reported renaming it to `inhouse-ims-as` (G8-3; only the git repo name and remote URL; this repo performed no remote or local-path change); chart name (`3rdparty-as`), image name, and OTel service name **stay unchanged as `3rdparty-as`** (`../plan.md` §0 "product decision record" G8 row).
+>   - **Appended 2026-10-10 (G8, synced; original above preserved unchanged)**: the description name `In-house IMS Application Server` has been **formally adopted as the description name** (not trademark / not brand), and the qualifier "document provisional name" is **outdated**; the repo rename `inhouse-ims-as` is reported **completed** by the maintainer, so the "proposed to change" wording is likewise outdated. **Boundary**: chart name / image name / OTel service name remain `3rdparty-as`, **this round did not change the remote or local path**. Landing see `../plan.md` §0 decision record G8 row and [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7. **The positioning "this document is not legal advice" is unchanged.**
+> - **Ownership of this document**: `../product-packaging-plan.md` §1 third batch deliverable **3.4 (Security Compliance Statement / PDPO)**. Per that plan §3.2 it is **Class B**: the **retention-period part is blocked by O4 / D5**.
+>   - **Appended 2026-10-10 (G6, synced; original above preserved unchanged)**: the **values** of O4 / D5 are **decided** — retention default **10 days, deployment-configurable**; storage selection **in-cluster PostgreSQL**. Therefore the meaning of "blocked" in this row has changed from "awaiting decision" to "awaiting implementation": **trace storage / query / deletion capability is not implemented this round**, and this document **must not** be described as "system already purges at 10 days". Landing see `../plan.md` §0 decision record G6 / B2 + D5 row and register §7.
+> - **⚠️ This document is not legal advice.** This document is engineering- and delivery-side compliance **explanatory material**, for review by the customer's security and compliance departments; the applicability determination of PDPO, the role delineation (data processor / data controller), and the final compliance conclusion **are made by the customer and its legal counsel**.
+> - **⚠️ This document states no retention days or time periods** (review **G-P1-8**, **G-P1-5**): the **call-trace retention period (O4) and the trace-storage selection (D5) values are both decided (G6, 2026-10-10) — default 10 days, deployment-configurable; in-cluster PostgreSQL** (`../plan.md` §0 decision record G6 row; §5.1 O4, §5.2 D5); **implementation not landed**, so this document **must not** be described as "system already purges at 10 days". ADR-0017 decision ④ states explicitly "mechanism lands first, values do not" — writing a default value out equals answering a compliance question on the customer's behalf; and the trace storage / query / deletion capability does not currently exist. Therefore the retention-period column in §2 uniformly writes "**fill in after O4 is decided**", and the storage column writes "**pending D5 decision**".
+>   - **Appended 2026-10-10 (G6, synced; original above preserved unchanged)**: the premise "both undecided" in the sentence above **has been overturned** — the decided default value is **10 days, deployment-configurable**. But **§2's retention column and §3.1's "fill in after O4 is decided" remain as-is**: because trace storage / query / deletion **have no implementation now**, writing down a number of days would mislead the customer into thinking the system already has that purge behavior. **What remains to be filled is "the criterion after implementation lands", not "the decided value"**; the specific scope still to be confirmed by OP-SEC and the customer is likewise **not** closed by this.
+> - **⚠️ No penetration test has been executed**: there are **no penetration-test artifacts in the repo** (verification method see §7). §7 only writes **suggested scope, prerequisites, expected deliverables, and exit criteria**.
+> - **⚠️ Dependency vulnerability scanning: no ready scan artifact in the repo** (verification method see §6). The four-tier test gates contain **no** SCA / image-scan / SBOM step. §6 writes the current state and plan, and fabricates no results.
+> - **This document contains no capacity / performance numbers**: O1 undecided (`../plan.md` §5.1), `AGENT.md` §2 forbids publishing any CPS / CAPS / BHCA / concurrency / throughput / latency numbers before the measured decision exists.
+> - **B6 review status**: this document has left a review record alongside the B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (first review 2026-10-12) and §7 (closure re-review 2026-10-12); **conclusion pending maintainer confirmation**, and until confirmed it is not an external delivery or acceptance basis (`AGENT.md` §3.3).
 
 ---
 
-## 1. 适用范围与法律框架
+## 1. Scope and legal framework
 
-### 1.1 适用范围
+### 1.1 Scope of application
 
-| 项 | 内容 |
+| Item | Content |
 |---|---|
-| 覆盖对象 | In-house AS 采集/生成的**全部数据资产**（§2）、数据留存与删除机制（§3）、数据驻留与跨境（§4）、已实现的安全措施（§5）、漏洞与依赖安全（§6）、渗透测试（§7） |
-| 部署形态 | **单租户、on-premises**：一个 namespace 承载一套完整系统（含各自的 Redis / PostgreSQL / AS Pod 组）。**数据不出客户机房**（REQ-NF-9；ADR-0026 accepted；`../product/ne-datasheet.md` §1） |
-| 不在范围 | 媒体面（不做媒体，ADR-0004）、计费面（不做 CDR / 计费，ADR-0017）、Diameter 面（不做 Sh，`AGENT.md` §2）、**合法监听 LI / IRI**（ADR-0016）、规范符合性矩阵（见 [`compliance-matrix.md`](compliance-matrix.md)）、责任边界（见 [`responsibility-matrix.md`](responsibility-matrix.md)） |
+| Covered objects | All data assets collected/generated by the in-house AS (§2), data-retention and deletion mechanisms (§3), data residency and cross-border (§4), implemented security measures (§5), vulnerability and dependency security (§6), penetration testing (§7) |
+| Deployment form | **Single-tenant, on-premises**: one namespace carries one complete system (incl. its own Redis / PostgreSQL / AS Pod group). **Data does not leave the customer machine room** (REQ-NF-9; ADR-0026 accepted; `../product/ne-datasheet.md` §1) |
+| Out of scope | Media plane (no media, ADR-0004), billing plane (no CDR / billing, ADR-0017), Diameter plane (no Sh, `AGENT.md` §2), **lawful interception LI / IRI** (ADR-0016), compliance matrix (see [`compliance-matrix.md`](compliance-matrix.md)), responsibility boundary (see [`responsibility-matrix.md`](responsibility-matrix.md)) |
 
-### 1.2 法律框架与六原则映射
+### 1.2 Legal framework and six-principle mapping
 
-**框架**：香港《个人资料（私隐）条例》（PDPO）。选择 PDPO 而非等保，理由见维护者 2026-10-09 确认（运营商属上市公司，内控要求）。**本文只做工程侧对照，不作法律解释。**
+**Framework**: Hong Kong Personal Data (Privacy) Ordinance (PDPO). The reason for choosing PDPO over a graded-protection standard is the maintainer's 2026-10-09 confirmation (the operator is a listed company, with internal-control requirements). **This document only does the engineering-side mapping, not legal interpretation.**
 
-| PDPO 原则 | 我方如何满足 | 证据 | 缺口 |
+| PDPO principle | How we satisfy it | Evidence | Gap |
 |---|---|---|---|
-| **收集限制**（Collection limitation） | 只收集业务判决与投诉追溯所必需的号码与Call-ID；不采集 CDR 话单、不采集媒体、不为LI 预留采集点 | ADR-0017 决策 ①（四个动作一个都不做，**不预留采集点**）；ADR-0016（**不为其预留任何采集点** —— 预留采集点等于预留了被要求启用的可能）；ADR-0004（不做媒体） | 采集项的**最小必要清单**需客户合规确认；号码是否属 PDPO 意义上的「个人资料」需客户法务认定（§1.3） |
-| **用途限制**（Purpose limitation） | 号码 / 轨迹**只用于**投诉追溯与反诈举证；**不做计费、不批价、不做网间结算**；呼叫轨迹**明确不是话单** | ADR-0017 决策 ②③（无投递通道、不批价，声明的目的是防止它被下游当成计费数据源） | 客户若提出新的用途（如向第三方披露），需新 ADR + 文档链，不得在实现里加一条导出（ADR-0017 consequences） |
-| **保安**（Data security） | 对端白名单 + 端到端 mTLS + 控制台角色/密码/可撤销会话 + append-only 审计 + 非 root 容器 + NetworkPolicy + 凭据走 Secret / 客户 PKI + fail-closed 渲染 | §5 全表（每项均有 `file:line`） | 证书热轮换 **E4 未验收**、运营商 PKI **无实验室证据**；控制台仅**工程切片**，**REQ-S-4 未验收**；无渗透测试（§7）；无漏洞扫描产物（§6） |
-| **保留**（Retention） | 清理机制已formalize 为功能（可配），**数值不落地** | ADR-0017 决策 ④；REQ-NF-7（清理任务已 formalize 为功能，但默认值未定） | **O4（保留期）未裁决** → **本文不写任何天数**；**D5（存储选型）未裁决** 。<br>**2026-10-10 追加（G6，已同步；同行原文保留不改）**：O4 取值已裁为**默认 10 天、部署可配**，D5 选型已裁为 **in-cluster PostgreSQL**；但轨迹存储 / 查询 / 删除**本次不实现**，故「本文不写任何天数」**继续有效** —— 它现在的依据是「无实现可写」，不再是「无裁决可写」。**不得**据本行推断系统已按 10 天清理。 |
-| **透明度**（Transparency） | 本文与 [`one-pager.md`](one-pager.md) / [`ne-datasheet.md`](ne-datasheet.md) / [`compliance-matrix.md`](compliance-matrix.md) 构成对客户的数据说明包；产品描述名已正式采用（G8-2，非商标 / 非品牌宣称）+ 状态标注 + 未验收项如实披露 | 本文 §2 资产清单；同批三份文档的状态块 | 面向最终用户的**隐私告知文本**（用户侧告知 / 号码使用告知）**不在本交付物范围**，需客户按其用户告知义务另行提供 |
-| **查閱与更正**（Data access & correction） | 数据更正 = 改配置（号段 / 规则 / 号码段），走变更单 → 审批 → 写 PG → 灰度分发；控制台支持角色鉴权 + 全量审计 | ADR-0006 变更流水线；`services/console/src/as_console/access.py:26-74` | **呼叫轨迹是逐消息记录，本产品不提供事后改写能力**（轨迹不可变）；见 §3.3 |
+| **Data collection limitation** | Collect only the numbers and Call-IDs necessary for business decision and complaint tracing; do not collect CDR, do not collect media, do not reserve collection points for LI | ADR-0017 decision ① (none of the four actions are done, **no collection point reserved**); ADR-0016 (**no collection point reserved for it** — reserving a collection point equals reserving the possibility of being required to enable it); ADR-0004 (no media) | The **minimum-necessary list** of collected items needs customer compliance confirmation; whether a number is "personal data" in the PDPO sense needs the customer's legal determination (§1.3) |
+| **Purpose limitation** | Numbers / traces are used **only** for complaint tracing and anti-fraud evidence; **no billing, no rating, no inter-network settlement**; call traces are **explicitly not a CDR** | ADR-0017 decisions ②③ (no delivery channel, no rating; the stated purpose is to prevent it being treated downstream as a billing data source) | If the customer proposes a new purpose (e.g., disclosure to a third party), a new ADR + document chain is required; no export may be added in the implementation (ADR-0017 consequences) |
+| **Data security** | Peer allowlist + end-to-end mTLS + console roles/passwords/revocable sessions + append-only audit + non-root container + NetworkPolicy + credentials via Secret / customer PKI + fail-closed render | §5 full table (each item has `file:line`) | Cert hot-rotation **E4 not accepted**, operator PKI **has no lab evidence**; console is **engineering-slice only**, **REQ-S-4 not accepted**; no penetration test (§7); no vulnerability-scan artifact (§6) |
+| **Retention** | The purge mechanism is formalized as a feature (configurable), **values do not land** | ADR-0017 decision ④; REQ-NF-7 (purge task formalized as a feature, but default value undecided) | **O4 (retention period) undecided** → **this document writes no number of days**; **D5 (storage selection) undecided**.<br>**Appended 2026-10-10 (G6, synced; same-row original preserved unchanged)**: O4 value decided as **default 10 days, deployment-configurable**, D5 selection decided as **in-cluster PostgreSQL**; but trace storage / query / deletion **not implemented this round**, so "this document writes no number of days" **still holds** — its basis now is "no implementation to write", not "no decision to write". **Must not** infer from this row that the system already purges at 10 days. |
+| **Transparency** | This document together with [`one-pager.md`](one-pager.md) / [`ne-datasheet.md`](ne-datasheet.md) / [`compliance-matrix.md`](compliance-matrix.md) forms the data-explanation package for the customer; the product description name is formally adopted (G8-2, not trademark / not brand claim) + status labeling + honest disclosure of unaccepted items | §2 asset list of this document; the status blocks of the three same-batch documents | The **end-user-facing privacy notice text** (user-side notice / number-usage notice) is **outside this deliverable's scope**; the customer must provide it separately per its user-notice obligation |
+| **Data access & correction** | Data correction = change config (number ranges / rules / number segments), via change order → approval → write PG → canary distribution; console supports role authorization + full audit | ADR-0006 change pipeline; `services/console/src/as_console/access.py:26-74` | **Call traces are recorded per message, and this product provides no post-hoc rewriting capability** (traces are immutable); see §3.3 |
 
-### 1.3 角色界定（**待客户与法务确认，本文不得自行断言**）
+### 1.3 Role delineation (**pending customer and legal confirmation; this document must not assert it unilaterally**)
 
-| 项 | 状态 |
+| Item | Status |
 |---|---|
-| 我方在本产品中的角色（data processor / data controller 之一或兼具） | **待客户与其法务确认**。本文**不自行断言**任何一种界定 |
-| 判定影响 | 直接影响 §3 的请求受理路径、§4 的跨境安排与合同条款；**必须由客户法务先行界定**，本文所有描述均以此为前提 |
-| 我方可提供的事实 | 数据的**采集点、处理方式、存储位置、访问控制、审计**是可核查的工程事实（§2、§5）；**数据的使用目的与对外提供行为由客户决定**（§1.2 用途限制行） |
+| Our role in this product (data processor / data controller, one or both) | **Pending confirmation by the customer and its legal counsel.** This document **does not assert** any delineation |
+| Impact of determination | Directly affects the request-handling path in §3, the cross-border arrangement in §4, and contract terms; **must be delineated first by the customer's legal counsel**, and all descriptions in this document are premised on this |
+| Facts we can provide | The **collection points, processing methods, storage locations, access control, and audit** of the data are verifiable engineering facts (§2, §5); **the purpose of use and the external-provision behavior of the data are decided by the customer** (§1.2 purpose-limitation row) |
 
 ---
 
-## 2. 数据资产清单
+## 2. Data asset inventory
 
-| 数据项 | 内容 | 来源 | 用途 | 是否可能属个人资料 | 存储位置 | 保留期 |
+| Data item | Content | Source | Purpose | Possibly personal data? | Storage location | Retention period |
 |---|---|---|---|---|---|---|
-| **MSISDN / 被叫号码** | 号码字符串、号段前缀 | 入腿 INVITE 的被叫用户部分 / 出腿改写目标 | 号段规则匹配、号码翻译 | **可能属** —— 号码可识别个人；最终认定待客户法务 | ① 进程内（判决）；② 配置库 `as_config` 的规则版本行（号段 / 前缀）；③ 呼叫轨迹 | 待 O4 裁决后填入（规则侧随配置版本库生命周期，轨迹侧随轨迹 TTL） <br>**2026-10-10 追加（G6）**：O4 取值 = 默认 10 天、部署可配；**轨迹侧当前无实现**，故本列仍留空。 |
-| **主叫号码** | 号码字符串（若在消息中被解析使用） | 入腿 INVITE 的主叫部分 | 反诈策略判定、号码翻译 | **可能属**；同上手工认定 | 同上（进程内判决 + 轨迹；**是否持久化到治理库需随轨迹存储选型 D5 确定**） | 待 O4 裁决后填入 <br>**2026-10-10 追加（G6）**：同上，O4 取值已定但无实现可写。 |
-| **Call-ID** | SIP Call-ID 字符串（入腿 / 出腿各一，B2BUA 两侧不同） | SIP 消息头 | **呼叫轨迹的检索键**（REQ-F-13）；两腿关联；与 trace 关联 | **可能属** —— 可与其他字段组合定位到个人 | 轨迹存储（**待 D5 裁决：PostgreSQL 或独立短保留存储**）；日志中作为 JSON 字段 | 待 O4 裁决后填入 <br>**2026-10-10 追加（G6）**：D5 选型已裁 = **in-cluster PostgreSQL**（不再是二选一），但轨迹存储 / 查询 **本次不实现**，故存储位置仍待落地。 |
-| **呼叫轨迹**（按 Call-ID） | 逐条 SIP 消息记录：入/ 出方向、时间戳、方法、响应码 | AS 自身数据面 | **投诉追溯与反诈举证**。**明确不是话单**：无投递通道、不批价、不做网间结算 | **可能属**；同上 | **待 D5 裁决** | 待 O4 裁决后填入 <br>**2026-10-10 追加（G6）**：两处取值均已裁（10 天可配 / in-cluster PostgreSQL），**实现未落**；本行登记的是数据资产类别与选型结论，**不是「系统已在采集」**。 |
-| **规则与号段配置** | 号段前缀、翻译映射、反诈限额、feature 开关 | 运维人员经变更单提交 | 业务判决输入 | 通常**不属**个人资料（配置而非用户数据）；若号段本身可反推用户群体需复核 | PostgreSQL `as_config` schema 的**不可变版本行**（ADR-0006） | 随配置版本库保留策略（**待客户与 OP-SEC 确认**）；与个人资料保留期分开评估 |
-| **控制台审计日志** | 操作者、时间戳、操作类型、变更前后值；**append-only** | 每个控制台操作 | 追责、合规举证、变更追溯 | 通常**不属**（操作者标识可能属个人资料） | PostgreSQL `console_audit` schema（`services/config-service/src/as_config_service/audit_store.py:493-494`；`deploy/helm/values.yaml:123`） | 待客户与 OP-SEC 确认（REQ-S-4 写明「审计日志保留期 = 合规要求，M4 冻结」→ **未冻结**） |
-| **凭据与证书** | TLS 私钥 / 证书链 / CA、对端证书指纹白名单、PG 密码、控制台密码校验值（`pbkdf2-sha256`）、审计 HMAC key | 客户 PKI / 客户 Secret / `as-config-migrate` bootstrap | 接入准入、连接加密、治理库访问、控制台鉴权、审计完整性 | 通常**不属**个人资料；**属敏感凭据，绝不入日志** | k8s Secret（客户 PKI / 客户 vault）→ 挂载为文件（`defaultMode: 0440`）；**TLS 材料绝不存进 chart 的凭据 Secret**（`deploy/helm/templates/secret.yaml:51-55`） | 随证书有效期 + 轮换周期（**待客户 PKI 政策**） |
+| **MSISDN / called number** | Number string, number-range prefix | Called-party part of inbound INVITE / outbound rewrite target | Number-range rule matching, number translation | **Possibly** — a number can identify an individual; final determination pending customer legal | ① in process (decision); ② config DB `as_config` rule-version row (number range / prefix); ③ call trace | Fill in after O4 decided (rule side follows config-version-DB lifecycle; trace side follows trace TTL)<br>**Appended 2026-10-10 (G6)**: O4 value = default 10 days, deployment-configurable; **trace side has no implementation yet**, so this column stays empty. |
+| **Calling number** | Number string (if parsed and used in the message) | Calling-party part of inbound INVITE | Anti-fraud policy judgment, number translation | **Possibly**; same manual determination | Same as above (in-process decision + trace; **whether persisted to the governance DB depends on the trace-storage selection D5**) | Fill in after O4 decided<br>**Appended 2026-10-10 (G6)**: same as above, O4 value decided but nothing to write yet |
+| **Call-ID** | SIP Call-ID string (one each inbound / outbound, different on the two B2BUA sides) | SIP message header | **Search key for call traces** (REQ-F-13); correlates the two legs; correlated with trace | **Possibly** — can be combined with other fields to locate an individual | Trace store (**pending D5 decision: PostgreSQL or independent short-retention store**); as a JSON field in logs | Fill in after O4 decided<br>**Appended 2026-10-10 (G6)**: D5 selection decided = **in-cluster PostgreSQL** (no longer a binary choice), but trace storage / query **not implemented this round**, so the storage location still awaits landing |
+| **Call trace** (by Call-ID) | Per-message SIP message record: direction in/out, timestamp, method, response code | The AS's own data plane | **Complaint tracing and anti-fraud evidence.** Explicitly not a CDR: no delivery channel, no rating, no inter-network settlement | **Possibly**; same as above | **Pending D5 decision** | Fill in after O4 decided<br>**Appended 2026-10-10 (G6)**: both values decided (10 days configurable / in-cluster PostgreSQL), **implementation not landed**; this row registers the data-asset category and selection conclusion, **not "the system is already collecting"** |
+| **Rules and number-range config** | Number-range prefix, translation map, anti-fraud limits, feature switches | Submitted by ops via change order | Business-decision input | Usually **not** personal data (config, not user data); if the number range itself can reverse-infer a user group it needs review | PostgreSQL `as_config` schema's **immutable version rows** (ADR-0006) | Follows the config-version-DB retention policy (**pending customer and OP-SEC confirmation**); evaluated separately from the personal-data retention period |
+| **Console audit log** | Operator, timestamp, operation type, before/after values; **append-only** | Every console operation | Accountability, compliance evidence, change tracing | Usually **not** (operator identifier may be personal data) | PostgreSQL `console_audit` schema (`services/config-service/src/as_config_service/audit_store.py:493-494`; `deploy/helm/values.yaml:123`) | Pending customer and OP-SEC confirmation (REQ-S-4 states "audit-log retention = compliance requirement, frozen at M4" → **not frozen**) |
+| **Credentials and certificates** | TLS private key / cert chain / CA, peer-cert-fingerprint allowlist, PG password, console password verifier (`pbkdf2-sha256`), audit HMAC key | Customer PKI / customer Secret / `as-config-migrate` bootstrap | Access admission, connection encryption, governance-DB access, console authorization, audit integrity | Usually **not** personal data; **sensitive credentials, never into logs** | k8s Secret (customer PKI / customer vault) → mounted as file (`defaultMode: 0440`); **TLS material never goes into the chart's credential Secret** (`deploy/helm/templates/secret.yaml:51-55`) | Follows cert validity + rotation cycle (**pending customer PKI policy**) |
 
-**三条必须一起读的注记**
+**Three notes to be read together**
 
-1. **不存在的资产（因其不做）**：**CDR / 话单**（ADR-0017 决策 ①）、**媒体 / 语音内容**（ADR-0004：不做 RTP / 转码 / DTMF / MRF / 媒体锚定）、**Diameter Sh 订阅数据**（`AGENT.md` §2）、**IRI / LI**（ADR-0016）。**表中不列这些行，因为它们根本不被采集** —— 补上它们等于暗示存在。
-2. **载荷日志默认关闭**：`AS_PAYLOAD_LOGS_ENABLED` / `telemetry.payloadLogsEnabled` 默认为 `false`（`deploy/helm/values.yaml:319`；`deploy/helm/templates/configmap.yaml:65`）。开启是**显式、可审计**的操作（ADR-0016）。因此**消息载荷默认不落盘**。
-3. **呼叫轨迹的存储与查询当前尚无实现**：检索键是 Call-ID（REQ-F-13；ADR-0017 决策 ②）是**设计约定**；仓库内 `platform/` 与 `services/` 中**没有**轨迹存储或轨迹查询 API 的代码命中，`../plan.md` §5.4 明确记录「无 trace store/API；REQ-F-13 / M4b-7.4 补测未做，M4b-8 标 BLOCKED」。因此本节登记的是**数据资产类别与存储选型待决**，不是"系统已在采集"的事实。
-
----
-
-## 3. 留存范围与删除机制
-
-### 3.1 机制已具备 vs 待落地 / 待裁决
-
-| 环节 | 状态 | 内容与依据 |
-|---|---|---|
-| **轨迹清理机制** | **机制已formalize 为功能，默认值未定** | REQ-NF-7（"清理任务已 formalize 为功能，但默认值未定"）；ADR-0017 决策 ④ |
-| **轨迹保留期数值** | 🔴 **待 O4 裁决** | `../plan.md` §5.1 O4（呼叫轨迹保留期 / 客户合规要求）。**本文不写天数**（G-P1-8） <br>**2026-10-10 追加（G6，已同步；同行原文保留不改）**：O4 **取值已裁**（默认 10 天、部署可配），故本行的 🔴 含义已变为「**等实现落地**」而非「等裁决」—— 轨迹存储 / 查询 / 删除**本次不实现**，本文因此**仍不写天数**，且**不得**表述成「系统已按 10 天清理」。落地见 `../plan.md` §0 决策记录 G6 行。 |
-| **轨迹存储选型** | 🔴 **待 D5 裁决** | `../plan.md` §5.2 D5（PostgreSQL 还是独立的短保留存储 / 与 O4 相关）。ADR-0017 consequences 明确「在保留期定下来之前，存储选型缺乏关键输入，本 ADR 不裁决选型」 <br>**2026-10-10 追加（G6，已同步；同行原文保留不改）**：D5 **选型已裁 = in-cluster PostgreSQL**，二选一不再成立；但**实现未落**，本行 🔴 同样转为「等实现」。ADR-0017 的上述保留意见针对的是**裁决当时**，不因本次裁决而被追溯修改。 |
-| **审计与治理数据的删除** | 🟡 **待落地 / 待确认** | 审计表 append-only（`audit_store.py:102-104`：`BEFORE UPDATE OR DELETE` 行触发器 + `BEFORE TRUNCATE` 表触发器），因此**删除不能靠 UPDATE/DELETE**。任何清理必须走**运维层的显式受控操作 + 变更单 + 审计留痕**，且受审计合规约束；审计保留期待 OP-SEC 确认（REQ-S-4 写明「M4 冻结」→ **未冻结**） |
-| **配置版本库的数据删除** | 🟡 **待确认** | 变更单状态机拒绝非法跳转（ADR-0006），不可变版本行；删除策略需与审计保留要求一起评估 |
-| **凭据的更换与销毁** | 🟡 **机制已具备，周期待定** | 证书轮换是配置热更新（ADR-0016；`transport.py:110-132`、ingress 重叠窗口 `ingress.py:70-100`）；旧证书的销毁责任在双方各自 PKI 流程 |
-
-### 3.2 「机制先落地、数值不落地」的理由（ADR-0017 决策 ④ 原文精神）
-
-保留期直接决定存储容量与清理任务的行为。**写一个默认值出来，等于替客户回答了一个合规问题** —— 若这个默认值短于客户要求，会造成举证数据缺失；若长于客户要求，则构成超出必要性的留存。因此本文与产品文档在该项上**一律留空**（这是刻意留空，不是遗漏）。
-
-> **2026-10-10 追加（G6，已同步；上文原文保留不改）**：维护者 2026-10-10 已裁 O4 = **默认 10 天、部署可配**，即上文所设的前提「一个默认值等于替客户回答了一个合规问题」**在产品默认值这一层已被推翻** —— 产品需要一个可部署的默认口径。
-> **但本文仍不写天数，理由随之改变**，且改变后的理由更严格：轨迹存储 / 查询 / 删除**本次不实现**（register §7 载明「不等于已实现轨迹存储/查询/删除」）。在**没有实现**的前提下写下 10 天，只会让客户与评审误读为「系统已按 10 天清理」—— 那不是替客户回答合规问题，而是**陈述一个不存在的行为**。
-> 因此留空仍是刻意留空。待①轨迹存储落地、②OP-SEC 与客户确认各自适用范围后，本节才填入。**本节不构成法律意见，也不构成客户验收。**
-
-### 3.3 查閱与更正请求的处理流程
-
-| 步骤 | 谁做 | 做什么 |
-|---|---|---|
-| 1 | **客户侧受理** | 由客户（作为与数据主体关系的当事人）受理查閱 / 更正请求。**我方不直接面向数据主体受理** |
-| 2 | **客户书面指令** | 以书面形式给出查询键（Call-ID / 号段 / 时间范围）与更正内容。我方不自行推断请求范围 |
-| 3 | **我方执行查询** | 按Call-ID 在轨迹通道检索并导出（**注意：轨迹存储与查询 API 当前尚无实现**，见 §2 注记 3；实际可导出范围以交付时的实现为准，不得预先承诺） |
-| 4 | **我方执行更正** | 号码 / 号段类更正 = **改配置**，走变更单 → 审批 → 写 PostgreSQL → 灰度分发（ADR-0006）。**不是**运维直接 UPDATE 数据库，也不是用 git 管配置（`AGENT.md` §2） |
-| 5 | **不可更正项** | **呼叫轨迹是逐消息记录，不可事后改写**（append-only 语义）。因此更正只能作用于配置与未来呼叫，不能重写历史轨迹。若客户要求重写历史，须回到ADR-0017 重新裁决 |
-| 6 | **留痕** | 每个控制台操作都鉴权并审计（ADR-0016；REQ-S-4）。审计本身 append-only（`audit_store.py:102-104`） |
-| 7 | **范围争议** | 若请求涉及计费数据 —— 本产品**不采集**（ADR-0017），无法提供；该诉求应指向运营商计费域 |
-
-**本文不承诺任何响应时限**（期限需与客户 SLA 一并约定，本文不单方面写入天数）。
+1. **Assets that do not exist (because we do not do them)**: **CDR / call detail** (ADR-0017 decision ①), **media / voice content** (ADR-0004: no RTP / transcoding / DTMF / MRF / media anchoring), **Diameter Sh subscription data** (`AGENT.md` §2), **IRI / LI** (ADR-0016). **These rows are not listed in the table because they are simply not collected** — adding them would imply existence.
+2. **Payload logging off by default**: `AS_PAYLOAD_LOGS_ENABLED` / `telemetry.payloadLogsEnabled` defaults to `false` (`deploy/helm/values.yaml:319`; `deploy/helm/templates/configmap.yaml:65`). Enabling is an **explicit, auditable** operation (ADR-0016). Therefore **message payloads are not persisted by default**.
+3. **Call-trace storage and query have no implementation yet**: the search key is Call-ID (REQ-F-13; ADR-0017 decision ②) is a **design convention**; there is **no code hit** for a trace-store or trace-query API in the repo's `platform/` and `services/`, and `../plan.md` §5.4 explicitly records "no trace store/API; REQ-F-13 / M4b-7.4 supplementary tests not done, M4b-8 marked BLOCKED". Therefore this section registers the **data-asset category and pending storage selection**, not the fact "the system is already collecting".
 
 ---
 
-## 4. 数据留港原则与跨境
+## 3. Retention scope and deletion mechanism
 
-### 4.1 原则与逐项事实
+### 3.1 Mechanism ready vs. pending landing / pending decision
 
-| 项 | 结论 | 依据 / 缺口 |
+| Stage | Status | Content and basis |
 |---|---|---|
-| **数据不出客户机房** | ✅ 设计如此 | 单租户 on-premises，一个 namespace 一套系统（REQ-NF-9；ADR-0026 accepted）。数据面只有 Redis（运行态）与 PostgreSQL（治理态）（ADR-0007） |
-| **跨境传输** | ✅ **无跨境传输** —— 仓库内**没有**任何把数据发往外部的通道 | 唯一出向候选是遥测 OTLP exporter，而**它当前是 `NoOp`**：`platform/src/as_platform/telemetry/__init__.py:77` `NoOpExporter`、`:129` 队列 exporter 默认 `NoOpExporter`；`:89-95` `default_sink()` 返回 `NoOpSink`。因此**遥测不外发**。**待确认**：若未来接入真实 OTLP 后端，该后端**必须位于香港境内**，否则须先做合规评估 |
-| **日志与镜像不得上传第三方 SaaS** | ✅ 纪律项 | `AGENT.md` §11 / §13：「绝不提交密钥、证书或真实流量抓包」；`SECURITY.md`「绝不提交的东西」。交付链路的镜像走客户内网 registry（`../product/ne-datasheet.md` §8：仓库内**没有**公开 registry） |
-| **备份介质与WAL 归档位置** | 🔴 **待客户确认** | 架构要求 PostgreSQL 流复制 + 备份 + PITR（ADR-0007 / ADR-0008 语境；`../architecture/新系统整体架构.md` §7），但chart **无备份 Job**（`../product/ne-datasheet.md` §8）；**备份落地位置、是否跨站点、是否出港需客户确认** |
-| **跨站点容灾** | 🟡 架构已定，参数未决 | ADR-0008 accepted：站点内 N+1 零单点 + 跨站点 **1+1 温备（非双活）**，切换靠 S-SBC 侧 trunk 优先级。**容灾等级 O5 未决**（N+1 节点 / N+M 机架或 AZ）。**跨站点本身即跨境评估对象**（若备站在港内则无跨境） <br>**2026-10-10 追加（G7，已同步；同行原文保留不改）**：**O5 已裁** —— 基线为**站点内 N+1 + 跨站 1+1 warm standby**，与本行上方 ADR-0008 的既有描述**一致**，本行结论无需改写。**边界不得夸大**：裁决明确**不承诺机架 / AZ 级容错**，故「N+M 机架 / AZ」不再是待选项；**RPO / RTO 数值仍未裁决**，本文不代填。🟡 的剩余含义是「备站物理位置与参数未确认」，仍待客户确认（见本节「备份介质与 WAL 归档位置」行）。 |
-| **未来引入外部后端** | 🔴 须先做合规评估 | 任何 OTLP 后端、日志聚合平台、告警平台若位于港外，须先完成跨境传输合规评估并更新本文，再上线 |
+| **Trace-purge mechanism** | **Mechanism formalized as a feature, default value undecided** | REQ-NF-7 ("purge task formalized as a feature, but default value undecided"); ADR-0017 decision ④ |
+| **Trace-retention value** | 🔴 **Pending O4 decision** | `../plan.md` §5.1 O4 (call-trace retention period / customer compliance requirement). **This document writes no number of days** (G-P1-8)<br>**Appended 2026-10-10 (G6, synced; same-row original preserved unchanged)**: O4 **value decided** (default 10 days, deployment-configurable), so the 🔴 in this row has changed to "**awaiting implementation landing**" rather than "awaiting decision" — trace storage / query / deletion **not implemented this round**, so this document **still writes no number of days**, and **must not** be described as "system already purges at 10 days". Landing see `../plan.md` §0 decision record G6 row. |
+| **Trace-storage selection** | 🔴 **Pending D5 decision** | `../plan.md` §5.2 D5 (PostgreSQL or independent short-retention store / related to O4). ADR-0017 consequences state explicitly "before the retention period is settled, the storage selection lacks a key input, so this ADR does not decide the selection"<br>**Appended 2026-10-10 (G6, synced; same-row original preserved unchanged)**: D5 **selection decided = in-cluster PostgreSQL**, the binary choice no longer holds; but **implementation not landed**, so this row's 🔴 also turns to "awaiting implementation". The above reservation in ADR-0017 targeted **the moment of decision** and is not retroactively modified by this round's decision. |
+| **Audit and governance-data deletion** | 🟡 **Pending landing / pending confirmation** | Audit table is append-only (`audit_store.py:102-104`: `BEFORE UPDATE OR DELETE` row trigger + `BEFORE TRUNCATE` table trigger), so **deletion cannot rely on UPDATE/DELETE**. Any purge must go through **an explicit controlled ops-layer operation + change order + audit trail**, and is bound by audit-compliance constraints; audit-retention period pending OP-SEC confirmation (REQ-S-4 states "frozen at M4" → **not frozen**) |
+| **Config-version-DB data deletion** | 🟡 **Pending confirmation** | The change-order state machine rejects illegal transitions (ADR-0006), immutable version rows; deletion policy needs evaluation together with the audit-retention requirement |
+| **Credential rotation and destruction** | 🟡 **Mechanism ready, cycle pending** | Cert rotation is a config hot-reload (ADR-0016; `transport.py:110-132`, ingress overlap window `ingress.py:70-100`); destruction of old certs is the responsibility of each side's own PKI process |
 
-### 4.2 留港论证链（供评审直接引用）
+### 3.2 Rationale for "mechanism lands first, values do not" (ADR-0017 decision ④ original spirit)
+
+The retention period directly determines storage capacity and purge-task behavior. **Writing a default value out equals answering a compliance question on the customer's behalf** — if this default is shorter than the customer requires, it causes loss of evidence data; if longer, it constitutes retention beyond necessity. Therefore this document and the product docs uniformly leave this item **blank** (this is a deliberate blank, not an omission).
+
+> **Appended 2026-10-10 (G6, synced; original above preserved unchanged)**: the maintainer decided O4 = **default 10 days, deployment-configurable** on 2026-10-10, i.e., the premise set above — "a default value equals answering a compliance question on the customer's behalf" — **has been overturned at the product-default level**. A product needs a deployable default criterion.
+> **But this document still writes no number of days, and the reason changes accordingly, becoming stricter**: trace storage / query / deletion **are not implemented this round** (register §7 records "not equivalent to having implemented trace storage/query/deletion"). Writing 10 days **without an implementation** would only mislead the customer and reviewers into reading it as "the system already purges at 10 days" — that is not answering a compliance question on the customer's behalf, but **stating a behavior that does not exist**.
+> Therefore the blank remains a deliberate blank. It is filled only after ① trace storage lands and ② OP-SEC and the customer confirm their respective scopes. **This section constitutes neither legal advice nor customer acceptance.**
+
+### 3.3 Access & correction request handling flow
+
+| Step | Who | What |
+|---|---|---|
+| 1 | **Customer-side intake** | The customer (as the party to the relationship with the data subject) handles the access / correction request. **We do not intake directly from the data subject** |
+| 2 | **Customer written instruction** | Provide the search key (Call-ID / number range / time range) and the correction content in writing. We do not infer the request scope ourselves |
+| 3 | **We execute the query** | Search and export via the trace channel by Call-ID (**note: the trace store and query API have no implementation yet**, see §2 note 3; the actually exportable scope is subject to the implementation at delivery, must not be pre-promised) |
+| 4 | **We execute the correction** | Number / number-range corrections = **change config**, via change order → approval → write PostgreSQL → canary distribution (ADR-0006). **Not** ops directly running UPDATE on the DB, nor managing config with git (`AGENT.md` §2) |
+| 5 | **Uncorrectable items** | **Call traces are recorded per message and cannot be rewritten after the fact** (append-only semantics). Therefore correction can only act on config and future calls, not rewrite historical traces. If the customer requires rewriting history, ADR-0017 must be re-adjudicated |
+| 6 | **Trail** | Every console operation is authorized and audited (ADR-0016; REQ-S-4). The audit itself is append-only (`audit_store.py:102-104`) |
+| 7 | **Scope dispute** | If the request involves billing data — this product **does not collect it** (ADR-0017), cannot provide it; the claim should be directed to the operator's billing domain |
+
+**This document promises no response-time limit** (the period must be agreed with the customer SLA; this document does not unilaterally write a number of days).
+
+---
+
+## 4. Data-stays-in-HK principle and cross-border
+
+### 4.1 Principle and item-by-item facts
+
+| Item | Conclusion | Basis / gap |
+|---|---|---|
+| **Data does not leave the customer machine room** | ✅ By design | Single-tenant on-premises, one namespace one system (REQ-NF-9; ADR-0026 accepted). The data plane has only Redis (runtime) and PostgreSQL (governance) (ADR-0007) |
+| **Cross-border transfer** | ✅ **No cross-border transfer** — there is **no** channel in the repo that sends data externally | The only outbound candidate is the telemetry OTLP exporter, and **it is currently `NoOp`**: `platform/src/as_platform/telemetry/__init__.py:77` `NoOpExporter`, `:129` queue exporter defaults to `NoOpExporter`; `:89-95` `default_sink()` returns `NoOpSink`. Therefore **telemetry is not sent out**.**Pending confirmation**: if a real OTLP backend is connected in future, that backend **must be located within Hong Kong**; otherwise a cross-border transfer compliance assessment must be done first |
+| **Logs and images must not be uploaded to third-party SaaS** | ✅ Discipline item | `AGENT.md` §11 / §13: "never commit keys, certificates, or real-traffic captures"; `SECURITY.md` "what must never be committed". The delivery-chain image goes through the customer internal registry (`../product/ne-datasheet.md` §8: there is **no** public registry in the repo) |
+| **Backup media and WAL archive location** | 🔴 **Pending customer confirmation** | The architecture requires PostgreSQL streaming replication + backup + PITR (ADR-0007 / ADR-0008 context; `../architecture/system-architecture.md` §7), but the chart **has no backup Job** (`../product/ne-datasheet.md` §8); **whether the backup landing location, cross-site, or out-of-HK needs customer confirmation** |
+| **Cross-site DR** | 🟡 Architecture decided, parameters open | ADR-0008 accepted: in-site N+1 zero-single-point + cross-site **1+1 warm standby (not active-active)**, switchover via S-SBC-side trunk priority.**DR tier O5 undecided** (N+1 nodes / N+M racks or AZ).**Cross-site itself is a cross-border assessment object** (if the standby is within HK there is no cross-border)<br>**Appended 2026-10-10 (G7, synced; same-row original preserved unchanged)**: **O5 decided** — baseline is **in-site N+1 + cross-site 1+1 warm standby**, consistent with the existing ADR-0008 description above this row, no rewrite of this row's conclusion needed.**Boundary must not be overstated**: the decision explicitly **does not promise rack / AZ-level fault tolerance**, so "N+M rack / AZ" is no longer an option; **RPO / RTO values still undecided**, this document does not fill them in. The remaining 🟡 meaning is "standby physical location and parameters unconfirmed", still pending customer confirmation (see this section's "backup media and WAL archive location" row). |
+| **Introducing an external backend in future** | 🔴 Must do a compliance assessment first | Any OTLP backend, log-aggregation platform, or alerting platform located outside HK must complete a cross-border transfer compliance assessment and update this document before going live |
+
+### 4.2 Stays-in-HK argument chain (for direct citation in review)
 
 ```mermaid
 flowchart LR
-    IMS["运营商 IMS 核心网<br/>客户侧"] -->|"ISC 触发"| SBC["S-SBC<br/>客户侧"]
-    SBC ==>|"SIP trunk · TLS<br/>mTLS + 白名单"| AS["In-house AS<br/>客户机房 · 单租户 on-prem"]
-    AS --> REDIS[("Redis · 运行态<br/>客户侧")]
-    AS --> PG[("PostgreSQL · 治理态<br/>客户侧")]
-    AS -.->|"遥测 OTLP · 当前 exporter = NoOp<br/>（不外发）"| OTLP["OTLP 后端<br/>如启用必须位于港内"]
-    PG -.->|"备份 / WAL 归档<br/>位置待客户确认"| BK["备份介质<br/>待客户确认"]
+    IMS["Operator IMS core network<br/>customer side"] -->|"ISC trigger"| SBC["S-SBC<br/>customer side"]
+    SBC ==>|"SIP trunk · TLS<br/>mTLS + allowlist"| AS["In-house AS<br/>customer machine room · single-tenant on-prem"]
+    AS --> REDIS[("Redis · runtime<br/>customer side")]
+    AS --> PG[("PostgreSQL · governance<br/>customer side")]
+    AS -.->|"telemetry OTLP · current exporter = NoOp<br/>(not sent out)"| OTLP["OTLP backend<br/>if enabled must be within HK"]
+    PG -.->|"backup / WAL archive<br/>location pending customer confirmation"| BK["backup media<br/>pending customer confirmation"]
 
     style AS fill:#e8f0fe,stroke:#1a73e8
     style OTLP stroke-dasharray: 5 5
     style BK stroke-dasharray: 5 5
 ```
 
-**论证链的三个支点**：① 单租户 on-prem 天然物理隔离（`AGENT.md` §2 选择依据表）；② 产品唯一出向通道当前不落地（`NoOpExporter`）；③ 交付形态不产生对外依赖（Helm + 客户内网 registry，ADR-0013）。
+**Three pillars of the argument chain**: ① single-tenant on-premises gives natural physical isolation (`AGENT.md` §2 selection-basis table); ② the product's only outbound channel does not land currently (`NoOpExporter`); ③ the delivery form creates no external dependency (Helm + customer internal registry, ADR-0013).
 
 ---
 
-## 5. 已实现的安全措施
+## 5. Implemented security measures
 
-> 每行都给出 `file:line`。**未验收项如实标注，不写成已验收。**
+> Every row gives `file:line`. **Unaccepted items are labeled honestly, not written as accepted.**
 
-| 措施 | 实现位置 | 说明 |
+| Measure | Implementation location | Description |
 |---|---|---|
-| **对端白名单**（IP / CIDR / `host:port` / 证书指纹） | `platform/src/as_platform/sip/transport.py:249-298`（`authorize_peer`）、`:48-63`（`PeerPolicy`） | **证书命中或地址命中任一即放行**；mTLS 下证书是真正识别对端的那一维（源地址可伪造，证书不可）。支持 IPv6 bracket 端点语法；畸形 CIDR / 端点 token 不授权任何人 |
-| **空策略拒绝（fail-closed）** | `platform/src/as_platform/sip/transport.py:272-273` | 空策略（两个集合都空）**授权 nobody**。理由：能伪装成 S-SBC 的人就能灌入呼叫，白名单没填过就不能变成放行的洞（ADR-0016；`AGENT.md` §13） |
-| **端到端 mTLS，默认要求客户端证书** | `platform/src/as_platform/sip/transport.py:86`（`require_client_certificate: bool = True`）、`:88-93`（`ca_path` 为空即`raise ValueError`）；环境变量解析 `platform/src/as_platform/runtime/transport_env.py:66-71` | 只有 server-only TLS 是**显式配置**而非默认。优先级：`AS_TLS_REQUIRE_CLIENT_CERT` → `SIP_TLS_REQUIRE_CLIENT_CERT` → 默认 `True` |
-| **明文在解析前拒绝** | `platform/src/as_platform/sip/ingress.py:178-194`（`reject_plaintext_when_tls_required`）、`:24`（只接受 `tls` / `sips`） | 拒绝**先于** `decide()` 与消息解析。⚠️ 明文拒绝与白名单未命中**共用 `403`**，排障时需区分（见 [`responsibility-matrix.md`](responsibility-matrix.md) §4） |
-| **证书热更新（不重启、不丢在途呼叫）** | 机制：`transport.py:110-132`（`reload` 返回新快照而非就地改）、`ingress.py:52-68`（`install`）、`ingress.py:70-100`（`install_with_overlap` 双证书重叠窗口）、`:140-164`（重叠期内 legacy 连接沿用退役策略） | 🔴 **E4 无实验室证据 → 状态为 open**，不得表述为已通过验收。热轮换的完整验收依赖运营商 PKI（REQ-S-2 / REQ-S-3） |
-| **控制台角色 + 密码 + 可撤销会话** | 角色矩阵 `services/console/src/as_console/access.py:26-39`（`viewer` / `approver` / `admin`）、`:60-74`（`ROLE_PERMISSIONS`）、`:152-166`（`authorize` 按"是否被授予"判定 → 新增权限默认对所有人拒绝）、`:169-185`（提交者不得审批自己的变更）；密码 `services/config-service/src/as_config_service/auth.py:191-201`（`pbkdf2-sha256$v1$600000$32`，每账号独立随机盐）、`:227-232`（校验）、`:166-171`（最小长度约束）、`:118-134`（`IssuedSession` / `RevokedSession`，raw token 只在签发时返回调用方，撤销后对象不含 token 材料） | 🔴 **仅为工程切片**，REQ-S-4 **未验收**。ADR-0024 已 accepted（2026-10-03 维护者签核），但 ADR 自述证据边界：仅本地 PostgreSQL 12.22 验证、3 个 publication DDL 测试因 `wal_level=replica` 跳过、**PG16 与远端门禁未测**、**无生产 trusted-proxy 证据、无应用层限流证据、无 REQ-S-4 验收** |
-| **全量控制台操作审计，append-only** | `services/config-service/src/as_config_service/audit_store.py:1`（append-only）、`:102-104`（行级 `BEFORE UPDATE OR DELETE` + 表级 `BEFORE TRUNCATE` 触发器抛异常）、`:1064-1110`（`REVOKE ALL ... FROM PUBLIC` + 最小 `GRANT`）；schema `console_audit`（`:493-494`；`deploy/helm/values.yaml:123`） | 允许与拒绝**都留痕**（`access.py:78` `AuditOutcome.ALLOWED/DENIED`）。审计 HMAC key 走 Secret（`deploy/helm/templates/config-service-deployment.yaml:53-57`） |
-| **治理库三角色最小权限** | `deploy/compose/postgres/init/01-dev-roles.sh:9-14`：`as_config_runtime` **NOLOGIN**、`as_config_owner` LOGIN、`as_config_web` LOGIN，`GRANT as_config_runtime TO as_config_web`；chart 侧同构 `deploy/helm/templates/state-postgres.yaml:18-22` | 生产角色须由 DBA 预置，chart **不创建也不填充** 生产凭据（`deploy/helm/templates/secret.yaml:16-18` fail；`:44-48` 空占位并带 `as.3rdparty/credentials: "placeholder-replace-before-install"` 注解）。**注**：`01-dev-roles.sh` 文件头自述为 **dev-only**，生产不得直接使用 |
-| **凭据走 k8s Secret / 客户 PKI** | `deploy/helm/templates/secret.yaml:19-50`（凭据 Secret，**仅占位空串**）、`:51-55`（**TLS 材料绝不存此处**，来自客户 PKI，按 `tls.secretName` 引用）；挂载 `deploy/helm/templates/deployment.yaml:176-181`（`defaultMode: 0440`，非 world-readable）；`deploy/helm/templates/config-service-deployment.yaml:5`（configService 启用必须给 `secretName`） | ConfigMap 中**不含任何密码**（`deploy/helm/templates/configmap.yaml:50-55`：DSN 在 Deployment 侧由 host/port/name + Secret 拼装） |
-| **fail-closed 渲染守卫** | `deploy/helm/templates/deployment.yaml:11-13`（`tls.enabled=true` 且 `tls.secretName` 空 → 渲染失败）、`:14-16`（`sip.peerAllowlist` 空且未设 `allowEmptyAllowlistForTest` → 渲染失败）；`deploy/helm/templates/validate-install.yaml:6,9,12`（三条安装期守卫）；`deploy/helm/templates/secret.yaml:16-18` | 空值回落的是**可用性开关，不是安全开关** —— 安全侧一律拒绝渲染。Ingress 侧 `config-service-ingress.yaml:7-8`（只支持 ingress-nginx，否则渲染失败）、`:11`（`tlsSecretName` 必填）、`:37-38`（强制 ssl-redirect + force-ssl-redirect） |
-| **NetworkPolicy：仅放行本系统 Pod → PG / Redis** | `deploy/helm/templates/state-networkpolicy.yaml:1-29`：`podSelector` 选中 `state-postgres` / `state-redis`，`ingress.from` 仅 `app.kubernetes.io/part-of: 3rdparty-as`，端口仅 `5432` 与 `stateStores.redis.port` | 仅在 `stateStores.enabled` 且 `stateStores.networkPolicy.enabled` 时渲染（`:1`）。⚠️ 依赖客户集群的 CNI 实际执行 NetworkPolicy |
-| **非 root 运行 + 丢弃全部 capabilities** | `deploy/helm/templates/deployment.yaml:190-194`（`runAsNonRoot: true`、`runAsUser: 10001`、`runAsGroup: 10001`、`fsGroup: 10001`）、`:169-172`（`allowPrivilegeEscalation: false`、`capabilities.drop: ["ALL"]`） | uid 10001 是进程实际用户；TLS Secret 以 `fsGroup` 可读 + `0440` 方式挂载 |
-| **不挂载 ServiceAccount token** | `deploy/helm/templates/serviceaccount.yaml:16`（`automountServiceAccountToken: false`），注释见 `:1-8` | 理由写明：AS 进程无状态、只与 Redis / PG / OTLP collector 通信，**不需要访问 K8s API**（ADR-0002；REQ-NF-9） |
-| **载荷日志默认关闭** | `deploy/helm/values.yaml:319`（`payloadLogsEnabled: false`）→ `deploy/helm/templates/configmap.yaml:65`（`AS_PAYLOAD_LOGS_ENABLED`） | 显式可开关；开启是可审计的操作（ADR-0016；`AGENT.md` §13）。**因此消息载荷默认不落盘** |
-| **OTLP exporter 当前为 NoOp** | `platform/src/as_platform/telemetry/__init__.py:77`（`NoOpExporter`）、`:89-95`（`default_sink()` → `NoOpSink`）、`:116,129`（队列 exporter 默认 `NoOpExporter`）；`platform/src/as_platform/__main__.py:193`（读`OTEL_EXPORTER_OTLP_ENDPOINT`）；chart 默认 `telemetry.otlpEndpoint: null`（`configmap.yaml:63`） | ✅ **当前遥测不会外发**（数据留港的最强支点）。🔴 缺口：**真实 OTLP 后端接线未完成**。ADR-0005 要求导出不得阻塞呼叫路径（有界队列、独立线程） |
+| **Peer allowlist** (IP / CIDR / `host:port` / cert fingerprint) | `platform/src/as_platform/sip/transport.py:249-298` (`authorize_peer`), `:48-63` (`PeerPolicy`) | **Cert hit or address hit either one passes**; under mTLS the cert is the dimension that truly identifies the peer (source address is forgeable, cert is not). Supports IPv6 bracket endpoint syntax; malformed CIDR / endpoint token authorizes nobody |
+| **Empty-policy deny (fail-closed)** | `platform/src/as_platform/sip/transport.py:272-273` | Empty policy (both sets empty) **authorizes nobody**. Reason: whoever can impersonate the S-SBC can inject calls, so an unfilled allowlist must not become a pass-through hole (ADR-0016; `AGENT.md` §13) |
+| **End-to-end mTLS, client cert required by default** | `platform/src/as_platform/sip/transport.py:86` (`require_client_certificate: bool = True`), `:88-93` (`ca_path` empty → `raise ValueError`); env parsing `platform/src/as_platform/runtime/transport_env.py:66-71` | Only server-only TLS is an **explicit config**, not the default. Priority: `AS_TLS_REQUIRE_CLIENT_CERT` → `SIP_TLS_REQUIRE_CLIENT_CERT` → default `True` |
+| **Reject plaintext before parse** | `platform/src/as_platform/sip/ingress.py:178-194` (`reject_plaintext_when_tls_required`), `:24` (accepts only `tls` / `sips`) | Rejection happens **before** `decide()` and message parsing. ⚠️ Plaintext rejection and allowlist miss **share `403`**, distinguish when troubleshooting (see [`responsibility-matrix.md`](responsibility-matrix.md) §4) |
+| **Cert hot-reload (no restart, no in-flight call loss)** | Mechanism: `transport.py:110-132` (`reload` returns a new snapshot rather than mutating in place), `ingress.py:52-68` (`install`), `ingress.py:70-100` (`install_with_overlap` dual-cert overlap window), `:140-164` (legacy connections use the retired policy within the overlap period) | 🔴 **E4 has no lab evidence → status is open**, must not be described as acceptance-passed. Full acceptance of hot rotation depends on the operator PKI (REQ-S-2 / REQ-S-3) |
+| **Console roles + password + revocable sessions** | Role matrix `services/console/src/as_console/access.py:26-39` (`viewer` / `approver` / `admin`), `:60-74` (`ROLE_PERMISSIONS`), `:152-166` (`authorize` judges by "whether granted" → a newly added permission defaults to deny for everyone), `:169-185` (submitter cannot approve own change); password `services/config-service/src/as_config_service/auth.py:191-201` (`pbkdf2-sha256$v1$600000$32`, independent random salt per account), `:227-232` (verify), `:166-171` (minimum-length constraint), `:118-134` (`IssuedSession` / `RevokedSession`, raw token returned only to the caller at issuance, revoked object contains no token material) | 🔴 **Engineering slice only**, REQ-S-4 **not accepted**. ADR-0024 already accepted (maintainer sign-off 2026-10-03), but ADR self-describes its evidence boundary: only local PostgreSQL 12.22 verified, 3 publication-DDL tests skipped due to `wal_level=replica`, **PG16 and remote gate untested**, **no production trusted-proxy evidence, no application-layer rate-limit evidence, no REQ-S-4 acceptance** |
+| **Full console-operation audit, append-only** | `services/config-service/src/as_config_service/audit_store.py:1` (append-only), `:102-104` (row-level `BEFORE UPDATE OR DELETE` + table-level `BEFORE TRUNCATE` trigger throws), `:1064-1110` (`REVOKE ALL ... FROM PUBLIC` + minimal `GRANT`); schema `console_audit` (`:493-494`; `deploy/helm/values.yaml:123`) | Both allow and deny **leave a trail** (`access.py:78` `AuditOutcome.ALLOWED/DENIED`). Audit HMAC key via Secret (`deploy/helm/templates/config-service-deployment.yaml:53-57`) |
+| **Governance-DB three-role least privilege** | `deploy/compose/postgres/init/01-dev-roles.sh:9-14`: `as_config_runtime` **NOLOGIN**, `as_config_owner` LOGIN, `as_config_web` LOGIN, `GRANT as_config_runtime TO as_config_web`; chart-side same-structure `deploy/helm/templates/state-postgres.yaml:18-22` | Production roles must be pre-provisioned by the DBA; the chart **does not create or populate** production credentials (`deploy/helm/templates/secret.yaml:16-18` fail; `:44-48` empty placeholder with `as.3rdparty/credentials: "placeholder-replace-before-install"` annotation).**Note**: the `01-dev-roles.sh` file header self-describes as **dev-only**, must not be used directly in production |
+| **Credentials via k8s Secret / customer PKI** | `deploy/helm/templates/secret.yaml:19-50` (credential Secret, **placeholder empty strings only**), `:51-55` (**TLS material never stored here**, comes from customer PKI, referenced by `tls.secretName`); mount `deploy/helm/templates/deployment.yaml:176-181` (`defaultMode: 0440`, not world-readable); `deploy/helm/templates/config-service-deployment.yaml:5` (configService enable requires a `secretName`) | ConfigMap contains **no password** (`deploy/helm/templates/configmap.yaml:50-55`: DSN assembled on the Deployment side from host/port/name + Secret) |
+| **fail-closed render guard** | `deploy/helm/templates/deployment.yaml:11-13` (`tls.enabled=true` with empty `tls.secretName` → render fails), `:14-16` (`sip.peerAllowlist` empty and `allowEmptyAllowlistForTest` unset → render fails); `deploy/helm/templates/validate-install.yaml:6,9,12` (three install-time guards); `deploy/helm/templates/secret.yaml:16-18` | What falls back on empty is an **availability switch, not a security switch** — the security side uniformly refuses to render. Ingress side `config-service-ingress.yaml:7-8` (supports only ingress-nginx, else render fails), `:11` (`tlsSecretName` required), `:37-38` (force ssl-redirect + force-ssl-redirect) |
+| **NetworkPolicy: only this system's Pods → PG / Redis** | `deploy/helm/templates/state-networkpolicy.yaml:1-29`: `podSelector` selects `state-postgres` / `state-redis`, `ingress.from` only `app.kubernetes.io/part-of: 3rdparty-as`, ports only `5432` and `stateStores.redis.port` | Rendered only when `stateStores.enabled` and `stateStores.networkPolicy.enabled` (`:1`). ⚠️ Depends on the customer cluster's CNI actually enforcing NetworkPolicy |
+| **Non-root run + drop all capabilities** | `deploy/helm/templates/deployment.yaml:190-194` (`runAsNonRoot: true`, `runAsUser: 10001`, `runAsGroup: 10001`, `fsGroup: 10001`), `:169-172` (`allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`) | uid 10001 is the process's real user; the TLS Secret is mounted readable via `fsGroup` + `0440` |
+| **No ServiceAccount token mounted** | `deploy/helm/templates/serviceaccount.yaml:16` (`automountServiceAccountToken: false`), comment see `:1-8` | Reason stated: the AS process is stateless, only talks to Redis / PG / OTLP collector, **does not need to access the K8s API** (ADR-0002; REQ-NF-9) |
+| **Payload logging off by default** | `deploy/helm/values.yaml:319` (`payloadLogsEnabled: false`) → `deploy/helm/templates/configmap.yaml:65` (`AS_PAYLOAD_LOGS_ENABLED`) | Explicitly toggleable; enabling is an auditable operation (ADR-0016; `AGENT.md` §13).**Therefore message payloads are not persisted by default** |
+| **OTLP exporter currently NoOp** | `platform/src/as_platform/telemetry/__init__.py:77` (`NoOpExporter`), `:89-95` (`default_sink()` → `NoOpSink`), `:116,129` (queue exporter defaults to `NoOpExporter`); `platform/src/as_platform/__main__.py:193` (reads `OTEL_EXPORTER_OTLP_ENDPOINT`); chart default `telemetry.otlpEndpoint: null` (`configmap.yaml:63`) | ✅ **Current telemetry is not sent out** (the strongest pillar of data-stays-in-HK). 🔴 Gap: **real OTLP backend wiring incomplete**. ADR-0005 requires export not to block the call path (bounded queue, dedicated thread) |
 
-**已知未落实项（不得当作已具备）**
+**Known-not-landed items (must not be treated as present)**
 
-| 项 | 状态 | 依据 |
+| Item | Status | Basis |
 |---|---|---|
-| 证书热轮换的实验室证据（E4） | **open** | `../plan.md` §5.1 O2/O3；`compliance-matrix.md` §3.6.7 |
-| REQ-S-4 正式验收 | **未验收**（工程切片） | ADR-0024 Evidence limits |
-| 生产 ingress / trusted-proxy | **未验收**（7.2d blocked） | `../product/ne-datasheet.md` §8 |
-| Prometheus 抓取接线 | **缺失** —— chart 无 `prometheus.io/scrape` 注解、无 ServiceMonitor / PodMonitor | `../product/ne-datasheet.md` §5、§10。后果：`as_*` 序列在标准部署中不会被采集，依赖它的 `as.*` 告警事实上不可触发 |
-| 渗透测试 | **未执行** | §7 |
-| 依赖漏洞扫描 | **无产物** | §6 |
-| 应用层限流 / hardened reverse proxy | **无证据** | ADR-0024 Evidence limits |
+| Lab evidence for cert hot-rotation (E4) | **open** | `../plan.md` §5.1 O2/O3; `compliance-matrix.md` §3.6.7 |
+| REQ-S-4 formal acceptance | **Not accepted** (engineering slice) | ADR-0024 Evidence limits |
+| Production ingress / trusted-proxy | **Not accepted** (7.2d blocked) | `../product/ne-datasheet.md` §8 |
+| Prometheus scrape wiring | **Missing** — chart has no `prometheus.io/scrape` annotation, no ServiceMonitor / PodMonitor | `../product/ne-datasheet.md` §5, §10. Consequence: `as_*` series not collected in a standard deployment, the `as.*` alerts depending on them effectively cannot fire |
+| Penetration test | **Not executed** | §7 |
+| Dependency vulnerability scan | **No artifact** | §6 |
+| Application-layer rate-limit / hardened reverse proxy | **No evidence** | ADR-0024 Evidence limits |
 
 ---
 
-## 6. 漏洞管理与依赖安全
+## 6. Vulnerability management and dependency security
 
-### 6.1 现状（如实，含核查方式）
+### 6.1 Current state (honest, with verification method)
 
-**核查方式**（可复现）：
-① 读 `Makefile` 的 `gate` / `gate-strict` / `chart-check` / `alert-check` 四个目标 → 对应四层测试门禁；② 全仓库 grep `trivy|grype|syft|snyk|bandit|pip-audit|dependabot|osv|sbom|cyclonedx|vulnerability|CVE-`（排除 `.git` / `.venv` / `node_modules`）；③ 查 `docs/acceptance/artifacts/` 全部文件；④ 查 `docs/reviews/` 是否有扫描/渗透测试记录；⑤ 查 `CHANGELOG.md` 是否有 CVE 条目。
+**Verification method** (reproducible): ① read the `gate` / `gate-strict` / `chart-check` / `alert-check` targets in `Makefile` → corresponding to the four-tier test gates; ② full-repo grep `trivy|grype|syft|snyk|bandit|pip-audit|dependabot|osv|sbom|cyclonedx|vulnerability|CVE-` (excluding `.git` / `.venv` / `node_modules`); ③ check all files under `docs/acceptance/artifacts/`; ④ check `docs/reviews/` for any scan / penetration-test records; ⑤ check `CHANGELOG.md` for CVE entries.
 
-| 项 | 现状 | 结论 |
+| Item | Current state | Conclusion |
 |---|---|---|
-| **依赖锁定** | ✅ 有：`uv.lock` + `uv sync --frozen`（锁不一致即失败）；`AGENT.md` §8「每个依赖都走 `uv`，提交 `uv.lock` 并在门禁中校验」 | 锁存在，但**锁不等于没有漏洞** |
-| **本地门禁** | ✅ 有：`make gate` = lint → type → layer①（`Makefile:131`）；`make gate-strict` 追加 ADR 标注扫描（`Makefile:136`）；另有 `make chart-check`、`make alert-check` | 都是**正确性**门禁，**不是安全扫描** |
-| **门禁中的安全扫描** | ❌ **无**。四层测试门禁中没有任何 SCA、容器镜像扫描、SBOM 生成或依赖审计步骤 | **无自动化依赖漏洞检测** |
-| **扫描产物** | ❌ **无现成扫描产物**。`docs/acceptance/artifacts/` 下只有 `m5/`（alert-check / gate / chart-check 采样）与 `m8/`（`req-s-2-pki`、`req-nf-1-live`、`req-s-3-rotation` 三份 README，无扫描报告）；`CHANGELOG.md` 无 CVE 条目；`docs/reviews/` 无渗透测试记录 | 仅讨论层面提及过「依赖漏洞扫描 / 渗透测试」，无对应产物记录 |
-| **运行时基线** | ⚠️ `deploy/docker/Dockerfile:23` 运行时镜像 `python:3.10-slim`（builder `:3` 为 `ghcr.io/astral-sh/uv:python3.10-bookworm-slim`）；门禁层① 锁定 Python 3.10 | **D1 未决**：Python 3.10 在 2026 年 10 月到达生命周期终点（`../plan.md` §5.2 D1）。处置二选一：① 尽早验证迁移到受支持版本；② 在 ADR 里把 EOL 运行时**登记为已接受风险**。该日期之后的任何交付需先完成其中一项 |
-| **第三方 native 依赖** | reSIProcate（C++，Vovida 许可，ADR-0019 accepted）；`testbed/simulators/resip-probe/vendor/` 下有上游源码/预编译 tarball | 这类依赖**不在 `uv.lock` 覆盖范围内**，Python SCA 扫不到 —— 是当前扫描方案的**盲区** |
-| **禁止提交项** | `AGENT.md` §11 / §13、`SECURITY.md` | **绝不提交密钥、证书、token、真实地址、真实流量抓包**；仓库只放占位符 |
+| **Dependency lock** | ✅ Yes: `uv.lock` + `uv sync --frozen` (lock inconsistency fails); `AGENT.md` §8 "every dependency goes through `uv`, commit `uv.lock` and validate in the gate" | Lock exists, but **a lock does not mean no vulnerability** |
+| **Local gates** | ✅ Yes: `make gate` = lint → type → tier① (`Makefile:131`); `make gate-strict` adds ADR-annotation scanning (`Makefile:136`); additionally `make chart-check`, `make alert-check` | All are **correctness** gates, **not security scans** |
+| **Security scan in gates** | ❌ **None.** The four-tier test gates contain no SCA, container-image scan, SBOM generation, or dependency-audit step | **No automated dependency-vulnerability detection** |
+| **Scan artifacts** | ❌ **No ready scan artifact.** `docs/acceptance/artifacts/` has only `m5/` (alert-check / gate / chart-check samples) and `m8/` (three READMEs `req-s-2-pki`, `req-nf-1-live`, `req-s-3-rotation`, no scan report); `CHANGELOG.md` has no CVE entries; `docs/reviews/` has no penetration-test records | Only mentioned at the discussion level "dependency vulnerability scan / penetration test", no corresponding artifact record |
+| **Runtime baseline** | ⚠️ `deploy/docker/Dockerfile:23` runtime image `python:3.10-slim` (builder `:3` is `ghcr.io/astral-sh/uv:python3.10-bookworm-slim`); gate tier① pins Python 3.10 | **D1 open**: Python 3.10 reaches end of life in October 2026 (`../plan.md` §5.2 D1). Two options: ① verify migration to a supported version as early as possible; ② register the EOL runtime as an accepted risk in an ADR. Any delivery after that date must complete one of the two first |
+| **Third-party native dependencies** | reSIProcate (C++, Vovida license, ADR-0019 accepted); `testbed/simulators/resip-probe/vendor/` has upstream source / prebuilt tarball | Such dependencies are **outside `uv.lock`'s coverage**, Python SCA cannot scan them — a **blind spot** in the current scanning approach |
+| **Prohibited commits** | `AGENT.md` §11 / §13, `SECURITY.md` | **Never commit keys, certificates, tokens, real addresses, real-traffic captures**; the repo holds only placeholders |
 
-### 6.2 计划（尚未执行，不得当作已有能力）
+### 6.2 Plan (not yet executed, must not be treated as existing capability)
 
-| # | 计划项 | 内容 | 出口 |
+| # | Planned item | Content | Exit |
 |---|---|---|---|
-| 1 | **Python 依赖 SCA** | 在门禁① 之后加一个依赖审计步骤，对 `uv.lock` 覆盖范围做漏洞检测，输出报告作为 artifact | 报告落 `docs/acceptance/artifacts/`；新增高危项须有处置记录 |
-| 2 | **容器镜像漏洞扫描** | 扫描 `deploy/docker/Dockerfile` 产出的运行时镜像（当前 `python:3.10-slim` 基线） | 同上；**与 D1 的处置绑定** |
-| 3 | **SBOM** | 为交付镜像生成 SBOM（组件清单 + 版本），随交付物提供给客户 | 交付清单中出现 SBOM 项 |
-| 4 | **频率与出口** | 随门禁每次运行（快速、无高危即不阻塞）；高危出口条件为「**发现新增高危且无处置记录 → 阻塞**」 | 写入 `deploy/alerts/README.md` 同级文档；**出口标准需与 OP-SEC 共同定** |
-| 5 | **native / 非 Python 依赖** | reSIProcate 的上游版本与已知问题纳入人工跟踪（`uv.lock` 覆盖不到） | 登记进 `../plan.md` 未决或风险登记 |
-| 6 | **安全报告入口** | 已存在 `SECURITY.md`：私下报告疑似漏洞，不公开 issue | 已具备 |
+| 1 | **Python dependency SCA** | Add a dependency-audit step after gate tier①, do vulnerability detection over the `uv.lock` coverage, output a report as an artifact | Report lands in `docs/acceptance/artifacts/`; new high-severity items must have a disposition record |
+| 2 | **Container-image vulnerability scan** | Scan the runtime image produced by `deploy/docker/Dockerfile` (current `python:3.10-slim` baseline) | Same as above; **bound to the D1 disposition** |
+| 3 | **SBOM** | Generate an SBOM (component list + versions) for the delivered image, provided to the customer with the deliverable | SBOM item appears in the delivery checklist |
+| 4 | **Frequency and exit** | Run with every gate (fast, non-blocking unless high-severity); high-severity exit condition is "**new high-severity found with no disposition record → block**" | Written into a doc at the same level as `deploy/alerts/README.md`; **exit criteria need to be set jointly with OP-SEC** |
+| 5 | **Native / non-Python dependencies** | Track reSIProcate's upstream version and known issues manually (`uv.lock` cannot cover them) | Register into `../plan.md` open-items or risk register |
+| 6 | **Security-report entry** | `SECURITY.md` already exists: report suspected vulnerabilities privately, no public issue | Already present |
 
 ---
 
-## 7. 渗透测试（**未执行**）
+## 7. Penetration testing (**not executed**)
 
-> **当前状态：未执行。仓库内无任何渗透测试产物**（核查方式同 §6.1：`docs/reviews/` 无记录、`docs/acceptance/artifacts/` 无报告、`CHANGELOG.md` 无条目）。本节是**计划**，不是结果。
+> **Current state: not executed. No penetration-test artifact in the repo** (verification method same as §6.1: no records in `docs/reviews/`, no report in `docs/acceptance/artifacts/`, no entry in `CHANGELOG.md`). This section is a **plan**, not a result.
 
-### 7.1 建议范围
+### 7.1 Suggested scope
 
-| # | 范围项 | 具体内容 | 攻击面来源 |
+| # | Scope item | Specific content | Attack-surface source |
 |---|---|---|---|
-| 1 | **trunk 接入面** | 能否绕过对端白名单灌入呼叫；IP / CIDR / `host:port` / 证书指纹四种白名单形式的绕过；畸形 token（畸形 CIDR、无括号 IPv6 端点）是否被误当授权 | ADR-0016；`transport.py:146-298` |
-| 2 | **TLS 与证书轮换** | 明文能否在要求 TLS 时通过；`ca_path` 为空时的 fail-closed；双证书重叠窗口内旧策略是否按期失效；证书热更新是否真的不重启进程、不丢在途呼叫 | `ingress.py:24,178-194`；`transport.py:86-93`；`ingress.py:70-100` |
-| 3 | **控制台鉴权与越权** | 角色越权（`viewer` 是否能提交 / 审批）、提交者自审批绕过（`may_approve`）、会话撤销后仍可用、空角色 / 未知角色是否被 fail-closed 拒绝、新增权限是否默认对所有人拒绝 | `access.py:26-74,152-185`；`auth.py:118-134,191-232` |
-| 4 | **内部 API 鉴权** | 未鉴权能否访问 `/internal/v1`；`config-service` 的 DSN / HMAC key 是否泄漏到响应或日志；trusted-proxy 与 `AS_CONFIG_PROXY_HEADERS` / `AS_CONFIG_TRUSTED_PROXIES` 的误配后果 | `config-service-deployment.yaml:48-71`；ADR-0024 Evidence limits（**无生产 trusted-proxy 证据**） |
-| 5 | **配置变更审批链** | 能否绕过审批直接改生效配置；非法状态跳转是否被拒；回滚能否绕过审批；灰度分发期间的不一致窗口 | ADR-0006；`access.py:169-185` |
-| 6 | **日志与数据泄露** | 开启载荷日志后是否泄漏凭据 / 证书私钥；PG 密码、审计 HMAC key 是否进日志；`console_audit` 内容是否可被越权读取；错误堆栈是否泄漏内部路径 | `configmap.yaml:65`；`secret.yaml:19-50` |
-| 7 | **容器与 K8s 逃逸面** | 非 root（uid 10001）+ drop ALL 是否被绕过；未挂载 SA token 是否属实；NetworkPolicy 是否真的只放行本系统 Pod | `deployment.yaml:169-194`；`serviceaccount.yaml:16`；`state-networkpolicy.yaml:1-29` |
+| 1 | **Trunk access surface** | Whether the peer allowlist can be bypassed to inject calls; bypass of the four allowlist forms IP / CIDR / `host:port` / cert fingerprint; whether malformed tokens (malformed CIDR, IPv6 endpoint without brackets) are mistakenly authorized | ADR-0016; `transport.py:146-298` |
+| 2 | **TLS and cert rotation** | Whether plaintext can pass when TLS is required; fail-closed when `ca_path` is empty; whether the old policy expires on schedule within the dual-cert overlap window; whether cert hot-reload truly restarts no process and loses no in-flight call | `ingress.py:24,178-194`; `transport.py:86-93`; `ingress.py:70-100` |
+| 3 | **Console authorization and privilege escalation** | Role escalation (can `viewer` submit / approve), submitter self-approval bypass (`may_approve`), session usable after revocation, whether empty / unknown role is fail-closed-denied, whether a newly added permission defaults to deny for everyone | `access.py:26-74,152-185`; `auth.py:118-134,191-232` |
+| 4 | **Internal API authorization** | Whether `/internal/v1` is accessible unauthenticated; whether the config-service's DSN / HMAC key leaks to responses or logs; misconfiguration consequences of trusted-proxy and `AS_CONFIG_PROXY_HEADERS` / `AS_CONFIG_TRUSTED_PROXIES` | `config-service-deployment.yaml:48-71`; ADR-0024 Evidence limits (**no production trusted-proxy evidence**) |
+| 5 | **Config-change approval chain** | Whether effective config can be changed bypassing approval; whether illegal state transitions are rejected; whether rollback can bypass approval; inconsistency window during canary distribution | ADR-0006; `access.py:169-185` |
+| 6 | **Logs and data leakage** | Whether enabling payload logging leaks credentials / TLS private keys; whether PG password, audit HMAC key enter logs; whether `console_audit` content is readable via privilege escalation; whether error stacks leak internal paths | `configmap.yaml:65`; `secret.yaml:19-50` |
+| 7 | **Container and K8s escape surface** | Whether non-root (uid 10001) + drop ALL is bypassed; whether SA token truly unmounted; whether NetworkPolicy truly only allows this system's Pods | `deployment.yaml:169-194`; `serviceaccount.yaml:16`; `state-networkpolicy.yaml:1-29` |
 
-**明确不在测试范围**：媒体面（不做媒体，ADR-0004）、Diameter 面（不做 Sh）、计费 / CDR（不做，ADR-0017）、**LI / IRI（不实现，ADR-0016）** —— 没有攻击面可测。
+**Explicitly out of test scope**: media plane (no media, ADR-0004), Diameter plane (no Sh), billing / CDR (not done, ADR-0017), **LI / IRI (not implemented, ADR-0016)** — no attack surface to test.
 
-### 7.2 前置条件
+### 7.2 Prerequisites
 
-| # | 前置条件 | 说明 |
+| # | Prerequisite | Description |
 |---|---|---|
-| 1 | **测试窗口** | 需客户批准窗口；测试期间可主动拒绝 / 伪造呼叫 |
-| 2 | **客户侧对端配合** | 需要 **OP-SBC** 侧配合做畸形信令注入、双证书并行、trunk 优先级切换；需要 **OP-NET / OP-HSS** 侧配合验证 iFC 触发相关的边界 |
-| 3 | **真实环境而非仿真** | `testbed/` 仿真结果**不是**安全测试证据（ADR-0014；v1 不把 testbed 作为交付物）。E1 / E4 / E5 未验收也会限制可测范围 |
-| 4 | **凭据与证书** | 测试用证书由客户 PKI 或隔离测试 CA 签发；**测试产生的抓包不得进入仓库**（`AGENT.md` §11） |
-| 5 | **范围与出口标准书面确认** | 出口标准由 **OP-SEC** 裁决，本文只给建议（§7.3） |
+| 1 | **Test window** | Needs a customer-approved window; during the test calls may be actively rejected / forged |
+| 2 | **Customer-side peer cooperation** | Needs **OP-SBC** side to cooperate with malformed-signaling injection, dual-cert parallel, trunk-priority switching; needs **OP-NET / OP-HSS** side to cooperate with iFC-trigger-related boundary validation |
+| 3 | **Real environment, not simulation** | `testbed/` simulation results are **not** security-test evidence (ADR-0014; v1 does not deliver testbed as a deliverable). Unaccepted E1 / E4 / E5 also limit the testable scope |
+| 4 | **Credentials and certificates** | Test certs issued by customer PKI or an isolated test CA; **captures produced by the test must not enter the repo** (`AGENT.md` §11) |
+| 5 | **Scope and exit criteria in writing** | Exit criteria decided by **OP-SEC**; this document only gives suggestions (§7.3) |
 
-### 7.3 期望交付物与出口标准（**建议**）
+### 7.3 Expected deliverables and exit criteria (**suggested**)
 
-| 项 | 建议 |
+| Item | Suggestion |
 |---|---|
-| 交付物 | 测试报告（含方法、时间线、发现清单、复现步骤、证据）、发现项逐条处置记录（修复 / 风险接受 / 不适用 + 理由）、复测结论 |
-| 出口标准（建议） | ① 无**严重（Critical）** 未处置项；② 每个高危项都有**书面处置结论**（修复或经 OP-SEC 接受）；③ 复测确认已修复项不再复现；④ 报告与证据留存位置明确，**真实抓包不入库** |
-| 待OP-SEC 确认 | 出口标准的具体档位、是否要求第三方执行、复测轮次 |
+| Deliverable | Test report (method, timeline, finding list, reproduction steps, evidence), per-finding disposition record (fix / risk-accept / not-applicable + reason), retest conclusion |
+| Exit criteria (suggested) | ① No **Critical** undisposed item; ② every High item has a **written disposition conclusion** (fix or OP-SEC-accepted); ③ retest confirms fixed items do not recur; ④ report and evidence retention location clear, **real captures not in repo** |
+| Pending OP-SEC confirmation | Specific tiers of exit criteria, whether third-party execution is required, retest rounds |
 
-### 7.4 当前状态
+### 7.4 Current state
 
-| 项 | 状态 |
+| Item | Status |
 |---|---|
-| 是否已执行 | **未执行** |
-| 是否有产物 | **无** |
-| 阻塞 | 无技术阻塞；需**客户窗口 + OP-SBC / OP-NET 侧配合 + OP-SEC 出口标准** |
-| 本文立场 | 本节**不构成**任何"已通过安全测试"的表述；不得在任何对外材料中引用为安全资质证明 |
+| Executed? | **Not executed** |
+| Artifact? | **None** |
+| Blocking | No technical blocking; needs **customer window + OP-SBC / OP-NET side cooperation + OP-SEC exit criteria** |
+| This document's position | This section **constitutes no** "security test passed" statement; must not be cited in any external material as a security qualification |
 
 ---
 
-## 8. 未决与阻塞
+## 8. Open items and blockers
 
-| 项 | 阻塞源 | 影响 | 何时可闭合 |
+| Item | Blocking source | Impact | When it can close |
 |---|---|---|---|
-| **O4 呼叫轨迹保留期** | 取值**已裁（G6）**：默认 10 天、部署可配；**实现未落**（`../plan.md` §0 决策记录 G6 行） | §2 保留期列、§3.1 清理行为、存储容量、备份策略的**落地**依赖轨迹存储 / 查询 / 删除实现 → **本文仍不写天数**（G-P1-8；无实现可写，且不得表述成「系统已按 10 天清理」） | 轨迹存储落地 + OP-SEC 与客户确认适用范围后填入 |
-| **D5 轨迹存储选型** | 取值**已裁（G6）**：in-cluster PostgreSQL（不再是二选一）；**实现未落** | §2 存储列、§4 备份位置的**落地**随轨迹存储实现 | 轨迹存储落地后 |
-| **data processor / data controller 角色界定** | 客户与其法务 | §1.3、§3 的请求受理路径、§4 跨境安排、合同条款 | 客户法务确认 |
-| **审计与治理数据保留期** | REQ-S-4 写「M4 冻结」→ **未冻结** | §3.1 删除机制无法定稿 | 客户与 OP-SEC 确认 |
-| **备份介质与 WAL 归档位置** | 客户基础设施决策 | §4 留港论证链的一个支点待补 | 客户确认（需 O5 容灾等级一并裁决） |
-| **O5 容灾等级** | 取值**已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby（沿用 ADR-0008 拓扑；D3 选 Redis primary/replica + Sentinel，不选 Cluster）；**不承诺机架 / AZ 级容错**；RPO / RTO 数值未裁 | 影响 Redis 是否跨 AZ、Sentinel 拓扑、PG HA，以及**备站是否在港内**；chart 仍单副本渲染，failover 实测行为无证据 | 客户确认备站位置与参数 |
-| **D1 Python 3.10 生命周期终点** | `../plan.md` §5.2 D1 | 该日期之后的任何交付需先完成迁移验证或在 ADR 登记为已接受风险；直接影响镜像扫描基线（§6） | 维护者裁决 |
-| **E4 TLS 证书热轮换** | M8 验收 + 运营商 PKI（REQ-S-2 / REQ-S-3） | §5 该行状态为 open；渗透测试范围 2 无法完整执行 | M8 验收 |
-| **REQ-S-4 正式验收** | 仅为工程切片 | §5 控制台相关行的验收状态 | M8 或维护者单独签收 |
-| **渗透测试** | 客户窗口 + 对端配合 + 出口标准 | §7 全部 | OP-SEC 委托后 |
-| **依赖漏洞扫描** | 无产物、无门禁步骤 | §6 计划 1–5 待落地 | 落地后关闭 |
-| **号码 / 轨迹是否属 PDPO 个人资料** | 客户法务认定 | §2「是否可能属个人资料」列与 §1.2 缺口行 | 客户法务确认 |
-| **用户侧隐私告知文本** | 客户的用户告知义务 | 不在本交付物范围 | 客户自行提供 |
+| **O4 call-trace retention period** | Value **decided (G6)**: default 10 days, deployment-configurable; **implementation not landed** (`../plan.md` §0 decision record G6 row) | The **landing** of §2 retention column, §3.1 purge behavior, storage capacity, and backup policy depends on trace storage / query / deletion implementation → **this document still writes no number of days** (G-P1-8; nothing to write, and must not be described as "system already purges at 10 days") | Fill in after trace storage lands + OP-SEC and customer confirm scope |
+| **D5 trace-storage selection** | Value **decided (G6)**: in-cluster PostgreSQL (no longer a binary choice); **implementation not landed** | The **landing** of §2 storage column and §4 backup location follows the trace-storage implementation | After trace storage lands |
+| **data processor / data controller role delineation** | Customer and its legal counsel | The request-handling path in §1.3, §3, the cross-border arrangement in §4, contract terms | Customer legal confirmation |
+| **Audit and governance-data retention period** | REQ-S-4 says "frozen at M4" → **not frozen** | §3.1 deletion mechanism cannot be finalized | Customer and OP-SEC confirmation |
+| **Backup media and WAL archive location** | Customer infrastructure decision | One pillar of the §4 stays-in-HK argument chain awaits fill-in | Customer confirmation (needs O5 DR tier decided together) |
+| **O5 DR tier** | Value **decided (G7)**: in-site N+1 + cross-site 1+1 warm standby (following ADR-0008 topology; D3 selects Redis primary/replica + Sentinel, not Cluster); **no rack / AZ-level fault-tolerance promise**; RPO / RTO values undecided | Affects whether Redis crosses AZ, Sentinel topology, PG HA, and **whether the standby is within HK**; chart still renders single-replica, no failover measured behavior evidence | Customer confirms standby location and parameters |
+| **D1 Python 3.10 end of life** | `../plan.md` §5.2 D1 | Any delivery after that date must first complete migration verification or register it as an accepted risk in an ADR; directly affects the image-scan baseline (§6) | Maintainer decision |
+| **E4 TLS cert hot rotation** | M8 acceptance + operator PKI (REQ-S-2 / REQ-S-3) | The row status in §5 is open; penetration-test scope 2 cannot be fully executed | M8 acceptance |
+| **REQ-S-4 formal acceptance** | Engineering slice only | Acceptance status of the console-related rows in §5 | M8 or separate maintainer sign-off |
+| **Penetration test** | Customer window + peer cooperation + exit criteria | All of §7 | After OP-SEC commission |
+| **Dependency vulnerability scan** | No artifact, no gate step | §6 plan 1–5 pending landing | Close after landing |
+| **Whether number / trace is PDPO personal data** | Customer legal determination | The "possibly personal data?" column in §2 and the gap row in §1.2 | Customer legal confirmation |
+| **End-user privacy notice text** | Customer's user-notice obligation | Outside this deliverable's scope | Provided by the customer itself |
 
-**本表的 2026-10-10 裁决同步注记（2026-10-11 追加，上表各行原文保留不改）**：上表 **O4 / D5 / O5 三行**的「未裁决」措辞已过期 —— G6 裁 O4（默认 10 天、部署可配）与 D5（in-cluster PostgreSQL），G7 裁 O5（站点内 N+1 + 跨站 1+1 warm standby）。**但三行均不因此闭合**：轨迹存储 / 查询 / 删除**本次不实现**；RPO / RTO 数值**未裁决**；备站位置仍待客户确认。上表「何时可闭合」列保持原样有效。落地见 `../plan.md` §0 决策记录 G6 / G7 行与 [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7。**本文仍不是法律意见，不构成客户验收。**
+**2026-10-10 decision-sync note for this table (appended 2026-10-11, original rows above preserved unchanged)**: the **O4 / D5 / O5** rows' "undecided" wording in the table above is outdated — G6 decided O4 (default 10 days, deployment-configurable) and D5 (in-cluster PostgreSQL), G7 decided O5 (in-site N+1 + cross-site 1+1 warm standby).**But none of the three rows close because of this**: trace storage / query / deletion **not implemented this round**; RPO / RTO values **undecided**; standby location still pending customer confirmation. The "when it can close" column above remains valid as-is. Landing see `../plan.md` §0 decision record G6 / G7 rows and [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7.**This document is still not legal advice and constitutes no customer acceptance.**
 
-**2026-10-12 追加（B6 闭环）**：上表 O4 / D5 / O5 三行主单元格已按 G6 / G7 口径就地更新（读者不再先读到「未裁决」措辞）；本注记保留为审计链。
+**Appended 2026-10-12 (B6 closure)**: the main cells of the O4 / D5 / O5 rows above have been updated in-place per the G6 / G7 criterion (readers no longer first see "undecided" wording); this note is retained as the audit chain.
 
 ---
 
-## 9. 追溯
+## 9. Traceability
 
-| 项 | 内容 |
+| Item | Content |
 |---|---|
-| **对应交付物** | `../product-packaging-plan.md` §1 第三批 **3.4（安全合规说明 / PDPO）**；按 §3.2 属 **B 类**：保留期限与存储选型被 **O4 / D5** 阻塞。工程事实约束见该计划 §0.3（尤其第 3 条运营商 PKI 无 lab 证据、第 6 条 O4 / D5 未决） |
-| **已落实的评审意见** | **G-P1-5** —— §8 明确 **O4 / D5** 为与 PDPO 同等关键的前置项，且与 PDPO 同列<br>**G-P1-8** —— **保留期限一律写「待 O4 裁决后填入」**，本文**零保留天数、零时限承诺**（§2、§3、§8）<br>**G-P0-4** —— 不做 Sh / 不做计费：§2 注记 1 与 §5 明确列出「不存在的资产」，不做任何 Sh / CDR / 计费表述<br>**G-P0-5 / G-P1-10**（相邻）—— 与 [`responsibility-matrix.md`](responsibility-matrix.md) 共用同一边界口径 |
-| **引用的 REQ** | `REQ-S-1`（对端白名单校验）、`REQ-S-2`（与 S-SBC 端到端 TLS，证书由运营商 PKI 签发、拒绝明文）、`REQ-S-3`（证书热轮换，双证书窗口）、`REQ-S-4`（控制台操作鉴权与审计，审计不可篡改；**仅工程切片**）、`REQ-NF-7`（不做 CDR → 呼叫轨迹替代；轨迹保留期待定）、`REQ-NF-13`（OTel 三信号导出；logs 为结构化 JSON）、`REQ-NF-14`（告警规则集）、`REQ-NF-9`（单租户on-premises）、`REQ-F-13`（按 Call-ID 的轨迹查询）。定义见 `../requirements/prd.md` |
-| **引用的 ADR** | **ADR-0016**（边界内安全：对端白名单 / 端到端 TLS / 证书热轮换 / 控制台鉴权与全量审计；**不做 LI、不做计费**）、**ADR-0017**（不做 CDR，由按 Call-ID 的呼叫轨迹替代；决策 ④ 保留期 O4 未决、决策 ⑤ 轨迹与 trace 分离）、**ADR-0024**（控制台角色 + 密码认证与可撤销会话）、ADR-0005（OTel 可观测性；导出不得阻塞呼叫路径）、**ADR-0006**（配置治理：PostgreSQL 版本库 + 变更单状态机，而非 GitOps）、ADR-0007（数据面 split：Redis 运行态 / PostgreSQL 治理态）、ADR-0008（冗余：站点内 N+1 零单点 + 跨站点 1+1 温备）、ADR-0009（ISSU = draining）、ADR-0002（一用例一进程，状态外置）、ADR-0004（媒体 seam）、ADR-0013（Helm-only 生产形态）、ADR-0019（SIP 栈选型）、ADR-0021（运行态覆盖粒度）、ADR-0026（集群内状态存储）。状态以 `../architecture/adr/README.md` 注册表为准；**ADR-0023 / ADR-0025 仍为 draft，本文不据其作结论** |
-| **引用的文档链** | [`../plan.md`](../plan.md) §0 / §5.1（O1–O5）/ §5.2（D1、D3、D5）、[`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md)、[`../architecture/新系统整体架构.md`](../architecture/新系统整体架构.md) §7（数据面）/ §8（可观测性）/ §9.2（安全：边界内安全，不碰 LI）、[`../acceptance/m8-resip-runtime-log-contract.md`](../acceptance/m8-resip-runtime-log-contract.md)（日志字段契约）、[`../requirements/prd.md`](../requirements/prd.md)、`SECURITY.md`、`AGENT.md` §11 / §13 |
-| **关键代码依据** | 见 §5 每行的 `file:line`（对端准入 `transport.py:249-298`；空策略 `:272-273`；mTLS 默认 `:86-93`；明文拒 `ingress.py:178-194`；双证书重叠 `:70-100`；env `transport_env.py:52-103`；fail-closed `deployment.yaml:11-16`、`validate-install.yaml:6,9,12`；凭据 `secret.yaml:16-50`；挂载 `deployment.yaml:176-181`；SA `serviceaccount.yaml:16`；NetworkPolicy `state-networkpolicy.yaml:1-29`；securityContext `deployment.yaml:169-194`；载荷日志 `values.yaml:319` / `configmap.yaml:65`；NoOp `telemetry/__init__.py:77,89-95,129`；三角色 `01-dev-roles.sh:9-14`、`state-postgres.yaml:18-22`；角色矩阵 `access.py:26-74,152-185`；密码/会话 `auth.py:166-232`；审计 `audit_store.py:1,102-104,493-494,1064-1110`） |
-| **同批交付物** | [`one-pager.md`](one-pager.md)（1.1）、[`compliance-matrix.md`](compliance-matrix.md)（1.2）、[`ne-datasheet.md`](ne-datasheet.md)（1.3）、[`responsibility-matrix.md`](responsibility-matrix.md)（3.3）、[`version-lifecycle.md`](version-lifecycle.md)（3.5）及 `docs/operations/` 目录**均已落盘** |
-| **已落盘的互链文档** | [`version-lifecycle.md`](version-lifecycle.md)（§9 生命周期与 EOL）。本文**不链接** `docs/operations/` 下的文件（本文不依赖它们；责任边界与故障定界入口在 [`responsibility-matrix.md`](responsibility-matrix.md)） |
-| **状态纪律** | 本文**不是法律意见**，**不构成合规结论**。本文只登记**事实、机制与缺口**：M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；REQ-S-4 仅为工程切片；e2e：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open；O1 / D1 **未决**，O4 / D5 **已裁（G6，实现未落）**，O5 / D3 **已裁（G7，chart 仍单副本）**；**无渗透测试产物、无依赖漏洞扫描产物**。**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3） |
+| **Corresponding deliverable** | `../product-packaging-plan.md` §1 third batch **3.4 (Security Compliance Statement / PDPO)**; per §3.2 it is **Class B**: retention period and storage selection blocked by **O4 / D5**. Engineering-fact constraints see that plan §0.3 (esp. item 3 operator PKI has no lab evidence, item 6 O4 / D5 undecided) |
+| **Implemented review comments** | **G-P1-5** — §8 states **O4 / D5** as preconditions equally critical with PDPO, listed alongside PDPO<br>**G-P1-8** — retention period uniformly writes "fill in after O4 is decided", this document has **zero retention days, zero time-period promises** (§2, §3, §8)<br>**G-P0-4** — no Sh / no billing: §2 note 1 and §5 explicitly list "assets that do not exist", with no Sh / CDR / billing statement<br>**G-P0-5 / G-P1-10** (adjacent) — shares the same boundary criterion with [`responsibility-matrix.md`](responsibility-matrix.md) |
+| **REQ cited** | `REQ-S-1` (peer-allowlist validation), `REQ-S-2` (end-to-end TLS with S-SBC, cert issued by operator PKI, reject plaintext), `REQ-S-3` (cert hot rotation, dual-cert window), `REQ-S-4` (console-operation authorization and audit, audit immutable; **engineering slice only**), `REQ-NF-7` (no CDR → call trace replaces it; trace retention pending), `REQ-NF-13` (OTel three-signal export; logs are structured JSON), `REQ-NF-14` (alert rule set), `REQ-NF-9` (single-tenant on-premises), `REQ-F-13` (Call-ID-based trace query). Definitions in `../requirements/prd.md` |
+| **ADR cited** | **ADR-0016** (in-boundary security: peer allowlist / end-to-end TLS / cert hot rotation / console authorization and full audit; **no LI, no billing**), **ADR-0017** (no CDR, replaced by Call-ID-based call trace; decision ④ retention O4 undecided, decision ⑤ trace and trace separated), **ADR-0024** (console roles + password auth and revocable sessions), ADR-0005 (OTel observability; export must not block the call path), **ADR-0006** (config governance: PostgreSQL version store + change-order state machine, not GitOps), ADR-0007 (data-plane split: Redis runtime / PostgreSQL governance), ADR-0008 (redundancy: in-site N+1 zero-single-point + cross-site 1+1 warm standby), ADR-0009 (ISSU = draining), ADR-0002 (one process per use case, state externalized), ADR-0004 (media seam), ADR-0013 (Helm-only production form), ADR-0019 (SIP stack selection), ADR-0021 (runtime override granularity), ADR-0026 (in-cluster state store). Status per `../architecture/adr/README.md` registry; **ADR-0023 / ADR-0025 still draft, this document draws no conclusion from them** |
+| **Document chain cited** | [`../plan.md`](../plan.md) §0 / §5.1 (O1–O5) / §5.2 (D1, D3, D5), [`../reviews/product-packaging-plan-review-2026-10-09.md`](../reviews/product-packaging-plan-review-2026-10-09.md), [`../architecture/system-architecture.md`](../architecture/system-architecture.md) §7 (data plane) / §8 (observability) / §9.2 (security: in-boundary security, no LI), [`../acceptance/m8-resip-runtime-log-contract.md`](../acceptance/m8-resip-runtime-log-contract.md) (log-field contract), [`../requirements/prd.md`](../requirements/prd.md), `SECURITY.md`, `AGENT.md` §11 / §13 |
+| **Key code basis** | See the `file:line` in each row of §5 (peer admission `transport.py:249-298`; empty policy `:272-273`; mTLS default `:86-93`; plaintext reject `ingress.py:178-194`; dual-cert overlap `:70-100`; env `transport_env.py:52-103`; fail-closed `deployment.yaml:11-16`, `validate-install.yaml:6,9,12`; credentials `secret.yaml:16-50`; mount `deployment.yaml:176-181`; SA `serviceaccount.yaml:16`; NetworkPolicy `state-networkpolicy.yaml:1-29`; securityContext `deployment.yaml:169-194`; payload logging `values.yaml:319` / `configmap.yaml:65`; NoOp `telemetry/__init__.py:77,89-95,129`; three roles `01-dev-roles.sh:9-14`, `state-postgres.yaml:18-22`; role matrix `access.py:26-74,152-185`; password/session `auth.py:166-232`; audit `audit_store.py:1,102-104,493-494,1064-1110`) |
+| **Same-batch deliverables** | [`one-pager.md`](one-pager.md) (1.1), [`compliance-matrix.md`](compliance-matrix.md) (1.2), [`ne-datasheet.md`](ne-datasheet.md) (1.3), [`responsibility-matrix.md`](responsibility-matrix.md) (3.3), [`version-lifecycle.md`](version-lifecycle.md) (3.5) and `docs/operations/` directory **all landed** |
+| **Landed cross-linked documents** | [`version-lifecycle.md`](version-lifecycle.md) (§9 lifecycle and EOL). This document **does not link** files under `docs/operations/` (this document does not depend on them; the responsibility boundary and fault-demarcation entry are in [`responsibility-matrix.md`](responsibility-matrix.md)) |
+| **Status discipline** | This document **is not legal advice** and **constitutes no compliance conclusion**. This document only registers **facts, mechanisms, and gaps**: M8 exit sign-off still pending (**RC ready ≠ passed**); E1 / E4 / E5 not accepted; REQ-S-4 engineering slice only; e2e: `pytest -m e2e` **8 stable passes** (fails not skips when native missing), REQ-F-1 = automated subset covered / full text still open; O1 / D1 **open**, O4 / D5 **decided (G6, implementation not landed)**, O5 / D3 **decided (G7, chart still single-replica)**; **no penetration-test artifact, no dependency-vulnerability-scan artifact**.**B6 review status**: this document has left a review record alongside the B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (first review 2026-10-12) and §7 (closure re-review 2026-10-12); **conclusion pending maintainer confirmation**, and until confirmed it is not an external delivery or acceptance basis (`AGENT.md` §3.3) |

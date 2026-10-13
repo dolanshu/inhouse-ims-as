@@ -12,220 +12,220 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 环境登记（Environments）
+# Environments Registry
 
-> **本文是长期事实登记，不是会话交接件。** 它不会随某次 session 结束而失效，也不会被下一次
-> 工作覆盖重写 —— 机器、工具、产出的证据都是仓库的长期属性。
+> **This document is a long-term factual registry, not a session handoff.** It does not expire when a
+> session ends, nor is it overwritten by the next working pass — the machines, tools, and produced
+> evidence are long-term properties of the repository.
 >
-> **本文引用环境必须使用表中的「环境名」；禁止再写匿名的「本机」。**
-> 依据与批准记录：[`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §7.4 第 2 层。
+> **References to an environment in this document must use the "environment name" from the table; writing an anonymous "this machine" is no longer allowed.**
+> Basis and approval record: [`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §7.4 layer 2.
 
-## 0. 口径（维护者 2026-10-11 立场，先读这一段）
+## 0. Framing (maintainer position of 2026-10-11, read this first)
 
-> **项目会部署到不同电脑。环境差异是常态，不是缺陷，也不是缺陷的证据。**
-> 本仓库的工作跨多台机器、多个 session 进行；任何一条结论如果只在某一台机器上成立，
-> 就必须写清它在哪台机器上成立 —— 这正是本文存在的理由。
+> **The project gets deployed on different computers. Environment differences are the norm — not a defect, and not evidence of a defect.**
+> Work in this repository spans multiple machines and multiple sessions; if a conclusion only holds on one machine,
+> then it must state on which machine it holds — that is precisely why this document exists.
 
-由此产生三条硬口径：
+Three hard rules follow:
 
-1. **任何文档不得依赖某台机器的能力。** 判定「项目能不能做 X」时，依据只能是仓库里的资产与
-   证据，不是一台机器的 `PATH`。
-2. **不得以「某台机器没有 X」推断「项目没有 X」。** 单台机器的工具清单是**这台机器的事实**，
-   不是**项目的能力**。2026-10-05 的 chart / alert 证据由一台具备完整 infra 工具、但从未被
-   命名的机器产出；而 2026-10-10 落盘的一句匿名的工具否认被读成了「项目无 promtool 能力」。
-   **这类混淆的代价是整个里程碑被反复重新讨论。**
-3. **本文的环境信息不由人工维护**，由 [`../tools/env-probe.sh`](../tools/env-probe.sh)
-   **现场探测生成**（见 §3）。人工填 hostname 的做法已取消：手工表格一定漂移，漂移之后又会被
-   当成事实读回去。**不需要人工查 hostname** —— 脚本自己探测。
+1. **No document may depend on the capabilities of one particular machine.** When deciding "can the project do X", the only admissible basis is the assets and
+   evidence in the repository, not one machine's `PATH`.
+2. **"Machine X does not have X" must never be used to infer "the project has no X".** A single machine's tool inventory is **a fact about that machine**,
+   not **a project capability**. The 2026-10-05 chart / alert evidence was produced by a machine that had the complete infra toolset but was never
+   named; whereas the anonymous tool denial written down on 2026-10-10 was read as "the project has no promtool capability".
+   **The cost of this confusion is an entire milestone being re-discussed over and over.**
+3. **The environment information in this document is not maintained by hand**; it is **generated on the spot by probing** with
+   [`../tools/env-probe.sh`](../tools/env-probe.sh) (see §3). The practice of entering hostnames by hand has been abolished: a hand-made table always drifts,
+   and once it has drifted it gets read back in as fact. **There is no need to look up a hostname by hand** — the script probes it itself.
 
-## 1. 为什么必须有名（背景，不重复论证）
+## 1. Why names are mandatory (background, not re-argued here)
 
-2026-10-05 的 M5 证据文件（chart-check / alert-check）记录的路径是
-`==> helm lint /home/shudong/project/3rdparty-as/deploy/helm` —— **同一用户名、同一项目路径**；
-而 2026-10-11 实测的工作站上**没有** helm / kubectl / kind / promtool。
+The path recorded in the 2026-10-05 M5 evidence files (chart-check / alert-check) is
+`==> helm lint /home/shudong/project/3rdparty-as/deploy/helm` — **the same user name, the same project path**;
+whereas the workstation actually measured on 2026-10-11 has **no** helm / kubectl / kind / promtool.
 
-⇒ 证据由**另一台机器**产出，而文档中匿名的「本机」实际指代**两台不同的机器**。
-这是「项目到底有没有 infra 能力」这一问反复重新争论的直接原因：**事实载体没有元数据**。
-给环境起名字，就是给事实载体加元数据。
+⇒ The evidence was produced by **a different machine**, while the anonymous "this machine" in the documentation actually referred to **two different machines**.
+This is the direct cause of the question "does the project have infra capability" being argued over and over again: **the carrier of the fact has no metadata**.
+Giving environments names is adding metadata to the carrier of the fact.
 
-## 2. 环境登记表
+## 2. Environment registry table
 
-> 本表**只登记已实测的机器**。无法填写的一律**不占位** —— 不写「待填写」行：空占位会被读者
-> 读成「有一台机器，只是没人填」，比不写更糟。未测量的机器，等它第一次运行
-> [`../tools/env-probe.sh`](../tools/env-probe.sh) 时再进来。
+> This table registers **only machines that have actually been measured**. Anything that cannot be filled in gets **no placeholder row** — do not write
+> "to be filled in" rows: an empty placeholder is read by the reader as "there is a machine, nobody filled it in", which is worse than not writing it. An unmeasured
+> machine enters this table when it first runs [`../tools/env-probe.sh`](../tools/env-probe.sh).
 
-| 环境名 | hostname | 具备工具 | 缺失工具 | 已在此产出的证据 | 备注 |
+| Environment name | hostname | Tools present | Tools missing | Evidence produced here | Notes |
 |---|---|---|---|---|---|
-| `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | `docker`（`/usr/bin/docker` 29.2.1）、`uv`（`/home/shudong/.local/bin/uv` 0.12.15）、`python3.10`（`/usr/bin/python3.10` 3.10.12）、`helm`（`tools/bin/helm` v3.16.4+g7877b45）、`kubectl`（`tools/bin/kubectl` v1.31.4）、`kind`（`tools/bin/kind` v0.24.0 go1.22.10）、`promtool`（`tools/bin/promtool` 2.55.1）、`make`（`/usr/bin/make` 4.3）、`git`（`/usr/bin/git` 2.34.1）—— 后四件于 2026-10-11 由 `tools/bootstrap-infra.sh` 装入 `tools/bin/`（不入库），bootstrap 后 `tools/env-probe.sh` 实测九项全 ✅ | （无）—— ❌ 缺失与 ⚠ 装了但不可用均为（无）（2026-10-11 bootstrap 后实测；此前 helm / kubectl / kind / promtool 四项曾为「未找到」，见 §2.1 旧数据行） | `docs/reviews/product-packaging-execution-record-2026-10-10.md:132`（`preflight.sh --dry-run` 行为与退出码）；`docs/plan.md` §0 记的 config-service PostgreSQL integration（2026-10-03，本地 PG 12.22）；`docs/acceptance/artifacts/m5/2026-10-11/`（2026-10-11 本机复跑 gate / chart-check / alert-check 各 PASS-，另有 FAILCLOSED-m5-strict-context 与如实 FAIL 的 FAIL-m5-verify-strict，采集与判读见 [`acceptance/artifacts/m5/README.md`](acceptance/artifacts/m5/README.md)） | 当前工作站 / 日常开发环境；OS `Ubuntu 22.04.5 LTS`、架构 `x86_64`。`uv` 位于 `/home/shudong/.local/bin/uv`。**2026-10-11 bootstrap 前**不能运行 `make chart-check` / `make alert-check` / 任何 kind 集群级验证（历史结论保留为审计链）；**2026-10-11 bootstrap 后**三项均可本机运行 —— chart-check / alert-check 已当日复跑通过，kind 集群 `as-m5` 已创建、context `kind-as-m5` 校验 OK；**集群级产品验证未做**（m5-verify-strict 如实 FAIL）。工具安装经过与偏差见 [`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md) |
+| `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | `docker` (`/usr/bin/docker` 29.2.1), `uv` (`/home/shudong/.local/bin/uv` 0.12.15), `python3.10` (`/usr/bin/python3.10` 3.10.12), `helm` (`tools/bin/helm` v3.16.4+g7877b45), `kubectl` (`tools/bin/kubectl` v1.31.4), `kind` (`tools/bin/kind` v0.24.0 go1.22.10), `promtool` (`tools/bin/promtool` 2.55.1), `make` (`/usr/bin/make` 4.3), `git` (`/usr/bin/git` 2.34.1) — the last four were installed into `tools/bin/` by `tools/bootstrap-infra.sh` on 2026-10-11 (not committed to the repo); after bootstrap, all nine items measured ✅ by `tools/env-probe.sh` | (none) — both ❌ missing and ⚠ installed-but-unusable are (none) (measured after the 2026-10-11 bootstrap; previously helm / kubectl / kind / promtool were "not found", see the historical data row in §2.1) | `docs/reviews/product-packaging-execution-record-2026-10-10.md:132` (`preflight.sh --dry-run` behaviour and exit code); the config-service PostgreSQL integration recorded in `docs/plan.md` §0 (2026-10-03, local PG 12.22); `docs/acceptance/artifacts/m5/2026-10-11/` (gate / chart-check / alert-check re-run locally on 2026-10-11, each PASS-, plus FAILCLOSED-m5-strict-context and the honest FAIL FAIL-m5-verify-strict; for collection and interpretation see [`acceptance/artifacts/m5/README.md`](acceptance/artifacts/m5/README.md)) | Current workstation / day-to-day development environment; OS `Ubuntu 22.04.5 LTS`, architecture `x86_64`. `uv` is at `/home/shudong/.local/bin/uv`. **Before the 2026-10-11 bootstrap** it was not possible to run `make chart-check` / `make alert-check` / any kind cluster-level verification (the historical conclusion is retained as an audit chain); **after the 2026-10-11 bootstrap** all three can run locally — chart-check / alert-check were re-run and passed the same day, the kind cluster `as-m5` has been created and the context `kind-as-m5` validates OK; **cluster-level product verification was not done** (m5-verify-strict honestly FAIL). For the tool-installation process and deviations see [`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md) |
 
-> **本行由 2026-10-11 实测写入；后续请用 `tools/env-probe.sh` 重新生成，不要手工编辑本行。**
-> 本行是本轮实测真值，本次未改动。补齐 helm / kubectl / kind / promtool 的执行计划见
-> [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md)。
+> **This row was written from an actual 2026-10-11 measurement; afterwards regenerate it with `tools/env-probe.sh` — do not hand-edit this row.**
+> This row is the truth value of this round's measurement and was not changed in this round. The execution plan for adding helm / kubectl / kind / promtool is
+> [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md).
 >
-> **2026-10-11 追加（重贴）：** 上方「本次未改动」记录的是**首次落盘那一轮**——那一轮里探测脚本**跑不起来**
-> （`tr` 参数报错），本行与 §2.1 的数据行是**手工写的**。脚本修复后已在本机实跑
-> `bash tools/env-probe.sh --markdown`（退出码 0），本行已按**该次真实输出**重贴。
-> 上方「后续请用 `tools/env-probe.sh` 重新生成、不要手工编辑本行」的说明**不变、仍然有效**：
-> 下次工具清单变化就重跑脚本整段粘贴，不要手工编辑。
+> **2026-10-11 addition (re-post):** the "not changed in this round" note above records **the round in which it was first written to disk** — in that round the probe script
+> **could not run** (the `tr` call errored), so this row and the §2.1 data row were **written by hand**. After the script was fixed it was actually run locally with
+> `bash tools/env-probe.sh --markdown` (exit code 0), and this row has been re-posted from **that real output**.
+> The instruction above — "afterwards regenerate with `tools/env-probe.sh`, do not hand-edit this row" — is **unchanged and still in effect**:
+> next time the tool inventory changes, re-run the script and paste the whole block; do not hand-edit.
 
-> **2026-10-11 追加（infra bootstrap 后重贴；上文原样保留，不删改；待维护者评审）：**
-> [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) 已执行完毕，
-> 本行「具备工具 / 缺失工具 / 已在此产出的证据 / 备注」四栏已按 bootstrap 后 fresh `tools/env-probe.sh` 输出**整行重贴**：
-> helm / kubectl / kind / promtool 四项由「未找到」变为 ✅ 具备（路径 `tools/bin/`，不入库），缺失工具栏为（无）。
-> 「已在此产出的证据」与「备注」的历史记载**保留未删，只做追加**。kubectl 的版本号 v1.31.4 来自直跑
-> `tools/bin/kubectl version --client=true`（`Client Version: v1.31.4`）与 `tools/bootstrap-infra.sh` 校验段；
-> env-probe 判定依据列显示 `clientVersion:` 是其 `version --client=true -o yaml` 取首行的显示形式（见 §2.1 注），
-> 非版本缺失。执行记录：[`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md)。
+> **2026-10-11 addition (re-posted after the infra bootstrap; the text above is retained as-is, neither deleted nor altered; pending maintainer review):**
+> [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) has been executed,
+> and the four columns of this row — "tools present / tools missing / evidence produced here / notes" — have been **re-posted in full** from the fresh `tools/env-probe.sh` output after the bootstrap:
+> helm / kubectl / kind / promtool changed from "not found" to ✅ present (path `tools/bin/`, not committed to the repo), and the tools-missing column is (none).
+> The historical records under "evidence produced here" and "notes" are **retained undeleted, additions only**. The kubectl version v1.31.4 comes from running
+> `tools/bin/kubectl version --client=true` directly (`Client Version: v1.31.4`) and from the verification section of `tools/bootstrap-infra.sh`;
+> the env-probe basis column shows `clientVersion:` because that is the display form of taking the first line of its `version --client=true -o yaml` (see the note in §2.1),
+> not a missing version. Execution record: [`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md).
 
-### 2.1 逐工具实测矩阵（由 `tools/env-probe.sh --markdown` 生成）
+### 2.1 Per-tool measurement matrix (generated by `tools/env-probe.sh --markdown`)
 
-本表的列与 [`../tools/env-probe.sh`](../tools/env-probe.sh) `--markdown` 输出**逐列对应**，整段粘贴即可。
-「环境名」列按 **`<角色>-<hostname 小写去分隔符>`** 生成，**默认角色 `dev`**（规则见 §3 第 4 条）。
-本轮**未落盘数据行**：脚本是本轮新建的，本次会话只写脚本、不执行，数据行必须由执行者现场生成，
-**不得手工补写**。
+The columns of this table correspond **one-to-one, column by column**, with the `--markdown` output of [`../tools/env-probe.sh`](../tools/env-probe.sh); pasting the whole block works.
+The "environment name" column is generated as **`<role>-<hostname lowercased, separators removed>`**, with **default role `dev`** (rule in item 4 of §3).
+**No data row is written to disk in this round**: the script is newly created in this round, and this session only writes the script without executing it; the data row must be generated on the spot by the executor and
+**must not be hand-filled**.
 
-**2026-10-11 补记（上一段记录的是「首次落盘那一轮」的状况）：** 脚本修复后已在本机实跑
-`bash tools/env-probe.sh --markdown`（退出码 0），下表数据行 = 该次真实输出**整段粘贴**，非手工补写。
-脚本没输出的一律不补写：本轮四列缺失工具都由脚本判为「未找到」，**没有任何一格需要填「未探测」**。
+**2026-10-11 addendum (the preceding paragraph records the state "as of the round in which it was first written to disk"):** after the script was fixed it was actually run locally with
+`bash tools/env-probe.sh --markdown` (exit code 0), and the data row below = that real output pasted **as a whole block**, not hand-filled.
+Anything the script did not output is left unfilled: in this round all four missing-tool columns were judged "not found" by the script; **not a single cell needed "not probed"**.
 
-| 环境名 | hostname | OS | 架构 | docker | uv | python3.10 | helm | kubectl | kind | promtool | make | git |
+| Environment name | hostname | OS | Architecture | docker | uv | python3.10 | helm | kubectl | kind | promtool | make | git |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | Ubuntu 22.04.5 LTS | x86_64 | ✅ `/usr/bin/docker` Docker version 29.2.1, build a5c7197 | ✅ `/home/shudong/.local/bin/uv` uv 0.12.15 (x86_64-unknown-linux-gnu) | ✅ `/usr/bin/python3.10` Python 3.10.12 | ❌ — 未找到（tools/bin 与 PATH 均无） | ❌ — 未找到（tools/bin 与 PATH 均无） | ❌ — 未找到（tools/bin 与 PATH 均无） | ❌ — 未找到（tools/bin 与 PATH 均无） | ✅ `/usr/bin/make` GNU Make 4.3 | ✅ `/usr/bin/git` git version 2.34.1 |
+| `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | Ubuntu 22.04.5 LTS | x86_64 | ✅ `/usr/bin/docker` Docker version 29.2.1, build a5c7197 | ✅ `/home/shudong/.local/bin/uv` uv 0.12.15 (x86_64-unknown-linux-gnu) | ✅ `/usr/bin/python3.10` Python 3.10.12 | ❌ — not found (neither in tools/bin nor in PATH) | ❌ — not found (neither in tools/bin nor in PATH) | ❌ — not found (neither in tools/bin nor in PATH) | ❌ — not found (neither in tools/bin nor in PATH) | ✅ `/usr/bin/make` GNU Make 4.3 | ✅ `/usr/bin/git` git version 2.34.1 |
 
-**2026-10-11 补记（infra bootstrap 后；上行保留为 bootstrap 前真值，不删改；待维护者评审）：**
-[`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) 已执行完毕，
-四件 infra 工具装入 `tools/bin/`（不入库）。下表数据行 = bootstrap 后 fresh
-`bash tools/env-probe.sh --markdown`（退出码 0）输出**整段粘贴**（表头 + 分隔行 + 数据行），非手工补写：
+**2026-10-11 addendum (after the infra bootstrap; the row above is retained as the pre-bootstrap truth value, neither deleted nor altered; pending maintainer review):**
+[`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) has been executed,
+and the four infra tools were installed into `tools/bin/` (not committed to the repo). The data row below = the post-bootstrap fresh
+`bash tools/env-probe.sh --markdown` (exit code 0) output pasted **as a whole block** (header row + separator row + data row), not hand-filled:
 
-| 环境名 | hostname | OS | 架构 | docker | uv | python3.10 | helm | kubectl | kind | promtool | make | git |
+| Environment name | hostname | OS | Architecture | docker | uv | python3.10 | helm | kubectl | kind | promtool | make | git |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `dev-win03ib7niepf0` | `WIN-03IB7NIEPF0` | Ubuntu 22.04.5 LTS | x86_64 | ✅ `/usr/bin/docker` Docker version 29.2.1, build a5c7197 | ✅ `/home/shudong/.local/bin/uv` uv 0.12.15 (x86_64-unknown-linux-gnu) | ✅ `/usr/bin/python3.10` Python 3.10.12 | ✅ `/home/shudong/project/3rdparty-as/tools/bin/helm` v3.16.4+g7877b45 | ✅ `/home/shudong/project/3rdparty-as/tools/bin/kubectl` clientVersion: | ✅ `/home/shudong/project/3rdparty-as/tools/bin/kind` kind v0.24.0 go1.22.10 linux/amd64 | ✅ `/home/shudong/project/3rdparty-as/tools/bin/promtool` promtool, version 2.55.1 (branch: HEAD, revision: 6d7569 | ✅ `/usr/bin/make` GNU Make 4.3 | ✅ `/usr/bin/git` git version 2.34.1 |
 
-> **kubectl 格说明（`clientVersion:` 是脚本输出原文，非手工补写）：** env-probe 对 kubectl 探测命令为
-> `version --client=true -o yaml`，判定依据列显示的是 YAML 首行 `clientVersion:` 原样输出；锁定版本
-> v1.31.4 由直跑 `tools/bin/kubectl version --client=true`（`Client Version: v1.31.4`）、
-> `tools/bootstrap-infra.sh` 校验段（exit 0）与安装文件 sha256 官方值逐字比对一致三重确认。
-> 本轮 plain 输出末尾：❌ 缺失：（无）；⚠ 装了但不可用：（无）。
+> **kubectl cell note (`clientVersion:` is the script's raw output, not hand-filled):** env-probe's probe command for kubectl is
+> `version --client=true -o yaml`, and the basis column displays the YAML first line `clientVersion:` verbatim; the pinned version
+> v1.31.4 is triple-confirmed by running `tools/bin/kubectl version --client=true` directly (`Client Version: v1.31.4`),
+> by the verification section of `tools/bootstrap-infra.sh` (exit 0), and by a byte-for-byte match against the official sha256 of the installed file.
+> The tail of this round's plain output: ❌ missing: (none); ⚠ installed but unusable: (none).
 
-**三种状态的读法（脚本按此区分，勿混为一谈）：**
+**How to read the three states (the script distinguishes them as follows; do not conflate them):**
 
-| 记号 | 含义 | 判据 |
+| Marker | Meaning | Criterion |
 |---|---|---|
-| ✅ 具备 | 工具可解析**且**版本命令成功 | 有路径 + 有版本号 |
-| ❌ 缺失 | 解析不到可执行文件 | `tools/bin/` 与 `PATH` 均无 |
-| ⚠ 装了但不可用 | 二进制存在但跑不通 | 版本命令非零退出，或退出 0 却无输出 |
+| ✅ Present | The tool resolves **and** its version command succeeds | Has a path + has a version number |
+| ❌ Missing | No executable file can be resolved | Absent from both `tools/bin/` and `PATH` |
+| ⚠ Installed but unusable | The binary exists but cannot run | The version command exits non-zero, or exits 0 with no output |
 
-> **「装了但不可用」是本轮新识别的易混淆点**：装了 ≠ 能用。把它算进「具备」，等于用一个
-> 跑不起来的二进制去支撑一条「已验证」结论 —— 与「文件名即结论」同源，都是让载体撒谎。
+> **"Installed but unusable" is a newly identified confusion point in this round**: installed ≠ usable. Counting it as "present" means supporting a
+> "verified" conclusion with a binary that cannot even run — the same root cause as "the filename is the conclusion": in both cases the carrier is made to lie.
 
-### 2.2 尚未归属的证据（不得默认归给任一环境）
+### 2.2 Evidence not yet attributed (must not be defaulted to any environment)
 
-| 证据文件 | 状态 |
+| Evidence file | Status |
 |---|---|
-| `docs/acceptance/artifacts/m5/2026-10-05/PASS-gate-2026-10-05.txt` / `PASS-gate-sample-2026-10-05.txt` | 产出环境**未登记**。同一批次入库，但本文只对 chart / alert 两份有路径证据（`helm lint` 绝对路径），gate 那两份无同类线索，故不推定 |
-| `docs/acceptance/artifacts/m5/2026-10-05/FAILCLOSED-m5-strict-context-2026-10-05.txt` | 产出环境**未登记**；内容为 fail-closed 记录（`exit=1`），**不是通过证据** |
+| `docs/acceptance/artifacts/m5/2026-10-05/PASS-gate-2026-10-05.txt` / `PASS-gate-sample-2026-10-05.txt` | Producing environment **not registered**. They were committed in the same batch, but this document only holds path evidence for the chart / alert pair (`helm lint` absolute path); the gate pair has no comparable clue, so no inference is drawn |
+| `docs/acceptance/artifacts/m5/2026-10-05/FAILCLOSED-m5-strict-context-2026-10-05.txt` | Producing environment **not registered**; the content is a fail-closed record (`exit=1`), **not passing evidence** |
 
-### 2.3 待校验项（执行前先在本文登记执行环境）
+### 2.3 Items awaiting verification (register the executing environment in this document first)
 
-- **P4 的 promtool 校验**：2026-10-10 新增的 `as.runtime` / `as.platform` 两组告警规则至今未被任何
-  已登记环境校验过（需运行 `promtool check rules`，**本次未运行**）。执行前应先在本文登记执行环境。
+- **P4's promtool verification**: the two alert-rule groups `as.runtime` / `as.platform` added on 2026-10-10 have still not been verified by any
+  registered environment (this requires running `promtool check rules`, **not run in this round**). The executing environment should be registered in this document before execution.
 
-> **2026-10-11 收尾轮追加更正（上方 P4 条目原文保留，不删改）：** P4 已由已登记环境
-> **`dev-win03ib7niepf0`**（host `WIN-03IB7NIEPF0`）以 **docker 容器化方式**完成校验 ——
-> 容器镜像 `prom/prometheus:v2.45.0` 内的 promtool 对 `deploy/alerts/as-alerts.yaml` 执行
-> `check rules`，输出 `SUCCESS: 10 rules found`（as.call-path 5 + as.runtime 3 + as.platform 2，共 3 组），
-> 主 agent 同日同 host 同命令独立复跑 exit=0。
-> 三元组：**(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**。
-> **与工具矩阵的关系（二者不矛盾）：** 该环境 PATH 中**仍无本地 promtool 二进制**，
-> §2 / §2.1 工具矩阵的 promtool 格**维持 env-probe 实测「❌ — 未找到」不变**（矩阵行由
-> `tools/env-probe.sh` 生成，**不得手改**）；容器化 promtool 校验不改变 PATH 事实 —— 缺本地二进制
-> 与「能用 docker 跑容器内 promtool」同时成立。
-> **不影响其余待执行项：** 本地工具安装计划
+> **2026-10-11 closing-round correction (the original P4 entry above is retained, neither deleted nor altered):** P4 has been verified by the registered environment
+> **`dev-win03ib7niepf0`** (host `WIN-03IB7NIEPF0`) **using a containerized (docker) approach** —
+> promtool inside the container image `prom/prometheus:v2.45.0` ran `check rules` against `deploy/alerts/as-alerts.yaml`,
+> outputting `SUCCESS: 10 rules found` (as.call-path 5 + as.runtime 3 + as.platform 2, 3 groups in total),
+> and the main agent independently re-ran the same command on the same host the same day with exit=0.
+> Triple: **(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**.
+> **Relation to the tool matrix (the two do not contradict each other):** that environment's `PATH` **still contains no local promtool binary**,
+> so the promtool cell in the §2 / §2.1 tool matrix **stays at the env-probe measured "❌ — not found"** (the matrix rows are
+> generated by `tools/env-probe.sh` and **must not be hand-edited**); the containerized promtool verification does not change the PATH fact — lacking a local binary
+> and "being able to run the in-container promtool via docker" both hold at the same time.
+> **The remaining pending items are unaffected:** the other objectives of the local tool installation plan
 > [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md)
-> 的其余目标（helm / kubectl / kind 本地就位、chart-check 本机复跑、kind 集群证据）**不受 P4 闭合影响，
-> 仍按该计划待执行 / 待授权**。
+> (local helm / kubectl / kind in place, chart-check re-run locally, kind cluster evidence) are **unaffected by P4's closure and
+> remain pending execution / pending authorization**.
 
-> **2026-10-11 追加（infra bootstrap 轮；上方 P4 docker 闭合注原文保留，不删改；待维护者评审）：**
-> 本地 promtool **2.55.1** 现已就位（`tools/bin/promtool`，与 2026-10-05 历史 alert 证据**同版本**；
-> 二进制溯源为官方镜像 `quay.io/prometheus/prometheus@sha256:2659f4c2ebb718e7695cb9b25ffa7d6be64db013daba13e05c875451cf51b0d3`
-> 提取，见执行记录），`make alert-check` 已在本机（环境 `dev-win03ib7niepf0`）复跑：
-> `promtool check rules` → **`SUCCESS: 10 rules found`**（as.call-path 5 + as.runtime 3 + as.platform 2，共 3 组）。
-> 三元组：**(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)**。
-> 本注**升级** P4 的证据基座（docker 容器化 prometheus v2.45.0 → 与历史证据同版本的本地 promtool 2.55.1），
-> **不改变** P4 已闭合的裁决本身；状态维持「已关闭」，本追加待维护者评审。
-> 执行记录：[`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md)。
+> **2026-10-11 addition (infra bootstrap round; the P4 docker-closure note above is retained, neither deleted nor altered; pending maintainer review):**
+> local promtool **2.55.1** is now in place (`tools/bin/promtool`, **the same version** as the 2026-10-05 historical alert evidence;
+> the binary's provenance is extraction from the official image `quay.io/prometheus/prometheus@sha256:2659f4c2ebb718e7695cb9b25ffa7d6be64db013daba13e05c875451cf51b0d3`,
+> see the execution record), and `make alert-check` has been re-run locally (environment `dev-win03ib7niepf0`):
+> `promtool check rules` → **`SUCCESS: 10 rules found`** (as.call-path 5 + as.runtime 3 + as.platform 2, 3 groups in total).
+> Triple: **(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)**.
+> This note **upgrades** the evidence basis for P4 (docker-containerized prometheus v2.45.0 → local promtool 2.55.1, the same version as the historical evidence),
+> and **does not change** P4's closure decision itself; the status stays "closed", and this addition is pending maintainer review.
+> Execution record: [`handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](handoff/2026-10-11-local-infra-bootstrap-execution-record.md).
 
-## 3. 如何新增 / 更新一行（不需要人工查 hostname）
+## 3. How to add / update a row (no need to look up a hostname by hand)
 
-1. 在目标机器上进入仓库根目录，运行：
+1. On the target machine, enter the repository root and run:
 
    ```bash
-   tools/env-probe.sh              # 人看的表格：三种状态一目了然
-   tools/env-probe.sh --markdown   # 直接粘进 §2.1 的表格行
+   tools/env-probe.sh              # human-readable table: the three states at a glance
+   tools/env-probe.sh --markdown   # paste straight into the table row in §2.1
    ```
 
-   两个命令都是**只读**的：不安装任何东西、不改系统状态、不需要 root，可重复执行。
-   缺工具时退出码仍是 0 —— **缺工具是常态，不是脚本失败**。
+   Both commands are **read-only**: they install nothing, change no system state, require no root, and can be run repeatedly.
+   The exit code is still 0 when tools are missing — **missing tools are the norm, not a script failure**.
 
-2. 把 `--markdown` 的输出**整段**（表头 + 分隔行 + 数据行）粘进 §2.1。
-   本表已有表头与分隔行，粘贴时保持列序不变。
+2. Paste the `--markdown` output **as a whole block** (header row + separator row + data row) into §2.1.
+   This table already has a header row and a separator row; keep the column order unchanged when pasting.
 
-3. 同步更新 §2 登记表对应行。首次出现的环境按「**追加一行**」处理，不改动既有行。
+3. Update the corresponding row of the §2 registry table in sync. A first-time environment is handled as "**append a row**"; existing rows are not altered.
 
-4. **命名规则：`<角色>-<hostname 小写去分隔符>`，默认角色 `dev`。**
-   `WIN-03IB7NIEPF0` → `dev-win03ib7niepf0`，与 §2 既有行一致 —— 维护者 2026-10-11 裁决：
-   **角色作前缀**。换角色用 `--role`（`tools/env-probe.sh --role infra` → `infra-win03ib7niepf0`）；
-   完全覆盖环境名用 `--name`（`tools/env-probe.sh --name my-env`）。
-   **登记表以名字为键，不以生成规则为键** —— 改名等于换环境，须经维护者确认。
+4. **Naming rule: `<role>-<hostname lowercased, separators removed>`, default role `dev`.**
+   `WIN-03IB7NIEPF0` → `dev-win03ib7niepf0`, consistent with the existing row in §2 — maintainer ruling of 2026-10-11:
+   **the role goes first as a prefix**. To change the role use `--role` (`tools/env-probe.sh --role infra` → `infra-win03ib7niepf0`);
+   to override the environment name entirely use `--name` (`tools/env-probe.sh --name my-env`).
+   **The registry is keyed by name, not by generation rule** — renaming equals substituting a different environment and requires maintainer confirmation.
 
-5. **照实写缺失项。** 缺 helm 就写缺 helm；「装了但版本命令报错」必须记成
-   ⚠ 装了但不可用，不能记成具备。**不得**因为一台机器缺工具就去推论「项目缺能力」。
+5. **Write missing items truthfully.** If helm is missing, write that helm is missing; "installed but the version command errors" must be recorded as
+   ⚠ installed but unusable, never as present. **Never** infer "the project lacks the capability" from one machine missing a tool.
 
-## 4. 引用规范：状态声明三元组
+## 4. Citation convention: the status-claim triple
 
-**凡写「已验证 / 未验证」，一律写成三元组 `(结论, 证据文件, 日期)`，不允许裸句。**
+**Whenever writing "verified / unverified", always write it as the triple `(conclusion, evidence file, date)`; a bare sentence is not allowed.**
 
-| | 示例 | 说明 |
+| | Example | Explanation |
 |---|---|---|
-| ✅ 正向 | `(已验证, docs/acceptance/artifacts/m5/2026-10-05/PASS-chart-check-2026-10-05.txt, 2026-10-05)` | 结论、证据文件、日期三者齐备，读者可自行打开核对 |
-| ❌ 反例 | 「chart-check 通过」 | **禁止** —— 未说明在哪台机器跑的，读者无法判断该结论可否在当前环境复现，正是 2026-10-11 之前反复返工的根因 |
+| ✅ Positive | `(verified, docs/acceptance/artifacts/m5/2026-10-05/PASS-chart-check-2026-10-05.txt, 2026-10-05)` | Conclusion, evidence file, and date are all present; the reader can open it and check |
+| ❌ Counter-example | "chart-check passed" | **Forbidden** — it does not state on which machine it ran, so the reader cannot judge whether the conclusion reproduces in the current environment; this is precisely the root cause of the repeated rework before 2026-10-11 |
 
-补充约定：
+Supplementary conventions:
 
-- **三件容易被误读的事**（`FAILCLOSED-` 文件不是通过证据、chart-check 的 `[INFO] Fail:` 属预期断言、
-  `PASS-gate-*.txt` 含 SKIPPED 项）见
-  [`acceptance/artifacts/m5/README.md`](acceptance/artifacts/m5/README.md)。
-- **本目录内 `Fail` / `ERROR` 字样属正常语义，不得据此判定文件失败；一律以文件名前缀为准。**
-- 机器能力之外的**项目**能力不由本文裁决；交付边界见
-  [`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §7.1。
+- **Three things that are easily misread** (`FAILCLOSED-` files are not passing evidence; chart-check's `[INFO] Fail:` is an expected assertion;
+  `PASS-gate-*.txt` contains SKIPPED items) see
+  [`acceptance/artifacts/m5/README.md`](acceptance/artifacts/m5/README.md).
+- **`Fail` / `ERROR` wording inside this directory is normal semantics; never judge a file failed on that basis — always go by the file-name prefix.**
+- **Project** capabilities beyond machine capability are not adjudicated by this document; for the delivery boundary see
+  [`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §7.1.
 
-## 5. 安全边界
+## 5. Security boundary
 
-**本文不含任何凭据、token、地址**（`AGENT.md` §11 / §13）：不写密码、证书私钥、token、DSN、
-cookie，也不写真实 IP / 域名 / registry 地址。工具路径只写到解释能力所必需的程度；
-`tools/env-probe.sh` 的输出同样受此约束 —— 它只打印工具路径、版本与机器标识，
-**不打印任何环境变量**。证据文件同样受此约束，见 `acceptance/artifacts/m5/README.md` 末行。
+**This document contains no credentials, tokens, or addresses** (`AGENT.md` §11 / §13): no passwords, certificate private keys, tokens, DSNs,
+cookies, and no real IPs / domain names / registry addresses. Tool paths are recorded only to the extent needed to explain capability;
+the output of `tools/env-probe.sh` is bound by the same constraint — it prints only tool paths, versions, and machine identifiers, and
+**prints no environment variables**. Evidence files are bound by the same constraint; see the last line of `acceptance/artifacts/m5/README.md`.
 
-## 6. 维护约定
+## 6. Maintenance conventions
 
-- **环境信息由脚本生成，不由人工填写**（§0 第 3 条）。人工登记表已被取消。
-- 新增环境 = **追加一行**，不改动既有行；**hostname 不得为空字符串，也不得留占位符**。
-  本表不写「待填写」行：写不出 hostname 就说明这台机器还没被探测过。
-- 工具增减必须带**实测日期**；「大概有」不构成登记。
-- 守卫：[`../tests/test_evidence_discipline.py`](../tests/test_evidence_discipline.py) 强制
-  `tools/env-probe.sh` 存在且可执行、本文不得再出现空 hostname 占位、本文必须链到该脚本。
-- 本表与 [`architecture/README.md`](architecture/README.md) 的证据分级、
-  [`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md) §7.4
-  构成第 2 层机制，回归由 `tests/test_evidence_discipline.py` 守卫。
+- **Environment information is script-generated, not hand-filled** (§0 item 3). The hand-maintained registry has been abolished.
+- Adding an environment = **appending a row**; existing rows are not altered, and **a hostname must never be an empty string nor a leftover placeholder**.
+  This table has no "to be filled in" rows: if a hostname cannot be written, that means the machine has not been probed yet.
+- Tool additions and removals must carry a **measurement date**; "probably present" does not constitute a registry entry.
+- Guard: [`../tests/test_evidence_discipline.py`](../tests/test_evidence_discipline.py) enforces that `tools/env-probe.sh` exists and is executable, that no empty-hostname placeholder reappears in this document, and that this document links to that script.
+- This table, the evidence grading in [`architecture/README.md`](architecture/README.md), and
+  §7.4 of [`handoff/2026-10-11-open-adjudication-register.md`](handoff/2026-10-11-open-adjudication-register.md)
+  together constitute the layer-2 mechanism, guarded by the regression test `tests/test_evidence_discipline.py`.
 
-**落盘日期：2026-10-11。状态：已落盘，待维护者评审。**
-（2026-10-11 变更：删除无法填写的 infra 占位行；环境信息改为由 `tools/env-probe.sh` 现场探测生成；
-新增 §0 口径段、§2.1 逐工具矩阵、§3 更新步骤。`dev-win03ib7niepf0` 一行为实测真值，未改动。
-同日：`tools/env-probe.sh` 的默认命名规则由「角色作后缀」改为「**角色作前缀**，默认角色 `dev`」，
-与既有行一致；`--role` / `--name` 的语义不变。依据：维护者 2026-10-11 裁决。）
-**2026-10-11 第三次变更（按真实输出重贴）：** 上文「`dev-win03ib7niepf0` 一行为实测真值，未改动」记录的是
-**首次落盘那一轮**——那一轮探测脚本跑不起来，该行是手工写的。脚本修复后本机实跑
-`bash tools/env-probe.sh --markdown`（退出码 0），§2 登记表行与 §2.1 矩阵数据行已按该次真实输出重贴
-（新增 `make` / `git` 两列实测值、OS 与架构；`helm` / `kubectl` / `kind` / `promtool` 四项确认均为「未找到」）。
-版本号一律来自脚本输出，未手工补写任何一格。§2.1 原「本轮未落盘数据行」的说明按审计链要求**保留未删**，
-其后的补记说明现状。§0 口径、§3 命名规则、§4 三元组、§5 安全边界、§6 维护约定均未改动。
+**Written to disk: 2026-10-11. Status: written to disk, pending maintainer review.**
+(2026-10-11 change: removed the unfillable infra placeholder row; environment information is now generated by on-the-spot probing with `tools/env-probe.sh`;
+added the §0 framing section, the §2.1 per-tool matrix, and the §3 update procedure. The `dev-win03ib7niepf0` row is the measured truth value and was not changed.
+Same day: the default naming rule of `tools/env-probe.sh` changed from "role as suffix" to "**role as prefix, default role `dev`**",
+consistent with the existing rows; the semantics of `--role` / `--name` are unchanged. Basis: maintainer ruling of 2026-10-11.)
+**2026-10-11 third change (re-posted from the real output):** the sentence above stating "the `dev-win03ib7niepf0` row is the measured truth value and was not changed" records
+**the round in which it was first written to disk** — in that round the probe script could not run and that row was hand-written. After the script was fixed it was actually run locally with
+`bash tools/env-probe.sh --markdown` (exit code 0), and the §2 registry row and the §2.1 matrix data row have been re-posted from that real output
+(adding the measured values for the two new columns `make` / `git`, plus OS and architecture; `helm` / `kubectl` / `kind` / `promtool` all confirmed as "not found").
+All version numbers come from the script output; not a single cell was hand-filled. §2.1's original "no data row written to disk in this round" statement is retained undeleted as the audit chain requires,
+with the subsequent addendum stating the current state. §0 framing, §3 naming rule, §4 triple, §5 security boundary, and §6 maintenance conventions are unchanged.

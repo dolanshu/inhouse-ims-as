@@ -12,134 +12,134 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-**本文是「内部版收尾评审」，不是 M8 退出签字。**
+**This document is the "internal release wrap-up review", not the M8 exit sign-off.**
 
-# M8 内部版收尾评审记录（2026-10-12）
+# M8 Internal Release Wrap-Up Review Record (2026-10-12)
 
-- **评审对象（object）**：M8 内部版收尾；范围为批次 1「发布与打包」至批次 6「文档与报告」六批全部产出。
-- **评审日期（date）**：2026-10-13（文档批次日期：2026-10-12）。
-- **评审人（reviewer）**：AI agent（维护者授权执行批次 1–6）；**维护者确认栏留空待签**。
-- **评审结论（conclusion）**：**内部版收尾完成（有条件）**。条件是 M8 退出签字仍后置，排在外部硬依赖闭环之后。**这不是 M8 退出签字，也不是「通过」结论。**
-- **执行环境**：`dev-win03ib7niepf0`。
-
----
-
-## 1. 本版完成项
-
-### 1.1 批次 1：发布与打包
-
-Dockerfile 带 SIP 监听，内部镜像 tag 为 `as-platform:0.2.0-internal-20261012`；已记录构建 digest、运行时 SIP 监听、脱敏检查及环境文档对齐边界。
-
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-docker-build-digest-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-desensitization-check-2026-10-12.txt, 2026-10-12)`
-
-### 1.2 批次 2：SIP 对拍（A3 Phase D）
-
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s5-call-id-stability-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s6-multi-rule-priority-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s7a-sdp-corpus-expansion-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s8-baseline-recapture-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s9-in-dialog-bye-routing-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s10-non-2xx-passthrough-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s11-cancel-race-branch1-2026-10-12.txt, 2026-10-12)`
-
-### 1.3 批次 3：kind / sim 证据
-
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt, 2026-10-12)`
-- `(已验证-接受实测呼损, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt, 2026-10-12)`
-
-### 1.4 批次 4：签收与评审
-
-- `(已验证-仅拒绝场景, docs/acceptance/artifacts/m5/2026-10-12/PASS-s1-whitelist-rejection-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-audit-append-only-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-rbac-permission-matrix-2026-10-12.txt, 2026-10-12)`
-
-矩阵终态登记指针：`(已验证, docs/acceptance/m8-test-plan-matrix.md「M8 批次4 终态化代签（2026-10-13）」节, 2026-10-13)`。现行计数为 pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0；签字口径均为「工程证据接受」，全部为 agent 代签（维护者授权），不是维护者亲签。
-
-### 1.5 批次 5：性能与容量
-
-- `(已验证-非饱和点, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf15-multi-replica-measurement-2026-10-12.txt, 2026-10-12)`
-- `(已验证-仅限内部, docs/acceptance/artifacts/m5/2026-10-12/PASS-o1-loopback-cps-1280-2026-10-12.txt, 2026-10-12)`
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-hpa-threshold-filled-2026-10-12.txt, 2026-10-12)`
-
-`PASS-o1-loopback-cps-1280-2026-10-12.txt` 中的 CPS 1280 仅是内部工程目标，不得写入对外材料。
-
-### 1.6 批次 6：文档与报告
-
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt, 2026-10-12)`
+- **Review target (object)**: M8 internal release wrap-up; scope covers the outputs of all six batches from batch 1 "release and packaging" to batch 6 "docs and reports".
+- **Review date (date)**: 2026-10-13 (document batch date: 2026-10-12).
+- **Reviewer (reviewer)**: AI agent (maintainer-authorized to execute batches 1–6); **the maintainer confirmation block is left blank pending signature**.
+- **Conclusion (conclusion)**: **internal release wrap-up complete (conditional)**. The condition is that the M8 exit sign-off remains deferred, placed after closure of the external hard dependencies. **This is not the M8 exit sign-off, and not a "pass" conclusion.**
+- **Execution environment**: `dev-win03ib7niepf0`.
 
 ---
 
-## 2. 已知 gap 与终态边界
+## 1. Items Completed in This Release
 
-下列 `FAILCLOSED-` / `FAIL-` 文件**一律不是通过证据**：
+### 1.1 Batch 1: Release and Packaging
 
-1. 滚动零丢失未达成；当前 release 只接受已实测呼损范围：`(失败已登记-不是通过证据, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt, 2026-10-12)`。
-2. performance 层门禁终态的原始 FAILCLOSED 登记仍不是通过证据；批次 4 的 B5-04 已裁决采用 `(b)`，由 M8 总审书面接受风险关闭，本版不实现 `make gate` 阻塞层：`(失败已登记-不是通过证据, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-performance-gate-terminal-state-2026-10-12.txt, 2026-10-12)`。
-3. 白名单变更审批能力不存在：`(能力不存在-不是通过证据, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt, 2026-10-12)`。
-4. in-dialog re-INVITE / UPDATE 未实现：`(未实现-不是通过证据, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s9-reinvite-update-not-implemented-2026-10-12.txt, 2026-10-12)`。
-5. CANCEL 先于任何下游响应的分支未实现：`(未实现-不是通过证据, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s11-cancel-before-any-downstream-response-2026-10-12.txt, 2026-10-12)`。
-6. PostgreSQL 15 集成运行失败；标准环境为 PostgreSQL 12.22，本批次未改产品代码：`(失败-不是通过证据, docs/acceptance/artifacts/m5/2026-10-12/FAIL-integration-pg15-2026-10-12.txt, 2026-10-12)`。
+Dockerfile carries a SIP listener; the internal image tag is `as-platform:0.2.0-internal-20261012`; the build digest, runtime SIP listener, desensitization check and environment documentation alignment boundary have been recorded.
 
-另有 4 行 `defer`：F-5 / F-8 / F-9 / F-11，均为本 release 不验收、已定点 v1.1；另有 9 行 `blocked`，属于现行矩阵登记的 restriction / 受限项。`defer`、`blocked` 与 `n-a` 的定义以矩阵「M8 批次4 终态化代签（2026-10-13）」节第三节为准。
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-docker-build-digest-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-desensitization-check-2026-10-12.txt, 2026-10-12)`
+
+### 1.2 Batch 2: SIP Cross-Check (A3 Phase D)
+
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s5-call-id-stability-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s6-multi-rule-priority-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s7a-sdp-corpus-expansion-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s8-baseline-recapture-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s9-in-dialog-bye-routing-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s10-non-2xx-passthrough-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s11-cancel-race-branch1-2026-10-12.txt, 2026-10-12)`
+
+### 1.3 Batch 3: kind / sim Evidence
+
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt, 2026-10-12)`
+- `(verified-accepted measured call loss, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt, 2026-10-12)`
+
+### 1.4 Batch 4: Sign-off and Review
+
+- `(verified-rejection scenarios only, docs/acceptance/artifacts/m5/2026-10-12/PASS-s1-whitelist-rejection-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-audit-append-only-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-s4-rbac-permission-matrix-2026-10-12.txt, 2026-10-12)`
+
+Matrix final-state registration pointer: `(verified, "M8 Batch 4 Final-State Countersign (2026-10-13)" section of docs/acceptance/m8-test-plan-matrix.md, 2026-10-13)`. The current counts are pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0; all sign-off bases are "engineering evidence accepted", all are agent countersignatures (maintainer-authorized), not the maintainer's own signature.
+
+### 1.5 Batch 5: Performance and Capacity
+
+- `(verified-non-saturation point, docs/acceptance/artifacts/m5/2026-10-12/PASS-nf15-multi-replica-measurement-2026-10-12.txt, 2026-10-12)`
+- `(verified-internal use only, docs/acceptance/artifacts/m5/2026-10-12/PASS-o1-loopback-cps-1280-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-hpa-threshold-filled-2026-10-12.txt, 2026-10-12)`
+
+The CPS 1280 in `PASS-o1-loopback-cps-1280-2026-10-12.txt` is only an internal engineering target and must not be written into external materials.
+
+### 1.6 Batch 6: Docs and Reports
+
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt, 2026-10-12)`
 
 ---
 
-## 3. 问题清单与对应修改 / 处置
+## 2. Known Gaps and Final-State Boundaries
 
-| # | 发现的问题 | 对应修改 / 处置 | 当前状态 |
+The following `FAILCLOSED-` / `FAIL-` files are **never pass evidence**:
+
+1. Zero-loss rolling upgrade was not achieved; the current release only accepts the range of measured call loss already tested: `(failure registered-not pass evidence, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt, 2026-10-12)`.
+2. The original FAILCLOSED registration for the terminal state of the performance-layer gate is still not pass evidence; B5-04 of batch 4 has been adjudicated to adopt `(b)`, closed by written risk acceptance from the overall M8 review, and this release does not implement the `make gate` blocking layer: `(failure registered-not pass evidence, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-performance-gate-terminal-state-2026-10-12.txt, 2026-10-12)`.
+3. The whitelist-change approval capability does not exist: `(capability absent-not pass evidence, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt, 2026-10-12)`.
+4. in-dialog re-INVITE / UPDATE are not implemented: `(not implemented-not pass evidence, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s9-reinvite-update-not-implemented-2026-10-12.txt, 2026-10-12)`.
+5. The CANCEL-before-any-downstream-response branch is not implemented: `(not implemented-not pass evidence, docs/acceptance/artifacts/m5/2026-10-12/FAILCLOSED-s11-cancel-before-any-downstream-response-2026-10-12.txt, 2026-10-12)`.
+6. The PostgreSQL 15 integration run failed; the standard environment is PostgreSQL 12.22, and this batch did not change product code: `(failed-not pass evidence, docs/acceptance/artifacts/m5/2026-10-12/FAIL-integration-pg15-2026-10-12.txt, 2026-10-12)`.
+
+There are also 4 `defer` rows: F-5 / F-8 / F-9 / F-11, all not accepted in this release and already earmarked for v1.1; plus 9 `blocked` rows, which are restriction / constrained items registered in the current matrix. The definitions of `defer`, `blocked` and `n-a` are governed by section three of the matrix's "M8 Batch 4 Final-State Countersign (2026-10-13)" section.
+
+---
+
+## 3. List of Issues and Corresponding Fixes / Disposition
+
+| # | Issue Found | Corresponding Fix / Disposition | Current Status |
 |---|---|---|---|
-| 1 | 重建镜像的 manifest digest 与批次 1 记录值不同 | 保留批次 1 历史 digest，并在 E-6 证据记录新 digest、buildx attestation / manifest-list 差异与「不宣称逐字节一致」边界 | 已记录，不据此宣称镜像内容变化 |
-| 2 | `report.md` §0.5 仍是 2026-10-06 历史计数 | 仅追加 §0.10 同步现行计数；历史段落一字不改 | 已同步 |
-| 3 | 旧 M8 退出评审签字表未反映内部版收尾状态 | 仅追加 §3.2；M8 保持未签，M1/M2/M6/M7 维持授权代签的工程完成口径 | 已登记 |
-| 4 | `plan.md` M8 行尚未回写内部版收尾 | 只生成 `m8-plan-m8-row-draft-2026-10-12.md` 草案，等待维护者确认；未改 `plan.md` | 待维护者确认 |
-| 5 | 外部硬依赖与 v1.1 缺口尚未闭环 | 外部依赖保持 `blocked`，F-5/F-8/F-9/F-11 保持 `defer`；不以内部证据替代客户 / 运营商环境 | 后置，不等于取消 |
-| 6 | M5 REQ 级验收仍不通过 | 保持既有结论，不用内部版收尾覆盖 REQ 级结论 | 未改变 |
+| 1 | The manifest digest of the rebuilt image differs from the value recorded in batch 1 | Preserve the batch 1 historical digest, and record in the E-6 evidence the new digest, the buildx attestation / manifest-list difference and the "do not claim byte-for-byte identity" boundary | Recorded; no claim of image content change is made on this basis |
+| 2 | `report.md` §0.5 still holds the 2026-10-06 historical counts | Only append §0.10 to sync the current counts; the historical paragraph is left unchanged | Synced |
+| 3 | The old M8 exit review signature table does not reflect the internal release wrap-up status | Only append §3.2; M8 remains unsigned, and M1/M2/M6/M7 keep the authorized-countersign engineering-complete basis | Registered |
+| 4 | The M8 row of `plan.md` has not yet been written back for the internal release wrap-up | Only produce the `m8-plan-m8-row-draft-2026-10-12.md` draft and wait for maintainer confirmation; `plan.md` was not changed | Pending maintainer confirmation |
+| 5 | External hard dependencies and v1.1 gaps are not yet closed | External dependencies stay `blocked`, F-5/F-8/F-9/F-11 stay `defer`; internal evidence does not substitute for customer / carrier environments | Deferred, not equivalent to cancelled |
+| 6 | M5 REQ-level acceptance still does not pass | Keep the existing conclusion; do not override REQ-level conclusions with the internal release wrap-up | Unchanged |
 
 ---
 
-## 4. 限制说明
+## 4. Limitation Notes
 
-1. 模拟器 / kind 证据是工程与集成层证据，**不升级为运营商或客户验收**。
-2. 测试 CA ≠ 运营商 PKI；不签收 REQ-S-2 / REQ-S-3。
-3. kind bundled state ≠ 生产 Redis / PostgreSQL HA；D12 / O5 不验收。
-4. M7.1 仿真透明桥 ≠ 运营商 S-SBC。
-5. accept-all harness ≠ 业务判决路径，因此 **O1 对外承诺值仍不填**；内部工程目标 loopback CPS 1280 仅限内部，不得写入对外材料。
-6. 内部版本 ≠ 发行版：VERSION 维持 `0.2.0`、未 tag、chart 不随 internal build 变更。
-7. **本文不构成 M8 退出签字**。M8 退出签字排在外部硬依赖 D-1（运营商 PKI + 外网 S-SBC）、D-2（客户 K8s）、ADR-0008 跨站点演练、D12 / O5 生产 HA 闭环之后。
-8. 本批次未执行任何 git 写操作；commit 拆分由维护者决定。
+1. Simulator / kind evidence is engineering- and integration-level evidence; **it is not upgraded to carrier or customer acceptance**.
+2. Test CA ≠ carrier PKI; REQ-S-2 / REQ-S-3 are not signed off.
+3. kind bundled state ≠ production Redis / PostgreSQL HA; D12 / O5 are not accepted.
+4. M7.1 simulated transparent bridge ≠ carrier S-SBC.
+5. accept-all harness ≠ business adjudication path, therefore **the external commitment value for O1 is still left blank**; the internal engineering target of loopback CPS 1280 is internal-only and must not be written into external materials.
+6. Internal version ≠ release version: VERSION remains `0.2.0`, is not tagged, and the chart does not change with the internal build.
+7. **This document does not constitute the M8 exit sign-off.** The M8 exit sign-off is placed after the external hard dependencies D-1 (carrier PKI + external-network S-SBC), D-2 (customer K8s), the ADR-0008 cross-site drill, and closure of D12 / O5 production HA.
+8. This batch performed no git write operations; the commit split is decided by the maintainer.
 
 ---
 
-## 5. 修改后的确认签字
+## 5. Post-Fix Confirmation Sign-off
 
-| 项 | 记录 |
+| Item | Record |
 |---|---|
-| 评审结论 | **内部版收尾完成（有条件）**；不是「通过」结论 |
-| 条件 | M8 退出签字继续后置，排在外部硬依赖闭环之后 |
-| 评审人 | AI agent（维护者授权执行批次 1–6） |
-| M8 退出签字栏 | **未签（维护者待签）** |
-| 维护者确认 | **待签字** |
-| 所需维护者动作 | (1) 确认 `docs/plan.md` M8 行最终表述；(2) 给出外部硬依赖排期或书面接受风险；(3) 决定 commit 拆分；(4) 决定并仅由维护者执行 tag |
+| Review conclusion | **Internal release wrap-up complete (conditional)**; not a "pass" conclusion |
+| Condition | The M8 exit sign-off stays deferred, placed after closure of the external hard dependencies |
+| Reviewer | AI agent (maintainer-authorized to execute batches 1–6) |
+| M8 exit sign-off block | **Unsigned (pending maintainer signature)** |
+| Maintainer confirmation | **Pending signature** |
+| Required maintainer actions | (1) Confirm the final wording of the M8 row in `docs/plan.md`; (2) provide a schedule for the external hard dependencies or written risk acceptance; (3) decide the commit split; (4) decide on and perform the tag, by the maintainer only |
 
 ---
 
-## 6. 路径 C 更正（2026-10-13；以上各节原文保留不改）
+## 6. Path C Correction (2026-10-13; all preceding sections preserved unchanged)
 
-> 本节只追加更正，§1–§5 一字未改。
+> This section only appends a correction; §1–§5 are unchanged down to the character.
 
-维护者已于 **2026-10-13** 按**路径 C** 作出 **M8 退出签字** —— 即「签 M8 退出签字 + 同时**书面接受外部硬依赖风险**」。据此：
+The maintainer made the **M8 exit sign-off** on **2026-10-13** following **path C** — i.e. "sign the M8 exit sign-off + at the same time **accept the external hard dependency risk in writing**". Accordingly:
 
-1. 本文文首「**本文是「内部版收尾评审」，不是 M8 退出签字**」与 §5 签字节（M8 退出签字栏 = 未签），**保留为内部版收尾阶段的历史结论**，不因本次签字而被改写或视为失效。
-2. **现行状态以 [`m8-exit-review-2026-10-06.md`](m8-exit-review-2026-10-06.md) §3.3 与风险接受前提文件 [`m8-external-dependency-risk-acceptance-2026-10-13.md`](m8-external-dependency-risk-acceptance-2026-10-13.md) 为准**。
-3. 本文仍作为**内部版收尾评审存档**保留，**其中的 FAILCLOSED / gap / 限制说明全部继续有效** —— **不因 M8 签字而失效**：
-   - §2 六项 `FAILCLOSED-` / `FAIL-` 文件**一律不是通过证据**的判定继续有效；
-   - §4 八条限制说明（测试 CA ≠ 运营商 PKI、kind bundled state ≠ 生产 HA、accept-all harness ≠ 业务判决路径、内部版本 ≠ 发行版等）继续有效；
-   - §4 第 7 条「本文不构成 M8 退出签字」作为**本文自身的历史定位**保留，M8 退出签字现登记于 `m8-exit-review-2026-10-06.md` §3.3。
-4. **接受风险 ≠ 验证通过 ≠ 这些行转终态**：四项外部硬依赖（D-1 / D-2 / ADR-0008 演练 / D12-O5）保持 `blocked` 并转下一 release，重启条件 = 维护者另行裁决 + 外部资源到位，后置 ≠ 取消。
-5. **签字覆盖里程碑退出，不覆盖 REQ 级验收** —— M5 REQ 级仍是不通过；不宣称 M8 全绿。
-6. 本节未执行任何 git 写操作；tag 仅维护者执行（`AGENT.md` §10.4）。执行环境 `dev-win03ib7niepf0`。
+1. The document-opening statement "**This document is the 'internal release wrap-up review', not the M8 exit sign-off**" and the sign-off block in §5 (M8 exit sign-off block = unsigned) are **preserved as the historical conclusion of the internal release wrap-up stage**, and are neither rewritten nor treated as invalidated by this sign-off.
+2. **The current status is governed by §3.3 of [`m8-exit-review-2026-10-06.md`](m8-exit-review-2026-10-06.md) and the risk-acceptance premise document [`m8-external-dependency-risk-acceptance-2026-10-13.md`](m8-external-dependency-risk-acceptance-2026-10-13.md)**.
+3. This document is still retained as an **internal release wrap-up review archive**, and **all of its FAILCLOSED / gap / limitation notes remain in force** — **they are not invalidated by the M8 sign-off**:
+   - The determination in §2 that the six `FAILCLOSED-` / `FAIL-` files are **never pass evidence** remains in force;
+   - The eight limitation notes in §4 (test CA ≠ carrier PKI, kind bundled state ≠ production HA, accept-all harness ≠ business adjudication path, internal version ≠ release version, etc.) remain in force;
+   - Item 7 of §4, "this document does not constitute the M8 exit sign-off", is preserved as **this document's own historical positioning**; the M8 exit sign-off is now registered in §3.3 of `m8-exit-review-2026-10-06.md`.
+4. **Risk acceptance ≠ verified pass ≠ these rows becoming final**: the four external hard dependencies (D-1 / D-2 / ADR-0008 drill / D12-O5) stay `blocked` and roll over to the next release; the restart condition = a separate maintainer adjudication + external resources in place; deferred ≠ cancelled.
+5. **The sign-off covers milestone exit, not REQ-level acceptance** —— M5 REQ-level is still a fail; no claim is made that M8 is all green.
+6. This section performed no git write operations; the tag is performed by the maintainer only (`AGENT.md` §10.4). Execution environment `dev-win03ib7niepf0`.

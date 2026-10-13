@@ -14,8 +14,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 # AGENT.md — 3rdparty-as
 
-> 人与 AI agent 的协作守则（rules of engagement）。
-> 在写任何代码之前先读这个文件。如果这里的规则与某条请求冲突，以本文件为准，并向维护者提出冲突。
+> Rules of engagement between humans and AI agents.
+> Read this file before writing any code. If any rule here conflicts with a request, this file prevails, and raise the conflict with the maintainer.
 
 ## Agent skills
 
@@ -29,281 +29,281 @@ Use the canonical triage labels mapped in `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-This is a single-context repo. Read relevant domain docs and ADRs under `docs/architecture/adr/`; see `docs/agents/domain.md`.
+This is a single-context repo. Read the relevant domain docs and ADRs under `docs/architecture/adr/`; see `docs/agents/domain.md`.
 
-## 1. 项目定位与范围
+## 1. Positioning and scope
 
-一个**产品化的第三方 IMS Application Server（应用服务器）**：单租户、on-premises（本地部署），部署在运营商 IMS 网络之外，由 S-CSCF 经运营商的 S-SBC 触发，S-SBC 做透明桥接。
+A **productized third-party IMS Application Server (application server)**: single-tenant, on-premises, deployed outside the operator's IMS network, triggered by the S-CSCF through the operator's S-SBC, which does transparent bridging.
 
-它**不是 POC**。POC（`../3rtparty_AS_POC`）是在另一套非目标下验证概念而存在的；本仓库是产品本身。
+It **is not a POC**. The POC (`../3rtparty_AS_POC`) exists to validate concepts under a different set of goals; this repository is the product itself.
 
-**我们只实现外部 AS。** S-CSCF、S-SBC 和 HSS 是运营商的；它们在这里只作为 `testbed/` 下的仿真器出现。
+**We implement only the external AS.** The S-CSCF, S-SBC, and HSS are the operator's; here they appear only as simulators under `testbed/`.
 
-定位细节、架构图和 19 项已确认决策见 [`docs/architecture/新系统整体架构.md`](docs/architecture/新系统整体架构.md)。里程碑、未决项和当前状态见 [`docs/plan.md`](docs/plan.md)。
+For positioning details, architecture diagrams, and the 19 confirmed decisions, see [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md). For milestones, open items, and current status, see [`docs/plan.md`](docs/plan.md).
 
-## 2. 非目标
+## 2. Non-goals
 
-明确不在范围内。每一项都是经过决策的结果，不是疏漏：
+Explicitly out of scope. Each is the result of a decision, not an oversight:
 
-- **不做媒体。** 没有 RTP、没有转码、没有 DTMF、没有 MRF、没有媒体锚定。保留一个 seam 并写明触发条件（ADR-0004）。
-- **不做 CDR。** 不采集、不投递、不归档、不批价。用按 Call-ID 的呼叫轨迹替代它，用于投诉追溯与反诈举证（ADR-0017）。
-- **不做合法监听（LI）。** IRI 属于网内网元；让第三方 AS 介入会引入跨法域暴露（ADR-0016）。
-- **不做 Diameter Sh。** 数据来自我们自己的数据面。
-- **不做多租户。** 单租户、on-premises。选择依据：
+- **No media.** No RTP, no transcoding, no DTMF, no MRF, no media anchoring. Keep a seam and document the trigger conditions (ADR-0004).
+- **No CDR.** No collection, delivery, archiving, or rating. Replace it with a Call-ID-based call trace, for complaint tracing and anti-fraud evidence (ADR-0017).
+- **No lawful interception (LI).** IRIs belong to in-network network elements; having a third-party AS intervene would introduce cross-jurisdiction exposure (ADR-0016).
+- **No Diameter Sh.** Data comes from our own data plane.
+- **No multi-tenant.** Single-tenant, on-premises. Rationale:
 
-  | 维度 | 单租户 | 多租户 |
+  | Dimension | Single-tenant | Multi-tenant |
   |---|---|---|
-  | 部署 | 每客户独立实例，on-prem 交付 | 共享实例，逻辑隔离 |
-  | 隔离 | 天然物理隔离，故障域独立 | 需租户级命名空间 + 访问控制 |
-  | 运维 | 升级窗口按客户协商，互不影响 | 一次变更影响全部租户 |
-  | 合规 | 数据不出客户机房，审计边界清晰 | 跨租户数据泄露风险需额外证明 |
+  | Deployment | One independent instance per customer, on-prem delivery | Shared instance, logical isolation |
+  | Isolation | Natural physical isolation, independent fault domains | Needs tenant-level namespaces + access control |
+  | Ops | Upgrade windows negotiated per customer, no mutual impact | One change affects all tenants |
+  | Compliance | Data does not leave the customer machine room, clear audit boundary | Cross-tenant data-leak risk needs extra proof |
 
-  运营商的交付形态本身就是一客户一系统，多租户在此场景无收益。
-- **配置不走 GitOps。** 不能要求运营商运维人员为了改一个号段去学 Git；版本存为 PostgreSQL 中的行，藏在变更单状态机之后（ADR-0006）。
-  变更路径：控制台 / 内部 API 提交变更单 → 审批 → 服务写入 PostgreSQL → 灰度分发。
-  不是运维直接 UPDATE 数据库，也不是用 git 仓库管理配置。
-- **不写 Operator（CRD）。** 用 Helm + 标准 Deployment / ConfigMap / Secret（ADR-0013）。
-- **M6 实测之前不发布任何容量数字。** 在真实 socket 压测测出之前，不公布任何 CPS 或并发数字。
+  The operator's delivery form is itself one system per customer; multi-tenant brings no benefit in this scenario.
+- **No GitOps for config.** We cannot require operator ops staff to learn Git just to change a number range; the version is stored as a row in PostgreSQL, behind a change-order state machine (ADR-0006).
+  Change path: console / internal API submits a change order → approval → service writes to PostgreSQL → canary distribution.
+  Not ops directly `UPDATE`-ing the database, nor managing config with a git repo.
+- **No Operator (CRD).** Use Helm + standard Deployment / ConfigMap / Secret (ADR-0013).
+- **No capacity numbers published before M6 measurement.** Before measuring on a real-socket load test, publish no CPS or concurrency number.
 
-## 3. 工程阶段与文档链
+## 3. Engineering phases and the documentation chain
 
-每一个行为改动都必须贯通整条文档链。Requirement 是设计、编码、测试和验收的**唯一标准**。缺少任一环节的改动不完整。
+Every behavioral change must traverse the entire documentation chain. The Requirement is the **single standard** for design, coding, testing, and acceptance. A change missing any link is incomplete.
 
 ```text
-需求（Requirement）
+Requirement
    ↓
-架构决策（ADR）
+Architecture Decision (ADR)
    ↓
-高层设计（HLD）+ 低层设计（LLD）
+High-Level Design (HLD) + Low-Level Design (LLD)
    ↓
-接口契约与消息样例
+Interface contracts and message samples
    ↓
-代码 + 测试
+Code + tests
    ↓
-验收项与 Review Record
+Acceptance items and Review Record
 ```
 
-### 3.1 阶段定义
+### 3.1 Phase definitions
 
-| 阶段 | 产出 | 负责人 | 进入下一阶段的条件 |
+| Phase | Output | Owner | Condition to enter next phase |
 |---|---|---|---|
-| **Requirement** | `docs/requirements/` 中的 REQ-F-*/REQ-NF-* 条目 | 维护者 / 产品 | 评审通过，有 review record |
-| **ADR** | `docs/architecture/adr/00NN-*.md` | 维护者 / 架构 | 评审通过，有 review record |
-| **HLD/LLD** | `docs/architecture/hld.md`、`docs/architecture/lld.md`（含 feature enablement 设计） | 维护者 / 架构 | 评审通过，有 review record |
-| **Interface Contract** | `testbed/contracts/` 中的用例、消息样例 | 维护者 / 开发 | 与 ADR 一致，有 review record |
-| **Code + Test** | 实现代码 + 对应测试 | 开发 / AI agent | `make gate` 绿，PR 引用 ADR 和 requirement |
-| **Acceptance** | `docs/acceptance/report.md` 中的证据 | 维护者 | 验收项逐项通过，有 review record |
+| **Requirement** | REQ-F-*/REQ-NF-* entries in `docs/requirements/` | Maintainer / Product | Review passed, with review record |
+| **ADR** | `docs/architecture/adr/00NN-*.md` | Maintainer / Architecture | Review passed, with review record |
+| **HLD/LLD** | `docs/architecture/hld.md`, `docs/architecture/lld.md` (including feature enablement design) | Maintainer / Architecture | Review passed, with review record |
+| **Interface Contract** | Use cases, message samples in `testbed/contracts/` | Maintainer / Dev | Consistent with ADR, with review record |
+| **Code + Test** | Implementation code + corresponding tests | Dev / AI agent | `make gate` green, PR references ADR and requirement |
+| **Acceptance** | Evidence in `docs/acceptance/report.md` | Maintainer | Acceptance items pass one by one, with review record |
 
-### 3.2 文档要求
+### 3.2 Documentation requirements
 
-- **每个阶段都必须有文档。** 没有文档的决策等于没有发生过的决策。
-- **Requirement 是唯一标准。** 设计、代码、测试、验收都必须能追溯到具体的 REQ-* 编号。
-- **所有文档必须有 review。** 评审不是可选步骤；每个阶段的产出必须经过 review 才能进入下一阶段。
-- **Review 必须有单独的 review record。** 评审意见、修改记录、签字状态写入 `docs/reviews/` 下的独立文件（例如 `docs/reviews/adr-0019-review.md`）。口头或 inline comment 不构成正式评审记录。
-- **推翻或修改上游文档时，必须同步更新整条链。** 只改代码不改 requirement/design/acceptance 是未完成。
+- **Every phase must have documentation.** A decision without documentation is a decision that never happened.
+- **Requirement is the single standard.** Design, code, tests, and acceptance must all trace to a specific REQ-* number.
+- **All documents must be reviewed.** Review is not optional; each phase's output must pass review before entering the next phase.
+- **A Review must have a separate review record.** Review opinions, modification records, and sign-off status are written to a separate file under `docs/reviews/` (e.g., `docs/reviews/adr-0019-review.md`). Oral or inline comments do not constitute a formal review record.
+- **When overturning or modifying an upstream document, the entire chain must be updated synchronously.** Changing only code without changing requirement/design/acceptance is incomplete.
 
-### 3.3 Review Record 格式
+### 3.3 Review Record format
 
-每个 review record 至少包含：
+Each review record contains at least:
 
-1. 评审对象（文档 / PR / commit range）
-2. 评审日期与评审人
-3. 评审结论：通过 / 有条件通过 / 不通过
-4. 发现的问题清单与对应修改
-5. 修改后的确认签字
+1. Review target (document / PR / commit range)
+2. Review date and reviewer
+3. Review conclusion: pass / conditional pass / fail
+4. List of issues found and corresponding fixes
+5. Confirmation sign-off after fixes
 
-### 3.4 新 Feature 的实现流程
+### 3.4 New Feature implementation flow
 
-与 §3 的文档链对应，每个新 feature 逐阶段推进：
+Corresponding to the §3 documentation chain, each new feature advances phase by phase:
 
-1. **REQ** —— 需求条目进入 `docs/requirements/`。
-2. **ADR** —— 显式裁决 **enablement**（是否引入开关、默认态、灰度、移除条件）。
-3. **HLD/LLD** —— 落在设计文档里：开关如何分层、如何判定、如何回滚。
-4. **契约** —— 开关只做能力启停、**不改接口契约**；关闭走既有默认路径。
-5. **代码 + 测试** —— 开关的**开 / 关两态**都要有测试（§6）。
-6. **验收** —— 按开关态取证（§14）。
+1. **REQ** — the requirement entry enters `docs/requirements/`.
+2. **ADR** — explicitly adjudicate **enablement** (whether to introduce a toggle, default state, canary, removal condition).
+3. **HLD/LLD** — lands in the design doc: how toggles are layered, how they are judged, how to roll back.
+4. **Contract** — the toggle only enables/disables a capability, **does not change the interface contract**; the off path uses the existing default.
+5. **Code + Test** — both **on / off** states of the toggle must have tests (§6).
+6. **Acceptance** — gather evidence by toggle state (§14).
 
-**规则**：每个 feature 必须显式裁决**是否引入开关**；引入即须写明**默认态、灰度策略与移除条件**（防开关债务）。机制见 [ADR-0020](docs/architecture/adr/0020-feature-capability-gating.md) 与 [`docs/architecture/新系统整体架构.md`](docs/architecture/新系统整体架构.md) §5.3。
+**Rule**: each feature must explicitly adjudicate **whether to introduce a toggle**; if introduced, must state the **default state, canary strategy, and removal condition** (to prevent toggle debt). Mechanism in [ADR-0020](docs/architecture/adr/0020-feature-capability-gating.md) and [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md) §5.3.
 
-## 4. 分层
+## 4. Layering
 
 ```text
-apps/  ──uses──▶  platform/          一个用例一个进程
-services/ ─────────────────────────▶  PostgreSQL、AS 内部 API
-testbed/ ──may use──▶ platform/       研发资产，绝不做运行时依赖
+apps/  ──uses──▶  platform/          one process per use case
+services/ ─────────────────────────▶  PostgreSQL, AS internal API
+testbed/ ──may use──▶ platform/       R&D asset, never a runtime dependency
 ```
 
-**内核绝不能 import 应用、服务或 testbed。** 仓库边界并不强制这一点 —— 在 monorepo 里任何 import 都能解析成功。靠 [`platform/tests/test_library_independence.py`](platform/tests/test_library_independence.py) 来强制，[`tests/test_workspace_layout.py`](tests/test_workspace_layout.py) 来强制结构本身。
+**The core must never import apps, services, or testbed.** The repo boundary does not enforce this — in a monorepo any import resolves. It is enforced by [`platform/tests/test_library_independence.py`](platform/tests/test_library_independence.py) and [`tests/test_workspace_layout.py`](tests/test_workspace_layout.py).
 
-一个 app 绝不能 import 另一个 app。一个用例是一个进程、一个故障域、一个灰度单元。
+An app must never import another app. A use case is one process, one fault domain, one canary unit.
 
-**services 内部依赖（2026-10-11 追加注记，待维护者评审）**：上方分层图不禁止 services 层成员之间沿「内部 API」方向发生依赖。现存唯一一例：`services/config-service`（import root `as_config_service`）依赖 `services/console`（import root `as_console`，使用其会话 / 认证内部 API）。该依赖在 `services/config-service/pyproject.toml` 中显式声明（`[project].dependencies` 的 `as-console` 与 `[tool.uv.sources]` 的 workspace 源两处）；`services/console/pyproject.toml` 的 dependencies 为空、console 不反向依赖 config-service，因此不构成环。规则：此类依赖**必须**显式声明在依赖方的 `pyproject.toml` 中，且声明出的内部依赖图必须无环；「用了未声明」由 [`tests/test_layer_boundaries.py`](tests/test_layer_boundaries.py) 的 `test_internal_imports_are_declared_dependencies` 机器化守卫，成环由同文件 `test_internal_dependencies_do_not_form_a_cycle` 守卫，未声明或成环即违规。**本段不放宽上方的 app 互斥规则与 testbed 禁令**：app 仍绝不能 import 另一个 app，产品包仍绝不能依赖 testbed。
+**Internal dependency among services (added note 2026-10-11, pending maintainer review)**: the layering diagram above does not forbid dependencies between members of the services layer along the "internal API" direction. The only existing example: `services/config-service` (imports root `as_config_service`) depends on `services/console` (imports root `as_console`, using its session / auth internal API). That dependency is explicitly declared in `services/config-service/pyproject.toml` (the `as-console` in `[project].dependencies` and the workspace source in `[tool.uv.sources]`); `services/console/pyproject.toml`'s dependencies are empty, and console does not depend back on config-service, so no cycle is formed. Rule: such dependencies **must** be explicitly declared in the dependent party's `pyproject.toml`, and the declared internal dependency graph must be acyclic; "used but not declared" is machine-guarded by [`tests/test_layer_boundaries.py`](tests/test_layer_boundaries.py)'s `test_internal_imports_are_declared_dependencies`, and cycles by the same file's `test_internal_dependencies_do_not_form_a_cycle`; undeclared or cyclic is a violation. **This paragraph does not relax the app-mutual-exclusion rule above nor the testbed ban**: apps still must never import another app, and the product package still must never depend on testbed.
 
-目录结构和成员清单见 [`docs/plan.md`](docs/plan.md) §2。
+Directory structure and member list are in [`docs/plan.md`](docs/plan.md) §2.
 
-## 5. 编码约定
+## 5. Coding conventions
 
-- **产物的语言：英文。** 标识符、注释、日志、错误字符串、commit message、贴近代码的文档都用英文。本仓库中面向人的文档用中文；这是唯一的例外。
-- **所有公共函数都要类型标注；`mypy` 严格模式必须干净。**
-- **决策模块是纯函数。** 产出判决的模块里不能有 socket、不能有时钟、不能有全局状态。这正是 TDD 在那儿便宜的原因。
-- **SIP 栈的交互只局限在 SIP adapter 和 call controller。** 胶水层保持轻薄。
-- **`ED2.loop()` 或等价的阻塞事件循环是阻塞的。** 绝不要在 SIP 回调里调用阻塞操作 —— 包括遥测导出。导出在自己的线程上跑（ADR-0005）。
-- **每一行不显而易见的代码都指向它的 ADR**：`# See ADR-00NN`。审稿人必须能从代码一步走到理由。
-- **`src/` 里不要出现 `util`、`helper`、`misc`、`common`、`tools` 这类模块名。**
-- **SIP 栈的行为是观察出来的，不是假设的。** 有疑问就在 `testbed/` 下写一个 probe 跑一下。绝不要凭空发明一个 header、状态码或 API。
+- **Language of artifacts: English.** Identifiers, comments, logs, error strings, commit messages, and code-adjacent docs are all English. Human-facing documentation in this repo is in Chinese; that is the only exception.
+- **All public functions must have type annotations; `mypy` strict mode must be clean.**
+- **The decision module is a pure function.** The module that produces decisions must have no socket, no clock, no global state. This is precisely why TDD is cheap there.
+- **SIP stack interaction is confined to the SIP adapter and call controller.** Keep the glue layer thin.
+- **`ED2.loop()` or equivalent blocking event loop is blocking.** Never call a blocking operation inside a SIP callback — including telemetry export. Export runs on its own thread (ADR-0005).
+- **Every line of non-obvious code points to its ADR**: `# See ADR-00NN`. A reviewer must be able to walk from code to rationale in one step.
+- **No `util`, `helper`, `misc`, `common`, `tools` module names in `src/`.**
+- **SIP stack behavior is observed, not assumed.** When in doubt, write a probe under `testbed/` and run it. Never invent a header, status code, or API out of thin air.
 
-## 6. 测试策略
+## 6. Test strategy
 
-测试必须与 requirement 对齐。每个测试都应能追溯到至少一个 REQ-* 或契约用例。
+Tests must align with requirements. Each test should trace to at least one REQ-* or contract case.
 
-| 层 | Marker | 方法 |
+| Layer | Marker | Method |
 |---|---|---|
-| 决策逻辑 | `unit` | **强制 TDD**，红 - 绿 - 重构。TDD 的回报就在这里。 |
-| 契约 | `contract` | 声明式用例，放在 `testbed/contracts/`，对**每一个**实现重放 |
-| 协议 / 接入 | `integration` | 契约测试 + 仿真对等端；不做严格 TDD —— 成本高、回报低 |
-| 完整流程 | `e2e` | 完整呼叫 + 错误分支，含控制台 |
-| 容量 | `performance` | 只用真实 socket。绝不要靠驱动回调来测 —— 那测的是业务逻辑，不是系统（ADR-0014） |
+| Decision logic | `unit` | **mandatory TDD**, red - green - refactor. The payoff of TDD is here. |
+| Contract | `contract` | Declarative cases, in `testbed/contracts/`, replayed against **every** implementation |
+| Protocol / access | `integration` | Contract tests + simulated peers; no strict TDD — high cost, low payoff |
+| Full flow | `e2e` | Full call + error branches, including console |
+| Capacity | `performance` | Real socket only. Never measure via driven callbacks — that tests business logic, not the system (ADR-0014) |
 
-**feature 开关的开 / 关两态必须在对应测试层被覆盖**（机制见 [ADR-0020](docs/architecture/adr/0020-feature-capability-gating.md)）。
+**The on/off states of a feature toggle must be covered in the corresponding test layer** (mechanism in [ADR-0020](docs/architecture/adr/0020-feature-capability-gating.md)).
 
-测试端口必须可配置，避免并行运行时端口冲突。
+Test ports must be configurable to avoid port conflicts during parallel runs.
 
 ## 7. ADR
 
-每一个架构决策都在 `docs/architecture/adr/` 里留一条记录。注册表把已确认决策映射到 ADR 编号，见 [`docs/architecture/adr/README.md`](docs/architecture/adr/README.md)。
+Every architecture decision leaves a record in `docs/architecture/adr/`. The registry maps confirmed decisions to ADR numbers; see [`docs/architecture/adr/README.md`](docs/architecture/adr/README.md).
 
-- ADR 与它所授权的改动**一起**写，不事后补，也不批量补。
-- ADR 必须写明它接受的缺口。空的 consequences 节等于没分析完。
-- 推翻一个决策意味着新增一个 ADR，**并且**在同一次改动里更新 [`docs/architecture/新系统整体架构.md`](docs/architecture/新系统整体架构.md)。
-- POC 的 ADR-0001…0016 **不**导入。它们描述的是另一个系统。可以引用它们作背景，但不能把它们当作有约束力的。
+- Write the ADR **together with** the change it authorizes — not back-filled, not batch-filled.
+- The ADR must state the gaps it accepts. An empty consequences section means analysis is unfinished.
+- Overturning a decision means adding a new ADR, **and** updating [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md) in the same change.
+- POC ADRs 0001…0016 are **not** imported. They describe a different system. They may be cited as background, but not treated as binding.
 
-## 8. 版本与依赖
+## 8. Versions and dependencies
 
-- **`./VERSION`** 是产品 release 版本的唯一源头。一次交付一个号，因为运营商收到的是一个系统。
-- **`<member>/pyproject.toml`** 携带该组件自己的接口版本。
-- **任何成员都不得拥有 `VERSION` 文件。** 一个数字两个家，正是本仓库要消灭的漂移（ADR-0018）。由 [`tests/test_version_consistency.py`](tests/test_version_consistency.py) 守卫。
-- **SIP 协议栈由 ADR-0019 决定。** 在 ADR-0019 接受之前，`platform/` 不绑定任何具体 SIP 栈。POC 使用的 `sippy==2.4.2` 仅作为 `testbed/` 中抓取行为基线的参考工具，不进入产品生产依赖。
-- 每个依赖都走 `uv`，提交 `uv.lock` 并校验锁文件一致。
+- **`./VERSION`** is the single source of the product release version. One number per delivery, because the operator receives a system.
+- **`<member>/pyproject.toml`** carries that component's own interface version.
+- **No member may own a `VERSION` file.** One number with two homes is exactly the drift this repo kills (ADR-0018). Guarded by [`tests/test_version_consistency.py`](tests/test_version_consistency.py).
+- **The SIP protocol stack is decided by ADR-0019.** Until ADR-0019 is accepted, `platform/` binds to no specific SIP stack. The `sippy==2.4.2` used by the POC is only a reference tool in `testbed/` for capturing behavior baselines, and does not enter production dependencies.
+- Every dependency goes through `uv`; commit `uv.lock` and verify lock-file consistency.
 
-## 9. 门禁（Gates）
+## 9. Gates
 
-`make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。四步固定，AST 扫描**不在 gate 内**。
+`make gate` = `ruff format --check` → `ruff check` → `mypy` → pytest (unit/contract layers). Four fixed steps; AST scanning is **not** in the gate.
 
-**AST 扫描归属**：AST 扫描（检查不显而易见的代码是否标注 ADR，对应 REQ-G-3）在 `make gate` **之外**单独执行（ADR-0015）。用 `make gate-strict` 目标触发（`make gate` 四步 + AST 扫描）。`make gate` 本身四步不变，保持快速反馈。
+**AST scanning ownership**: AST scanning (checks whether non-obvious code is annotated with its ADR, corresponding to REQ-G-3) runs **outside** `make gate` (ADR-0015). Trigger it with the `make gate-strict` target (`make gate` four steps + AST scanning). `make gate` itself stays the four fixed steps, keeping fast feedback.
 
-本地同样分四层，各自是独立目标：① 快（`make test-unit`，`unit or contract`）→ ② 集成（`make test-integration`）→ ③ e2e（`make test-e2e`）→ ④ 性能（`make test-perf`，不进提交门禁）。AST 扫描不属于这四层，按上一条单独触发。
+Local also has four layers, each an independent target: ① fast (`make test-unit`, `unit or contract`) → ② integration (`make test-integration`) → ③ e2e (`make test-e2e`) → ④ performance (`make test-perf`, not in the commit gate). AST scanning is not part of these four layers; trigger it separately per the line above.
 
-本地门禁不绿，什么都不能提交。**本地门禁的结论只覆盖它实际跑过的东西**：绝不要把本地重跑的结果表述成比它更强的验证通过。
+Nothing may be committed while the local gate is red. **The local gate's conclusion covers only what it actually ran**: never present a local re-run as stronger verification than it is.
 
-**分层现状说明**：`make test` 依次跑 ① → ② → ③。`integration` 层已有测试；`e2e` 层目前还没有测试文件（marker 已在 `pyproject.toml` 声明），因此 `make test` 会在 ③ 因 pytest 收集不到测试而失败。`make gate` 只跑 ① 层。首个引入某层测试的里程碑必须同步确认该层已在对应目标中生效。
+**Layering status note**: `make test` runs ① → ② → ③ in sequence. The `integration` layer already has tests; the `e2e` layer has no test files yet (the marker is declared in `pyproject.toml`), so `make test` will fail at ③ because pytest collects no tests. `make gate` runs only layer ①. The milestone that first introduces a test for a layer must confirm that layer is active in the corresponding target.
 
-## 10. AI 辅助与 Subagent 协作
+## 10. AI assistance and Subagent collaboration
 
-1. AI 生成的代码过**完全相同**的门禁。不会因为是生成的就降低标准。
-2. 含 AI 生成工作的 PR 要**标注出来**，方便审稿时相应加权。
-3. Go 镜像移植是本项目收益最高的 AI 任务 —— 同构翻译 + 对拍 harness。要利用这个杠杆；但标准不放。
+1. AI-generated code goes through the **exact same** gate. No lower standard because it was generated.
+2. PRs containing AI-generated work must be **labeled** so reviewers can weight them accordingly.
+3. Porting the Go image is the highest-leverage AI task in this project — isomorphic translation + differential-harness. Exploit this leverage; but do not lower the standard.
 
-### 10.1 Subagent 模式（派发的唯一权威说明）
+### 10.1 Subagent mode (the sole authoritative description of dispatch)
 
-- **在接任务时判定，不是在写文件时判定**：接到任务先判断它是否会产生文件改动（新建 / 编辑 / 删除）。会 —— 在动手做任何其他事之前先派 writing subagent；主 agent 只做规划与 review。
-- **主 agent 不写代码、不写文件。** 主 agent 负责规划、拆分任务、review subagent 输出、向维护者汇报。
+- **Decide when taking the task, not when writing the file**: on receiving a task, first judge whether it will produce a file change (create / edit / delete). If yes — before doing anything else, dispatch a writing subagent; the main agent only plans and reviews.
+- **The main agent does not write code or files.** The main agent plans, splits tasks, reviews subagent output, and reports to the maintainer.
 
-**先认 IDE —— 两个 IDE 的派发机制不同，用错会静默退化成只读**（本仓库 M0 已经踩过这个坑）：
+**Identify the IDE first — the two IDEs have different dispatch mechanisms; using the wrong one silently degrades to read-only** (this repo's M0 already hit this pitfall):
 
-| IDE | 只读（探索 / 调研 / 代码搜索） | 可写（任何文件改动） |
+| IDE | Read-only (explore / research / code search) | Writable (any file change) |
 |---|---|---|
-| **Trae** | `Agent` 工具，`subagent_type = Explore` | `Agent` 工具，`subagent_type = general-purpose` |
-| **CodeBuddy** | `Task` 工具，不传 `name`，`subagent_name = code-explorer` | `Task` 工具，**传 `name`**（角色标签，如 `m0-writer`，即 team mode）+ `mode = "acceptEdits"` |
+| **Trae** | `Agent` tool, `subagent_type = Explore` | `Agent` tool, `subagent_type = general-purpose` |
+| **CodeBuddy** | `Task` tool, no `name` passed, `subagent_name = code-explorer` | `Task` tool, **pass `name`** (role label, e.g. `m0-writer`, i.e. team mode) + `mode = "acceptEdits"` |
 
-> 判断依据：手上有哪个工具就用哪个。CodeBuddy 里**不存在** `general-purpose` / `Explore`，按名字调用会报
-> `Subagent "general-purpose" not found`；**此时不得退回主 agent 自己写文件**，改用它自己的 team mode（传 `name`）。
-> 反之在 Trae 里用 `Agent` 工具 + `subagent_type` 是正确的，不要照搬 CodeBuddy 的写法。
+> Basis: use whichever tool you have. In CodeBuddy there is **no** `general-purpose` / `Explore`; calling by name raises
+> `Subagent "general-purpose" not found`; **do not fall back to the main agent writing files itself** — use its own team mode (pass `name`) instead.
+> Conversely, in Trae the `Agent` tool + `subagent_type` is correct; do not copy CodeBuddy's approach.
 
-派发 writing subagent：
+Dispatching a writing subagent:
 
-1. `prompt` 必须自包含：目标、边界、验证命令、报告格式，以及全部硬约束（如"不许运行 git commit"、"只许改这一个文件"）。CodeBuddy 另需 `name` 与 `mode = "acceptEdits"`（传 `name` 即自动开启 team mode 并建团，无需单独 `team_create`）。
-2. subagent 报告完成后，主 agent 用 `git status` / `git diff` 核对实际改动，与其自述比对。
-3. 确认无误后关闭该 writer，**然后**再启动下一个。
+1. The `prompt` must be self-contained: goal, boundaries, verification commands, report format, and all hard constraints (e.g., "do not run git commit", "only this one file may be changed"). CodeBuddy additionally needs `name` and `mode = "acceptEdits"` (passing `name` auto-enables team mode and creates the team; no separate `team_create` needed).
+2. After the subagent reports completion, the main agent uses `git status` / `git diff` to verify the actual changes against its self-report.
+3. After confirming, close that writer, **then** start the next one.
 
-- **一个工作树同时只能有一个 writing subagent。** Git 状态是每工作树一个；第二个 writer 的改动会落到错误分支或互相覆盖，且失败是静默的。
-- **Spawn prompt 必须自包含**：追加消息只在下一个 turn 边界被读取，**无法打断正在跑的 turn**（§10.3）。
-- **派不出 writable subagent 时的处置**：① 先按上表确认当前 IDE 与模式；② 仍不可用则**停下来报告维护者**，由维护者显式批准主 agent 直接写。**绝不自作主张自己写。**
-- **Trust but verify：** 主 agent 必须用 `git status` / `git diff` 核对 writing subagent 实际改动的文件，与其自述报告比对。Subagent 的总结描述的是它的意图，不一定是它实际做的事。
-- **主 agent 自检**：每个 turn 结束前回答"我这一 turn 有没有直接写过文件？"。有 —— 立即停止并向维护者报告。
+- **Only one writing subagent per worktree at a time.** Git state is per-worktree; a second writer's changes land on the wrong branch or overwrite each other, and the failure is silent.
+- **The spawn prompt must be self-contained**: appended messages are only read at the next turn boundary and **cannot interrupt a running turn** (§10.3).
+- **When a writable subagent cannot be dispatched**: ① first confirm the current IDE and mode per the table above; ② if still unavailable, **stop and report to the maintainer**, who must explicitly approve the main agent writing directly. **Never decide on your own to write files.**
+- **Trust but verify:** the main agent must use `git status` / `git diff` to verify the files a writing subagent actually changed, against its self-reported summary. A subagent's summary describes its intent, not necessarily what it actually did.
+- **Main agent self-check**: before each turn ends, answer "did I write any file directly this turn?". If yes — stop immediately and report to the maintainer.
 
-### 10.2 Context 管理
+### 10.2 Context management
 
-- **Context 接近上限时必须立即通知维护者**，不得静默工作到自动压缩发生。通知内容：(1) 当前落盘状态盘点（用 `git status` 核对）；(2) handoff 决策建议（开新对话 / 先补落盘 / 留在本对话）。
-- **凡"只存在于对话里、丢了无法恢复"的决策，必须先落盘再开新对话。** 落盘去向：裁决进 ADR / gap review，状态进 `docs/plan.md`，调研结论进 `docs/` 专门文档。
-- 具体流程见项目 skill `.trae/skills/context-handoff/`。
+- **When context nears its limit, notify the maintainer immediately**; do not work silently until auto-compaction happens. Notification content: (1) a disk-state inventory of what has landed (verified with `git status`); (2) handoff decision suggestion (new conversation / catch up on disk first / stay in this conversation).
+- **Any decision that "exists only in the conversation and cannot be recovered if lost" must be written to disk before opening a new conversation.** Write destinations: adjudications go to ADR / gap review, status to `docs/plan.md`, research conclusions to a dedicated `docs/` doc.
+- Specific flow in the project skill `.trae/skills/context-handoff/`.
 
-### 10.3 任务派发与同步
+### 10.3 Task dispatch and synchronization
 
-- Subagent 是无状态的：每次调用只返回最终结果，中间过程不可见。spawn prompt 必须自包含 —— 目标、边界、验证命令、报告格式全部写进去。
-- **所有硬约束必须放在 spawn prompt 里**（例如"不许运行 git commit"、"只许改这一个文件"），而不是依赖后续消息。
-- 需要追问或追加指令时：subagent 仍在运行用 `SendMessage`（CodeBuddy）或等效的追加消息机制；已完成则用 `resume` 参数（Trae）续接其上下文。不要为追问而重新 spawn 一个新 subagent。
-- Subagent 在做出昂贵修改前（加依赖、改 schema、删代码、commit）必须先停下来报告。
+- Subagents are stateless: each call returns only the final result, intermediate steps invisible. The spawn prompt must be self-contained — goal, boundaries, verification commands, report format all written in.
+- **All hard constraints must be in the spawn prompt** (e.g., "do not run git commit", "only this one file may be changed"), not relied upon in follow-up messages.
+- When you need to ask or append instructions: if the subagent is still running use `SendMessage` (CodeBuddy) or an equivalent append mechanism; if completed, use the `resume` parameter (Trae) to continue its context. Do not spawn a new subagent just to ask a follow-up.
+- A subagent must stop and report before making an expensive modification (adding a dependency, changing a schema, deleting code, committing).
 
-### 10.4 Handover 协议
+### 10.4 Handover protocol
 
-每个里程碑 conversation 的**开场仪式**：
+The **opening ceremony** of each milestone conversation:
 
-1. 读 `AGENT.md`（本文件）
-2. 读 `docs/README.md`
-3. 读 `docs/plan.md` 中当前里程碑章节
-4. 读 `docs/acceptance/m8-test-plan-matrix.md` 中该里程碑的验收项（2026-10-11 更正：原指向 `docs/acceptance/criteria.md`，该文件从未存在；验收矩阵现以 `m8-test-plan-matrix.md` 为准）
-5. 确认当前分支（由维护者命名或批准）
-6. **首任务 subagent 判定**：收到维护者的首个任务时，先判断是否涉及文件改动（新建 / 编辑 / 删除）。是 —— 立即派 writing subagent，再做其他规划或讨论；否 —— 进入只读模式。
+1. Read `AGENT.md` (this file)
+2. Read `docs/README.md`
+3. Read the current milestone section in `docs/plan.md`
+4. Read the acceptance items for that milestone in `docs/acceptance/m8-test-plan-matrix.md` (2026-10-11 correction: originally pointed to `docs/acceptance/criteria.md`, which never existed; the acceptance matrix now uses `m8-test-plan-matrix.md`)
+5. Confirm the current branch (named or approved by the maintainer)
+6. **First-task subagent judgment**: on receiving the maintainer's first task, first judge whether it involves a file change (create / edit / delete). Yes — dispatch a writing subagent immediately, then do other planning or discussion; No — enter read-only mode.
 
-**结束仪式**：
+**Closing ceremony**:
 
-1. 跑 DoD，把结果写入 `docs/acceptance/report.md`
-2. 更新 `docs/plan.md` 状态和下一里程碑入口
-3. 更新 `CHANGELOG.md` 和 `VERSION`
-4. 不写 tag：tag 是维护者的步骤
+1. Run the DoD, write results to `docs/acceptance/report.md`
+2. Update `docs/plan.md` status and the next-milestone entry
+3. Update `CHANGELOG.md` and `VERSION`
+4. Do not write a tag: the tag is the maintainer's step
 
-## 11. Git 规则
+## 11. Git rules
 
-- **未经维护者在该次对话中明确批准，绝不 push。** 不是 push、不是 force-push、不是 tag。
-- **Agent 不创建分支。** 工作在维护者指定的分支上进行。每个分支要有明确目的和结束条件。
-- **未经逐次、显式的批准，任何东西都不能进 `main` / `master`。**
-- **Conventional Commits**，英文，一次 commit 一个逻辑改动：`feat` · `fix` · `docs` · `refactor` · `test` · `chore` · `build`。
-- **不跳过 hook。** `--no-verify` 及其等价物禁止。如果 hook 挡住了 commit，去修原因。
-- **绝不提交密钥、证书或真实流量抓包。**
-- 一个行为改动要贯通整条文档链：需求 → ADR → 设计 → 接口契约 → 验收项 → CHANGELOG。
+- **Never push without the maintainer's explicit approval in that conversation.** Not push, not force-push, not tag.
+- **Agents do not create branches.** Work on the branch designated by the maintainer. Each branch needs a clear purpose and end condition.
+- **Nothing may enter `main` / `master` without per-instance, explicit approval.**
+- **Conventional Commits**, in English, one logical change per commit: `feat` · `fix` · `docs` · `refactor` · `test` · `chore` · `build`.
+- **Do not skip hooks.** `--no-verify` and its equivalents are forbidden. If a hook blocks a commit, fix the cause.
+- **Never commit keys, certificates, or real traffic captures.**
+- A behavioral change must traverse the whole documentation chain: requirement → ADR → design → interface contract → acceptance item → CHANGELOG.
 
-## 12. 从 POC 采纳代码
+## 12. Adopting code from the POC
 
-**绝不整块照搬。** 见 [`docs/migration/triage.md`](docs/migration/triage.md)。
+**Never copy wholesale.** See [`docs/migration/triage.md`](docs/migration/triage.md).
 
-- 每个 POC 文件在写产品代码之前都要有一个裁决 —— adopt / rewrite / baseline-reference / discard —— 且要有证据。
-- 被采纳的代码**带着它的测试**一起过来。
-- POC 的行为基线要在任何重写**之前**抓取，这样“等价”才是可查的断言。
-- 本仓库必须能在**不引用** `../3rtparty_AS_POC` 或 `../as_platform` 的情况下构建、测试、运行。
+- Each POC file must have an adjudication before writing product code — adopt / rewrite / baseline-reference / discard — and must have evidence.
+- Adopted code comes **with its tests**.
+- The POC's behavior baseline must be captured **before** any rewrite, so that "equivalence" is a checkable assertion.
+- This repo must build, test, and run **without referencing** `../3rtparty_AS_POC` or `../as_platform`.
 
-## 13. 安全
+## 13. Security
 
-- 不提交任何敏感信息：没有密钥、证书、token 或真实地址。
-- trunk 是不可信的。对端要按白名单校验，并且与 S-SBC 端到端终止 TLS —— 任何人只要能伪装成 S-SBC，就能灌入呼叫（ADR-0016）。
-- 证书轮换是配置热更新。绝不能重启进程，也不能丢掉在途呼叫。
-- 载荷日志是显式、可开关的；日志里默认关闭。
-- 每个控制台操作都要鉴权并审计。
+- Do not commit any sensitive information: no keys, certificates, tokens, or real addresses.
+- The trunk is untrusted. Peers must be validated against an allowlist and terminate TLS end-to-end with the S-SBC — anyone who can impersonate the S-SBC can inject calls (ADR-0016).
+- Certificate rotation is a configuration hot-update. Never restart a process, never drop in-flight calls.
+- Payload logging is explicit and toggleable; off by default in logs.
+- Every console operation must be authenticated and audited.
 
-## 14. 完成定义（Definition of done）
+## 14. Definition of done
 
-- [ ] 对着仿真对等端端到端跑通
-- [ ] 在改动所属的层补了测试；`make gate` 绿
-- [ ] `ruff format`、`ruff check`、`mypy` 干净
-- [ ] 改动带了 ADR；若决策有移动，`docs/architecture/新系统整体架构.md` 已更新
-- [ ] README 与受影响文档已更新（新 env var、端口、命令、目录）
-- [ ] 有 CHANGELOG 条目；若交付内容变化则产品版本号已 bump
-- [ ] 若采纳了 POC 代码：已引用对应的 triage 行
-- [ ] 没有提交任何密钥
-- [ ] 文档链完整：requirement → ADR → HLD/LLD → 契约/消息样例 → 验收项 → review record
-- [ ] 若引入 feature 开关：开 / 关两态都有测试与验收证据，且写明移除条件
+- [ ] End-to-end pass against the simulated peer
+- [ ] Added tests in the layer of the change; `make gate` green
+- [ ] `ruff format`, `ruff check`, `mypy` clean
+- [ ] Change carries an ADR; if the decision moved, `docs/architecture/system-architecture.md` is updated
+- [ ] README and affected docs updated (new env var, port, command, directory)
+- [ ] Has a CHANGELOG entry; if delivery content changed, the product version was bumped
+- [ ] If POC code was adopted: referenced the corresponding triage line
+- [ ] No key committed
+- [ ] Documentation chain complete: requirement → ADR → HLD/LLD → contract/message samples → acceptance item → review record
+- [ ] If a feature toggle was introduced: both on/off states have tests and acceptance evidence, and the removal condition is stated
 
-## 15. 未决项
+## 15. Open items
 
-未决清单和风险登记由 [`docs/plan.md`](docs/plan.md) §5 持有。不要悄悄解决一个未决项：如果一项工作强行逼出了一个决策，去写 ADR 并移动 `plan.md` 中的那一行。
+The open-item list and risk register are held in [`docs/plan.md`](docs/plan.md) §5. Do not silently resolve an open item: if a piece of work forcibly forces out a decision, write an ADR and move that line in `plan.md`.
 
-其中最大的 O1（容量目标）有自己独立的研究里程碑（M6）。在它跑起来之前，不假设任何容量数字。
+The largest of these, O1 (capacity target), has its own independent research milestone (M6). Do not assume any capacity number before it runs.

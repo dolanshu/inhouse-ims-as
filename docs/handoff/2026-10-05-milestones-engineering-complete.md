@@ -21,9 +21,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Milestone | Status | Adjudication |
 |-----------|--------|--------------|
-| **M2** | 工程完成，**M8 验收** | [`m2-milestone-engineering-complete-adjudication-2026-10-05.md`](../reviews/m2-milestone-engineering-complete-adjudication-2026-10-05.md) |
-| **M6** | 工程完成，**M8 验收** | [`m6-engineering-complete-adjudication-2026-10-05.md`](../reviews/m6-engineering-complete-adjudication-2026-10-05.md) |
-| **M7** | 工程完成，**M8 验收** | [`m7-milestone-engineering-complete-adjudication-2026-10-05.md`](../reviews/m7-milestone-engineering-complete-adjudication-2026-10-05.md) |
+| **M2** | Engineering complete, **M8 acceptance** | [`m2-milestone-engineering-complete-adjudication-2026-10-05.md`](../reviews/m2-milestone-engineering-complete-adjudication-2026-10-05.md) |
+| **M6** | Engineering complete, **M8 acceptance** | [`m6-engineering-complete-adjudication-2026-10-05.md`](../reviews/m6-engineering-complete-adjudication-2026-10-05.md) |
+| **M7** | Engineering complete, **M8 acceptance** | [`m7-milestone-engineering-complete-adjudication-2026-10-05.md`](../reviews/m7-milestone-engineering-complete-adjudication-2026-10-05.md) |
 
 ## M7 tail inventory
 
@@ -53,4 +53,4 @@ uv run pytest platform/tests/test_m7_forward_two_leg_integration.py \
 2. **Customer K8s NF-1** — REQ-NF-1 live kill/restart/BYE acceptance  
 3. **Maintainer signature** — M2/M6/M7 milestone exit per `plan.md` §4  
 
-No other plan §5 items are deferred as engineering blockers; remaining work is **M8 验收** scope.
+No other plan §5 items are deferred as engineering blockers; remaining work is **M8 acceptance** scope.

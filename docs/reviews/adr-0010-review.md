@@ -12,48 +12,48 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0010 评审记录
+# ADR-0010 Review Record
 
-> 评审对象：`docs/architecture/adr/0010-autoscaling-hpa-downscale-guard.md`（2026-09-28 新建，Status: draft）
-> 评审日期：2026-09-28
-> 评审人：AI agent（对照 AGENT.md 红线与非目标、PRD REQ、已在册 ADR 交叉核对）
-> 评审结论：**通过** —— 转 accepted；共 2 项已知缺口，其中 0 项阻塞
+> Review target: `docs/architecture/adr/0010-autoscaling-hpa-downscale-guard.md` (newly created on 2026-09-28, Status: draft)
+> Review date: 2026-09-28
+> Reviewer: AI agent (cross-checked against the AGENT.md red lines and non-goals, PRD REQs, and the ADRs already on record)
+> Review conclusion: **Pass** — moved to accepted; 2 known gaps in total, none of them blocking
 
-## 评审方法
+## Review Method
 
-| 维度 | 方法 |
+| Dimension | Method |
 |---|---|
-| 与红线一致性 | 逐条比对 `AGENT.md` §2（非目标：M6 实测之前不发布任何容量数字）、§5（决策模块是纯函数）、§7（ADR 与改动一起写）原文 |
-| 与需求一致性 | 核对 PRD v0.2 的 REQ-NF-1（进程重启不丢会话）、REQ-NF-3（可水平扩展：能安全缩容）、REQ-NF-4（ISSU 不掉呼叫） |
-| 与既有 ADR 一致性 | 是否与 ADR-0002（无状态 + Redis 会话表 + 亲和性双保险）、ADR-0007（运行态在 Redis）、ADR-0009（draining，skeleton）冲突 |
-| 结构完整性 | 是否具备 Context / Decision / Consequences / Alternatives / Evidence / Related，且与 ADR-0002 的章节结构一致 |
-| 实现一致性 | 判据是否在 `platform/src/as_platform/ops/downscale_guard.py` 中如实落地，并由 `unit` 层用例锁定 |
+| Consistency with red lines | Clause-by-clause comparison against the original text of `AGENT.md` §2 (non-goal: publish no capacity numbers before the M6 measurements), §5 (the decision module is a pure function), §7 (write the ADR together with the change) |
+| Consistency with requirements | Checked PRD v0.2 REQ-NF-1 (a process restart does not lose sessions), REQ-NF-3 (horizontally scalable: safe scale-down is possible), REQ-NF-4 (ISSU does not drop calls) |
+| Consistency with existing ADRs | Whether it conflicts with ADR-0002 (stateless + Redis session table + affinity as double insurance), ADR-0007 (runtime state in Redis), ADR-0009 (draining, skeleton) |
+| Structural completeness | Whether it has Context / Decision / Consequences / Alternatives / Evidence / Related, and whether the section structure matches ADR-0002 |
+| Implementation consistency | Whether the criteria are faithfully implemented in `platform/src/as_platform/ops/downscale_guard.py` and locked down by `unit`-level test cases |
 
-## 发现与裁决
+## Findings and Adjudication
 
-| # | 发现 | 裁决 |
+| # | Finding | Adjudication |
 |---|---|---|
-| 1 | **阈值纪律**：ADR 未给出任何目标利用率、目标 `active_calls`、副本上下限或超时值，全部指向 `deploy/helm/values.yaml` 由 M6 填入；`hpa.yaml` 的 `required` 守卫（"measure it in M6 (O1), do not guess"）已落地为佐证，不是口头承诺 | 接受，作为红线合规的 L1 证据；"阈值是容量结论，保护阈值是安全判据"的区分成立，且两个概念未被混用 |
-| 2 | **控制器只产出判定、不操作 K8s**：实现为纯函数（`plan_scale_down` / `may_remove`），无 socket、无时钟、无全局状态；判定与执行分离使缩容保护可在无集群的环境下被单测覆盖 | 接受；与 AGENT.md §5"决策模块是纯函数"一致，且把"能不能缩"从"要不要缩"里剥离出来的解耦论证成立 |
-| 3 | **与 draining 协同**：选出候选后的摘除必须走 draining（先摘流 → 等归零 → 再删除），且已在 draining 的实例不再被重复选为候选，避免重复下发同一次摘除 | 接受；与 ADR-0009 的 draining 语义一致。ADR-0009 仍是 skeleton，本 ADR 已在 Related 中降级为纯文本，未产生失效链接，也未越权替它做裁决 |
-| 4 | **保护阈值是安全判据而非容量数字**：默认 0（非零即保护），并明确"调整理由必须是接受掉呼叫的风险，而不是容量结论" | 接受；`protect_above < 0` 被钳到 0（非法输入不得放宽保护），有用例锁定，安全方向失败即保守，无反向开口 |
-| 5 | **实现与测试已同步落地**：`platform/src/as_platform/ops/downscale_guard.py` 与 `platform/tests/test_downscale_guard.py` 同批交付，10 个 `unit` 用例覆盖全零呼叫放行、部分阻塞给部分候选、draining 不重选、排序可复现、非法阈值不放宽、纯度（monkeypatch 后断言无 socket / 时钟调用） | 接受；符合 AGENT.md §7"ADR 与它所授权的改动一起写"，不是事后补记；阻塞时给出可用部分候选的设计使运维不必干等 |
-| 6 | 结构完整性：章节与 ADR-0002 对齐（头部四字段 → Context → Decision → Consequences → Alternatives → Evidence → Related），Alternatives 五条均给出 Why not，非走过场 | 接受；consequences 负面段非空，写明接受理由与解决时点 |
-| 7 | 已知缺口两项：① 缩容可能被长时间阻塞，超时与强制策略属运维参数未定；② 控制器需要每实例 `active_calls` 指标，比聚合指标更细，指标侧扩展未做 | 接受为**已知缺口**，均不阻塞；① 已写入 Consequences 负面段并标明进 `values.yaml`，② 属 M5 运维接线与指标扩展工作，不属本 ADR 裁决范围 |
+| 1 | **Threshold discipline**: the ADR gives no target utilization, no target `active_calls`, no replica upper or lower bounds and no timeout value; everything points at `deploy/helm/values.yaml` to be filled in by M6; the `required` guard in `hpa.yaml` ("measure it in M6 (O1), do not guess") has been implemented as corroboration, not a verbal promise | Accept, as L1 evidence of red-line compliance; the distinction between "a threshold is a capacity conclusion, a guard threshold is a safety criterion" holds, and the two concepts are not conflated |
+| 2 | **The controller only produces a verdict, it does not operate K8s**: the implementation is a pure function (`plan_scale_down` / `may_remove`), with no socket, no clock and no global state; separating the verdict from the execution lets the scale-down guard be covered by unit tests in an environment without a cluster | Accept; consistent with AGENT.md §5 "the decision module is a pure function", and the decoupling argument that peels "may we scale down" out of "should we scale down" holds |
+| 3 | **Coordination with draining**: once a candidate is selected, its removal must go through draining (stop new calls first → wait for the count to reach zero → then delete), and instances already draining are not selected as candidates again, avoiding a repeated dispatch of the same removal | Accept; consistent with the draining semantics of ADR-0009. ADR-0009 is still a skeleton, so this ADR has downgraded it to plain text in Related, producing no dead links and not overstepping by adjudicating on its behalf |
+| 4 | **The guard threshold is a safety criterion, not a capacity number**: default 0 (non-zero means protection is on), and it is explicit that "the justification for adjusting it must be accepting the risk of dropping calls, not a capacity conclusion" | Accept; `protect_above < 0` is clamped to 0 (illegal input must not loosen protection), test cases lock this down, failure in the safe direction is conservative, and there is no opening in the opposite direction |
+| 5 | **Implementation and tests landed together**: `platform/src/as_platform/ops/downscale_guard.py` and `platform/tests/test_downscale_guard.py` were delivered in the same batch; 10 `unit` test cases cover letting all-zero calls through, giving partial candidates when partially blocked, not re-selecting draining instances, reproducible ordering, illegal thresholds not loosening protection, and purity (asserting no socket / clock calls after monkeypatching) | Accept; complies with AGENT.md §7 "write the ADR together with the change it authorizes", so it is not an after-the-fact record; the design that yields a usable subset of candidates when blocked means operations does not have to wait idle |
+| 6 | Structural completeness: the sections align with ADR-0002 (header four fields → Context → Decision → Consequences → Alternatives → Evidence → Related), and all five Alternatives give a "Why not", so they are not perfunctory | Accept; the negative part of Consequences is non-empty and states the reason for acceptance and the resolution point |
+| 7 | Two known gaps: ① scale-down may be blocked for a long time, and the timeout and override policy are undefined operational parameters; ② the controller needs a per-instance `active_calls` metric, which is finer-grained than an aggregate metric, and the metric-side extension has not been done | Accept as **known gaps**, neither blocking; ① is written into the negative part of Consequences and marked to go into `values.yaml`, ② belongs to M5 operations wiring and metric extension work and is outside the adjudication scope of this ADR |
 
-## Adjudication 汇总
+## Adjudication Summary
 
-| 类别 | 条数 | 处置 |
+| Category | Count | Disposition |
 |---|---|---|
-| 接受且无需修改 | 5（发现 1、2、3、4、6） | — |
-| 接受为已知缺口 | 2（发现 5 无缺口；发现 7 的两项缺口） | 发现 7 ① 进 `deploy/helm/values.yaml` 运维参数；② 随 M5 每实例指标扩展解决 |
-| 需要修改 | 0 | — |
+| Accepted with no changes needed | 5 (findings 1, 2, 3, 4, 6) | — |
+| Accepted as known gaps | 2 (finding 5 has no gap; the two gaps in finding 7) | Finding 7 ① goes into `deploy/helm/values.yaml` as an operational parameter; ② is resolved together with the M5 per-instance metric extension |
+| Changes required | 0 | — |
 
-## 确认签字
+## Sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 通过 |
-| 状态流转 | ADR-0010 `draft` → `accepted`；注册表同步（`docs/architecture/adr/README.md` 0010 行 skeleton → accepted ✓） |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | 待填 |
+| Review conclusion | Pass |
+| State transition | ADR-0010 `draft` → `accepted`; registry synchronized (the 0010 line in `docs/architecture/adr/README.md` skeleton → accepted ✓) |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer sign-off | To be filled in |

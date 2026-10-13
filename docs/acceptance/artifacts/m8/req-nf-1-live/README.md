@@ -1,20 +1,20 @@
-# REQ-NF-1 live 现场证据（restriction：Close 前不采证）
+# REQ-NF-1 live on-site evidence (restriction: no collection before Close)
 
-> **状态**：restriction（2026-10-07）。Close 前不做客户 K8s live kill/restart/BYE 采证。本目录保持空白。
-> 需求：`docs/acceptance/test-plan.md` §2 REQ-NF-1；`docs/plan.md` §5.2 D10；
-> 记录：`docs/acceptance/m8-environment-evidence.md` D-2。
-> 工程 harness（非 live 验收）见 `platform/tests/test_d10_product_recovery_integration.py`、
-> `platform/tests/test_d10_req_nf1_harness_integration.py` 等 M7 D10 切片。
+> **Status**: restriction (2026-10-07). No customer K8s live kill/restart/BYE evidence collection before Close. This directory stays empty.
+> Requirement: `docs/acceptance/test-plan.md` §2 REQ-NF-1; `docs/plan.md` §5.2 D10;
+> recording: `docs/acceptance/m8-environment-evidence.md` D-2.
+> Engineering harness (non-live acceptance) see `platform/tests/test_d10_product_recovery_integration.py`,
+> `platform/tests/test_d10_req_nf1_harness_integration.py`, etc. M7 D10 slices.
 
-## 采证时应提交的文件（脱敏）
+## Files to submit when collecting evidence (redacted)
 
-1. `README.md`（本文件更新为采证记录）：集群信息（版本、节点数）、镜像 tag、Helm values 版本、
-   kill/restart 时间线、执行人、引用 runbook 版本。
-2. `kill-restart.transcript.md`：`kubectl delete pod / rollout restart` 命令 transcript（对象名打码）。
-3. `dialog-recovery.redacted.md`：重启前后 dialog 状态对比（脱敏日志摘录，Call-ID 打码或截断）。
-4. `bye-verdict.txt`：BYE 对拍结论（双腿挂断行为符合预期的文字结论 + 脱敏摘录）。
+1. `README.md` (this file updated to the collection record): cluster info (version, node count), image tag, Helm values version,
+   kill/restart timeline, executor, referenced runbook version.
+2. `kill-restart.transcript.md`: `kubectl delete pod / rollout restart` command transcript (object names masked).
+3. `dialog-recovery.redacted.md`: dialog state comparison before and after restart (redacted log excerpts, Call-ID masked or truncated).
+4. `bye-verdict.txt`: BYE cross-check verdict (text verdict that both-leg hang-up behavior meets expectations + redacted excerpt).
 
-## 禁止提交
+## Prohibited from submission
 
-**不得提交密钥、证书明文、真实抓包**（`*.key` / `*.pem` 真实内容 / `*.pcap` / `*.pcapng` /
-含口令或真实号码/ Call-ID 明文全量的日志）。违例文件会被 `.gitignore` 拦截或须在评审中直接拒绝入库。
+**Do not submit private keys, certificate plaintext, or real captures** (`*.key` / `*.pem` real content / `*.pcap` / `*.pcapng` /
+logs containing passwords or real numbers / full plaintext Call-IDs). Violating files will be blocked by `.gitignore` or must be directly rejected from the repo during review.

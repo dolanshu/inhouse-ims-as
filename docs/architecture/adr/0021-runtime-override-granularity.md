@@ -12,91 +12,91 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0021：运行态覆盖的判定粒度与配置 schema
+# ADR-0021: Evaluation granularity and config schema for runtime overrides
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: 未决项 D7 —— 运行态覆盖的判定粒度与配置 schema
-- **回应 REQ**: REQ-G-1, REQ-NF-10
+- **Decides**: Open item D7 — evaluation granularity and config schema for runtime overrides
+- **Responds to REQ**: REQ-G-1, REQ-NF-10
 
 ---
 
-## Context（背景）
+## Context
 
-[ADR-0020](0020-feature-capability-gating.md) 把 feature 门控分成两层：① 部署级总开关，② 运行态细粒度覆盖。它裁掉了"要不要分层"，但把第 ② 层的**粒度**留成了未决项 —— 原文写的候选是"号段 / 呼叫 / 用户 / 百分比"，四选一还是组合、schema 长什么样，都没定。ADR-0020 的评审把这一点记为"M4 完成前必须落裁决"的已知缺口。
+[ADR-0020](0020-feature-capability-gating.md) splits feature gating into two tiers: ① deployment-level master switch, ② runtime fine-grained override. It decided "whether to layer," but left the **granularity** of tier ② as an open item — the original text's candidates were "number range / call / user / percentage," with no decision on whether to pick one, combine, or what the schema looks like. ADR-0020's review recorded this as a known gap that "must be adjudicated before M4 is complete."
 
-粒度不定，三件事都无从落地：
+Without fixed granularity, three things cannot land:
 
-1. **配置 schema 无从落地。** schema 是粒度的直接投影：粒度是号段，字段就是前缀；粒度是用户，字段就得是用户标识。schema 不定，[ADR-0006](0006-config-governance.md) 的变更单模板、控制台表单、版本 diff 都没有对象。
-2. **判定幂等无从保证。** ADR-0020 第 ② 层的硬要求是「同一判决重复求值结果一致，不得因窗口内的读抖动产生不一致放行或反复翻转」（风险 R5、未决 D3）。这条要求直接约束了"百分比"怎么算：任何依赖时钟、随机数或存储状态的百分比算法，在 Redis 脑裂窗口内重复求值都可能换答案，等于把幂等要求交给运气。
-3. **审计无从下手。** 运营商验收会问"这一通呼叫为什么走了新路径"（REQ-NF-10：可追溯）。粒度不定，就无法回答"依据哪一条配置"。
+1. **The config schema cannot land.** The schema is a direct projection of granularity: if granularity is number range, the field is a prefix; if granularity is user, the field must be a user identifier. With the schema undecided, [ADR-0006](0006-config-governance.md)'s change-order template, console form, and version diff have no object.
+2. **Idempotent evaluation cannot be guaranteed.** Tier ② of ADR-0020 has the hard requirement "repeated evaluation of the same decision yields the same result, with no inconsistent pass or repeated flip caused by read jitter within the window" (risk R5, open item D3). This requirement directly constrains "how percentage is computed": any percentage algorithm depending on the clock, random numbers, or stored state could change its answer on repeated evaluation within the Redis split-brain window — effectively leaving idempotency to luck.
+3. **Audit has no foothold.** Carrier acceptance will ask "why did this call take the new path" (REQ-NF-10: traceability). With granularity undecided, we cannot answer "by which configuration."
 
-还有一个产品前提：本产品是**号码域的 AS**，用户标识不可得 —— `AGENT.md` §2 明确"不做 Diameter Sh，数据来自我们自己的数据面"。这直接排掉了以用户为判据的一类设计。
+There is also a product premise: this product is a **number-domain AS**, where user identifiers are unavailable — `AGENT.md` §2 explicitly states "no Diameter Sh; data comes from our own data plane." This directly rules out a class of designs that use the user as the criterion.
 
-## Decision（决策）
+## Decision
 
-运行态覆盖的判定粒度固定为：**号码前缀（号段）为第一维，可选叠加按呼叫的稳定百分比分流**。不做"按用户"，不做"按单通呼叫的持久覆盖"。
+The evaluation granularity for runtime overrides is fixed as: **number prefix (number range) as the first dimension, optionally overlaid with a stable-percentage call split by call**. No "by user," no "persistent per-call override."
 
-**schema。** 一条运行态覆盖项是五个字段：
+**Schema.** One runtime-override entry has five fields:
 
-| 字段 | 类型 | 含义 |
+| Field | Type | Meaning |
 |---|---|---|
-| `name` | string | 该覆盖项所属的 feature 名 |
-| `prefix` | string | 号段前缀，归一化形式（与 `Rule.prefix` 同构）；空串表示全域 |
-| `percent` | int | 0-100 整数，命中号段内多大比例的呼叫 |
-| `enabled` | bool | 是否启用；显式关闭优先于百分比 |
-| `removal_condition` | string | 移除条件：什么时候拆掉这条脚手架（防开关债务，ADR-0020） |
+| `name` | string | The feature name this override entry belongs to |
+| `prefix` | string | Number-range prefix, normalized form (isomorphic to `Rule.prefix`); empty string means the whole domain |
+| `percent` | int | Integer 0–100, what proportion of calls within the matched prefix |
+| `enabled` | bool | Whether enabled; explicit off takes priority over percentage |
+| `removal_condition` | string | Removal condition: when to tear down this scaffolding (guard against switch debt, ADR-0020) |
 
-**匹配。** 取 `name` 相同且前缀命中的覆盖项，**最长前缀优先** —— 与内核 `RuleSet.match` 的排序一致，运维心智只需一套。`enabled` 为 False 的覆盖项返回 `False`，显式关闭优先于百分比。查不到任何命中项时返回 `None`（fail-closed，交由部署级决定），不返回 `True`；这与 `gating.is_enabled` 的语义一致。
+**Matching.** Take override entries with matching `name` and matching prefix, **longest prefix wins** — consistent with the kernel `RuleSet.match` ordering, so ops need only one mental model. An override entry with `enabled` False returns `False`; explicit off takes priority over percentage. When no matching entry is found, return `None` (fail-closed, left to the deployment-level decision), not `True`; this is consistent with `gating.is_enabled` semantics.
 
-**百分比分流必须幂等。** 用 Call-ID 的稳定哈希，不依赖时钟、随机数或存储状态：
+**Percentage split must be idempotent.** Use a stable hash of Call-ID, not depending on the clock, random numbers, or stored state:
 
 ```text
 h = FNV-1a 32-bit(call_id.encode("utf-8"))
-命中 ⟺ h % 100 < percent
+hit ⟺ h % 100 < percent
 ```
 
-于是同一通呼叫在任何副本、任何一次重复求值中落进同一个桶 —— 这正是 Redis 脑裂窗口（风险 R5、未决 D3）所要求的幂等。
+Thus the same call lands in the same bucket in any replica, on any repeated evaluation — exactly the idempotency required by the Redis split-brain window (risk R5, open item D3).
 
-**边界。** `percent <= 0` 永不命中；`percent >= 100` 总是命中。超出 0-100 的值按这两个边界夹紧，不报错、不抛异常 —— 判定路径上不引入新的失败模式。
+**Boundaries.** `percent <= 0` never hits; `percent >= 100` always hits. Values outside 0–100 are clamped to these two boundaries, with no error or exception — no new failure mode is introduced into the evaluation path.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **判定可离线求值。** 判定只依赖配置与 `call_id`，不读 Redis、不读时钟、不读随机数，因此可以在进程内求值，也可以在控制台里离线预览同一条配置的后果。
-- **判定幂等。** 同一通呼叫重复求值结果一致，脑裂窗口不会把一次放行翻成拒答（风险 R5 / 未决 D3 的正面回答）。
-- **判定可审计。** 追溯一通呼叫只需两个数：`call_id` 与命中号段的 `percent`。"为什么这通走了新路径"这个问题有确定答案。
-- **配置 schema 与规则同构**（都是"前缀 + 属性"），因此复用 [ADR-0006](0006-config-governance.md) 的同一条治理流水线：版本行、变更单、审批、灰度分发、回滚，规则与覆盖项共用一套语义，控制台与审计也只有一套模型。
+- **Evaluation can be done offline.** Evaluation depends only on config and `call_id`, reading no Redis, no clock, no random numbers, so it can be evaluated in-process or previewed offline in the console for the consequence of the same config.
+- **Evaluation is idempotent.** Repeated evaluation of the same call yields the same result; the split-brain window will not flip one pass into a reject (the positive answer to risk R5 / open item D3).
+- **Evaluation is auditable.** Tracing a call requires only two numbers: `call_id` and the `percent` of the matched prefix. "Why did this call take the new path" has a definite answer.
+- **The config schema is isomorphic to rules** (both are "prefix + attribute"), so it reuses [ADR-0006](0006-config-governance.md)'s same governance pipeline: version row, change order, approval, canary distribution, rollback; rules and override entries share one set of semantics, and console and audit have only one model.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **百分比分流对"精确指定某一通呼叫"无能为力。** 这是有意为之：想让指定的一通呼叫走新路径，得反查出落在该桶内的 Call-ID，而不是直接点名一通呼叫。
-- **同一号段内不同呼叫行为不同。** 灰度期内排障的第一步是看 `call_id` 落在哪个桶；号段级"这整个号段都开了"的直觉不再成立，运维心智需要一次校准。
-- **`prefix` 与 `percent` 的组合需要运维理解。** 两个字段相乘出来的行为，控制台必须给出预览（输入号段 + 百分比，显示命中/未命中示例），否则配置只能靠猜。控制台预览是 M4 控制面的交付项，不是可选项。
+- **Percentage split is powerless to "precisely specify one particular call."** This is intentional: to make a specified call take the new path, you must reverse-derive the Call-ID that lands in that bucket, rather than directly naming a call.
+- **Different calls within the same prefix behave differently.** The first step in troubleshooting during the canary period is to see which bucket the `call_id` lands in; the intuition "this whole prefix is on" no longer holds, and ops' mental model needs one calibration.
+- **The combination of `prefix` and `percent` requires ops understanding.** The behavior produced by multiplying the two fields must be previewed by the console (enter prefix + percentage, show hit/miss examples), otherwise configuration can only be guessed. Console preview is a delivery item of the M4 control plane, not optional.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 按用户 | 本产品是号码域的 AS，不做 Diameter Sh（`AGENT.md` §2 非目标），用户标识根本不可得；为拿到标识而引入 Sh 接口，等于为了一个门控维度引入一整套网元对接 |
-| 按单通呼叫的持久覆盖 | 状态随呼叫量膨胀（每一通都要一条记录），审计要逐呼叫留痕，且状态存于 Redis 意味着脑裂窗口内重复求值可能读到不同版本 —— 直接违反 ADR-0020 对第 ② 层的幂等要求（风险 R5、未决 D3）；收益为负 |
-| 按时间窗口 | 依赖时钟。同一判决在不同副本、不同时刻求值结果不同，破坏幂等；且时钟回拨会让灰度范围突然归零或突然全量 |
-| 随机数百分比 | 同一次判决重复求值结果不同，直接违反幂等（风险 R5、未决 D3）。随机数是"分一次"的工具，不是"每次都分得一样"的工具 |
+| By user | This product is a number-domain AS; no Diameter Sh (`AGENT.md` §2 non-goal), so user identifiers are simply unavailable; introducing an Sh interface just to obtain an identifier means bringing in a whole network-element integration for one gating dimension |
+| Persistent per-call override | State grows with call volume (one record per call), audit must leave a trace per call, and state in Redis means repeated evaluation within the split-brain window may read a different version — directly violating ADR-0020's idempotency requirement for tier ② (risk R5, open item D3); negative net benefit |
+| By time window | Depends on the clock. The same decision evaluated in different replicas at different moments yields different results, breaking idempotency; and clock rollback would suddenly zero or suddenly fully enable the canary scope |
+| Random-percentage | Repeated evaluation of the same decision yields different results, directly violating idempotency (risk R5, open item D3). A random number is a tool to "split once," not to "split the same way every time" |
 
-## Evidence（证据）
+## Evidence
 
-- [ADR-0020](0020-feature-capability-gating.md) 把"运行态覆盖的判定粒度与配置 schema"列为已知缺口（未决 D7），并要求在 M4 控制面设计前落裁决。
-- 风险 R5（Redis 成为新 SPoF）与未决 D3（Redis 脑裂窗口下的判决幂等）要求第 ② 层判定幂等，这直接决定了百分比必须用 Call-ID 的稳定哈希而非时钟或随机数。
-- `AGENT.md` §2 非目标"不做 Diameter Sh，数据来自我们自己的数据面" —— 按用户粒度不可得。
-- 实现证据（本次同步落地）：`platform/src/as_platform/gating/overrides.py` 提供 `RuntimeOverride`、`fnv1a32`、`in_bucket`、`match_override`；`platform/tests/test_gating_overrides.py`（marker `unit`）覆盖百分比边界、重复求值幂等、号段内分流、`enabled=False` 优先、最长前缀优先、无命中返回 `None`、哈希回归锁定与纯度（不读时钟、不开 socket）。
-- 与内核规则的同构性：`as_platform/decision/rules.py` 的 `Rule` 已经是"前缀 + 属性"，最长前缀优先是既有排序（REQ-F-6）。
+- [ADR-0020](0020-feature-capability-gating.md) lists "evaluation granularity and config schema for runtime overrides" as a known gap (open item D7), and requires adjudication before the M4 control-plane design.
+- Risk R5 (Redis becomes a new SPoF) and open item D3 (decision idempotency under Redis split-brain window) require tier ② evaluation to be idempotent, which directly determines that percentage must use a stable Call-ID hash rather than clock or random numbers.
+- `AGENT.md` §2 non-goal "no Diameter Sh, data comes from our own data plane" — the by-user granularity is unavailable.
+- Implementation evidence (landed in this change): `platform/src/as_platform/gating/overrides.py` provides `RuntimeOverride`, `fnv1a32`, `in_bucket`, `match_override`; `platform/tests/test_gating_overrides.py` (marker `unit`) covers percentage boundaries, repeated-evaluation idempotency, intra-prefix split, `enabled=False` priority, longest-prefix priority, `None` on no match, and hash regression lock-in and purity (no clock read, no socket opened).
+- Isomorphism with kernel rules: `as_platform/decision/rules.py`'s `Rule` is already "prefix + attribute," and longest-prefix priority is the existing ordering (REQ-F-6).
 
-## Related（相关）
+## Related
 
-- [ADR-0020](0020-feature-capability-gating.md) 分层门控（本 ADR 裁决其中的第 ② 层）
-- [ADR-0006](0006-config-governance.md) 配置治理：PostgreSQL 版本库 + 变更单状态机
-- [ADR-0007](0007-data-plane-split.md) 数据面拆分：Redis 存运行态，PostgreSQL 存治理态
-- 风险 R5（Redis 成为新 SPoF）
-- 未决 D3（Redis 脑裂窗口下的判决幂等）
-- [`../新系统整体架构.md`](../新系统整体架构.md) §5.3 Feature enablement
+- [ADR-0020](0020-feature-capability-gating.md) layered gating (this ADR adjudicates its tier ②)
+- [ADR-0006](0006-config-governance.md) configuration governance: PostgreSQL version store + change-order state machine
+- [ADR-0007](0007-data-plane-split.md) data-plane split: Redis stores runtime, PostgreSQL stores governance state
+- Risk R5 (Redis becomes a new SPoF)
+- Open item D3 (decision idempotency under Redis split-brain window)
+- [`../system-architecture.md`](../system-architecture.md) §5.3 Feature enablement

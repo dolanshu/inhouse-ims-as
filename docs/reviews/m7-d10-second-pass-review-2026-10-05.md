@@ -56,14 +56,14 @@ Judgement against [`CONTRIBUTING.md`](../../CONTRIBUTING.md) / [`AGENT.md`](../.
 
 Plan checkboxes (all marked `[x]` as **engineering slices**; D10 maintainer acceptance **still pending** per plan and [`m7-d10-status-2026-10-05.md`](m7-d10-status-2026-10-05.md)).
 
-### M7.1 — 产品恢复接入
+### M7.1 — Product recovery integration
 
 | Plan bullet | Implementation | Verdict |
 |-------------|----------------|---------|
 | `platform/native/resip_recovery/` + `RecoveryStackSession` | Native `RecoveryTu` TransactionUser loads `d10-native-checkpoint-v1` fields; Python wrapper starts stack, pumps `process`, exposes BYE path flags | **Met** (engineering) |
 | Full DUM dialog rehydrate / product `_resip_runtime` on restart | Not wired; RecoveryTU matches testbed narrow BYE-forwarding seam | **Partial** (expected for slice) |
 
-### M7.2 — 非阻塞恢复读取
+### M7.2 — Non-blocking recovery read
 
 | Plan bullet | Implementation | Verdict |
 |-------------|----------------|---------|
@@ -77,20 +77,20 @@ Plan checkboxes (all marked `[x]` as **engineering slices**; D10 maintainer acce
 | `restore_from_checkpoint` / `route_in_dialog_bye` | Rebuilds FORWARD correlation and `route_target` from `uac_leg.remote_target`; unit tests | **Met** |
 | Wired into live runtime on process start | Not present | **Out of slice** |
 
-### M7.4 — owner 与提交安全
+### M7.4 — Owner and commit safety
 
 | Plan bullet | Implementation | Verdict |
 |-------------|----------------|---------|
 | Schema v2 + `CallCheckpointCommit` / `save_if_generation` | `owner_generation` / `committed` on encode-decode; v1 round-trip defaults; CAS on generation | **Met** |
 | Enforced on native BYE path | Helpers only; RecoveryTU does not call `require_committed_before_side_effect` | **Partial** (seam) |
 
-### M7.5 — checkpoint 生命周期
+### M7.5 — Checkpoint lifecycle
 
 | Plan bullet | Implementation | Verdict |
 |-------------|----------------|---------|
 | `CallCheckpointLifecycle` renew / terminal delete | `renew` via `StateStore.expire`; `mark_terminal_and_delete`; contract tests | **Met** |
 
-### M7.6 — D10 产品集成测试
+### M7.6 — D10 product integration tests
 
 | Plan bullet | Implementation | Verdict |
 |-------------|----------------|---------|

@@ -12,50 +12,50 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# Pre-M8 产品 Demo / Review 计划
+# Pre-M8 Product Demo / Review Plan
 
-> **状态（2026-10-08）**：故事 A/B 的现场走 kind `as-m71` 测试页。判决规则来自 config-service 编译 bundle。故事 C 的集群镜头已改到 `as-m71`，仍是 L1；7.2d 留在 `kind-as-m5`。故事 D/E 只补了口播。执行单是 [`2026-10-07-demo-on-m71-platform-plan.md`](2026-10-07-demo-on-m71-platform-plan.md)。
+> **Status (2026-10-08)**: stories A/B run live on the kind `as-m71` test page. The adjudication rules come from the config-service compiled bundle. The cluster shot of story C has been moved to `as-m71` and is still L1; 7.2d stays in `kind-as-m5`. Stories D/E only got narration added. The run sheet is [`2026-10-07-demo-on-m71-platform-plan.md`](2026-10-07-demo-on-m71-platform-plan.md).
 >
-> **对象**：运营商业务配置人员、运维负责人、信令/集成工程师（**客户与干系人**）。  
-> **目的**：在正式 M8 验收前，用可重复场景说明**产品做了什么**、边界在哪里。  
-> **不是**：内部里程碑走读、研发过程汇报、test-plan 签收会。  
-> **依据**：[`architecture/新系统整体架构.md`](../architecture/新系统整体架构.md)、[`requirements/prd.md`](../requirements/prd.md)。
+> **Audience**: carrier business configuration staff, the operations lead, signalling/integration engineers (**customer and stakeholders**).  
+> **Purpose**: before formal M8 acceptance, use repeatable scenarios to explain **what the product does** and where its boundaries are.  
+> **Not this**: an internal milestone walkthrough, an R&D process report, or a test-plan sign-off meeting.  
+> **Basis**: [`architecture/system-architecture.md`](../architecture/system-architecture.md), [`requirements/prd.md`](../requirements/prd.md).
 
-证据目录（办方自用）：`artifacts/demo-review/<YYYY-MM-DD>/`。
-
----
-
-## 1. 客户应带走的三句话
-
-1. **我们是什么**：部署在 IMS **网外**的第三方 AS；S-CSCF 经运营商 **S-SBC** 按 iFC 触发；我们执行业务判决并把 SIP 结果送回（**不碰媒体、不做 CDR**）。
-2. **我们交付什么**：可配置的 **号码翻译 / 反欺诈** 等用例进程 + **规则治理控制台** + **Kubernetes 部署与运维能力**（扩缩容、升级、可观测性接缝）。
-3. **客户怎么用起来**：业务人员在 **HTTPS 控制台** 改规则并走 **审批**；信令面 **多副本无状态**，会话必要状态在 **Redis**；规则与审计在 **PostgreSQL**。
+Evidence directory (for internal use by the running party): `artifacts/demo-review/<YYYY-MM-DD>/`.
 
 ---
 
-## 2. 产品介绍
+## 1. The Three Things the Customer Should Take Away
 
-产品由哪些单元组成，演示环境长什么样。对客户开场用 §2.6。架构全文在 [`新系统整体架构.md`](../architecture/新系统整体架构.md)。
+1. **What we are**: a third-party AS deployed **outside** the IMS network; the S-CSCF triggers it via the carrier's **S-SBC** per iFC; we execute the business adjudication and send the SIP result back (**no media, no CDR**).
+2. **What we deliver**: configurable use-case processes such as **number translation / anti-fraud**, plus a **rule governance console**, plus **Kubernetes deployment and operations capability** (scaling, upgrades, observability seams).
+3. **How the customer uses it**: business staff change rules through the **HTTPS console** and go through **approval**; the signalling plane is **stateless and multi-replica**, with the necessary session state in **Redis**; rules and audit are in **PostgreSQL**.
 
-### 2.1 在 IMS 网络中的位置
+---
 
-第三方 AS 仍由 S-CSCF 按 iFC 触发（3GPP TS 24.229）。运营商 S-SBC 做透明桥接：
+## 2. Product Introduction
 
-- 对 S-CSCF，第三方 AS 就是网内 AS，消息由 S-CSCF 送出网。
-- 对 AS，从 S-SBC 来的消息就是 S-CSCF 来的，AS 认为自己仍在网内。
+Which units make up the product and what the demo environment looks like. Use §2.6 to open for the customer. The full architecture is in [`system-architecture.md`](../architecture/system-architecture.md).
 
-AS 只实现一种接入语义：ISC（被 S-CSCF 触发）。S-SBC 是运营商网元，不是我方交付物。演示里用仿真器代替它。
+### 2.1 Position Within the IMS Network
+
+The third-party AS is still triggered by the S-CSCF per iFC (3GPP TS 24.229). The carrier's S-SBC does transparent bridging:
+
+- To the S-CSCF, the third-party AS is just an in-network AS; the message leaves the network from the S-CSCF.
+- To the AS, a message coming from the S-SBC is a message coming from the S-CSCF; the AS believes it is still inside the network.
+
+The AS implements only one access semantic: ISC (triggered by the S-CSCF). The S-SBC is a carrier network element, not one of our deliverables. In the demo a simulator stands in for it.
 
 ```mermaid
 flowchart LR
-    subgraph IMS["运营商 IMS"]
-        UE["UE / 终端"] --> PCSCF["P-CSCF"] --> SCSCF["S-CSCF<br/>按 iFC 触发"]
-        HSS["HSS<br/>iFC 签约"] -.-> SCSCF
-        SCSCF -->|"ISC"| SSBC["S-SBC<br/>透明桥接 · 拓扑隐藏<br/>运营商网元"]
+    subgraph IMS["Carrier IMS"]
+        UE["UE / handset"] --> PCSCF["P-CSCF"] --> SCSCF["S-CSCF<br/>triggers per iFC"]
+        HSS["HSS<br/>iFC subscription"] -.-> SCSCF
+        SCSCF -->|"ISC"| SSBC["S-SBC<br/>transparent bridging · topology hiding<br/>carrier network element"]
     end
 
-    subgraph EXT["网外 · 第三方托管域"]
-        AS["第三方 AS<br/>★ 本项目交付"]
+    subgraph EXT["Out-of-network · third-party hosted domain"]
+        AS["Third-party AS<br/>★ delivered by this project"]
     end
 
     SSBC <==>|"SIP trunk<br/>UDP/TCP 5060 · TLS 5061"| AS
@@ -65,60 +65,60 @@ flowchart LR
     style EXT fill:#fafafa,stroke:#999
 ```
 
-产品不碰媒体（SDP 原样透传），不做 CDR、计费和合法监听（LI）。
+The product touches no media (SDP is passed through verbatim), does no CDR, billing, or lawful interception (LI).
 
-### 2.2 整体架构
+### 2.2 Overall Architecture
 
 ```mermaid
 flowchart TB
-    subgraph UP["上游 · 运营商网元（非交付）"]
+    subgraph UP["Upstream · carrier network elements (not delivered)"]
         SCSCF2["S-CSCF"]
         SSBC2["S-SBC"]
     end
 
-    subgraph SIG["① 信令面 · 无状态 · 可多副本"]
+    subgraph SIG["① Signalling plane · stateless · multi-replica capable"]
         direction LR
-        APP1["apps/translation<br/>号码翻译 AS"]
-        APP2["apps/anti-fraud<br/>反诈 AS"]
-        APPN["apps/...<br/>未来用例"]
+        APP1["apps/translation<br/>number translation AS"]
+        APP2["apps/anti-fraud<br/>anti-fraud AS"]
+        APPN["apps/...<br/>future use cases"]
     end
 
-    subgraph CORE["② 内核 · platform/"]
-        CORE1["进程壳 · reSIProcate SIP 栈<br/>decide 决策缝<br/>Transport seam · StateStore seam"]
+    subgraph CORE["② Core · platform/"]
+        CORE1["Process shell · reSIProcate SIP stack<br/>decide decision seam<br/>Transport seam · StateStore seam"]
     end
 
-    subgraph CTRL["③ 控制面 · services/"]
+    subgraph CTRL["③ Control plane · services/"]
         direction LR
-        CFG["config-service<br/>规则版本库 · 变更单 · 分发"]
-        CON["console<br/>运维控制台"]
+        CFG["config-service<br/>rule version store · change orders · distribution"]
+        CON["console<br/>operations console"]
     end
 
-    subgraph DATA["④ 数据面 · 同 K8s 命名空间（ADR-0026）"]
+    subgraph DATA["④ Data plane · same K8s namespace (ADR-0026)"]
         direction LR
-        REDIS[("Redis<br/>会话状态 · 速率窗口 · 信誉")]
-        PG[("PostgreSQL<br/>规则版本 · 变更单 · 审计 · 用户")]
+        REDIS[("Redis<br/>session state · rate windows · reputation")]
+        PG[("PostgreSQL<br/>rule versions · change orders · audit · users")]
     end
 
-    subgraph CROSS["⑤ 横切能力"]
+    subgraph CROSS["⑤ Cross-cutting capabilities"]
         direction LR
-        OBS["可观测性<br/>OTel：log / metric / trace"]
-        SEC["安全<br/>白名单 · TLS · 鉴权 · 审计"]
-        OPS["运维<br/>Helm · 扩缩容 · ISSU"]
+        OBS["Observability<br/>OTel: log / metric / trace"]
+        SEC["Security<br/>whitelist · TLS · authentication · audit"]
+        OPS["Operations<br/>Helm · scaling · ISSU"]
     end
 
-    subgraph TEST["⑥ 测试平台 · testbed/"]
-        TB1["契约/单元测试 · 仿真网元 · 真实 socket 压测"]
+    subgraph TEST["⑥ Test platform · testbed/"]
+        TB1["contract/unit tests · simulated network elements · real socket load testing"]
     end
 
     SCSCF2 --> SSBC2 ==> SIG
     SIG --> CORE
     CORE --> DATA
     CTRL --> DATA
-    CTRL -. "规则分发 / 版本上报" .-> SIG
-    SIG -. "OTel 三信号" .-> OBS
-    CTRL -. "OTel 三信号" .-> OBS
-    OBS -. "指标驱动" .-> OPS
-    TEST -. "对拍 / 压测" .-> SIG
+    CTRL -. "rule distribution / version reporting" .-> SIG
+    SIG -. "OTel three signals" .-> OBS
+    CTRL -. "OTel three signals" .-> OBS
+    OBS -. "metrics-driven" .-> OPS
+    TEST -. "differential check / load test" .-> SIG
 
     style SIG fill:#e8f0fe,stroke:#1a73e8
     style CORE fill:#e6f4ea,stroke:#34a853
@@ -128,235 +128,235 @@ flowchart TB
     style TEST fill:#f1f3f4,stroke:#5f6368
 ```
 
-| 层 | 职责 | 有状态性 |
+| Layer | Responsibility | Statefulness |
 |---|---|---|
-| ① 信令面 `apps/` | 用例进程，承载 SIP 呼叫与业务判决 | 无状态（必要状态外置 Redis） |
-| ② 内核 `platform/` | 进程壳、SIP 栈与 B2BUA 控制、决策缝、两个可插拔 seam | 无状态 |
-| ③ 控制面 `services/` | 规则治理（版本、审批、分发）、运维控制台 | 无状态（状态在 PG） |
-| ④ 数据面 | Redis 存运行态，PG 存治理态 | 有状态，需冗余 |
-| ⑤ 横切 | 可观测性、安全、运维 | 无状态（后端除外） |
-| ⑥ testbed | 三层测试资产与仿真网元 | 研发资产，v1 不交付 |
+| ① Signalling plane `apps/` | Use-case processes, carrying SIP calls and business adjudication | Stateless (the necessary state is externalized to Redis) |
+| ② Core `platform/` | Process shell, SIP stack and B2BUA control, decision seam, two pluggable seams | Stateless |
+| ③ Control plane `services/` | Rule governance (versions, approval, distribution), operations console | Stateless (the state is in PG) |
+| ④ Data plane | Redis holds runtime state, PG holds governance state | Stateful, redundancy required |
+| ⑤ Cross-cutting | Observability, security, operations | Stateless (back ends excepted) |
+| ⑥ testbed | Three-layer test assets and simulated network elements | R&D asset, not delivered in v1 |
 
-部署形态是 Kubernetes + Helm，单租户 on-prem。compose 只用于开发和控制台演示。冗余目标是站点内 N+1、跨站点 1+1 温备，不做双活。
+The deployment form is Kubernetes + Helm, single-tenant on-premises. compose is used only for development and for the console demo. The redundancy target is N+1 within a site and 1+1 warm standby across sites; active-active is not done.
 
-### 2.3 各单元
+### 2.3 The Units
 
-**产品（交付物）**
+**Product (deliverables)**
 
-| 单元 | 代码位置 | 做什么 | 现状（2026-10-08） |
+| Unit | Code location | What it does | Current state (2026-10-08) |
 |---|---|---|---|
-| 号码翻译 AS | `apps/translation` + `platform` | 接 S-SBC 来的 INVITE，按被叫前缀判决：翻译、转发、阻止或无匹配。翻译后以新 Call-ID 起出腿，接通后把入腿 BYE 转到出腿 | kind 上 UDP、TCP、TLS 都跑通。T1 `+8613800138000` 出腿用户 `013800138000`，T4 404，T5/F1 200，F2 603。TLS 出腿用 `sips:` |
-| 运行时内核 | `platform/src/as_platform` | 进程壳、`SipStackService`、原生扩展 `_resip_runtime`（reSIProcate DUM）、`decide()` 决策缝、对端白名单、`/metrics` 与 `/health`（8080）、draining | 判决规则读 `AS_CONFIG_BUNDLE_PATH` 指向的已激活 bundle；`AS_RULESET_JSON` 非空时优先。进程不主动拉包 |
-| 翻译出腿钩子 | `apps/translation/.../outbound.py` | 由 `AS_SIP_ROUTE_HOOK` 加载。按 `AS_TRANSLATION_RULES_JSON` 改号（去 `+86` 加 `0`），拼出腿 URI，下一跳是 S-SBC 南向 | bundle 带不了去前缀、加前缀，所以改号表仍走这个环境变量 |
-| 反诈 AS | `apps/anti-fraud` | 主叫甄别，单腿拒绝 608（RFC 8688） | 判决模块和单测在。kind 上不起这个进程：它会和翻译抢 SIP 5060。F1/F2 由翻译进程内核转发或阻止 |
-| config-service | `services/config-service` | 规则、变更单、审批（提交人不能自批）、编译 ConfigBundle、激活、分发通知、用户与会话、HMAC 审计。API 在 `/internal/v1` | kind 上由 lab values 打开，演示前用它走完四条规则的提案、审批、分发、激活。生产默认 `services.configService.enabled` 是 false |
-| 运维控制台 | `services/console` | 纯 HTML/JS，由 config-service 从 `/` 提供。视图：Rules、Change orders、Call traces、Operations | 登录要求 HTTPS。演示在 compose（Caddy，`https://localhost:8443`）上看。kind `as-m71` 不提供控制台登录 |
-| PostgreSQL | Helm `stateStores` | 规则版本、变更单、审计、控制台用户 | kind 上是 `as-sut-postgres` StatefulSet，由迁移 Job 建表 |
-| Redis | Helm `stateStores` | 呼叫必要状态 checkpoint 的方向、速率窗口 | kind 上 `as-sut-redis` 在跑。进程重启后恢复呼叫（REQ-NF-1）没有签收 |
-| Helm chart | `deploy/helm` | 用例 Deployment/Service、config-service、Ingress 模板、PG/Redis、迁移 Job、NetworkPolicy、HPA、PDB | 生产默认 fail-closed：TLS 开启时必须给证书 Secret，对端白名单不能为空 |
-| 告警模板 | `deploy/alerts/as-alerts.yaml` | 比例类和状态类告警 | 没有 CPS 或并发的绝对值阈值，等容量研究 |
-| 发布镜像 | `deploy/docker/Dockerfile` | 交付用的产品镜像 | 现在是进程壳，不带 SIP 监听。重开 M8 之前补上 |
+| Number translation AS | `apps/translation` + `platform` | Receives the INVITE from the S-SBC, adjudicates on the called-party prefix: translate, forward, block, or no match. After translation it places the outbound leg with a new Call-ID, and once answered it forwards the inbound BYE to the outbound leg | UDP, TCP and TLS all work on kind. T1 `+8613800138000` outbound user `013800138000`, T4 404, T5/F1 200, F2 603. The TLS outbound leg uses `sips:` |
+| Runtime core | `platform/src/as_platform` | Process shell, `SipStackService`, native extension `_resip_runtime` (reSIProcate DUM), `decide()` decision seam, peer whitelist, `/metrics` and `/health` (8080), draining | Adjudication rules are read from the activated bundle pointed to by `AS_CONFIG_BUNDLE_PATH`; `AS_RULESET_JSON` takes priority when non-empty. The process does not proactively pull packages |
+| Translation outbound hook | `apps/translation/.../outbound.py` | Loaded via `AS_SIP_ROUTE_HOOK`. Rewrites numbers per `AS_TRANSLATION_RULES_JSON` (strip `+86`, add `0`), assembles the outbound URI, and the next hop is the S-SBC southbound side | The bundle cannot express prefix stripping or prefix addition, so the rewrite table still goes through this environment variable |
+| Anti-fraud AS | `apps/anti-fraud` | Caller screening, single-leg rejection with 608 (RFC 8688) | The decision module and unit tests exist. This process is not started on kind: it would contend with translation for SIP 5060. F1/F2 are forwarded or blocked by the translation process core |
+| config-service | `services/config-service` | Rules, change orders, approval (the submitter cannot self-approve), ConfigBundle compilation, activation, distribution notification, users and sessions, HMAC audit. The API is under `/internal/v1` | Enabled on kind via lab values; before the demo it is used to walk the proposal, approval, distribution and activation of the four rules. In production `services.configService.enabled` defaults to false |
+| Operations console | `services/console` | Pure HTML/JS, served by config-service from `/`. Views: Rules, Change orders, Call traces, Operations | Login requires HTTPS. The demo is done on compose (Caddy, `https://localhost:8443`). The kind `as-m71` cluster offers no console login |
+| PostgreSQL | Helm `stateStores` | Rule versions, change orders, audit, console users | On kind it is the `as-sut-postgres` StatefulSet, with tables created by a migration Job |
+| Redis | Helm `stateStores` | Direction of the call checkpoint necessary for calls, rate windows | `as-sut-redis` is running on kind. Restoring a call after a process restart (REQ-NF-1) is not signed off |
+| Helm chart | `deploy/helm` | Use-case Deployment/Service, config-service, Ingress templates, PG/Redis, migration Job, NetworkPolicy, HPA, PDB | Production defaults are fail-closed: when TLS is enabled a certificate Secret must be supplied, and the peer whitelist cannot be empty |
+| Alert templates | `deploy/alerts/as-alerts.yaml` | Ratio-based and state-based alerts | There are no absolute CPS or concurrency thresholds; awaiting the capacity study |
+| Release image | `deploy/docker/Dockerfile` | The product image for delivery | Currently a process shell with no SIP listening. To be filled in before reopening M8 |
 
-**测试平台（不交付）**
+**Test platform (not delivered)**
 
-| 单元 | 代码位置 | 做什么 |
+| Unit | Code location | What it does |
 |---|---|---|
-| 仿真 S-CSCF | `testbed/simulators`，角色 `scscf` | 接测试页发出的呼叫，转给北向 S-SBC |
-| 仿真 S-SBC 北向 / 南向 | 角色 `ssbc-north`、`ssbc-south` | 透明桥接：北向把呼叫送进产品 AS，南向把 AS 的出腿送到被叫。每跳在 Via、Record-Route、Contact 里写自己的 headless Service 名 |
-| 仿真被叫 | 角色 `uas` | INVITE 回 200（带最小 SDP），BYE 回 200 |
-| call-load 与测试页 | 角色 `ui` + `testbed/load` | 标准库 HTTP 页，不登录。选呼叫类型（T1、T4、T5、F1、F2）、传输、CPS、时长、保持时间、并发上限，点启动。显示每类的发出、接通、失败、响应码、建立时延、未拆除数。只向仿真 S-CSCF 发 SIP |
-| 测试 CA | `python -m as_simulators issue-certs` | 安装时临时生成。不是运营商 PKI，页面横幅写「非运营商 PKI」 |
-| 契约与对拍 | `testbed/contracts`、`testbed/probe` | 决策契约、SIP 基线（S1–S4 等）对拍 |
-| 本机压测 harness | `testbed/load` | 真实 socket 发 SIP，统计响应码和 BYE。故事 E 的内部容量研究用它 |
-| 本机控制台环境 | `deploy/compose` | PG、config-service、Caddy（HTTPS 8443）、迁移、初始管理员。故事 A 的控制台在这里 |
+| Simulated S-CSCF | `testbed/simulators`, role `scscf` | Receives the calls issued by the test page and forwards them to the northbound S-SBC |
+| Simulated S-SBC northbound / southbound | Roles `ssbc-north`, `ssbc-south` | Transparent bridging: the northbound side sends the call into the product AS, and the southbound side sends the AS's outbound leg to the called party. Each hop writes its own headless Service name in Via, Record-Route and Contact |
+| Simulated called party | Role `uas` | Returns 200 to INVITE (with minimal SDP), returns 200 to BYE |
+| call-load and the test page | Role `ui` + `testbed/load` | Standard-library HTTP page, no login. Select the call type (T1, T4, T5, F1, F2), transport, CPS, duration, hold time, concurrency cap, and press start. It shows per-type sent, answered, failed, response codes, setup latency and non-torn-down count. It sends SIP only to the simulated S-CSCF |
+| Test CA | `python -m as_simulators issue-certs` | Generated temporarily at install time. Not a carrier PKI; the page banner says "not a carrier PKI" |
+| Contracts and differential checks | `testbed/contracts`, `testbed/probe` | Decision contracts, SIP baseline (S1–S4, etc.) differential checks |
+| Local load-testing harness | `testbed/load` | Sends SIP over real sockets and tallies response codes and BYEs. Story E's internal capacity study uses it |
+| Local console environment | `deploy/compose` | PG, config-service, Caddy (HTTPS 8443), migrations, initial administrator. Story A's console is here |
 
-测试页统计的是本轮次数，不是容量承诺。直接从 call-load 打产品 SIP 会被网络策略丢掉（超时），这是期望行为。
+The test page tallies the counts of this round; it is not a capacity commitment. Sending SIP directly from call-load to the product's SIP is dropped by network policy (timeout), which is the expected behavior.
 
-### 2.4 当前演示的 infra
+### 2.4 The infra Used by the Current Demo
 
 ```mermaid
 flowchart LR
-    subgraph HOST["本机 · WSL2 Linux · Docker"]
-        BR["浏览器<br/>127.0.0.1:8088"] --> PF["kubectl port-forward<br/>svc/ims-sim-ui"]
+    subgraph HOST["Local host · WSL2 Linux · Docker"]
+        BR["Browser<br/>127.0.0.1:8088"] --> PF["kubectl port-forward<br/>svc/ims-sim-ui"]
     end
 
-    subgraph SIM["kind as-m71 · 命名空间 ims-sim（测试平台）"]
-        LOAD["call-load<br/>测试页 + 发呼叫"] --> SC["scscf"] --> N["ssbc-north"]
+    subgraph SIM["kind as-m71 · namespace ims-sim (test platform)"]
+        LOAD["call-load<br/>test page + call origination"] --> SC["scscf"] --> N["ssbc-north"]
         S["ssbc-south"] --> U["uas"]
     end
 
-    subgraph SUT["kind as-m71 · 命名空间 as-sut（产品 deploy/helm）"]
-        TR["as-sut-translation<br/>产品 SIP 进程"]
-        CM["ConfigMap<br/>as-sut-runtime-bundle"] -.->|"挂载"| TR
+    subgraph SUT["kind as-m71 · namespace as-sut (product deploy/helm)"]
+        TR["as-sut-translation<br/>product SIP process"]
+        CM["ConfigMap<br/>as-sut-runtime-bundle"] -.->|"mounted"| TR
         CS["as-sut-config-service"] --> PGS[("as-sut-postgres")]
         TR --> RD[("as-sut-redis")]
     end
 
     PF --> LOAD
     N -->|"SIP UDP/TCP/TLS"| TR
-    TR -->|"出腿"| S
+    TR -->|"outbound leg"| S
 ```
 
-`ims-sim` 里的 `scscf`、`ssbc-north`、`ssbc-south`、`uas`、`call-load` 各是一个 Deployment（1 副本、1 容器、1 进程，镜像 `ims-sim:dev`，`--role` 区分）。浏览器打开的是测试页，不是产品控制台。产品控制台在 compose 的 `https://localhost:8443`，不在这个集群上。
+In `ims-sim`, `scscf`, `ssbc-north`, `ssbc-south`, `uas` and `call-load` are each one Deployment (1 replica, 1 container, 1 process, image `ims-sim:dev`, distinguished by `--role`). What the browser opens is the test page, not the product console. The product console is compose's `https://localhost:8443` and is not on this cluster.
 
-一个 kind 节点，两个 namespace 共用 Calico Pod 网段 `192.168.0.0/16`。NetworkPolicy：call-load 只能连 `scscf`；产品翻译 Pod 的 SIP 只和两个仿真 S-SBC 通。ConfigMap `as-sut-runtime-bundle` 挂到翻译进程的 `/etc/as/bundle/bundle.json`。
+One kind node; the two namespaces share the Calico pod subnet `192.168.0.0/16`. NetworkPolicy: call-load may connect only to `scscf`; the product translation Pod's SIP talks only to the two simulated S-SBCs. The ConfigMap `as-sut-runtime-bundle` is mounted at the translation process's `/etc/as/bundle/bundle.json`.
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 主机 | WSL2 Linux，Docker 引擎 |
-| 工具 | `kind` v0.29.0、`kubectl`、`helm`，放在 `.tools/m71-bin` |
-| 集群 | kind `as-m71`，context `kind-as-m71`，一个 control-plane 节点 `kindest/node:v1.33.1` |
-| 网络 | Calico v3.28.2。两个 namespace 共用 Pod 网段 `192.168.0.0/16` |
-| 镜像 | `ims-sim:dev`（`testbed/sim-platform/Dockerfile`）；`as-sut:dev`（`testbed/sim-platform/Dockerfile.product`，把本机编好的 `_resip_runtime` 和 reSIProcate 库拷进去）；`as-config-service:m71-lab`（`deploy/docker/config-service.Dockerfile`）。都用 `kind load` 装进节点 |
-| Helm | `ims-sim` 用 `testbed/sim-platform/chart`；`as-sut` 用产品 chart `deploy/helm`，叠加 `values-product-as.yaml` 和 `values-product-as-bundle.yaml` |
-| Secret | `ims-sim-test-ca`（两个命名空间）、`as-sut-test-tls`（产品 TLS）、`as-sut-config-runtime`（lab 数据库与审计密钥） |
-| 规则 | 判决规则：ConfigMap `as-sut-runtime-bundle`，四条 `t1-plus86`、`t5-forward`、`f1-allow`、`f2-block`。改号表：`AS_TRANSLATION_RULES_JSON` 里的 `t1-plus86` |
-| 网络策略 | call-load 只能连 `scscf`。产品 SIP 只收北向 S-SBC 的 5060/5061 和南向 S-SBC 的回包；出向只到两个 S-SBC、Redis 和 DNS。指标端口 8080 放开 |
-| 访问 | 只有测试页经 `port-forward` 到本机 `8088`。没有 Ingress |
-| 安装 / 清理 | 安装见 §4「会前」，清理见 §4「下场」。干净的定义见 §4「干净」 |
+| Host | WSL2 Linux, Docker engine |
+| Tools | `kind` v0.29.0, `kubectl`, `helm`, placed in `.tools/m71-bin` |
+| Cluster | kind `as-m71`, context `kind-as-m71`, one control-plane node `kindest/node:v1.33.1` |
+| Network | Calico v3.28.2. The two namespaces share the pod subnet `192.168.0.0/16` |
+| Images | `ims-sim:dev` (`testbed/sim-platform/Dockerfile`); `as-sut:dev` (`testbed/sim-platform/Dockerfile.product`, which copies in the locally built `_resip_runtime` and the reSIProcate libraries); `as-config-service:m71-lab` (`deploy/docker/config-service.Dockerfile`). All are loaded into the node with `kind load` |
+| Helm | `ims-sim` uses `testbed/sim-platform/chart`; `as-sut` uses the product chart `deploy/helm`, overlaid with `values-product-as.yaml` and `values-product-as-bundle.yaml` |
+| Secrets | `ims-sim-test-ca` (both namespaces), `as-sut-test-tls` (product TLS), `as-sut-config-runtime` (lab database and audit keys) |
+| Rules | Adjudication rules: ConfigMap `as-sut-runtime-bundle`, the four `t1-plus86`, `t5-forward`, `f1-allow`, `f2-block`. Rewrite table: `t1-plus86` inside `AS_TRANSLATION_RULES_JSON` |
+| Network policy | call-load may connect only to `scscf`. Product SIP accepts only port 5060/5061 from the northbound S-SBC and the replies of the southbound S-SBC; outbound goes only to the two S-SBCs, Redis and DNS. The metrics port 8080 is open |
+| Access | Only the test page reaches the local host on `8088` via `port-forward`. There is no Ingress |
+| Install / cleanup | Install see §4 "Before the session", cleanup see §4 "After the session". The definition of clean is in §4 "Clean" |
 
-kind `as-m5` 是另一个集群，只放 7.2d 的 Ingress 登录证据，不属于本场环境。
+The kind `as-m5` cluster is a different cluster; it holds only the 7.2d Ingress login evidence and is not part of this session's environment.
 
-### 2.5 讲解时值得带上的几点
+### 2.5 Points Worth Bringing Up While Presenting
 
-- **规则怎么到进程。** 控制台或 API 改规则 → 变更单 → 另一人审批 → config-service 编译不可变版本 → 分发通知（只带 change id、版本号）→ 激活。本场由脚本把已激活的 bundle 写进 ConfigMap 挂进 Pod，进程启动时读文件。进程不主动拉包。
-- **一种接入语义。** 只做 ISC；trunk 是承载，不是第二种业务。
-- **一进程一用例。** 每个用例是独立进程、故障域和扩缩容边界。这也是反诈进程本场不起的原因：两个进程会抢同一 SIP 端口。
-- **SIP 结果码。** 无匹配 404，让 S-CSCF 继续 iFC 链；阻止 603；反诈进程的拒绝是 608。本场 F2 是 603。
-- **安全边界。** 对端白名单 + TLS + 网络策略三层。控制台登录要求 HTTPS，提交人不能自批，操作写审计。不参与 LI。
-- **扩缩容。** 指标 `as_active_calls`；缩容先 draining，活跃呼叫归零才删 Pod。HPA 阈值等容量研究，现在不填。
-- **本场不签的东西。** REQ-S-2 / REQ-S-3（测试 CA）、REQ-S-4（测试页不是控制台）、REQ-NF-1（呼叫恢复）、容量数字。M8 仍搁置。
+- **How rules reach the process.** Rules are changed in the console or via API → change order → approval by another person → config-service compiles an immutable version → distribution notification (carrying only the change id and version number) → activation. In this session a script writes the activated bundle into a ConfigMap and mounts it into the Pod; the process reads the file at startup. The process does not proactively pull packages.
+- **One access semantic.** Only ISC; the trunk is the bearer, not a second kind of business.
+- **One process per use case.** Each use case is an independent process, fault domain, and scaling boundary. This is also why the anti-fraud process is not started in this session: two processes would contend for the same SIP port.
+- **SIP result codes.** 404 for no match, letting the S-CSCF continue the iFC chain; 603 for block; 608 for the anti-fraud process's rejection. In this session F2 is 603.
+- **Security boundary.** Three layers: peer whitelist + TLS + network policy. Console login requires HTTPS, the submitter cannot self-approve, and operations are audited. LI is not involved.
+- **Scaling.** The metric `as_active_calls`; downscale drains first and deletes the Pod only when active calls reach zero. The HPA thresholds await the capacity study and are not filled in now.
+- **What this session does not sign.** REQ-S-2 / REQ-S-3 (test CA), REQ-S-4 (the test page is not the console), REQ-NF-1 (call recovery), capacity figures. M8 remains on hold.
 
-### 2.6 演示开场一张图
+### 2.6 One Diagram to Open the Demo
 
-对客户只讲五块交付，不讲仓库目录名：
+For the customer, talk only about the five delivered blocks; do not mention repository directory names:
 
 ```mermaid
 flowchart TB
-  subgraph EXT["网外 · 我方交付边界"]
-    SIG["信令面<br/>翻译 AS · 反诈 AS"]
-    CORE["运行时内核<br/>SIP 栈 · B2BUA · 业务判决缝"]
-    CTRL["控制面<br/>配置服务 · 运维控制台"]
-    DATA[("数据面<br/>Redis 会话态 · PG 规则/审计")]
-    OPS["运维与可观测<br/>Helm · 指标 · 升级/缩容"]
+  subgraph EXT["Out-of-network · our delivery boundary"]
+    SIG["Signalling plane<br/>translation AS · anti-fraud AS"]
+    CORE["Runtime core<br/>SIP stack · B2BUA · business decision seam"]
+    CTRL["Control plane<br/>config service · operations console"]
+    DATA[("Data plane<br/>Redis session state · PG rules/audit")]
+    OPS["Operations and observability<br/>Helm · metrics · upgrade/scale"]
   end
-  SSBC["运营商 S-SBC<br/>（非我方交付）"] ==> SIG
+  SSBC["Carrier S-SBC<br/>(not our deliverable)"] ==> SIG
   SIG --> CORE
   CORE --> DATA
   CTRL --> DATA
-  CTRL -. "规则版本 / 分发" .-> SIG
+  CTRL -. "rule versions / distribution" .-> SIG
   SIG --> OPS
   CTRL --> OPS
 ```
 
-| 对客户说的块 | 做什么 | 本场看什么 |
+| Block as stated to the customer | What it does | What is seen in this session |
 |--------------|--------|-------------|
-| **信令面** | 接住 trunk INVITE，按规则翻译、拒绝、转发 | 测试页经仿真 S-CSCF / S-SBC 打到产品 AS：T1 200、T4 404、F2 603 |
-| **运行时内核** | reSIProcate、双腿语义、UDP/TCP/TLS、白名单 | 三种传输各跑一轮，BYE 拆干净；TLS 出腿 `sips:` |
-| **控制面** | 规则、变更单、审批、分发、用户与会话 | compose 上的 HTTPS 控制台；kind 上判决规则来自 config-service 编译的 bundle |
-| **数据面** | Redis checkpoint 方向；PG 治理与审计 | `as-sut-redis`、`as-sut-postgres` 在跑；呼叫恢复不签 |
-| **运维** | 容器化、Helm、draining、指标、告警模板 | `as-m71` 两个命名空间的 Deployment、`as_active_calls`、告警 YAML |
+| **Signalling plane** | Catches the trunk INVITE and translates, rejects, or forwards per the rules | The test page hits the product AS through the simulated S-CSCF / S-SBC: T1 200, T4 404, F2 603 |
+| **Runtime core** | reSIProcate, two-leg semantics, UDP/TCP/TLS, whitelist | One round per transport, BYE torn down cleanly; the TLS outbound leg uses `sips:` |
+| **Control plane** | Rules, change orders, approval, distribution, users and sessions | The HTTPS console on compose; on kind the adjudication rules come from the config-service compiled bundle |
+| **Data plane** | Redis checkpoint direction; PG governance and audit | `as-sut-redis` and `as-sut-postgres` are running; call recovery is not signed |
+| **Operations** | Containerization, Helm, draining, metrics, alert templates | The Deployments of the two `as-m71` namespaces, `as_active_calls`, the alert YAML |
 
-testbed 只在对技术观众解释「怎么验证行为」时提及，不作为产品交付物对外陈述。
+testbed is mentioned only when explaining to a technical audience "how behavior is verified"; it is never stated externally as a product deliverable.
 
 ---
 
-## 3. 交付能力地图（按「做了什么」组织）
+## 3. Delivery Capability Map (organized by "what was built")
 
-下列能力与 PRD 用户故事 / REQ 族对应；演示按 **能力** 选场，不按研发阶段。
+The following capabilities correspond to PRD user stories / REQ families; the demo selects scenes by **capability**, not by R&D phase.
 
-### 3.1 呼叫与业务判决（信令 + 内核）
+### 3.1 Calls and Business Adjudication (signalling + core)
 
-| 能力 | 客户价值 | 典型 SIP 结果 | 演示方式（本地） |
+| Capability | Customer value | Typical SIP result | How it is demoed (locally) |
 |------|----------|---------------|------------------|
-| **基本呼叫接通** | iFC 触发后 AS 能完成对话建立 | 100/180/200… | 契约对拍 S1 形状（见附录 A-信令） |
-| **无匹配业务** | S-CSCF 可继续 iFC 链 | **404** | 空规则集进程壳或 S2 对拍 |
-| **策略拒绝（反诈形状）** | 命中阻止号段立即拒绝 | **603** | 反诈/翻译 `decide()` + S3 对拍 |
-| **号码翻译（双腿）** | 新 Call-ID 出腿，被叫改写 | 200 + 第二腿 INVITE | 决策演示 + FORWARD 集成测 |
-| **下游忙** | 合理映射忙信号 | **486** | FORWARD 第二腿 486 映射 |
-| **主叫取消** | 早 cancel 不挂死 | **487** | S4 对拍（故事 B 步骤 5 一键；见 `test_e1_s4_*`） |
-| **SDP 透传** | 不碰媒体，offer 字节一致 | SDP body 不变 | SDP 字节对比集成测 |
-| **反诈单腿** | 主叫甄别拒绝 | **608**（RFC 8688） | `apps/anti-fraud` 判决用例（可无 socket） |
+| **Basic call completion** | After iFC triggers, the AS can complete dialog establishment | 100/180/200… | Contract differential check of the S1 shape (see Appendix A-Signalling) |
+| **No matching service** | The S-CSCF can continue the iFC chain | **404** | A process shell with an empty rule set, or the S2 differential check |
+| **Policy rejection (anti-fraud shape)** | An immediate rejection when a blocked number range is hit | **603** | Anti-fraud/translation `decide()` + the S3 differential check |
+| **Number translation (two legs)** | A new Call-ID for the outbound leg, the called party rewritten | 200 + a second-leg INVITE | Decision demo + the FORWARD integration test |
+| **Downstream busy** | The busy signal is mapped reasonably | **486** | FORWARD second-leg 486 mapping |
+| **Caller cancel** | An early cancel does not hang | **487** | The S4 differential check (Story B step 5, one click; see `test_e1_s4_*`) |
+| **SDP pass-through** | No media is touched, the offer bytes are identical | The SDP body is unchanged | The SDP byte-comparison integration test |
+| **Anti-fraud single leg** | Caller screening rejection | **608** (RFC 8688) | The `apps/anti-fraud` decision cases (can run without sockets) |
 
-### 3.2 配置治理（控制面）
+### 3.2 Configuration Governance (control plane)
 
-| 能力 | 客户价值 | v1 范围 | 演示方式 |
+| Capability | Customer value | v1 scope | How it is demoed |
 |------|----------|---------|----------|
-| **规则管理（被叫 + 前缀）** | 按号段绑定翻译/拒绝等 | **不含**主叫/正则（v1.1） | 控制台创建/变更 + PG 管道集成测 |
-| **变更单与审批** | 防误操作 | 提交人不可自批 | 双账号浏览器：draft → submit → approve/reject |
-| **规则编译与激活** | 运行时可消费的 ConfigBundle | `runtime_bundle` 纯函数 + 激活 API | 展示激活后 bundle 形态（可导出 JSON） |
-| **分发与回滚** | 多实例一致版本 | Fleet 通知 + 健康占位 | Operations UI + fleet API 测 |
-| **身份与会话** | 控制台安全登录 | 密码会话、HTTPS、CSRF | compose 登录 +（可选）kind Ingress 登录 |
-| **操作审计** | 谁改了什么 |  append-only 审计 | API/库表说明 + 集成测摘要 |
+| **Rule management (called party + prefix)** | Bind translation/rejection and the like to number ranges | **Excludes** caller/regex (v1.1) | Create/change in the console + the PG pipeline integration test |
+| **Change orders and approval** | Prevents operator error | The submitter cannot self-approve | Two accounts in the browser: draft → submit → approve/reject |
+| **Rule compilation and activation** | A ConfigBundle consumable at runtime | `runtime_bundle` pure function + the activation API | Show the shape of the bundle after activation (exportable as JSON) |
+| **Distribution and rollback** | Consistent version across instances | Fleet notification + health placeholder | Operations UI + the fleet API test |
+| **Identity and sessions** | Secure console login | Password sessions, HTTPS, CSRF | compose login + (optionally) the kind Ingress login |
+| **Operation audit** | Who changed what | append-only audit | API/table description + the integration test summary |
 
-### 3.3 安全与接入
+### 3.3 Security and Access
 
-| 能力 | 客户价值 | 演示方式 | 现场限制 |
+| Capability | Customer value | How it is demoed | On-site limitation |
 |------|----------|----------|----------|
-| **控制台 HTTPS 同源** | 浏览器与 API 同域 | `deploy/compose` + Caddy | 自签证书 |
-| **SIP 对端约束** | 只信运营商 trunk | peer allowlist / TLS 缝 | loopback 策略测；**非**运营商 PKI 实网 |
-| **SIP TLS** | trunk 加密 | TLS runtime smoke | 本地证书 |
-| **证书轮换接缝** | 运维可热更证 | 文档 + 单测 | 完整双证重叠窗 → 运营商环境 |
+| **Same-origin HTTPS console** | Browser and API on the same domain | `deploy/compose` + Caddy | Self-signed certificate |
+| **SIP peer constraint** | Only the carrier trunk is trusted | peer allowlist / TLS seam | loopback policy test; **not** a real carrier PKI network |
+| **SIP TLS** | Trunk encryption | TLS runtime smoke | Local certificate |
+| **Certificate rotation seam** | Operations can hot-rotate certificates | Documentation + unit tests | Full dual-certificate overlap window → carrier environment |
 
-### 3.4 可靠性与会话
+### 3.4 Reliability and Sessions
 
-| 能力 | 客户价值 | 演示方式 | 现场限制 |
+| Capability | Customer value | How it is demoed | On-site limitation |
 |------|----------|----------|----------|
-| **会话 checkpoint（方向）** | 进程重启后恢复对话 | Redis + establish 回调 + D10 harness | **非**客户 K8s 正式 NF-1 签收 |
-| **优雅下线 / ISSU** | 升级少掉话 | draining + readiness 503 | kind 证据（可模拟 `active_calls`） |
-| **缩容保护** | 不在有活呼叫时缩掉实例 | downscale runbook + 判据 | 运维脚本层，非全自动 actuator |
-| **Redis Sentinel 接线** | 站点内 Redis HA | 客户端解析与单测 | 可不拉真 Sentinel 集群 |
+| **Session checkpoint (direction)** | The dialog is restored after a process restart | Redis + establish callback + the D10 harness | **Not** a formal NF-1 sign-off on a customer K8s |
+| **Graceful shutdown / ISSU** | Fewer dropped calls during upgrades | draining + readiness 503 | kind evidence (`active_calls` can be simulated) |
+| **Downscale protection** | Instances are not removed while calls are active | downscale runbook + criteria | At the operations script layer, not a fully automatic actuator |
+| **Redis Sentinel wiring** | Redis HA within a site | Client resolution and unit tests | A real Sentinel cluster need not be started |
 
-### 3.5 运维、容量与可观测
+### 3.5 Operations, Capacity and Observability
 
-| 能力 | 客户价值 | 演示方式 | 话术 |
+| Capability | Customer value | How it is demoed | Talking points |
 |------|----------|----------|------|
-| **Kubernetes 部署** | 标准 on-prem 交付 | Helm chart、kind Pod Running | 对照 `deploy/helm/README.md` |
-| **指标** | 容量与故障发现 | `/metrics` 中 `as_active_calls` 等 | M5 可为模拟值；真呼叫计数走信令路径 |
-| **告警规则集** | 开箱监控模板 | `deploy/alerts/as-alerts.yaml` | **无** CPS 绝对值阈值（待容量研究填） |
-| **容量研究方法** | 为 HPA/扩容提供依据 | 产品路径 as_load + 内部 O1 报告 | **仅内部研究**，不对外 SLA |
+| **Kubernetes deployment** | Standard on-premises delivery | Helm chart, kind Pods Running | Cross-checked against `deploy/helm/README.md` |
+| **Metrics** | Capacity and fault discovery | `as_active_calls` and the like in `/metrics` | In M5 these may be simulated values; real call counting goes through the signalling path |
+| **Alert rule set** | Out-of-the-box monitoring templates | `deploy/alerts/as-alerts.yaml` | **No** absolute CPS thresholds (to be filled from the capacity study) |
+| **Capacity study method** | Provides the basis for HPA/scaling | as_load on the product path + the internal O1 report | **Internal study only**, no external SLA |
 
 ---
 
-## 4. 现场步骤（M7.1 之后）
+## 4. On-site Steps (After M7.1)
 
-现场是 kind `as-m71`。在仓库根目录执行。`kubectl` 不在 PATH 上时，把 `.tools/m71-bin` 加进去。脚本与日志：[`scripts/demo-review/README.md`](../../scripts/demo-review/README.md)，`artifacts/demo-review/<date>/story-*/`。执行记录：[`2026-10-07-demo-on-m71-platform-plan.md`](2026-10-07-demo-on-m71-platform-plan.md)。
+The live site is the kind `as-m71`. Run from the repository root. When `kubectl` is not on PATH, add `.tools/m71-bin`. Scripts and logs: [`scripts/demo-review/README.md`](../../scripts/demo-review/README.md), `artifacts/demo-review/<date>/story-*/`. Execution record: [`2026-10-07-demo-on-m71-platform-plan.md`](2026-10-07-demo-on-m71-platform-plan.md).
 
-每步三栏：**做什么**是操作，**看什么**是通过标准，**说明什么**是对客户说的话。本场不签 REQ-S-2 / REQ-S-3 / REQ-S-4。
+Each step has three columns: **what to do** is the operation, **what to look at** is the pass criterion, and **what to say** is what is said to the customer. This session does not sign REQ-S-2 / REQ-S-3 / REQ-S-4.
 
-开场之前必须是下面定义的干净环境。Pod 由会前两条安装脚本创建，不是开场命令创建的。下场把环境收回干净。
+Before the opening it must be the clean environment defined below. The Pods are created by the two pre-session install scripts, not by the opening commands. After the session, return the environment to clean.
 
-### 干净
+### Clean
 
-**前置，清理脚本不碰**
+**Prerequisites; the cleanup script does not touch them**
 
-| 项 | 说明 |
+| Item | Notes |
 |---|---|
-| Docker 引擎 | 在跑。基础镜像缓存留下，例如 `kindest/node`、`python`、`postgres`、`redis` |
-| `kind`、`kubectl`、`helm` | 在 PATH 上，或在仓库 `.tools/m71-bin` |
-| `uv`、Python 3.10、`make`、C 工具链 | 会前要编原生 SIP 模块 |
-| 本机 reSIProcate 缓存 | `.cache/m2-resiprocate` 和已编好的 `_resip_runtime*.so`。没有 `.so` 时，会前的 `make m2-platform-resip-build` 会编 |
-| 网络 | 能拉镜像。本机走代理时，自己导出 `http_proxy` / `https_proxy` |
-| 别的 kind 集群 | 例如 `as-m5` 上的 7.2d。本场只删 `as-m71` |
+| Docker engine | Running. Base image caches are left behind, e.g. `kindest/node`, `python`, `postgres`, `redis` |
+| `kind`, `kubectl`, `helm` | On PATH, or in the repository's `.tools/m71-bin` |
+| `uv`, Python 3.10, `make`, C toolchain | The native SIP module must be built before the session |
+| Local reSIProcate cache | `.cache/m2-resiprocate` and the already-built `_resip_runtime*.so`. When there is no `.so`, the pre-session `make m2-platform-resip-build` builds it |
+| Network | Able to pull images. When the local host uses a proxy, export `http_proxy` / `https_proxy` yourself |
+| Other kind clusters | For example 7.2d on `as-m5`. This session deletes only `as-m71` |
 
-**干净：demo 开始前和结束后都要这样**
+**Clean: this must hold both before the demo starts and after it ends**
 
-- `kind get clusters` 里没有 `as-m71`
-- 本机没有镜像标签 `ims-sim:dev`、`as-sut:dev`、`as-config-service:m71-lab`
-- 没有把 `ims-sim-ui` 转到本机 `8088`、或把 Postgres 转到本机 `15432` 的 `kubectl port-forward`
-- 没有名为 `as-d10-redis` 的本机容器
+- `as-m71` is not in `kind get clusters`
+- The local host has no image tags `ims-sim:dev`, `as-sut:dev`, `as-config-service:m71-lab`
+- There is no `kubectl port-forward` of `ims-sim-ui` to local `8088`, or of Postgres to local `15432`
+- There is no local container named `as-d10-redis`
 
 ```bash
 bash scripts/demo-review/reset-m71-between-demos.sh --check
 ```
 
-打印 `as-m71 demo environment is clean` 并以 0 退出。
+It prints `as-m71 demo environment is clean` and exits 0.
 
-### 会前：把环境带起来
+### Before the Session: Bring the Environment Up
 
-这一步不对客户展示。先确认干净。不干净就先跑下场的清理，再装。
+This step is not shown to the customer. Confirm clean first. If it is not clean, run the post-session cleanup first, then install.
 
-**做什么**
+**What to do**
 
 ```bash
 bash scripts/demo-review/reset-m71-between-demos.sh --check
@@ -366,21 +366,21 @@ bash testbed/sim-platform/kind-up.sh
 bash scripts/demo-review/publish-m71-bundle.sh
 ```
 
-`make m2-platform-resip-build` 编出产品 SIP 用的原生模块，`kind-up.sh` 把它拷进实验镜像。`kind-up.sh` 创建 kind 集群 `as-m71`（Pod 从这里出现），装 Calico 和网络策略，发测试证书，构建并加载 `ims-sim:dev`、`as-sut:dev`、`as-config-service:m71-lab`，再用 Helm 装 `ims-sim` 和 `as-sut`。`publish-m71-bundle.sh` 在 config-service 里走完四条判决的提案、批准、分发、激活，把 bundle 挂进翻译进程。
+`make m2-platform-resip-build` builds the native module used by the product's SIP, and `kind-up.sh` copies it into the lab images. `kind-up.sh` creates the kind cluster `as-m71` (where the Pods appear), installs Calico and the network policies, issues the test certificates, builds and loads `ims-sim:dev`, `as-sut:dev`, `as-config-service:m71-lab`, and then installs `ims-sim` and `as-sut` with Helm. `publish-m71-bundle.sh` walks the four adjudications through proposal, approval, distribution and activation inside config-service and mounts the bundle into the translation process.
 
-两条安装脚本把 `http_proxy` / `https_proxy` 传给 `docker build`。第一次构建镜像要十几分钟。
+The two install scripts pass `http_proxy` / `https_proxy` to `docker build`. Building the images for the first time takes a dozen-odd minutes.
 
-**看什么**
+**What to look at**
 
-`--check` 先通过。`kind-up.sh` 以 0 退出，并打印测试页的 `port-forward` 提示。`publish-m71-bundle.sh` 以 0 退出，并打印 `translation is reading the compiled bundle`。只跑了 `kind-up.sh`、没跑发布脚本时，翻译进程仍读 `AS_RULESET_JSON`，开场检查失败。
+`--check` passes first. `kind-up.sh` exits 0 and prints the test page's `port-forward` hint. `publish-m71-bundle.sh` exits 0 and prints `translation is reading the compiled bundle`. If only `kind-up.sh` was run and not the publish script, the translation process still reads `AS_RULESET_JSON`, and the opening check fails.
 
-**说明什么**
+**What to say**
 
-会前不向客户讲。集群、三个实验镜像和编译 bundle 都是这场拉起来的，结束时删掉。
+Nothing before the session is told to the customer. The cluster, the three lab images and the compiled bundle were all brought up for this session and are deleted at the end.
 
-### 开场
+### Opening
 
-**做什么**
+**What to do**
 
 ```bash
 kubectl --context kind-as-m71 -n ims-sim get deploy
@@ -405,29 +405,29 @@ echo "anti-fraud deployment absent"
 kubectl --context kind-as-m71 -n ims-sim port-forward svc/ims-sim-ui 8088:8088
 ```
 
-浏览器打开 `http://127.0.0.1:8088`。
+The browser opens `http://127.0.0.1:8088`.
 
-**看什么**
+**What to look at**
 
-`ims-sim` 的 `scscf`、`ssbc-north`、`ssbc-south`、`uas`、`call-load` 为 Ready。`as-sut` 的 `as-sut-translation`、`as-sut-redis`、`as-sut-config-service` 为 Ready。Python 以 0 退出：`AS_CONFIG_BUNDLE_PATH` 以 `/etc/as/bundle/bundle.json` 结尾，`AS_RULESET_JSON` 为空，改号表里有 `t1-plus86`、`strip_prefix`、`+86`、`add_prefix`。打印 `anti-fraud deployment absent`。页标题是「IMS 模拟平台」，横幅是「非运营商 PKI」，并写明测试工具不登录。
+`scscf`, `ssbc-north`, `ssbc-south`, `uas` and `call-load` in `ims-sim` are Ready. `as-sut-translation`, `as-sut-redis` and `as-sut-config-service` in `as-sut` are Ready. Python exits 0: `AS_CONFIG_BUNDLE_PATH` ends with `/etc/as/bundle/bundle.json`, `AS_RULESET_JSON` is empty, and the rewrite table contains `t1-plus86`, `strip_prefix`, `+86`, `add_prefix`. It prints `anti-fraud deployment absent`. The page title is "IMS Simulation Platform", the banner says "not a carrier PKI", and it states that the test tool does not log in.
 
-`printenv AS_RULESET_JSON` 不能用来判断：变量未设置时 `printenv` 自己退出 1。
+`printenv AS_RULESET_JSON` cannot be used to judge this: when the variable is unset, `printenv` itself exits 1.
 
-**说明什么**
+**What to say**
 
-这是仿真 IMS 加产品 Helm AS 的实验室。测试页没有登录，证书是测试 CA，横幅写的是非运营商 PKI。这不是产品控制台。
+This is a lab of a simulated IMS plus a product Helm AS. The test page has no login, the certificate is the test CA, and the banner says it is not a carrier PKI. This is not the product console.
 
-### 故事 A — 开通翻译号段
+### Story A — Activate the Translation Number Range
 
-**做什么**
+**What to do**
 
-控制台是可选项，在 compose 的 `https://localhost:8443`（自签证书）：管理员登录，建审批员，打开被叫前缀规则、变更单、审批、分发。`bash scripts/demo-review/story-a.sh --with-compose` 只在 `.env` 和证书齐全时跑 `smoke-https`。
+The console is optional, on compose at `https://localhost:8443` (self-signed certificate): log in as the administrator, create an approver, and open the called-prefix rules, change orders, approval and distribution. `bash scripts/demo-review/story-a.sh --with-compose` runs `smoke-https` only when `.env` and the certificates are complete.
 
-信令在测试页：勾选 T1、T4、T5、F1、F2。持续时间 3 秒，目标 CPS 5，保持时间 0.2 秒，最大并发呼叫 8。传输选 UDP，点启动，等到「当次结果」不再运行。脚本替身：`make demo-story-a`（可加 `--skip-pg`）。
+The signalling is on the test page: tick T1, T4, T5, F1, F2. Duration 3 seconds, target CPS 5, hold time 0.2 seconds, max concurrent calls 8. Select transport UDP, press start, and wait until "this run's results" no longer says it is running. Script stand-in: `make demo-story-a` (`--skip-pg` may be added).
 
-**看什么**
+**What to look at**
 
-T1 的响应码里有 200，T4 有 404。产品日志里有出腿用户 `013800138000`：
+The response codes for T1 include 200 and for T4 include 404. The product log contains the outbound user `013800138000`:
 
 ```bash
 log="$(kubectl --context kind-as-m71 -n as-sut logs deploy/as-sut-translation --since=3m)"
@@ -435,168 +435,168 @@ printf '%s\n' "$log" | grep -F '013800138000'
 printf '%s\n' "$log" | grep -F 'OUTBOUND_BYE_FORWARD'
 ```
 
-两条 `grep` 都以 0 退出。页脚未拆除是 0。次数不必是 200×9。
+Both `grep` commands exit 0. The not-torn-down count in the footer is 0. The counts need not be 200×9.
 
-**说明什么**
+**What to say**
 
-四条判决（T1 翻译、T5/F1 转发、F2 阻止）来自 config-service 编译并挂上的 bundle，进程读 `AS_CONFIG_BUNDLE_PATH`。`+86` 改成 `0` 开头仍是翻译应用的 `AS_TRANSLATION_RULES_JSON`，bundle 带不了 strip/add。进程不拉包。控制台 HTTPS 登录不在这个集群；compose 那一页才是控制台。
+The four adjudications (T1 translation, T5/F1 forwarding, F2 blocking) come from the bundle compiled by config-service and mounted in; the process reads `AS_CONFIG_BUNDLE_PATH`. Rewriting `+86` to a leading `0` is still the translation application's `AS_TRANSLATION_RULES_JSON`, because the bundle cannot carry strip/add. The process does not pull packages. Console HTTPS login is not on this cluster; the compose page is the console.
 
-### 故事 B — 拦截诈骗号段
+### Story B — Block Fraud Number Ranges
 
-**做什么**
+**What to do**
 
-同一页、同一组参数，传输改成 TCP，再改成 TLS，各启动一轮。UDP 已在故事 A 看过就可以不再跑；三轮都要留记录时再跑 UDP。脚本替身：`make demo-story-b`。
+On the same page with the same parameters, change the transport to TCP, then to TLS, running one round each. UDP has already been seen in story A, so it need not be run again; run UDP too only when all three rounds must be recorded. Script stand-in: `make demo-story-b`.
 
-主叫取消 487 和反诈进程的 608 不在这页上打。脚本后半是本机单测：`test_e1_s4_*`、`apps/anti-fraud/tests/test_decision.py`。
+The caller-cancel 487 and the anti-fraud process's 608 are not exercised on this page. The second half of the script is local unit tests: `test_e1_s4_*` and `apps/anti-fraud/tests/test_decision.py`.
 
-**看什么**
+**What to look at**
 
-| 类型 | 响应码 |
+| Type | Response code |
 |---|---|
 | T1 | 200 |
 | T4 | 404 |
 | T5 | 200 |
 | F1 | 200 |
-| F2 | 603，不出现 608 |
+| F2 | 603, with no 608 |
 
-页脚未拆除是 0。页上写明这不是容量承诺。次数不必每轮都是 200×9、404×3、603×3。TLS 那一轮之后：
+The not-torn-down count in the footer is 0. The page states that this is not a capacity commitment. The counts need not be 200×9, 404×3, 603×3 on every round. After the TLS round:
 
 ```bash
 log="$(kubectl --context kind-as-m71 -n as-sut logs deploy/as-sut-translation --since=3m)"
 printf '%s\n' "$log" | grep -F 'sips:013800138000'
 ```
 
-这条 `grep` 以 0 退出。三条检查要分开做；用 `|` 把两句合成一条 `grep` 时，只命中一句也会退出 0。
+This `grep` exits 0. The three checks must be done separately; when the two statements are combined into one `grep` with `|`, it also exits 0 if only one of them matches.
 
-**说明什么**
+**What to say**
 
-F2 被叫前缀 `+15550003` 得到 603。这条阻止规则在编译 bundle 里。608 属于另一个反诈进程，这条网上没起，因为它会和翻译抢 5060。487 只是契约形状，不是第一版呼叫类型，不在这个集群上演示。
+F2's called prefix `+15550003` gets 603. This block rule is in the compiled bundle. 608 belongs to a different anti-fraud process that is not started on this network, because it would contend with translation for 5060. 487 is only a contract shape, not a first-version call type, and is not demoed on this cluster.
 
-### 故事 C — 平台能运维
+### Story C — The Platform Can Be Operated
 
-**做什么**
+**What to do**
 
-开场的两个 `get deploy` 就是集群镜头。再读翻译进程的指标。脚本替身：`make demo-story-c`。
+The two `get deploy` commands from the opening are the cluster shot. Then read the translation process's metrics. Script stand-in: `make demo-story-c`.
 
 ```bash
 kubectl --context kind-as-m71 -n as-sut exec deploy/as-sut-translation -- \
   python -c 'import urllib.request; t=urllib.request.urlopen("http://127.0.0.1:8080/metrics").read().decode(); print([l for l in t.splitlines() if l.startswith("as_active_calls")])'
 ```
 
-7.2d 的 Ingress 登录留在 `kind-as-m5`。设了 `M5_7_2D_E2E_PASSWORD` 且那个 context 还在时，才跑 `make m5-7.2d-evidence`。没有就跳过。
+The 7.2d Ingress login stays in `kind-as-m5`. Run `make m5-7.2d-evidence` only when `M5_7_2D_E2E_PASSWORD` is set and that context still exists. Skip it otherwise.
 
-chart-check、draining 单测、告警 YAML 头部由 `story-c.sh` 带出。人工只看集群和这一行指标即可。
+chart-check, the draining unit tests and the head of the alert YAML are surfaced by `story-c.sh`. Manually, it is enough to look at the cluster and that one line of metrics.
 
-**看什么**
+**What to look at**
 
-`ims-sim` 五个仿真 Deployment 和 `as-sut` 的翻译、Redis、config-service 为 Ready。反诈 Deployment 不存在。指标打出一行 `as_active_calls`。告警文件 `deploy/alerts/as-alerts.yaml` 里没有 CPS 绝对值。
+The five simulated Deployments in `ims-sim` and translation, Redis and config-service in `as-sut` are Ready. The anti-fraud Deployment does not exist. The metrics print one line of `as_active_calls`. The alert file `deploy/alerts/as-alerts.yaml` contains no absolute CPS value.
 
-**说明什么**
+**What to say**
 
-这是 L1：Helm 契约、指标和告警模板的形态。反诈进程没起，F1/F2 的 603 在翻译进程上。这一行 `as_active_calls` 只说明指标在。生产告警和缩容没有在这里闭环。测试页不是 7.2d 的控制台登录。详见 [`m5-full-chain-review-2026-10-05.md`](../reviews/m5-full-chain-review-2026-10-05.md) 与 F10 对账。
+This is L1: the shape of the Helm contract, the metrics and the alert templates. The anti-fraud process is not started, and the 603 of F1/F2 is on the translation process. This one line of `as_active_calls` only shows that the metric exists. Production alerting and downscaling are not closed out here. The test page is not the 7.2d console login. See [`m5-full-chain-review-2026-10-05.md`](../reviews/m5-full-chain-review-2026-10-05.md) and the F10 reconciliation.
 
-### 故事 D — 通话不随便丢
+### Story D — Calls Are Not Dropped Casually
 
-**做什么**
+**What to do**
 
-看开场里 `as-sut-redis` 已是 Ready。测量脚本不改，需要时另跑：`AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-story-d`。那条用的是本机 Redis，不是客户集群。
+Look at `as-sut-redis` already being Ready from the opening. The measurement script is unchanged; run it separately when needed: `AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-story-d`. That one uses a local Redis, not a customer cluster.
 
-**看什么**
+**What to look at**
 
-`as-sut-redis` 为 Ready。本机 harness 若跑了，日志在 `artifacts/demo-review/<date>/story-d/`。
+`as-sut-redis` is Ready. If the local harness was run, its logs are in `artifacts/demo-review/<date>/story-d/`.
 
-**说明什么**
+**What to say**
 
-多副本无状态，必要会话状态 checkpoint 到 Redis。`as-sut` 里 Redis 在跑。正式杀 Pod 和上游 BYE 在客户 K8s 上做，Close 前不做，这不是 REQ-NF-1 签收。
+Multi-replica and stateless, with the necessary session state checkpointed to Redis. Redis is running in `as-sut`. Actually killing Pods and the upstream BYE are done on a customer K8s and are not done before Close; this is not an REQ-NF-1 sign-off.
 
-### 故事 E — 我们能扛多少
+### Story E — How Much We Can Handle
 
-**做什么**
+**What to do**
 
-打开 [`m6-o1-measurement-report-2026-10-05.md`](../acceptance/m6-o1-measurement-report-2026-10-05.md) 前 45 行。测试页上刚跑的次数不抄进这份报告。完整批次是可选项：`make demo-story-e` 加 `--full-o1`。
+Open the first 45 lines of [`m6-o1-measurement-report-2026-10-05.md`](../acceptance/m6-o1-measurement-report-2026-10-05.md). The counts just run on the test page are not copied into that report. The full batch is optional: `make demo-story-e` with `--full-o1`.
 
-**看什么**
+**What to look at**
 
-报告写的是 dev-host 样本和研究方法。正文里没有本场 `as-m71` 测试页的几秒计数。
+The report describes dev-host samples and the study method. The body does not contain the few-second counts of this session's `as-m71` test page.
 
-**说明什么**
+**What to say**
 
-这是内部容量研究方法，不是对外 CPS 或并发 SLA。HPA 阈值等 O1 结论之后再填。
+This is an internal capacity study method, not an external CPS or concurrency SLA. The HPA thresholds are filled in after the O1 conclusion.
 
-### 下场
+### After the Session
 
-**做什么**
+**What to do**
 
 ```bash
 bash scripts/demo-review/reset-m71-between-demos.sh
 ```
 
-**看什么**
+**What to look at**
 
-脚本以 0 退出，并打印 `as-m71 demo environment is clean`。`kind get clusters` 里没有 `as-m71`。三个实验镜像标签没有了。`8088` 和 `15432` 的端口转发停了。`as-m5` 和其他基础镜像还在。
+The script exits 0 and prints `as-m71 demo environment is clean`. `as-m71` is not in `kind get clusters`. The three lab image tags are gone. The port forwards for `8088` and `15432` are stopped. `as-m5` and the other base images are still there.
 
-**说明什么**
+**What to say**
 
-环境回到会前的干净状态。下一场要从「会前：把环境带起来」重新装，不能从开场接着查 Pod。
+The environment is back to the clean state it had before the session. The next session must reinstall from "Before the Session: Bring the Environment Up"; it cannot continue from the opening by inspecting Pods.
 
-## 5. 场次套餐（按观众选能力包）
+## 5. Session Packages (Pick a Capability Package by Audience)
 
-| 套餐 | 时长 | 故事 | 观众 |
+| Package | Duration | Stories | Audience |
 |------|------|------|------|
-| **业务半天** | 3–4 h | A + B（控制台为主，信令桥接） | 运营商业务配置 |
-| **信令半天** | 3–4 h | B + A-5 + SDP/486/487 | 核心网/集成 |
-| **运维半天** | 3–4 h | C + D（轻） | 平台 SRE |
-| **全景日** | 6–8 h | A → B → C →（可选 E） | 联合评审 |
-| **远程 90 min** | 1.5 h | §2.6 开场图 + 故事 A 精简（仅控制台 + 一条 404/603 对拍录屏） | 管理层 |
+| **Business half-day** | 3–4 h | A + B (console-focused, with signalling bridged in) | Carrier business configuration |
+| **Signalling half-day** | 3–4 h | B + A-5 + SDP/486/487 | Core network / integration |
+| **Operations half-day** | 3–4 h | C + D (light) | Platform SRE |
+| **Full-view day** | 6–8 h | A → B → C → (optional E) | Joint review |
+| **Remote 90 min** | 1.5 h | The §2.6 opening diagram + a trimmed story A (console only + one recorded 404/603 differential check) | Management |
 
 ---
 
-## 6. 环境怎么选（对客户怎么说）
+## 6. How to Choose the Environment (How to Say It to the Customer)
 
-| 环境 | 代表什么 | 适合故事 |
+| Environment | What it represents | Suitable stories |
 |------|----------|----------|
-| **`deploy/compose`** | 单机 dev：**真实** PG + config-service + HTTPS 控制台 | A、B 控制面 |
-| **Loopback + 进程壳** | 信令行为，仿真 S-SBC | A-5、B、D 信令部分 |
-| **kind `as-m71`** | 仿真 IMS + 产品 Helm AS。测试页不是控制台 | A 的信令、B、C 的集群镜头 |
-| **kind `as-m5`** | 7.2d Ingress 登录证据。不搬到 `as-m71` | C 的可选登录步 |
-| **内部 O1 报告** | 容量 **研究**证据 | E |
+| **`deploy/compose`** | Single-host dev: **real** PG + config-service + HTTPS console | A, B's control plane |
+| **Loopback + process shell** | Signalling behavior, simulated S-SBC | A-5, B, D's signalling part |
+| **kind `as-m71`** | Simulated IMS + product Helm AS. The test page is not the console | A's signalling, B, C's cluster shot |
+| **kind `as-m5`** | 7.2d Ingress login evidence. Not moved to `as-m71` | C's optional login step |
+| **The internal O1 report** | Capacity **study** evidence | E |
 
-会前技术准备见 **附录 B**；脚本说明见 [`scripts/demo-review/README.md`](../../scripts/demo-review/README.md)。
+See **Appendix B** for the pre-session technical preparation; see [`scripts/demo-review/README.md`](../../scripts/demo-review/README.md) for the script descriptions.
 
 ---
 
-## 7. 演示边界（必须主动说明）
+## 7. Demo Boundaries (Must Be Stated Proactively)
 
-对客户 **不要** 暗示已验收或未交付的能力：
+Do **not** imply to the customer that a capability is accepted or delivered when it is not:
 
-| 话题 | 怎么说 |
+| Topic | How to say it |
 |------|--------|
-| **S-SBC / 运营商 PKI** | 我方在 kind `as-m71` 的仿真 S-SBC 和测试 CA 上验证行为；与贵司 S-SBC 对接是集成项目 + M8 环境证据。 |
-| **Call-ID 全轨迹查询（US-3）** | 产品设计方向有；**控制台 live trace 未交付**，投诉追溯 M8/后续版本。 |
-| **主叫/正则规则** | v1 仅 **被叫 + 前缀**；主叫/正则列入 v1.1。 |
-| **规则自动推到 SIP Pod** | 治理与编译已交付；**到场联调**可用 bundle 文件注入；生产拉取方式由部署约定闭合。 |
-| **HPA 数字 / CPS SLA** | 仅有内部测量方法学与 dev-host 样本，**不**作商业容量承诺。 |
-| **CDR / LI / 媒体** | 明确非目标（PRD）。 |
+| **S-SBC / carrier PKI** | We verify behavior on the simulated S-SBC and the test CA of kind `as-m71`; integration with your S-SBC is an integration project plus M8 environment evidence. |
+| **Full Call-ID trace query (US-3)** | The product design direction exists; **console live trace is not delivered**; complaint tracing is M8 / a later version. |
+| **Caller / regex rules** | v1 covers **called party + prefix** only; caller/regex is on the v1.1 list. |
+| **Automatic push of rules to SIP Pods** | Governance and compilation are delivered; **on-site joint debugging** can inject a bundle file; the production pull method is closed by the deployment agreement. |
+| **HPA numbers / CPS SLA** | There is only internal measurement methodology and dev-host samples; **no** commercial capacity commitment is made. |
+| **CDR / LI / media** | Explicitly non-goals (PRD). |
 
 ---
 
-## 8. Review 记分表（按能力，非里程碑）
+## 8. Review Scorecard (By Capability, Not Milestone)
 
-| 能力域 | 问题 | 1–3 |
+| Capability area | Question | 1–3 |
 |--------|------|-----|
-| 定位 | 网外 AS + S-SBC 语义是否清晰？ | |
-| 翻译 | 双腿与号段规则是否符合预期？ | |
-| 反诈 | 603/608 策略是否可接受？ | |
-| 治理 | 审批与审计是否满足运维制度？ | |
-| 安全 | HTTPS/TLS/白名单叙述是否可信？ | |
-| 可靠性 | 升级/缩容/checkpoint 预期是否对齐？ | |
-| 部署 | K8s/Helm 形态是否满足采购预期？ | |
-| 容量 | 是否理解「研究 vs SLA」区分？ | |
-| 缺口 | §7 中哪几条需写入合同/集成计划？ | |
+| Positioning | Is the out-of-network AS + S-SBC semantics clear? | |
+| Translation | Do the two legs and the number-range rules match expectations? | |
+| Anti-fraud | Is the 603/608 policy acceptable? | |
+| Governance | Do approval and audit satisfy the operations rules? | |
+| Security | Is the HTTPS/TLS/whitelist narrative credible? | |
+| Reliability | Are the upgrade/downscale/checkpoint expectations aligned? | |
+| Deployment | Does the K8s/Helm form meet procurement expectations? | |
+| Capacity | Is the distinction between "study" and "SLA" understood? | |
+| Gaps | Which items in §7 need to go into the contract / integration plan? | |
 
 ---
 
-## 附录 A — 办方速查
+## Appendix A — Quick Reference for the Running Party
 
 ```bash
 # 全会前冒烟（有 Redis 时含 D）
@@ -610,32 +610,32 @@ AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-story-d
 make demo-story-e
 ```
 
-浏览器控制台：[`m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md)（compose，不是 `as-m71` 测试页）。本场集群镜头：[`m71-sim-platform-evidence.md`](../acceptance/m71-sim-platform-evidence.md)。7.2d 仍见 [`m5-7.2d-ingress-runbook.md`](../acceptance/m5-7.2d-ingress-runbook.md)。
+Browser console: [`m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) (compose, not the `as-m71` test page). Cluster shots for this session: [`m71-sim-platform-evidence.md`](../acceptance/m71-sim-platform-evidence.md). 7.2d still see [`m5-7.2d-ingress-runbook.md`](../acceptance/m5-7.2d-ingress-runbook.md).
 
 ---
 
-## 附录 B — 会前检查（办方自用）
+## Appendix B — Pre-Session Checks (For Internal Use by the Running Party)
 
-| 检查项 | 命令/条件 |
+| Check item | Command/condition |
 |--------|-----------|
-| 依赖 | `uv sync` |
-| 一键验证 | `AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-review-all` |
-| Native SIP | `make m2-platform-resip-build`（A/B/D/E 脚本会按需构建） |
-| Compose（故事 A 现场 UI） | `deploy/compose` + `story-a.sh --with-compose` |
-| Kind（故事 C 集群镜头） | `kubectl` context `kind-as-m71` |
-| 7.2d 浏览器 | `M5_7_2D_E2E_PASSWORD`，且 context 仍是 `kind-as-m5` |
-| Redis（故事 D） | `docker run -d --name as-d10-redis -p 6379:6379 redis:7`。下场脚本会删掉这个容器 |
+| Dependencies | `uv sync` |
+| One-click verification | `AS_REDIS_URL=redis://127.0.0.1:6379/0 make demo-review-all` |
+| Native SIP | `make m2-platform-resip-build` (the A/B/D/E scripts build it as needed) |
+| Compose (story A's on-site UI) | `deploy/compose` + `story-a.sh --with-compose` |
+| Kind (story C's cluster shot) | `kubectl` context `kind-as-m71` |
+| 7.2d browser | `M5_7_2D_E2E_PASSWORD`, and the context is still `kind-as-m5` |
+| Redis (story D) | `docker run -d --name as-d10-redis -p 6379:6379 redis:7`. The post-session script deletes this container |
 
 ---
 
-## 附录 C — 文档索引（内部追溯）
+## Appendix C — Document Index (Internal Tracing)
 
-| 文档 | 用途 |
+| Document | Purpose |
 |------|------|
-| [`prd.md`](../requirements/prd.md) | 用户故事与 REQ |
-| [`新系统整体架构.md`](../architecture/新系统整体架构.md) | 分层与部署 |
-| [`m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) | 控制台步骤 |
-| [`test-plan.md`](../acceptance/test-plan.md) | M8 正式验收（非本场） |
-| [`plan.md`](../plan.md) §4 | 仅内部：工程关门记录 |
+| [`prd.md`](../requirements/prd.md) | User stories and REQs |
+| [`system-architecture.md`](../architecture/system-architecture.md) | Layering and deployment |
+| [`m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) | Console steps |
+| [`test-plan.md`](../acceptance/test-plan.md) | Formal M8 acceptance (not this session) |
+| [`plan.md`](../plan.md) §4 | Internal only: engineering gate-closure record |
 
-**维护**：能力或 PRD 变更时更新 §3 表格与故事步骤；附录命令随脚本改名而改。
+**Maintenance**: when a capability or the PRD changes, update the §3 tables and the story steps; the appendix commands change when the scripts are renamed.

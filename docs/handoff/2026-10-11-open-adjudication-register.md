@@ -12,628 +12,628 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 未结裁决与遗留问题登记（2026-10-11）
+# Open Adjudications and Leftover Issues Register (2026-10-11)
 
-## 0. 本文性质与边界
+## 0. Nature and Scope of This Document
 
-> **本文是「登记」，不是裁决、不是计划、不是执行授权。**
+> **This document is a "register", not an adjudication, not a plan, and not execution authorization.**
 
-- **只登记尚未裁决的事项。** 已裁决的记录仍以
-  [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §0-A.6
-  与 [`../plan.md`](../plan.md) §0「产品决策记录」表为准；本文**不重复**它们，只登记**尚未裁决**的部分。
-- **登记的目的是防遗忘**：本仓库的工作跨多台机器、多个 session 进行，未结裁决若不落盘，极易在下一
-  session 被误当作「已裁决」或「不存在」。本文把这类悬空项集中到一个可读的位置。
-- **本文不给方案、不选边、不推荐倾向。** 每一项只写「问题是什么 / 为什么会提出 / 不裁决会冻结什么」，
-  结论一律写「**待维护者裁决**」。
-- **本文不签收任何 REQ、不签收任何里程碑、不构成外部验收通过。**
-- **日期一律为 2026-10-11**（登记日）。
+- **It only registers items that have not yet been adjudicated.** Records of already-adjudicated items remain authoritative in
+  §0-A.6 of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md)
+  and the §0 "product decision record" table of [`../plan.md`](../plan.md); this document **does not repeat** them and only registers what is **not yet adjudicated**.
+- **The purpose of the register is to prevent forgetting**: work in this repository spans multiple machines and multiple sessions, and an open adjudication that is not landed is very easily mistaken in the next
+  session for "already adjudicated" or "non-existent". This document gathers such dangling items into one readable place.
+- **This document gives no proposal, takes no side, and recommends no leaning.** Each item only states "what the question is / why it was raised / what would be frozen without an adjudication",
+  and the conclusion always reads "**awaiting maintainer adjudication**".
+- **This document signs off no REQ, signs off no milestone, and constitutes no external acceptance pass.**
+- **All dates are 2026-10-11** (the registration date).
 
-### 0.1 本文的维护方式
+### 0.1 How This Document Is Maintained
 
-按 §0-A.5 的既有做法：任一项被裁决后，须在本文**追加**一行写明裁决结果与日期，并同步到
-`docs/plan.md` §0 决策记录表；**不得静默删除本文条目**。本文条目即使已裁决也应保留为审计链。
+Following the existing practice of §0-A.5: once an item has been adjudicated, a line stating the adjudication result and date must be **appended** to this document and synced to
+the §0 decision record table of `docs/plan.md`; **entries of this document must never be silently deleted**. Even adjudicated entries should be retained as the audit chain.
 
-### 0.2 编号约定
+### 0.2 Numbering Convention
 
-| 前缀 | 含义 |
+| Prefix | Meaning |
 |---|---|
-| **G9–G11** | 2026-10-11 由维护者新提出的项目级裁决（承接既有 G1–G8 编号，不重号） |
-| **P1–P6** | 2026-10-11 复核 §0-A.6 裁决记录时发现的遗留问题（Pending follow-up） |
-| **X1** | 仍待外部输入的事项（External input pending） |
-| **S1** | 已拟定但未启动的整体工作（Scoped but not started） |
+| **G9–G11** | project-level adjudications newly raised by the maintainer on 2026-10-11 (continuing the existing G1–G8 numbering, no renumbering) |
+| **P1–P6** | leftover issues found on 2026-10-11 while reviewing the §0-A.6 adjudication records (Pending follow-up) |
+| **X1** | items still awaiting external input (External input pending) |
+| **S1** | overall work that has been scoped but not started (Scoped but not started) |
 
 ---
 
-## 1. 第一组：新识别的项目级裁决（G9 起，维护者 2026-10-11 提出；本节各表/各条的「状态」为当前状态字段，随 §7 裁决同步更新）
+## 1. First Group: Newly Identified Project-Level Adjudications (from G9, raised by the maintainer on 2026-10-11; the "status" of each table/entry in this section is the current status field and is synced as adjudications are made in §7)
 
-### G9 · 项目范围与 infra 归属
+### G9 · Project Scope and Infra Ownership
 
-**问题一句话：** 本项目是「含 infra 的完整交付」，还是「application only」？
+**The question in one sentence:** is this project "a complete delivery that includes infra", or "application only"?
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 方向 | 证据 | 位置 |
+| Direction | Evidence | Location |
 |---|---|---|
-| 支持「含 infra」 | `Chart.yaml` + `templates/`（18 个文件） + `values.yaml` + `values-onprem.example.yaml` | `deploy/helm/` |
-| 支持「含 infra」 | 16 个 `m5-*.sh` 脚本（`m5-kind-up.sh`、`m5-helm-install.sh`、`m5-images.sh`、`m5-verify.sh`、`m5-issu-scale-evidence.sh`、`m5-7.2d-evidence.sh` 等）+ `manifests/` + `certs/` + `README.md` | `deploy/kind/` |
-| 支持「含 infra」 | M5 关门条件含「控制面集群部署证明（含 **7.2d**）」 | `docs/plan.md:183` |
-| 支持「含 infra」 | §0 状态表记录 M7.1 demo 在 kind 上跑通（UDP/TCP/TLS、第一版五种呼叫） | `docs/plan.md:15` |
-| **造成混淆的现有表述** | 「本机无 helm / kubectl / kind / promtool」—— 易被读成「项目不具备该能力」，但原文是**单台机器的工具清点** | `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` §1.2 表格、`:104` |
-| **反证一（推翻「项目不具备」）** | `promtool check rules` → `SUCCESS: 5 rules found` | `docs/acceptance/artifacts/m5/2026-10-05/alert-check-full.txt:1-3` |
-| **反证一（续）** | `chart-check: OK` | `docs/acceptance/artifacts/m5/2026-10-05/chart-check-full.txt` |
-| **反证二（代码内建开关）** | `M5_STRICT=1` 且无 `kind-as-m5` 时的 fail-closed 路径（exit=1），说明代码早已内建「有集群才判、无集群显式失败」 | `docs/acceptance/artifacts/m5/2026-10-05/m5-strict-context.txt:1-4` |
+| supports "includes infra" | `Chart.yaml` + `templates/` (18 files) + `values.yaml` + `values-onprem.example.yaml` | `deploy/helm/` |
+| supports "includes infra" | 16 `m5-*.sh` scripts (`m5-kind-up.sh`, `m5-helm-install.sh`, `m5-images.sh`, `m5-verify.sh`, `m5-issu-scale-evidence.sh`, `m5-7.2d-evidence.sh`, etc.) + `manifests/` + `certs/` + `README.md` | `deploy/kind/` |
+| supports "includes infra" | the M5 closure conditions include "control-plane cluster deployment proof (including **7.2d**)" | `docs/plan.md:183` |
+| supports "includes infra" | the §0 status table records that the M7.1 demo ran successfully on kind (UDP/TCP/TLS, five first-edition call types) | `docs/plan.md:15` |
+| **existing wording that causes confusion** | "this machine has no helm / kubectl / kind / promtool" — easily read as "the project lacks that capability", but the original text is a **per-machine tool inventory** | table and `:104` of §1.2 in `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` |
+| **counter-evidence one (refutes "the project lacks it")** | `promtool check rules` → `SUCCESS: 5 rules found` | `docs/acceptance/artifacts/m5/2026-10-05/alert-check-full.txt:1-3` |
+| **counter-evidence one (continued)** | `chart-check: OK` | `docs/acceptance/artifacts/m5/2026-10-05/chart-check-full.txt` |
+| **counter-evidence two (a switch built into the code)** | the fail-closed path when `M5_STRICT=1` and there is no `kind-as-m5` (exit=1), showing the code has long built in "judge only when there is a cluster, fail explicitly when there is none" | `docs/acceptance/artifacts/m5/2026-10-05/m5-strict-context.txt:1-4` |
 
-> **反证的推论（登记，非裁决）：** 存在一台具备完整 infra 工具（helm / kubectl / kind / promtool）并跑通过的机器，
-> 只是**不是当前这台**；且该机器在现有文档中**是无名的**。
+> **Inference from the counter-evidence (registration, not adjudication):** there exists a machine with complete infra tooling (helm / kubectl / kind / promtool) where the run passed;
+> it is simply **not the current machine**; and that machine is **unnamed** in the existing documents.
 
-**相关既有口径（登记，不引申）：**
+**Related existing stances (registered, not extrapolated):**
 
-- `AGENT.md:20-28` §1：产品为「单租户 on-prem 第三方 IMS AS」，由 S-CSCF 经运营商 S-SBC 触发。
-- `AGENT.md:30-52` §2 九条非目标，含「配置不走 GitOps」（`:48`）、「不写 Operator（CRD），用 Helm + 标准
-  Deployment/ConfigMap/Secret」（`:51`）。
-- ADR-0013（Helm-only 生产形态、无 operator 依赖）—— `docs/architecture/adr/README.md:29`。
+- `AGENT.md:20-28` §1: the product is a "single-tenant on-prem third-party IMS AS", triggered by an S-CSCF through a carrier S-SBC.
+- `AGENT.md:30-52` §2: nine non-goals, including "configuration does not go through GitOps" (`:48`) and "no Operator (CRD); use Helm + standard
+  Deployment/ConfigMap/Secret" (`:51`).
+- ADR-0013 (Helm-only production form, no operator dependency) — `docs/architecture/adr/README.md:29`.
 
-**分层登记为三项**（登记日三项均记为「待维护者裁决」；状态字段已随 §7 更新）： **〔2026-10-11 本轮追加；上句原文保留不改〕状态字段此后又随**实际消解**同步更新一次 —— G9-b 已**消解**、G9-c 已**降级**（依据见下表各自状态列），二者**均不再计入待裁决**。**
+**Layered registration into three items** (on the registration date all three are recorded as "awaiting maintainer adjudication"; the status fields have since been updated per §7): **〔added in this round on 2026-10-11; the previous sentence is retained unchanged〕the status fields were later updated once more in step with actual resolution — G9-b has been *resolved* and G9-c has been *downgraded* (basis in the respective status columns of the table below); neither counts as pending adjudication any more.**
 
-| 子项 | 要裁决什么 | 不裁决会冻结什么 | 状态 |
+| Sub-item | What must be adjudicated | What would be frozen without an adjudication | Status |
 |---|---|---|---|
-| **G9-a** | **交付物边界**：infra 资产（chart / kind 脚本 / 集群证据脚本）算**交付物**还是**研发脚手架** | `docs/delivery/` 的交付包内容清单；对外材料里「我们交付什么」的口径 | 已闭合（2026-10-11）—— 见 §7.1（交付产品 / 脚手架二分） |
-| **G9-b** | **机器能力定义**：是否需要命名/指定一台（或一类）「完整 infra 主机」 | 现有文档里这类机器无名，导致「本机无工具」被误读为「项目无能力」；集群级工作无法指派到确定环境 **〔2026-10-11 追加；上方「要裁决什么」与「不裁决会冻结什么」两列为登记日原文，保留不改〕本项所担心的两类危害均已消解：① 「本机无工具被误读为项目无能力」由 §7.4 第 2 层（[`docs/environments.md`](../environments.md) §0 第 2 条明写「不得以某台机器没有 X 推断项目没有 X」）消解；② 「集群级工作无法指派到确定环境」由该登记表消解（现有行 `dev-win03ib7niepf0`）。故本项**不再构成未决阻塞**。** | **已消解（2026-10-11）** —— 由 [`docs/environments.md`](../environments.md)（环境登记表）+ [`tools/env-probe.sh`](../../tools/env-probe.sh) 以**工具探测**方式解决：环境名按 `<角色>-<hostname 小写去分隔符>` 由脚本**现场生成**、hostname 由 `uname -n` **实测**（无需人工查）、工具按「✅ 具备 / ❌ 缺失 / ⚠ 装了但不可用」**三态**判定；**不再需要命名与手工登记**，也不再依赖匿名的「本机」**〔本表「状态」列为当前状态字段，随实际消解同步更新；登记日状态「待维护者裁决」已被本单元格取代，但上方两列原文与 §7.5 `:567` 清单原文一律保留不改〕** |
-| **G9-c** | **门禁归属**：集群级验证是否必须每台开发机、每个 PR 都能跑 | §1.2 工具表怎么写；e2e 的归属与 A4-4 的执行前提 | **已降级（2026-10-11）—— 与已生效裁决重叠，不单列为待裁决** **〔2026-10-11 追加；上方「要裁决什么」一列为登记日原文，保留不改〕理由：① **与已生效裁决重叠** —— 本项问的「集群级验证是否每 PR 都要能跑」与 §0-A.6 的 **G2 / A4-4**（kind e2e 是否进 PR required）是同一议题，[`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) **§8.1 ④** 的选项 A 风险栏已把「本机没有 kind」列为**该选项的固有风险**，故本项不构成独立待裁决。故本项**不再构成未决阻塞**。**〔本表「状态」列为当前状态字段，随实际降级同步更新；登记日状态「待维护者裁决」已被本单元格取代，但上方两列原文与 §7.5 `:567` 清单原文一律保留不改〕** |
+| **G9-a** | **deliverable boundary**: do infra assets (chart / kind scripts / cluster evidence scripts) count as **deliverables** or as **development scaffolding** | the contents list of the delivery package under `docs/delivery/`; the "what do we deliver" stance in external material | closed (2026-10-11) — see §7.1 (the deliverable-product / scaffolding dichotomy) |
+| **G9-b** | **machine capability definition**: whether a (or a class of) "complete infra host" needs to be named/designated | in the existing documents such a machine is unnamed, which makes "this machine has no tools" be misread as "the project has no capability"; cluster-level work cannot be assigned to a definite environment **〔added 2026-10-11; the two columns "what must be adjudicated" and "what would be frozen without an adjudication" above are the original registration-date text and are retained unchanged〕both kinds of harm this item worried about have been resolved: ① "this machine has no tools being misread as the project having no capability" is resolved by layer 2 of §7.4 (§0 item 2 of [`docs/environments.md`](../environments.md) explicitly states "do not infer that the project lacks X from some machine not having X"); ② "cluster-level work cannot be assigned to a definite environment" is resolved by that registry (existing row `dev-win03ib7niepf0`). Therefore this item **no longer constitutes an undecided blocker**.** | **resolved (2026-10-11)** — resolved by the **tool-probing** approach of [`docs/environments.md`](../environments.md) (environment registry) + [`tools/env-probe.sh`](../../tools/env-probe.sh): the environment name is **generated on the spot** by script as `<role>-<lowercase hostname without separators>`, the hostname is **measured** by `uname -n` (no manual lookup needed), and tools are judged in **three states** ("✅ present / ❌ missing / ⚠ installed but unusable"); **naming and manual registration are no longer needed**, and the anonymous "local machine" is no longer relied upon**〔the "status" column of this table is the current status field and is synced as things are actually resolved; the registration-date status "awaiting maintainer adjudication" has been replaced by this cell, but the original text of the two columns above and the original list at §7.5 `:567` are all retained unchanged〕** |
+| **G9-c** | **gate ownership**: whether cluster-level verification must be runnable on every developer machine and every PR | how the §1.2 tool table is written; the ownership of e2e and the execution premise of A4-4 | **downgraded (2026-10-11) — overlaps an already effective adjudication, not listed separately as pending adjudication** **〔added 2026-10-11; the column "what must be adjudicated" above is the original registration-date text and is retained unchanged〕rationale: ① **it overlaps an already effective adjudication** — the "must cluster-level verification run on every PR" asked by this item is the same issue as **G2 / A4-4** in §0-A.6 (whether kind e2e enters PR required), and the risk column of option A in **§8.1 ④** of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) already lists "this machine has no kind" as **an inherent risk of that option**, so this item does not constitute an independent pending adjudication. Therefore this item **no longer constitutes an undecided blocker**.**〔the "status" column of this table is the current status field and is synced as things are downgraded; the registration-date status "awaiting maintainer adjudication" has been replaced by this cell, but the original text of the two columns above and the original list at §7.5 `:567` are all retained unchanged〕** |
 
 ---
 
-### G10 · 是否需要 sub-repo / 仓库拆分
+### G10 · Whether a sub-repo / Repo Split Is Needed
 
-**问题一句话：** infra 资产（chart、kind 脚本、集群证据）是否需要与 application 代码分离存储（submodule /
-sub-repo / 独立仓库）？
+**The question in one sentence:** do the infra assets (chart, kind scripts, cluster evidence) need to be stored separately from the application code (submodule /
+sub-repo / separate repository)?
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 事实 | 位置 |
+| Fact | Location |
 |---|---|
-| **全仓无 `.gitmodules`、无 git submodule** —— 当前**完全没有拆分痕迹** | 仓库根（检索无命中） |
-| 唯一 Python 锁为根 `uv.lock`，由 8 个 `pyproject.toml` 共享 | 根 `uv.lock`；`pyproject.toml`、`platform/`、`apps/anti-fraud/`、`apps/translation/`、`services/config-service/`、`services/console/`、`testbed/load/`、`testbed/simulators/` |
-| chart 在 `deploy/helm/`，脚本在 `deploy/kind/`，二者以 `REPO_ROOT` 相对定位彼此 | `deploy/helm/scripts/chart-check.sh:5-6`（`REPO_ROOT` + `${REPO_ROOT}/deploy/helm`） |
-| kind 脚本写死 chart 路径 | `deploy/kind/m5-helm-install.sh:32`（`${ROOT}/deploy/helm`） |
+| **there is no `.gitmodules` and no git submodule anywhere in the repo** — there are currently **no traces of a split at all** | repository root (search finds no hits) |
+| the only Python lockfile is the root `uv.lock`, shared by 8 `pyproject.toml` files | root `uv.lock`; `pyproject.toml`, `platform/`, `apps/anti-fraud/`, `apps/translation/`, `services/config-service/`, `services/console/`, `testbed/load/`, `testbed/simulators/` |
+| the chart is under `deploy/helm/`, the scripts under `deploy/kind/`, and the two locate each other via `REPO_ROOT` | `deploy/helm/scripts/chart-check.sh:5-6` (`REPO_ROOT` + `${REPO_ROOT}/deploy/helm`) |
+| the kind script hardcodes the chart path | `deploy/kind/m5-helm-install.sh:32` (`${ROOT}/deploy/helm`) |
 
-> **当前形态（登记，非裁决）：** 属「**松物理、紧路径串接**」——目录上是分开的，但靠写死的相对路径互相引用。
+> **Current form (registration, not adjudication):** it is "**physically loose, tightly coupled by path strings**" — separated at the directory level but referring to each other through hardcoded relative paths.
 
-**不裁决会冻结什么：** 若将来决定拆分，现有的路径串接与 Makefile target
-（`chart-check` `Makefile:55-56`、`m5-kind-verify` `:65-66`、`m5-cluster-evidence` `:62-63`、
-`m5-issu-scale-evidence` `:68-69`、`m5-7.2d-evidence` 等）都要重写；**越晚决策，重写成本越高**。
+**What would be frozen without an adjudication:** if a split is decided later, the existing path coupling and Makefile targets
+(`chart-check` at `Makefile:55-56`, `m5-kind-verify` at `:65-66`, `m5-cluster-evidence` at `:62-63`,
+`m5-issu-scale-evidence` at `:68-69`, `m5-7.2d-evidence`, etc.) all have to be rewritten; **the later the decision, the higher the rewrite cost**.
 
-**状态：已闭合（2026-10-11）—— 见 §7.2（关闭为「不拆仓」，维持单仓形态）。**
+**Status: closed (2026-10-11) — see §7.2 (closed as "do not split the repo", keeping the single-repo form).**
 
 ---
 
-### G11 · 是否保留「application without infra」的交付形态
+### G11 · Whether to Keep the "application without infra" Delivery Form
 
-**问题一句话：** 除完整交付外，是否还要支持一种「只交付应用镜像/代码、不带 chart 与 kind infra」的形态？
+**The question in one sentence:** besides the complete delivery, is a form that "delivers only the application image/code, without chart and kind infra" also to be supported?
 
-**与 G9 的区别（必须一并登记，避免混淆）：**
+**Difference from G9 (must be registered together, to avoid confusion):**
 
-| | 问的是什么 |
+| | What it asks |
 |---|---|
-| **G9** | **当前这个项目现在是什么** —— 含 infra，还是 application only |
-| **G11** | **将来要不要多提供一种形态** —— 在已有形态之外，是否再加一种「不带 infra」的交付形态 |
+| **G9** | **what this project is right now** — does it include infra, or is it application only |
+| **G11** | **whether to provide an additional form in the future** — besides the existing form, whether to add an "without infra" delivery form |
 
-**不裁决会冻结什么：**
+**What would be frozen without an adjudication:**
 
-- 交付包形态（`docs/delivery/` 下 bundle / images 清单的内容边界）。
-- `docs/delivery/` 的产品边界描述。
-- 对客户的口径（同一产品是否有两种交付形态、各自的边界与责任划分）。
+- the form of the delivery package (the content boundary of the bundle / images list under `docs/delivery/`).
+- the product boundary description of `docs/delivery/`.
+- the stance towards customers (whether the same product has two delivery forms, and the boundary and responsibility split of each).
 
-**状态：已闭合（2026-10-11）—— 见 §7.2（关闭为「不声明第二种交付形态」）。**
+**Status: closed (2026-10-11) — see §7.2 (closed as "do not declare a second delivery form").**
 
 ---
 
-## 2. 第二组：2026-10-11 复核 §0-A.6 裁决记录时发现的遗留问题
+## 2. Second Group: Leftover Issues Found on 2026-10-11 While Reviewing the §0-A.6 Adjudication Records
 
-### P1 · A4-4 裁决本意待确认（两处口径相反）〔已澄清 2026-10-11：不构成矛盾，口径以 §0-A.6 G2/A4-4 为准〕
+### P1 · The Intention of the A4-4 Adjudication Awaits Confirmation (two stances are opposite)〔clarified 2026-10-11: not a contradiction, the stance is governed by G2/A4-4 in §0-A.6〕
 
-**问题一句话：** A4-4 的裁决方向到底是「纳入 PR required」还是「不进 PR required」？
+**The question in one sentence:** is the adjudication direction of A4-4 "included in PR required" or "not included in PR required"?
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 位置 | 记载内容 | 方向 |
+| Location | Recorded content | Direction |
 |---|---|---|
-| [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §8.1 ④ | 推荐「**不进 PR required**，仅在具备条件的环境手动运行」 | 不进 |
-| 同文件 §0-A.6 的 **G2 / A4-4** 行 | 「kind e2e 的方向是**纳入 PR required** 的 E2E policy」 | 进 |
-| `docs/plan.md:40` | 同步抄录 §0-A.6 口径（纳入 PR required） | 进 |
+| §8.1 ④ of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) | recommends "**not included in PR required**, only run manually in an environment that has the conditions" | not included |
+| the **G2 / A4-4** row of §0-A.6 in the same file | "the direction of kind e2e is an E2E policy **included in PR required**" | included |
+| `docs/plan.md:40` | copies the §0-A.6 stance (included in PR required) | included |
 
-> **附加风险（登记）：** §8.1 ④ 的标题为「kind e2e 是否**永不**进 PR required」，属双重否定表述，
-> 存在误读可能（「永不进」与「是否永不进」读出来的结论相反）。 **〔登记更正（2026-10-11，追加；上方证据表与本段原文一律保留，不删不改）〕** 本条所称「两处口径相反」**不成立**：§0-A.6 的 **G2 / A4-4** 行（上表第二行）是**已生效的裁决记录** —— kind e2e 的方向是**纳入 PR required** 的 E2E policy；§8.1 ④（上表第一行）是同一议题下的**推荐**（B 方案）。**建议被已生效的裁决覆盖属正常流程，两者并存不构成需要重新裁决的矛盾。** 此前把本项登记为「待维护者裁决」属**登记口径错误**，现予撤销；**A4-4 的口径以 §0-A.6 为准**。
+> **Additional risk (registration):** the title of §8.1 ④ is "whether kind e2e **never** enters PR required", which is a double-negative formulation
+> and can be misread ("never enters" and "whether it never enters" lead to opposite conclusions). **〔Registration correction (2026-10-11, appended; the evidence table above and the original text of this paragraph are all retained, nothing deleted or changed)〕** The "two opposite stances" claimed here **do not hold**: the **G2 / A4-4** row of §0-A.6 (the second row of the table above) is an **already effective adjudication record** — the direction of kind e2e is an E2E policy **included in PR required**; §8.1 ④ (the first row of the table above) is a **recommendation** under the same issue (option B). **A recommendation being overridden by an already effective adjudication is normal process; the two coexisting do not constitute a contradiction requiring re-adjudication.** Registering this item as "awaiting maintainer adjudication" was a **registration stance error** and is hereby withdrawn; **the stance of A4-4 is governed by §0-A.6**.
 
-**不裁决会冻结什么：**
+**What would be frozen without an adjudication:**
 
-- 与 **A4-2**（缺必需 native extension 时 **fail**，不 skip）叠加后的 PR 门禁形态——两者叠加会直接决定
-  一个 PR 是否因环境缺 native 扩展而红，即「A4-4 定了方向、A4-2 定了缺扩展时的红绿口径」，两条合起来才构成
-  PR 关键路径上的完整门禁形态。 **〔2026-10-11 追加；上方原文保留不改〕本项不构成阻塞，A4-4 的口径以 §0-A.6 的 G2 / A4-4 行为准（见上方「登记更正」段）。**
+- the PR gate form once combined with **A4-2** (**fail**, not skip, when a required native extension is missing) — the combination of the two directly determines
+  whether a PR goes red because the environment lacks the native extension, that is, "A4-4 sets the direction and A4-2 sets the red/green stance when the extension is missing"; only the two together constitute
+  the complete gate form on the PR critical path. **〔added 2026-10-11; the original text above is retained unchanged〕this item is not a blocker; the stance of A4-4 is governed by the G2 / A4-4 row of §0-A.6 (see the "registration correction" paragraph above).**
 
-**状态：已澄清（2026-10-11）—— 不需要重新裁决。** A4-4 的口径以 §0-A.6 的 G2 / A4-4 行为准（kind e2e 的方向是**纳入 PR required** 的 E2E policy，该裁决**已生效**）；§8.1 ④ 是**被该裁决覆盖的建议**，两者并存**不构成矛盾**。此前登记为「待维护者裁决」属登记口径错误，现予撤销，依据见本条上方「登记更正」段。
+**Status: clarified (2026-10-11) — no re-adjudication needed.** The stance of A4-4 is governed by the G2 / A4-4 row of §0-A.6 (the direction of kind e2e is an E2E policy **included in PR required**, and that adjudication **is already effective**); §8.1 ④ is a **recommendation overridden by that adjudication**, and the two coexisting **do not constitute a contradiction**. The previous registration as "awaiting maintainer adjudication" was a registration stance error and is hereby withdrawn; the basis is in the "registration correction" paragraph above this item.
 
 ---
 
-### P2 · `docs/plan.md` §5 未决项表未同步裁决
+### P2 · The Open-Items Table in §5 of `docs/plan.md` Does Not Sync Adjudications
 
-**问题一句话：** 2026-10-10 的裁决结果未回写到 §5 未决项表，只读 §5 会误判这些项仍完全 open。
+**The question in one sentence:** the adjudication results of 2026-10-10 were not written back into the §5 open-items table, so reading only §5 would wrongly judge that those items are still fully open.
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 位置 | 现状 |
+| Location | Current state |
 |---|---|
-| `docs/plan.md:399` | **O4** 呼叫轨迹保留期 —— 未追加 2026-10-10 的 G6 裁决（默认 10 天、部署可配） |
-| `docs/plan.md:400` | **O5** 容灾等级 —— 未追加 2026-10-10 的 G7 裁决（站点内 N+1、跨站 1+1 warm standby） |
-| `docs/plan.md:410` | **D5** 呼叫轨迹存储 —— 未追加 2026-10-10 的 G6 裁决（in-cluster PostgreSQL） |
-| `docs/plan.md:396` | **O1** —— 把「流程已裁决」（三级决策流程）与「取值未裁决」混写为一句，不易分辨哪一半已定 |
+| `docs/plan.md:399` | **O4** call-trace retention period — the G6 adjudication of 2026-10-10 (default 10 days, deployment-configurable) was not appended |
+| `docs/plan.md:400` | **O5** disaster recovery level — the G7 adjudication of 2026-10-10 (in-site N+1, cross-site 1+1 warm standby) was not appended |
+| `docs/plan.md:410` | **D5** call-trace storage — the G6 adjudication of 2026-10-10 (in-cluster PostgreSQL) was not appended |
+| `docs/plan.md:396` | **O1** — "the process is adjudicated" (the three-tier decision process) and "the value is not adjudicated" are written together as one sentence, making it hard to tell which half is settled |
 
-> **对照：** 同表 `docs/plan.md:406`（D1）、`:408`（D3）、`:413`（D8）、`:414`（D9）等行**都有**追加裁决的行内
-> 注记；O4 / O5 / D5 三行没有，属同步遗漏而非有意保留。
+> **Comparison:** rows such as `docs/plan.md:406` (D1), `:408` (D3), `:413` (D8), `:414` (D9) in the same table **all have**
+> inline annotations of appended adjudications; the O4 / O5 / D5 rows do not, which is a sync omission rather than a deliberate retention.
 
-> **现状更正（2026-10-11，追加；上方「现状」列与「对照」段保留为登记日原始状态，不删改）：**
-> 上表与「对照」段所陈述的前提**均已失效** —— `docs/plan.md` §5 未决项表的
-> **O1 / O4 / O5 / D5 四行现已全部带「2026-10-10 已裁 / 已追加，2026-10-11 同步」的行内注记**。
-> 2026-10-11 逐行复核，行号 `:397` / `:400` / `:401` / `:411` 仍然准确（未再漂移）。四行注记要点：
+> **Current-state correction (2026-10-11, appended; the "current state" column above and the "comparison" paragraph are retained as the original registration-date state, nothing deleted or changed):**
+> the premises stated by the table above and the "comparison" paragraph **are all now void** — the four rows
+> **O1 / O4 / O5 / D5 of the §5 open-items table of `docs/plan.md` now all carry an inline annotation "adjudicated on 2026-10-10 / appended, synced on 2026-10-11"**.
+> The row-by-row review of 2026-10-11 confirms the line numbers `:397` / `:400` / `:401` / `:411` are still accurate (no further drift). The essentials of the four annotations:
 >
-> | 行 | 注记要点（逐字核对） |
+> | Row | Annotation essentials (verified verbatim) |
 > |---|---|
-> | **O1** `:397` | 「**流程已裁、取值仍未裁**」—— 2026-10-10 裁决采纳 O1 三级决策流程并要求区分内部目标值与对外承诺值；本行上方「维护者目标裁决仍 open」**仅指取值**，不得据此认为流程也未裁；容量取值仍待 M6 更高保真测量与维护者裁决，REQ-NF-3 保持 applicable 且 blocked |
-> | **O4** `:400` | 「**默认保留 10 天、部署可配**」；**边界不得夸大** —— 轨迹存储 / 查询 / 删除本次不实现，故「已裁」只指取值已定，**不表示系统已按 10 天清理**；清理触发点与时间起算口径仍属实现细节待定义 |
-> | **O5** `:401` | 基线 = 「**站点内 N+1 + 跨站 1+1 warm standby**」（含 D3 选 Redis primary/replica + Sentinel，ADR-0008）；**边界不得夸大** —— **不承诺机架 / AZ 级容错**，且 **RPO / RTO 数值仍未裁决** |
-> | **D5** `:411` | 选型 = 「**in-cluster PostgreSQL**」；Redis 继续用于 runtime checkpoint；**边界不得夸大** —— **实现未落**，且 `security-privacy.md` §4.1 记录的 chart **无备份 Job** 这一事实不变 |
+> | **O1** `:397` | "**the process is adjudicated, the value is still not adjudicated**" — the 2026-10-10 adjudication adopted the O1 three-tier decision process and required distinguishing the internal target value from the external commitment value; the "maintainer target adjudication still open" **above this row refers only to the value**, and the process must not be taken as unadjudicated on that basis; the capacity value still awaits higher-fidelity M6 measurement and maintainer adjudication, and REQ-NF-3 stays applicable and blocked |
+> | **O4** `:400` | "**default retention 10 days, deployment-configurable**"; **the boundary must not be exaggerated** — trace storage / query / delete are not implemented this time, so "adjudicated" only means the value is settled and **does not mean the system cleans up after 10 days**; the cleanup trigger point and the time-origin definition remain implementation details to be defined |
+> | **O5** `:401` | baseline = "**in-site N+1 + cross-site 1+1 warm standby**" (including D3 choosing Redis primary/replica + Sentinel, ADR-0008); **the boundary must not be exaggerated** — **no rack / AZ-level fault tolerance is promised**, and **the RPO / RTO numbers are still not adjudicated** |
+> | **D5** `:411` | selection = "**in-cluster PostgreSQL**"; Redis continues to be used for runtime checkpoint; **the boundary must not be exaggerated** — **implementation not landed**, and the fact recorded in §4.1 of `security-privacy.md` that the chart has **no backup Job** is unchanged |
 >
-> 三点必须一并记住，否则会从「已同步」再推出「已解决」的二次错误：
+> Three points must be remembered together, otherwise a secondary error of deriving "already resolved" from "already synced" follows:
 >
-> 1. **O4 / O5 / D5 三行注记均明写「本行仍具『阻塞下游文档』性质」**，并写明「**不得因为裁决已下就标为『已解决』**」
->    —— 该下游同步（任务 E）亦已落盘，见 §2 P3 条目的现状更正。
-> 2. **O1 行注记不含**上述「阻塞下游文档」语句，它写的是**取值仍未裁**；故 O1 的实质状态**未变**。
-> 3. 四行的注记本身已把「取值的裁决结论、落地的边界、剩余依赖」写在同一行内 —— 本条目所提的
->    「只读 §5 会误判这些项仍完全 open」这一具体危害**已消解**，但四行的**实质未决部分并未因此闭合**
->    （实现未落 / RPO·RTO 未裁 / O1 取值 open），其跟踪载体即上述四行注记。
+> 1. **The annotations of all three rows O4 / O5 / D5 explicitly state "this row still has the nature of 'blocking downstream documents'"**, and state that "**it must not be marked 'resolved' just because the adjudication has been made**"
+>    — that downstream sync (task E) has also been landed; see the current-state correction of the §2 P3 entry.
+> 2. **The annotation of the O1 row does not contain** the above "blocking downstream documents" statement; what it says is **the value is still not adjudicated**; hence the substantive status of O1 **is unchanged**.
+> 3. The annotations themselves already put "the adjudication conclusion of the value, the boundary of the landing, and the remaining dependencies" in the same row — the specific harm claimed by this entry,
+>    "reading only §5 would wrongly judge that those items are still fully open", **has been resolved**, but the **substantive undecided parts of the four rows are not thereby closed**
+>    (implementation not landed / RPO·RTO not adjudicated / O1 value open), and their tracking carrier is precisely those four annotations.
 
-**不裁决会冻结什么：** `AGENT.md:289-291` §15 要求的未决项登记面（§5）与 §0 决策记录面对上；
-只读 §5 的人**已不再**会误判 O4 / O5 / D5 仍**完全** open，但若不知四行注记的「边界不得夸大」措辞，
-仍可能反向误判为「已实现」。
+**What would be frozen without an adjudication:** the open-items registration surface (§5) required by §15 of `AGENT.md:289-291` facing the §0 decision record surface;
+a reader of §5 only **no longer** wrongly judges that O4 / O5 / D5 are still **fully** open, but without knowing the "boundary must not be exaggerated" wording of the four annotations
+they may still wrongly judge in the opposite direction that it is "already implemented".
 
-**状态：已闭合（2026-10-11）。** 依据：§5 四行已带行内注记（见上方「现状更正」段），
-且下游文档同步已落盘（见 §2 P3 条目的现状更正）。本条目登记的问题（登记面与决策记录面对不上）已消解；
-**四行的实质未决部分不在本条目闭合范围内**，其跟踪载体为 `docs/plan.md:396` / `:399` / `:400` / `:410` 的注记本身。
+**Status: closed (2026-10-11).** Basis: the four rows of §5 now carry inline annotations (see the "current-state correction" paragraph above),
+and the downstream document sync has been landed (see the current-state correction of the §2 P3 entry). The problem registered by this entry (the registration surface not matching the decision record surface) has been resolved;
+**the substantive undecided parts of the four rows are out of this entry's closure scope**, and their tracking carrier is the annotations at `docs/plan.md:396` / `:399` / `:400` / `:410` themselves.
 
-> **更正说明（2026-10-11，事实性更正，非静默替换）：** 本条目所引 `docs/plan.md` 行号因该文件被**追加内容**
-> 而整体漂移（§5 未决项表区域统一 +4 行），已逐个打开原文核实后改为当前真实行号：
-> **O1 `:393` → `:397`、O4 `:396` → `:400`、O5 `:397` → `:401`、D5 `:407` → `:411`**；
-> 上方「对照」行 **D1 `:403` → `:407`、D3 `:405` → `:409`、D8 `:410` → `:414`、D9 `:411` → `:415`**。
-> 同批修正的还有本文其它位置对 `docs/plan.md` 的过期引用：§1 G9 证据表与 §7.3 的 M5 关门条件
-> `:180` → `:184`、§2 P3 与 §5 汇总表的「受阻项」`:63` → `:66`、§2 P4 与 §7.5 的新增告警组
-> `:64` → `:68`、§3 X1 的补充口径 `:51` → `:54`。
-> 已复核**确认无需**改动的引用：`docs/plan.md:15`、`:39`、`:40`、`:41`，以及全部 `AGENT.md:20-28` /
-> `:30-52` / `:48` / `:51` / `:238` / `:289-291`、`docs/delivery/install-guide.md:5` / `:19` / `:91`、
-> `PASS-chart-check-2026-10-05.txt:2`、`PASS-alert-check-2026-10-05.txt:1-3`。
-> **本次只改坐标，未改动任何裁决结论、证据文件路径或状态语义。**
+> **Correction note (2026-10-11, a factual correction, not a silent replacement):** the `docs/plan.md` line numbers cited by this entry drifted wholesale because that file was **appended to**
+> (the §5 open-items table area uniformly +4 lines), and after opening the original text one by one they were changed to the current real line numbers:
+> **O1 `:393` → `:397`, O4 `:396` → `:400`, O5 `:397` → `:401`, D5 `:407` → `:411`**;
+> the "comparison" rows above **D1 `:403` → `:407`, D3 `:405` → `:409`, D8 `:410` → `:414`, D9 `:411` → `:415`**.
+> Also corrected in the same batch are the stale references to `docs/plan.md` elsewhere in this document: the M5 closure conditions of §1 G9 and §7.3
+> `:180` → `:184`, the "blocked items" `:63` → `:66` of §2 P3 and the §5 summary table, the new alert group of §2 P4 and §7.5
+> `:64` → `:68`, the supplementary stance of §3 X1 `:51` → `:54`.
+> References re-checked and **confirmed to need no change**: `docs/plan.md:15`, `:39`, `:40`, `:41`, and all of `AGENT.md:20-28` /
+> `:30-52` / `:48` / `:51` / `:238` / `:289-291`, `docs/delivery/install-guide.md:5` / `:19` / `:91`,
+> `PASS-chart-check-2026-10-05.txt:2`, `PASS-alert-check-2026-10-05.txt:1-3`.
+> **This time only coordinates were changed; no adjudication conclusion, evidence file path or status semantics was altered.**
 
 ---
 
-### P3 · 下游文档 stale（与 2026-10-10 裁决不符）
+### P3 · Stale Downstream Documents (Inconsistent with the 2026-10-10 Adjudications)
 
-**问题一句话：** 两份下游文档仍写「待 O4 / D5 裁决」「O5 未决」「本文不写任何保留天数」「repo 名拟改为」，
-与已落盘的 G6 / G7 / G8 裁决不符。
+**The question in one sentence:** two downstream documents still say "awaiting the O4 / D5 adjudication", "O5 undecided", "this document states no retention days", "the repo name is to be renamed",
+which is inconsistent with the landed G6 / G7 / G8 adjudications.
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 文件 | 行 | 仍写的旧口径 |
+| File | Line | Old stance still written there |
 |---|---|---|
-| `docs/product/security-privacy.md` | 5、6、8、35、53–56、76–77、112 | 「保留期限部分被 **O4 / D5 阻塞**」「**本文不写任何保留天数**」「存储列写待 **D5** 裁决」「git repo 名**拟改为** `inhouse-ims-as`」 |
-| `docs/operations/backup-restore.md` | 7、11、25、78、146、158–160 | 「容灾等级 **O5** 未决」「**O5 / D3** 未决」「保留期（O4）与存储选型（D5）」「本文不得出现保留天数」 |
-| `docs/plan.md` | 65 | 「**受阻项**：**O4**（呼叫轨迹保留期）与 **D5**（轨迹存储选型）阻塞 PDPO 保留期限与存储方案」 |
+| `docs/product/security-privacy.md` | 5, 6, 8, 35, 53–56, 76–77, 112 | "the retention period is **blocked by O4 / D5**", "**this document states no retention days**", "the storage column says awaiting the **D5** adjudication", "the git repo name is **to be renamed to** `inhouse-ims-as`" |
+| `docs/operations/backup-restore.md` | 7, 11, 25, 78, 146, 158–160 | "the disaster recovery level **O5** is undecided", "**O5 / D3** undecided", "retention period (O4) and storage selection (D5)", "no retention days may appear in this document" |
+| `docs/plan.md` | 65 | "**blocked items**: **O4** (call-trace retention period) and **D5** (trace storage selection) block the PDPO retention period and storage scheme" |
 
-**裁决边界说明（登记，不引申）：** G6 / G7 的裁决明确写「**本次不实现**」轨迹存储/查询/删除能力、
-「不承诺机架/AZ 级容错」，因此当时**不更新**下游文档**不算越界**；但客观上形成了 stale 面。
+**Adjudication boundary note (registered, not extrapolated):** the G6 / G7 adjudications explicitly state "**not implemented this time**" for the trace storage/query/delete capability and
+"no rack/AZ-level fault tolerance is promised", so **not updating** the downstream documents at that time **was not out of bounds**; objectively, however, it created a stale surface.
 
-**不裁决会冻结什么：** 对外材料（PDPO 说明、备份恢复手册）与已裁决定论不一致；需**授权后**同步，
-本文不执行任何同步动作。
+**What would be frozen without an adjudication:** external material (the PDPO explanation, the backup/restore manual) would be inconsistent with the adjudicated conclusions; syncing requires **authorization**,
+and this document performs no sync action.
 
-> **现状更正（2026-10-11，追加；上方证据表与「裁决边界说明」保留为登记日原始状态，不删改）：**
-> 本条目登记的 **stale 面已在 2026-10-11 消解** —— 两份下游文档均已按「上文原文保留不改」的追加式方式同步，
-> `docs/plan.md` 也已追加解锁说明。2026-10-11 复核结果：
+> **Current-state correction (2026-10-11, appended; the evidence table above and the "adjudication boundary note" are retained as the original registration-date state, nothing deleted or changed):**
+> the **stale surface registered by this entry was resolved on 2026-10-11** — both downstream documents have been synced in the additive form of "the original text above is retained unchanged",
+> and `docs/plan.md` has also had an unlock note appended. Review results of 2026-10-11:
 >
-> | 同步对象 | 当前实际状态 |
+> | Sync target | Current actual state |
 > |---|---|
-> | `docs/product/security-privacy.md` | 已带同步注记，形如「**2026-10-10 追加（G6 / G7，已同步；上文原文保留不改）**」（例：`:8`、`:38`、`:119`、`:273`），逐处把 O4 / D5 / O5 的「未裁决 / 待裁决」标注为**取值已裁**，并写明「**本文不写任何天数**」的依据已由「无裁决可写」改为「**无实现可写**」 |
-> | `docs/operations/backup-restore.md` | 已带同步注记（例：`:8`、`:13`、`:27`、`:166`），把「O5 / D3 / O4 / D5 未决」改为「**取值已裁、实现未落**」；「本文不写保留天数」「RPO / RTO 不单方面给数值」**继续有效** |
-> | `docs/plan.md` | `:66` 已追加「**上行的解锁状态（2026-10-11 追加，不改上行原文）**」，明写 O4 / D5 的阻塞**已解锁**，并把剩余依赖列为三项（落地未开始 / 下游 stale 待同步 / **O1 仍完全 open**）。`:65` 上行原文**未改**（按该段的「不改上行原文」约定保留） |
-> | `docs/plan.md:399` / `:400` / `:410` | 三行注记均含「**本行仍具『阻塞下游文档』性质** …… 属任务 E」一句；**该任务 E 同步现已完成**，故这半句的**指代对象已不存在**，但三行**并未**因此可以标为「已解决」 |
+> | `docs/product/security-privacy.md` | sync notes attached, of the form "**added 2026-10-10 (G6 / G7, synced; the original text above is retained unchanged)**" (e.g. `:8`, `:38`, `:119`, `:273`), marking each of the O4 / D5 / O5 "undecided / awaiting adjudication" annotations as **value adjudicated**, and stating that the basis for "**this document states no days**" has changed from "no adjudication to write" to "**no implementation to write**" |
+> | `docs/operations/backup-restore.md` | sync notes attached (e.g. `:8`, `:13`, `:27`, `:166`), changing "O5 / D3 / O4 / D5 undecided" to "**value adjudicated, implementation not landed**"; "this document states no retention days" and "RPO / RTO numbers are not given unilaterally" **remain in effect** |
+> | `docs/plan.md` | `:66` has appended "**the unlock status of the row above (added 2026-10-11, the original text of the row above is not changed)**", explicitly stating that the blocking of O4 / D5 **has been unlocked**, and listing the remaining dependencies as three items (landing not started / downstream stale pending sync / **O1 still fully open**). The original text at `:65` is **unchanged** (retained per the "do not change the original text of the row above" convention of that paragraph) |
+> | `docs/plan.md:399` / `:400` / `:410` | the annotations of all three rows contain the sentence "**this row still has the nature of 'blocking downstream documents'** …… belongs to task E"; **that task E sync is now complete**, so the referent of this half-sentence **no longer exists**, but the three rows **still may not** be marked "resolved" on that account |
 >
-> **本次不回改 `docs/plan.md` 任何原文**（约束：只改本 register 一个文件）。上述「指代对象已失效」的措辞是否回改，
-> 属后续对 `docs/plan.md` 的动作，不在本文授权范围内，此处只作登记。
+> **No original text of `docs/plan.md` is changed back this time** (constraint: only this one register file may be changed). Whether to change back the "referent has become void" wording
+> is a later action on `docs/plan.md`, is not within this document's authorization scope, and is only registered here.
 
-> **后续动作已执行（2026-10-11 收尾轮追加；上段原文保留，不删改）：** 上段所说的「后续对 `docs/plan.md` 的动作」
-> **已在同日晚些时候以追加方式完成** —— `docs/plan.md` 的 `:66`、`:399`、`:400`、`:410` 四行**行末各追加一句更正**，
-> 写明「属任务 E」所指的**下游同步已完成**（即本条目已闭合的那件事），同时逐行重申该行**仍不得标为「已解决」**。
-> **仍是一律追加、零删改**：上表所列「仍写的旧口径」原文与其行内注记全部原样保留，未回改任何一个字。
->
-> **仍然有效的边界（不因同步而放宽）：** 轨迹存储 / 查询 / 删除**本次不实现**；
-> **不承诺机架 / AZ 级容错**；**RPO / RTO 数值未裁决**；O1 **取值**仍 open。这些是同步注记本身逐条声明的边界，
-> 不得因「下游已同步」而反向推导为「已解决」。
+> **Follow-up action already executed (appended in the closing round of 2026-10-11; the paragraph above is retained, nothing deleted or changed):** the "later action on `docs/plan.md`" described in the paragraph above
+> **was completed additively later the same day** — a correction sentence was appended to the end of each of the four rows `:66`, `:399`, `:400`, `:410` of `docs/plan.md`,
+> stating that the **downstream sync referred to by "belongs to task E" is complete** (that is, the thing by which this entry was closed), while restating row by row that the row **still must not be marked "resolved"**.
+> **Everything is still append-only with zero deletions or changes**: the original text of the "old stance still written there" in the table above and its inline annotations are all retained as-is, and not a single character was changed back.
 
-**状态：已闭合（2026-10-11）。** 依据：两份下游文档的同步注记已逐行落盘、`docs/plan.md:66` 已追加解锁说明
-（见上方「现状更正」段）。本条目登记的 stale 面已消解；**剩余依赖（实现未落 / RPO·RTO 未裁 / O1 取值 open）
-不在本条目闭合范围内**，其跟踪载体为 `docs/plan.md:396` / `:399` / `:400` / `:410` 与 `:66` 的注记本身。
-（下方「坐标更正说明」中的行号更正是登记日坐标修正，与本次状态闭合是两件事，两条审计链均保留。）
+> **Boundaries that remain in effect (not relaxed by the sync):** trace storage / query / delete are **not implemented this time**;
+> **no rack / AZ-level fault tolerance is promised**; **the RPO / RTO numbers are unadjudicated**; the O1 **value** is still open. These are the boundaries declared item by item by the sync notes themselves,
+> and they must not be derived in reverse as "resolved" on account of "the downstream has been synced".
+
+**Status: closed (2026-10-11).** Basis: the sync notes of both downstream documents have been landed line by line, and `docs/plan.md:66` has had an unlock note appended
+(see the "current-state correction" paragraph above). The stale surface registered by this entry has been resolved; **the remaining dependencies (implementation not landed / RPO·RTO unadjudicated / O1 value open)
+are out of this entry's closure scope**, and their tracking carrier is the annotations at `docs/plan.md:396` / `:399` / `:400` / `:410` and `:66` themselves.
+(The line-number corrections in the "coordinate correction note" below are registration-date coordinate corrections, which are a different matter from this status closure; both audit chains are retained.)
 
 ---
 
-### P4 · promtool 校验存在「旧证据过期」缺口
+### P4 · The promtool Validation Has a "Stale Evidence" Gap
 
-**问题一句话：** 新增的两个告警组 `as.runtime` / `as.platform` **至今从未被 promtool 校验过**。
+**The question in one sentence:** the two newly added alert groups `as.runtime` / `as.platform` have **so far never been validated by promtool**.
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 事实 | 位置 |
+| Fact | Location |
 |---|---|
-| 唯一一次 `promtool check rules` 的产物是 `SUCCESS: 5 rules found`，覆盖的是**当时的原 5 条规则** | `docs/acceptance/artifacts/m5/2026-10-05/alert-check-full.txt:1-3` |
-| 2026-10-10 在 `deploy/alerts/` 新增了 `as.runtime` / `as.platform` **两个告警组**（原 5 条未改） | `docs/plan.md:67` |
+| the only product of a `promtool check rules` run is `SUCCESS: 5 rules found`, covering the **then-existing original 5 rules** | `docs/acceptance/artifacts/m5/2026-10-05/alert-check-full.txt:1-3` |
+| on 2026-10-10 **two alert groups** `as.runtime` / `as.platform` were added under `deploy/alerts/` (the original 5 rules unchanged) | `docs/plan.md:67` |
 
-> **关键推论（登记，非裁决）：** 旧产物**不能**被用来划掉 §1.2 表格里
-> 「`make alert-check`（`promtool check rules`）……告警规则语法未校验」这一行的「未执行」。
-> 该行对**新增两个组**仍然成立。
+> **Key inference (registration, not adjudication):** the old artifact **cannot** be used to cross out the "not executed" of the row
+> "`make alert-check` (`promtool check rules`) …… alert rule syntax unvalidated" in the §1.2 table.
+> That row still holds for the **two newly added groups**.
 
-**不裁决会冻结什么：** 告警规则集是否可以宣称「语法已校验」；以及 §0-A.1 第 1 项（promtool 容器化校验）
-重新执行时，校验范围是否必须显式覆盖新增组。
+**What would be frozen without an adjudication:** whether the alert rule set can claim "syntax validated"; and, when §0-A.1 item 1 (containerized promtool validation)
+is re-executed, whether the validation scope must explicitly cover the new groups.
 
-**状态：已闭合（2026-10-11）。**
+**Status: closed (2026-10-11).**
 
-> **现状更正（2026-10-11 收尾轮追加；上方原文保留，不删改）：** P4 登记的缺口（新增的
-> `as.runtime` / `as.platform` 两组从未被 promtool 校验）**已于 2026-10-11 闭合**。
-> 状态声明三元组：**(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**。
-> 校验方式：在已登记环境 `dev-win03ib7niepf0`（host `WIN-03IB7NIEPF0`）上以 **docker 容器化方式**运行
-> `prom/prometheus:v2.45.0` 的 promtool
-> （`docker run --rm --entrypoint=/bin/promtool -v /home/shudong/project/3rdparty-as/deploy/alerts:/alerts prom/prometheus:v2.45.0 check rules /alerts/as-alerts.yaml`），
-> 输出 `Checking /alerts/as-alerts.yaml` / `SUCCESS: 10 rules found`。
-> 10 条 = `as.call-path` 5 条（2026-10-05 已验过的原 5 条）+ `as.runtime` 3 条 + `as.platform` 2 条
-> （后两组 2026-10-10 新增），即覆盖全部 **3 组 10 条**，规则文件 `deploy/alerts/as-alerts.yaml`。
-> 主 agent 于**同一日在同一 host 用同一命令独立复跑**：同样 `SUCCESS: 10 rules found`、exit=0。
-> 证据已由 [`../acceptance/artifacts/m5/README.md`](../acceptance/artifacts/m5/README.md) 索引表收录
-> （2026-10-11/PASS-alert-check-full 行，注明覆盖 3 组 10 条、镜像 v2.45.0、host）。
-> **边界：** 本闭合只指告警规则**语法校验**；X1（告警抓取接线 annotation vs ServiceMonitor/PodMonitor）
-> 仍待运营商 monitoring-integration 标准输入，**语法校验通过不等于接线闭合**（§3 X1「与 P4 的关系」段继续有效）。
+> **Current-state correction (appended in the closing round of 2026-10-11; the original text above is retained, nothing deleted or changed):** the gap registered by P4 (the newly added
+> `as.runtime` / `as.platform` groups never validated by promtool) **was closed on 2026-10-11**.
+> Status declaration triple: **(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**.
+> Validation method: on the registered environment `dev-win03ib7niepf0` (host `WIN-03IB7NIEPF0`), the promtool of
+> `prom/prometheus:v2.45.0` was run **in a docker container**
+> (`docker run --rm --entrypoint=/bin/promtool -v /home/shudong/project/3rdparty-as/deploy/alerts:/alerts prom/prometheus:v2.45.0 check rules /alerts/as-alerts.yaml`),
+> outputting `Checking /alerts/as-alerts.yaml` / `SUCCESS: 10 rules found`.
+> The 10 rules = 5 in `as.call-path` (the original 5 already validated on 2026-10-05) + 3 in `as.runtime` + 2 in `as.platform`
+> (the latter two groups added on 2026-10-10), i.e. covering all **3 groups / 10 rules**, in the rule file `deploy/alerts/as-alerts.yaml`.
+> The main agent **independently re-ran it on the same day on the same host with the same command**: likewise `SUCCESS: 10 rules found`, exit=0.
+> The evidence is collected in the index table of [`../acceptance/artifacts/m5/README.md`](../acceptance/artifacts/m5/README.md)
+> (the 2026-10-11/PASS-alert-check-full row, noting coverage of 3 groups / 10 rules, image v2.45.0, host).
+> **Boundary:** this closure covers only the **syntax validation** of the alert rules; X1 (the alert capture-wiring annotation vs ServiceMonitor/PodMonitor)
+> still awaits the carrier's monitoring-integration standard input, and **syntax validation passing does not mean the wiring is closed** (the "relationship to P4" paragraph of §3 X1 remains in effect).
 
 ---
 
-### P5 · A4-3 的独立 issue 未创建
+### P5 · The Separate Issue of A4-3 Has Not Been Created
 
-**问题一句话：** §0-A.6 裁决把 Wave 2 的 14 条回放用例「后置到独立 issue」，但该 issue 至今不存在。
+**The question in one sentence:** the §0-A.6 adjudication deferred the 14 Wave 2 replay cases to a "separate issue", but that issue still does not exist.
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 事实 | 位置 |
+| Fact | Location |
 |---|---|
-| 裁决原文：「Wave 2 的 14 条回放用例后置到独立 issue」；并记明「本任务**不创建 issue**」 | [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §0-A.6 **G2 / A4-3** 行（`:57`）；`docs/plan.md:39` |
-| 截至目前该 issue **不存在**（本登记未做远端核查，未发现仓内任何指向它的记录） | — |
+| adjudication original text: "the 14 Wave 2 replay cases are deferred to a separate issue"; and it records that "this task **does not create an issue**" | the **G2 / A4-3** row of §0-A.6 (`:57`) in [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md); `docs/plan.md:39` |
+| to date that issue **does not exist** (this register did no remote check and found no in-repo record pointing at it) | — |
 
-**不裁决会冻结什么：** Wave 2 回放用例只有一个「去处」（独立 issue）却没有载体；若无人创建，
-该批用例在下一 session 会失去可追溯的落点。
+**What would be frozen without an adjudication:** the Wave 2 replay cases have only one "destination" (the separate issue) but no carrier; if nobody creates it,
+that batch of cases loses a traceable landing point in the next session.
 
-**状态：已闭合（2026-10-11）。**
+**Status: closed (2026-10-11).**
 
-> **现状更正（2026-10-11 收尾轮追加；上方原文保留，不删改）：** 维护者 **2026-10-11 裁决**：
-> A4-3 所称「独立 issue」**以仓内 doc 作为载体**（本项目无外部 issue 跟踪，仓内文档即追踪系统）。
-> 载体文件 = [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)
-> （2026-10-11 新建）：14 条基准实物（`testbed/contracts/sip-baseline/S1-basic-call/` 下
-> `01-in-invite-trunk.txt` … `14-in-200-trunk.txt` 共 14 个消息文件，逐字列入该 doc §2）、
-> 对拍工作定义（[`../acceptance/2026-10-09-e2e-test-plan.md`](../acceptance/2026-10-09-e2e-test-plan.md)
-> Wave 2 节 `:66-74`）、关联需求（REQ-F-1 / F-2 / F-4）与启动前提均已可追溯。
-> **本闭合仅指「载体缺失」这一 gap 消失**；14 条用例的**实现本身仍属 A4 e2e 批次**
-> （当前 `pytest.mark.e2e` 在测试代码中 0 命中、Wave 1 也尚未落地，待 Wave 1 完成后启动），
-> 本闭合**不签收 REQ-F-1**（其 14 条全文仍 open）。
+> **Current-state correction (appended in the closing round of 2026-10-11; the original text above is retained, nothing deleted or changed):** the maintainer **adjudicated on 2026-10-11**:
+> the "separate issue" referred to by A4-3 **uses an in-repo doc as its carrier** (this project has no external issue tracker; in-repo documents are the tracking system).
+> The carrier file = [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)
+> (newly created on 2026-10-11): the 14 baseline artifacts (the 14 message files `01-in-invite-trunk.txt` … `14-in-200-trunk.txt` under
+> `testbed/contracts/sip-baseline/S1-basic-call/`, listed verbatim in §2 of that doc), the
+> replay work definition (`:66-74` of the Wave 2 section of [`../acceptance/2026-10-09-e2e-test-plan.md`](../acceptance/2026-10-09-e2e-test-plan.md)),
+> the related requirements (REQ-F-1 / F-2 / F-4) and the start prerequisites are all traceable.
+> **This closure covers only the disappearance of the "missing carrier" gap**; the **implementation of the 14 cases itself still belongs to the A4 e2e batch**
+> (currently `pytest.mark.e2e` has 0 hits in test code and Wave 1 has not landed either, to be started after Wave 1 is complete),
+> and this closure **does not sign off REQ-F-1** (all 14 of its items remain open).
 
 ---
 
-### P6 · 「FM」术语无源头
+### P6 · The Term "FM" Has No Source
 
-**问题一句话：** §0-A.6 的 G3 行出现「FM 指 Fault Management」，但该概念在更早的记载中没有来源可查。
+**The question in one sentence:** the G3 row of §0-A.6 contains "FM stands for Fault Management", but that concept has no traceable source in earlier records.
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 位置 | 是否出现 FM |
+| Location | Does FM appear |
 |---|---|
-| §0-A.6 的 **G3 / A5** 行（`:58`） | **出现**：「FM 指 Fault Management，按新 feature 流程管理，实施时补 demo/功能文档」 |
-| §0-A.2 的 **G3** 行（`:23`） | **未出现** |
-| §8.2 全文 | **未出现** |
-| `docs/plan.md:41` | 抄录 §0-A.6 时**保留**了该句 |
+| the **G3 / A5** row of §0-A.6 (`:58`) | **appears**: "FM stands for Fault Management, managed per the new feature process, with demo/feature documents added at implementation time" |
+| the **G3** row of §0-A.2 (`:23`) | **does not appear** |
+| the whole of §8.2 | **does not appear** |
+| `docs/plan.md:41` | **retained** that sentence when copying §0-A.6 |
 
-> **性质（登记，非裁决）：** 属裁决时**新增**且**无来源可查**的术语，不是既有口径的延续。
+> **Nature (registration, not adjudication):** it is a term **newly introduced** at adjudication time with **no traceable source**, not a continuation of an existing stance.
 
-**不裁决会冻结什么：** G3 / A5 范围是否包含 FM 这一 feature；「按新 feature 流程管理」的流程载体不明。
+**What would be frozen without an adjudication:** whether the G3 / A5 scope includes FM as a feature; the process carrier of "managed per the new feature process" is unclear.
 
-**状态：已澄清（2026-10-11）—— 闭合。**
+**Status: clarified (2026-10-11) — closed.**
 
-> **现状更正（2026-10-11 收尾轮追加；上方原文保留，不删改）：** 维护者 **2026-10-11 澄清**，口径不增不减：
-> §0-A.6 **G3 / A5** 行的「**FM 指 Fault Management，按新 feature 流程管理，实施时补 demo/功能文档**」
-> （[`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) `:58`、
-> [`../plan.md`](../plan.md) `:41`）是**裁决时有意引入**的 —— **不是笔误、不是无来源发挥**。
-> 边界：FM 属**未来项目 / 未来批次的新 feature**；FM 作为新 feature 的工作**不在当前项目完成，是以后的事情，现在不用管** ——
-> 当前项目**不立项、不实现、不定义需求、不补 demo 或功能文档**。
-> G3 / A5 裁决句（`:58` 与 `plan.md:41`）**保留不删**；未来启动 FM 时按本仓库**既有新 feature 流程**
-> （requirement → ADR → design → review，见 `AGENT.md` §3.4）管理。
-> 状态：**已澄清（2026-10-11），闭合。**
+> **Current-state correction (appended in the closing round of 2026-10-11; the original text above is retained, nothing deleted or changed):** the maintainer **clarified on 2026-10-11**, with nothing added or removed:
+> the "**FM stands for Fault Management, managed per the new feature process, with demo/feature documents added at implementation time**" of the **G3 / A5** row in §0-A.6
+> (`:58` of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md),
+> `:41` of [`../plan.md`](../plan.md)) was **deliberately introduced** at adjudication time — **it is not a typo and not unfounded improvisation**.
+> Boundary: FM is a **new feature of a future project / future batch**; the work on FM as a new feature **is not completed in the current project, it is a matter for later, and needs no attention now** ——
+> the current project **does not track it, does not implement it, does not define requirements, and adds no demo or feature document**.
+> The G3 / A5 adjudication sentence (`:58` and `plan.md:41`) is **retained and not deleted**; when FM is started in the future it will be managed per this repository's **existing new feature process**
+> (requirement → ADR → design → review, see §3.4 of `AGENT.md`).
+> Status: **clarified (2026-10-11), closed.**
 
 ---
 
-## 3. 第三组：仍待外部输入
+## 3. Third Group: Still Awaiting External Input
 
-### X1 · G3 / A5 告警抓取接线选型
+### X1 · Selection of the G3 / A5 Alert Capture Wiring
 
-**问题一句话：** annotation 与 ServiceMonitor/PodMonitor 暂不选边，等待运营商 monitoring-integration 标准输入。
+**The question in one sentence:** the annotation vs ServiceMonitor/PodMonitor question takes no side for now, awaiting the carrier's monitoring-integration standard input.
 
-**为什么会提出（证据）：**
+**Why it was raised (evidence):**
 
-| 事实 | 位置 |
+| Fact | Location |
 |---|---|
-| 裁决原文：「维持待决：annotation vs ServiceMonitor/PodMonitor **暂不选边**；等待运营商 monitoring-integration 标准输入；**当前不改 chart**」 | [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §0-A.6 G3 行（`:59`）；`docs/plan.md:41` |
-| 补充口径：同文件 **§0-A.6 口径优先级追加说明** `:69` **原文逐字**为「**G3（A5 监控接线）仍待运营商 monitoring-integration 标准输入，当前不改 chart。**」 | [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) `:70` |
-| 同一口径在 `docs/plan.md` 的**抄录**：`docs/plan.md:53` **原文逐字**为「**G3（A5）仍待运营商 monitoring-integration 标准，当前不改 chart**」 —— 括注：该抄录比 `:70` **少两处限定**（括注内无「监控接线」；「标准」后无「输入」二字）。**上文表格原有的措辞（「A5 监控接线」＋「标准输入」）与 `:70` 逐字一致**，措辞更完整者以 `:70` 为准；`docs/plan.md` 原文**不回改**（本文只登记） | `docs/plan.md:53` |
+| adjudication original text: "remains pending: annotation vs ServiceMonitor/PodMonitor **takes no side for now**; awaiting the carrier's monitoring-integration standard input; **do not change the chart for now**" | the G3 row of §0-A.6 (`:59`) in [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md); `docs/plan.md:41` |
+| supplementary stance: the **"stance-priority addendum"** `:69` of the same file reads **verbatim**: "**G3 (A5 monitoring wiring) still awaits the carrier's monitoring-integration standard input; do not change the chart for now.**" | `:70` of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) |
+| the same stance **copied** into `docs/plan.md`: `docs/plan.md:53` reads **verbatim** "**G3 (A5) still awaits the carrier's monitoring-integration standard; do not change the chart for now**" — parenthetical: that copy has **two fewer qualifiers** than `:70` (no "monitoring wiring" inside the parentheses; no "input" after "standard"). **The original wording in the table above ("A5 monitoring wiring" + "standard input") is verbatim identical to `:70`**, and the more complete wording is governed by `:70`; the original text of `docs/plan.md` is **not changed back** (this document only registers) | `docs/plan.md:53` |
 
-**与 P4 的关系（登记）：** P4 是「规则**语法**未校验」，X1 是「**抓取接线**未闭合」；两者不同，
-`promtool` 通过也不等于接线闭合。
+**Relationship to P4 (registration):** P4 is "rule **syntax** unvalidated", X1 is "**capture wiring** not closed"; they differ,
+and `promtool` passing does not mean the wiring is closed.
 
-**不裁决会冻结什么：** chart 的抓取接线（不改 chart 的口径维持有效）。
+**What would be frozen without an adjudication:** the chart's capture wiring (the "do not change the chart" stance remains in effect).
 
-**状态：** 待维护者裁决 —— **当前维持待决**，等待外部输入。
+**Status:** awaiting maintainer adjudication — **it currently remains pending**, awaiting external input.
 
-> **裁决落盘（2026-10-12 追加；上方原文保留不改）**：维护者 2026-10-12 决定 —— **X1 留到下一个 release**。理由：抓取接线选型需**运营商 monitoring-integration 标准输入**才能继续；输入到位前不选边、不改 chart（`deploy/helm/` 的抓取接线维持原样；2026-10-12 对 `Chart.yaml` 的改动仅限 A6 的 version / appVersion / kubeVersion，与本项无关）。口径与 [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §12「已裁不做登记区」一致：**后续任何状态盘点、汇报、handoff、session 开场涉及 X1 一律只写「见本行」，不逐项展开、不单独提醒、不再列入「待维护者动作」**。本行**不构成执行授权**，不闭合抓取接线本身；若运营商标准输入到位，届时重新排期并在本行追加重启记录。
+> **Adjudication landed (appended 2026-10-12; the original text above is retained unchanged)**: the maintainer decided on 2026-10-12 — **X1 is left to the next release**. Rationale: the capture-wiring selection needs the **carrier's monitoring-integration standard input** before it can continue; until the input is in place, no side is taken and the chart is not changed (the capture wiring of `deploy/helm/` stays as-is; the 2026-10-12 change to `Chart.yaml` was limited to the version / appVersion / kubeVersion of A6 and is unrelated to this item). This stance is consistent with §12 "adjudicated-but-not-done register area" of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md): **any subsequent status inventory, report, handoff or session opening that touches X1 writes only "see this row"; it does not expand item by item, does not remind separately, and is no longer listed as a "maintainer action"**. This row **constitutes no execution authorization** and does not close the capture wiring itself; if the carrier's standard input arrives, the rescheduling will be re-planned at that time and a restart record appended to this row.
 
-> **去向指针（2026-10-13 追加；上方 X1 裁决落盘原文一律保留不改）**：本段所述「下一个 release」的落点为
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) —— **X1 抓取接线**登记在该文档 **§2 第 7 行**
-> （外部硬依赖类，重启 = 维护者另行裁决 + 运营商 monitoring-integration 标准到位，卡点与「本版证据为何不能替代」
-> 沿用本段原文）。本段「后续任何状态盘点、汇报、handoff、session 开场涉及 X1 一律只写「见本行」、不逐项展开、
-> 不单独提醒、不再列入「待维护者动作」」的既有口径**不变**，据此改为统一写「见该文档 §2 第 7 行」。
+> **Destination pointer (appended 2026-10-13; the original X1 adjudication text above is all retained unchanged)**: the landing point of the "next release" described in this paragraph is
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) — **the X1 capture wiring** is registered in **row 7 of §2** of that document
+> (of the external hard-dependency class; restart = a separate maintainer adjudication + the carrier's monitoring-integration standard being in place, and the blocker plus "why this version's evidence cannot substitute"
+> follow the original text of this paragraph). The existing stance of this paragraph that "any subsequent status inventory, report, handoff or session opening that touches X1 writes only 'see this row', does not expand item by item,
+> does not remind separately, and is no longer listed as a maintainer action" **is unchanged**; accordingly it becomes "see row 7 of §2 of that document".
 
 ---
 
-## 4. 第四组：拟定但未启动的整体工作
+## 4. Fourth Group: Overall Work That Has Been Scoped but Not Started
 
-### S1 · requirement / ADR / design / coding / testing 全链路整理
+### S1 · End-to-End Cleanup of the requirement / ADR / design / coding / testing Layers
 
-**问题一句话：** 维护者 2026-10-11 提出，需对五层文档体系做一次全链路整理，从根上解决当前口径混乱。
+**The question in one sentence:** raised by the maintainer on 2026-10-11; an end-to-end cleanup of the five-layer document system is needed to solve the current stance confusion at the root.
 
-**范围（登记，共五层）：** requirement 体系 → ADR 体系 → design 文档去重 → coding 边界 → testing 分层。
+**Scope (registered, five layers in total):** requirement system → ADR system → design document deduplication → coding boundaries → testing layering.
 
-**本次摸底已发现的事实（作为输入登记，不展开方案）：**
+**Facts already found by this survey (registered as input, solutions not expanded):**
 
-| 层 | 已发现的事实 | 位置 |
+| Layer | Fact found | Location |
 |---|---|---|
-| requirements | `docs/requirements/` 仅 3 个文件（`prd.md`、`README.md`、`req-nf-15-testbed-performance.md`） | `docs/requirements/` |
-| requirements | 40 条 REQ 全在 `prd.md`：REQ-F-1…16、REQ-NF-1…16、REQ-S-1…4、REQ-G-1…4，**编号无缺口** | `docs/requirements/prd.md:162`（REQ-F-1 起）– `:536`（REQ-G-4） |
-| requirements | **REQ-NF 顺序错乱**：NF-9 排在 NF-6 之前 | `docs/requirements/prd.md:373`（REQ-NF-9）vs `:387`（REQ-NF-6） |
-| requirements | **状态矩阵不在 `requirements/` 下**，而在验收目录 | `docs/acceptance/m8-test-plan-matrix.md:42-44`（表头 `req_id / test_plan_ref / milestone / phase / evidence / status / signed_by`）；`docs/acceptance/report.md` §0.5 |
-| requirements | **悬空引用**：`AGENT.md` §10.4 开场仪式第 4 步要求读 `docs/acceptance/criteria.md`，但**该文件不存在** | `AGENT.md:238`；对照 `docs/architecture/hld.md:160`、`docs/architecture/lld.md:158`、`docs/reviews/hld-lld-design-review-2026-09-30.md:12,20` 均记录其缺失 |
-| ADR | 共 28 个文件（0000 为模板），编号 0000–0027 **连续** | `docs/architecture/adr/` |
-| ADR | 状态分布：accepted 24 / superseded-in-part 1（0011）/ proposed 1（0023）/ draft 1（0025） | `docs/architecture/adr/README.md:14-43` 与各 ADR 正文 |
-| ADR | **注册表与正文漂移**：`README.md:39`、`:41` 记 0023 / 0025 为 `draft`，但 0023 正文写 `Status: proposed` | `docs/architecture/adr/README.md:39,41` vs `docs/architecture/adr/0023-redis-call-state-checkpoint.md` |
-| design | 重叠三组：① `reSIProcate.md` ≒ `resiprocate-dum-b2bua.md` ≒ ADR-0019/0022 同源；② `新系统整体架构.md`（约 34.9KB）≒ `hld.md`（约 34.4KB），体量相当、同为全架构叙述；③ `call-state-recovery-options.md` ≒ ADR-0023 同主题 | `docs/architecture/` |
-| design | 上述三组**无优先级指引**（哪一份为准未标明） | — |
-| testing | markers 定义：`unit` / `contract` / `integration` / `e2e` / `performance` | `pyproject.toml:48-54` |
-| testing | 测试文件分布：`platform/tests/**` 53 个；`testbed/{probe,load,simulators}/tests` 15 个；根 `tests/` 2 个 | — |
-| testing | **`pytest.mark.e2e` 全仓命中 0 个文件**（仅文档提及）⇒ `-m e2e` 必然收集 0 条 | 全仓检索无测试文件命中 |
-| testing | `make test` 仍依次跑 unit/contract → integration → **e2e** 三层 | `Makefile:41-44` |
+| requirements | `docs/requirements/` has only 3 files (`prd.md`, `README.md`, `req-nf-15-testbed-performance.md`) | `docs/requirements/` |
+| requirements | all 40 REQs are in `prd.md`: REQ-F-1…16, REQ-NF-1…16, REQ-S-1…4, REQ-G-1…4, **with no numbering gaps** | `docs/requirements/prd.md:162` (from REQ-F-1) – `:536` (REQ-G-4) |
+| requirements | **REQ-NF order is disordered**: NF-9 comes before NF-6 | `docs/requirements/prd.md:373` (REQ-NF-9) vs `:387` (REQ-NF-6) |
+| requirements | **the status matrix is not under `requirements/`** but in the acceptance directory | `docs/acceptance/m8-test-plan-matrix.md:42-44` (header `req_id / test_plan_ref / milestone / phase / evidence / status / signed_by`); §0.5 of `docs/acceptance/report.md` |
+| requirements | **dangling reference**: step 4 of the opening ritual in §10.4 of `AGENT.md` requires reading `docs/acceptance/criteria.md`, but **that file does not exist** | `AGENT.md:238`; compare `docs/architecture/hld.md:160`, `docs/architecture/lld.md:158`, `docs/reviews/hld-lld-design-review-2026-09-30.md:12,20`, all of which record its absence |
+| ADR | 28 files in total (0000 is the template), numbering 0000–0027 is **contiguous** | `docs/architecture/adr/` |
+| ADR | status distribution: accepted 24 / superseded-in-part 1 (0011) / proposed 1 (0023) / draft 1 (0025) | `docs/architecture/adr/README.md:14-43` and the body of each ADR |
+| ADR | **the registry has drifted from the bodies**: `README.md:39` and `:41` record 0023 / 0025 as `draft`, but the body of 0023 says `Status: proposed` | `docs/architecture/adr/README.md:39,41` vs `docs/architecture/adr/0023-redis-call-state-checkpoint.md` |
+| design | three overlap groups: ① `reSIProcate.md` ≒ `resiprocate-dum-b2bua.md` ≒ same source as ADR-0019/0022; ② `system-architecture.md` (about 34.9KB) ≒ `hld.md` (about 34.4KB), comparable in size and both full-architecture narratives; ③ `call-state-recovery-options.md` ≒ same topic as ADR-0023 | `docs/architecture/` |
+| design | the above three groups have **no priority guidance** (which one is authoritative is not stated) | — |
+| testing | marker definitions: `unit` / `contract` / `integration` / `e2e` / `performance` | `pyproject.toml:48-54` |
+| testing | test file distribution: 53 under `platform/tests/**`; 15 under `testbed/{probe,load,simulators}/tests`; 2 in the root `tests/` | — |
+| testing | **`pytest.mark.e2e` has 0 file hits repo-wide** (mentioned only in documents) ⇒ `-m e2e` necessarily collects 0 cases | repo-wide search finds no test file hits |
+| testing | `make test` still runs the three layers unit/contract → integration → **e2e** in order | `Makefile:41-44` |
 
-**状态：五层整理已全部完成（2026-10-11，两批）；后续仅 ADR 体系随新 ADR 自然演进，不再设整理批次。**
+**Status: the cleanup of all five layers is fully complete (2026-10-11, two batches); from now on only the ADR system evolves naturally with new ADRs, and no further cleanup batches are planned.**
 
-> **现状更正（2026-10-11 收尾轮追加；上方摸底表与登记日「待维护者裁决」状态句保留为审计链，不删改）：**
-> S1 五层整理的**第一批已完成（2026-10-11）** —— 执行计划
-> [`2026-10-11-s1-document-structure-cleanup.md`](2026-10-11-s1-document-structure-cleanup.md)、
-> 执行记录 [`2026-10-11-s1-execution-record.md`](2026-10-11-s1-execution-record.md)。
-> 第一批 6 任务：① 修复 AGENT.md 开场仪式断链（`criteria.md` → `m8-test-plan-matrix.md`）；
-> ② REQ-NF 分组内顺序核查通过（未改文件）；③ 验收矩阵补 REQ-NF-16 行（status=open）；
-> ④ Makefile `test` target 移出空 e2e 层；⑤ 新建 `tests/test_requirements_registry.py`（6 个测试函数）；
-> ⑥ 本 register §8 元规则。
-> **design 文档重叠已由 [`../architecture/README.md`](../architecture/README.md) §1「文档地图与优先级」消解**：
-> 规范文档 = `hld.md` / `lld.md`；参考 / 背景材料（含「新系统整体架构.md」、reSIProcate 同源材料）
-> 与 HLD / LLD 冲突时一律以 HLD / LLD 为准；同源重叠已在该节标注。
-> **ADR 漂移已修**：[`../architecture/adr/README.md`](../architecture/adr/README.md) 注册表 0023 行已改为
-> `proposed`，表下已有 2026-10-11 注记说明「以正文为准、0025 draft 不动」。
-> 自检：`uv run pytest tests/ -q` → **76 passed**（2026-10-11 收尾轮复跑）。
-> **S1 不标「全部完成」，也不再是「未启动」**：ADR 体系进一步整理与 coding 边界整理是否启动后续批次，
-> **待维护者另行授权** —— 后续批次是新的授权事项，不是悬空裁决，故 S1 **不计入「待裁决」**。
+> **Current-state correction (appended in the closing round of 2026-10-11; the survey table above and the registration-date "awaiting maintainer adjudication" status sentence are retained as the audit chain, nothing deleted or changed):**
+> the **first batch of the S1 five-layer cleanup is complete (2026-10-11)** — the execution plan
+> [`2026-10-11-s1-document-structure-cleanup.md`](2026-10-11-s1-document-structure-cleanup.md) and the
+> execution record [`2026-10-11-s1-execution-record.md`](2026-10-11-s1-execution-record.md).
+> The 6 tasks of the first batch: ① fixing the broken link in the AGENT.md opening ritual (`criteria.md` → `m8-test-plan-matrix.md`);
+> ② the within-group REQ-NF order check passed (no file changed); ③ adding the REQ-NF-16 row to the acceptance matrix (status=open);
+> ④ moving the empty e2e layer out of the Makefile `test` target; ⑤ creating `tests/test_requirements_registry.py` (6 test functions);
+> ⑥ the meta-rule of §8 of this register.
+> **The design document overlap has been resolved by §1 "document map and priority" of [`../architecture/README.md`](../architecture/README.md)**:
+> the normative documents = `hld.md` / `lld.md`; reference / background material (including `system-architecture.md` and the reSIProcate same-source material)
+> always defers to HLD / LLD on conflict; the same-source overlaps are annotated in that section.
+> **The ADR drift has been fixed**: the 0023 row of the registry in [`../architecture/adr/README.md`](../architecture/adr/README.md) has been changed to
+> `proposed`, with a 2026-10-11 note below the table stating "the body is authoritative, 0025 draft is left unchanged".
+> Self-check: `uv run pytest tests/ -q` → **76 passed** (re-run in the closing round of 2026-10-11).
+> **S1 is neither marked "fully complete" nor still "not started"**: whether to start follow-up batches for further ADR-system cleanup and coding-boundary cleanup
+> **requires separate maintainer authorization** — a follow-up batch is a new authorization item, not a dangling adjudication, so S1 **is not counted as "pending adjudication"**.
 
-> **2026-10-11 第二批（收尾批）追加；上方摸底表、第一批「现状更正」与各历史状态句保留为审计链，不删改：**
-> **S1 五层（requirements / ADR / design / coding / testing 门禁口径）整理全部完成。**
-> ① **ADR 体系全量复核一致**：逐个打开 0001–0027 正文核对，25 个英文 `Status` 行 + 0011 / 0019 两个中文状态行
-> 与注册表取值全部一致；0011 ↔ 0019 superseded-in-part 双向可追溯；无 ADR-0028+ 越界引用；
-> `docs/**` 内 206 条 ADR 链接中 205 条有效，**1 条既有断链**
-> （`docs/acceptance/m5-engineering-closure-2026-10-04.md:43` 指向 ADR-0026 时缺 `../` 前缀）
-> 已在 [`../architecture/adr/README.md`](../architecture/adr/README.md)「第二次全量复核」注记登记，
-> 按保史约定本批不修历史文档原文，待维护者评审决定 —— 依据 ADR README 第二次复核注记。
-> ② **coding 分层边界已机器化**：新建 [`../../tests/test_layer_boundaries.py`](../../tests/test_layer_boundaries.py)，
-> ast 只读扫描（数据源为根 workspace 声明与各成员 pyproject，不硬编码成员清单），守四条横向边界 + 成员分类：
-> app 互斥、产品包（apps / services）不依赖 testbed、内部 import 必须在依赖方 pyproject 显式声明、
-> 声明的内部依赖图无环（services 内部依赖澄清同步追加于 `AGENT.md` §4：现存唯一一例 config-service → console，
-> 显式声明且不构成环），外加成员必须恰好分入 kernel / apps / services / testbed 四类的结构支撑测试；
-> 现状实测 **5 个测试全部合规通过**。
-> ③ **AGENT.md §4 已追加 services 内部依赖澄清**（2026-10-11 追加注记，不放宽 app 互斥与 testbed 禁令）。
-> **testing 层的 e2e 用例实现属 A4 批次，不是 S1 缺口**；S1 不签收任何 REQ / 里程碑，本批全部注记待维护者评审。
-> 执行记录见 [`2026-10-11-s1-execution-record.md`](2026-10-11-s1-execution-record.md) §11。
+> **Second batch (closing batch) of 2026-10-11 appended; the survey table above, the first batch's "current-state correction" and the various historical status sentences are retained as the audit chain, nothing deleted or changed:**
+> **the cleanup of all five S1 layers (requirements / ADR / design / coding / testing gate stance) is fully complete.**
+> ① **the ADR system is fully re-reviewed and consistent**: opening the bodies of 0001–0027 one by one, the 25 English `Status` lines plus the 2 Chinese status lines of 0011 / 0019
+> all match the registry values; 0011 ↔ 0019 superseded-in-part is bidirectionally traceable; there are no out-of-range references to ADR-0028+;
+> of the 206 ADR links under `docs/**`, 205 are valid, and there is **1 pre-existing broken link**
+> (the reference at `docs/acceptance/m5-engineering-closure-2026-10-04.md:43` to ADR-0026 lacks the `../` prefix),
+> which has been registered in the "second full review" note of [`../architecture/adr/README.md`](../architecture/adr/README.md),
+> and per the history-preservation convention this batch does not fix the original text of the historical document, leaving the decision to the maintainer's review — basis: the second review note of the ADR README.
+> ② **the coding layer boundaries are machine-enforced**: the new [`../../tests/test_layer_boundaries.py`](../../tests/test_layer_boundaries.py),
+> using a read-only ast scan (data sources are the root workspace declaration and each member's pyproject, no hardcoded member list), guards four horizontal boundaries + member classification:
+> app mutual exclusion, product packages (apps / services) not depending on testbed, internal imports must be explicitly declared in the dependent's pyproject,
+> and the declared internal dependency graph being acyclic (the intra-services dependency clarification was appended to §4 of `AGENT.md` in sync: the only existing case is config-service → console,
+> explicitly declared and not forming a cycle), plus a structural supporting test requiring every member to fall into exactly one of the kernel / apps / services / testbed classes;
+> the measured current state is **all 5 tests compliant and passing**.
+> ③ **§4 of AGENT.md has appended the intra-services dependency clarification** (note added 2026-10-11, not relaxing the app mutual exclusion or the testbed ban).
+> **The implementation of e2e cases in the testing layer belongs to the A4 batch, it is not an S1 gap**; S1 signs off no REQ / milestone, and all notes of this batch await maintainer review.
+> Execution record: §11 of [`2026-10-11-s1-execution-record.md`](2026-10-11-s1-execution-record.md).
 
 ---
 
-## 5. 汇总表（便于快速核对；表内「状态」列为当前状态字段，随 §7 裁决同步更新）
+## 5. Summary Table (for quick cross-checking; the "status" column in the table is the current status field and is synced as adjudications are made in §7)
 
-| 编号 | 问题一句话 | 不裁决会冻结什么（摘要） | 状态 |
+| ID | The question in one sentence | What would be frozen without an adjudication (summary) | Status |
 |---|---|---|---|
-| **G9-a** | infra 资产算交付物还是研发脚手架 | 交付包清单与对外口径 | 已闭合（2026-10-11）—— 见 §7.1（交付产品 / 脚手架二分） |
-| **G9-b** | 是否需要命名「完整 infra 主机」 | 集群级工作无确定环境；「本机无工具」被误读 | **已消解（2026-10-11）** —— 由 `docs/environments.md` + `tools/env-probe.sh` 以工具探测方式解决，不再需要命名与手工登记（依据见 §1 G9-b 状态列；状态列属当前状态字段，随实际消解同步更新） |
-| **G9-c** | 集群级验证是否每台机器/每个 PR 都要能跑 | §1.2 工具表；A4-4 前提 | **已降级（2026-10-11）** —— 与已生效的 §0-A.6 G2 / A4-4 重叠，不单列为待裁决（依据见 §1 G9-c 状态列） |
-| **G10** | 是否 sub-repo / 仓库拆分 | 路径串接与 Makefile target 的重写成本（越晚越高） | 已闭合（2026-10-11）—— 见 §7.2（关闭为「不拆仓」） |
-| **G11** | 是否保留「application without infra」形态 | 交付包形态、`docs/delivery/` 边界、客户口径 | 已闭合（2026-10-11）—— 见 §7.2（关闭为「不声明第二种交付形态」） |
-| **P1** | A4-4 两处口径相反（进 / 不进 PR required） | 与 A4-2 叠加后的门禁形态 | 已澄清（2026-10-11）—— 不需要重新裁决；以 §0-A.6 G2/A4-4 为准（依据见 §2 P1 的「登记更正」段） |
-| **P2** | `plan.md` §5 未同步 O4 / O5 / D5 裁决 | §15 未决项登记面与 §0 决策面不一致 | 已闭合（2026-10-11）—— 四行已带行内注记；见 §2 P2「现状更正」 |
-| **P3** | 下游文档 stale（security-privacy / backup-restore / plan.md:65） | 对外材料与已裁决定论不一致 | 已闭合（2026-10-11）—— 两份下游文档已追加同步注记、plan.md:66 已追加解锁说明；见 §2 P3「现状更正」 |
-| **P4** | 新增 `as.runtime` / `as.platform` 从未被 promtool 校验 | 告警规则集能否宣称语法已校验 | **已闭合（2026-10-11）** —— docker 容器化 promtool v2.45.0 校验 `SUCCESS: 10 rules found`（3 组 10 条）；三元组 `(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)`；见 §2 P4「现状更正」（X1 抓取接线仍待外部输入，语法通过≠接线闭合） |
-| **P5** | A4-3 的独立 issue 未创建 | Wave 2 回放用例失去可追溯落点 | **已闭合（2026-10-11）** —— 「独立 issue」以仓内载体替代：[`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md)；用例实现本身待 A4 批次；见 §2 P5「现状更正」 |
-| **P6** | 「FM」术语无源头 | G3 / A5 范围是否含 FM；流程载体不明 | **已澄清（2026-10-11），闭合** —— FM 经维护者确认为裁决时有意引入，定位为未来项目 / 未来批次的新 feature；当前项目不立项、不实现、不补文档；G3/A5 裁决句保留；见 §2 P6「现状更正」 |
-| **X1** | 告警抓取接线（annotation vs ServiceMonitor/PodMonitor） | chart 抓取接线（当前不改 chart） | **已后置到下一个 release（2026-10-12 维护者决定）** —— 需运营商 monitoring-integration 标准输入；输入到位前不选边、不改 chart；后续盘点只引指针不再单列（见 §3 X1 追加记录） |
-| **S1** | requirement / ADR / design / coding / testing 全链路整理 | 五层口径持续混乱 | **五层整理已全部完成（2026-10-11，两批）**；后续仅 ADR 体系随新 ADR 自然演进，不再设整理批次；第二批：ADR 0001–0027 全量复核一致（1 条既有断链已登记待维护者处理）、coding 边界由新建 `tests/test_layer_boundaries.py` 机器化（5 测全绿）、`AGENT.md` §4 追加 services 内部依赖澄清；e2e 用例实现属 A4 批次，不是 S1 缺口；见 §4 S1 两批「现状更正」 |
+| **G9-a** | do infra assets count as deliverables or as development scaffolding | the delivery package list and the external stance | closed (2026-10-11) — see §7.1 (the deliverable-product / scaffolding dichotomy) |
+| **G9-b** | whether a "complete infra host" needs to be named | cluster-level work has no definite environment; "this machine has no tools" is misread | **resolved (2026-10-11)** — solved by `docs/environments.md` + `tools/env-probe.sh` in the tool-probing form, no naming or manual registration needed any more (basis in the status column of §1 G9-b; the status column is the current status field and is synced as things are actually resolved) |
+| **G9-c** | whether cluster-level verification must run on every machine / every PR | the §1.2 tool table; the premise of A4-4 | **downgraded (2026-10-11)** — overlaps the already effective §0-A.6 G2 / A4-4, not listed separately as pending adjudication (basis in the status column of §1 G9-c) |
+| **G10** | whether to do a sub-repo / repo split | the rewrite cost of the path coupling and Makefile targets (the later, the higher) | closed (2026-10-11) — see §7.2 (closed as "do not split the repo") |
+| **G11** | whether to keep the "application without infra" form | the delivery package form, the `docs/delivery/` boundary, the customer stance | closed (2026-10-11) — see §7.2 (closed as "do not declare a second delivery form") |
+| **P1** | two opposite stances on A4-4 (included / not included in PR required) | the gate form once combined with A4-2 | clarified (2026-10-11) — no re-adjudication needed; governed by §0-A.6 G2/A4-4 (basis in the "registration correction" paragraph of §2 P1) |
+| **P2** | `plan.md` §5 did not sync the O4 / O5 / D5 adjudications | the §15 open-items registration surface is inconsistent with the §0 decision surface | closed (2026-10-11) — the four rows now carry inline annotations; see the "current-state correction" of §2 P2 |
+| **P3** | stale downstream documents (security-privacy / backup-restore / plan.md:65) | external material is inconsistent with the adjudicated conclusions | closed (2026-10-11) — both downstream documents have had sync notes appended and plan.md:66 has had an unlock note appended; see the "current-state correction" of §2 P3 |
+| **P4** | the newly added `as.runtime` / `as.platform` were never validated by promtool | whether the alert rule set can claim its syntax is validated | **closed (2026-10-11)** — containerized promtool v2.45.0 in docker validated `SUCCESS: 10 rules found` (3 groups / 10 rules); triple `(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)`; see the "current-state correction" of §2 P4 (the X1 capture wiring still awaits external input; syntax passing ≠ wiring closed) |
+| **P5** | the separate issue of A4-3 was not created | the Wave 2 replay cases lose a traceable landing point | **closed (2026-10-11)** — the "separate issue" is replaced by an in-repo carrier: [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md); the implementation of the cases themselves waits for the A4 batch; see the "current-state correction" of §2 P5 |
+| **P6** | the term "FM" has no source | whether the G3 / A5 scope includes FM; the process carrier is unclear | **clarified (2026-10-11), closed** — FM was confirmed by the maintainer as deliberately introduced at adjudication time and is positioned as a new feature of a future project / future batch; the current project does not track it, does not implement it and adds no documents; the G3/A5 adjudication sentence is retained; see the "current-state correction" of §2 P6 |
+| **X1** | the alert capture wiring (annotation vs ServiceMonitor/PodMonitor) | the chart's capture wiring (do not change the chart for now) | **deferred to the next release (maintainer decision on 2026-10-12)** — requires the carrier's monitoring-integration standard input; until the input is in place, no side is taken and the chart is not changed; subsequent inventories only cite the pointer and no longer list it separately (see the appended record of §3 X1) |
+| **S1** | end-to-end cleanup of the requirement / ADR / design / coding / testing layers | the stances of the five layers stay confused | **the cleanup of all five layers is fully complete (2026-10-11, two batches)**; from now on only the ADR system evolves naturally with new ADRs and no further cleanup batches are planned; second batch: a full re-review of ADR 0001–0027 is consistent (1 pre-existing broken link registered for maintainer handling), the coding boundaries are machine-enforced by the new `tests/test_layer_boundaries.py` (5 tests all green), and §4 of `AGENT.md` has the intra-services dependency clarification appended; the implementation of e2e cases belongs to the A4 batch and is not an S1 gap; see the two "current-state corrections" of §4 S1 |
 
 ---
 
-## 6. 状态节（必读）
+## 6. Status Section (Must Read)
 
-- **本文所列各项全部「待维护者裁决」。** 本文不含任何已裁决结论，也不给任何推荐倾向。
-- **本文不构成执行授权**：不授权修改任何文件、不授权运行任何构建/测试/容器动作、不授权任何 git 写操作。
-- **本文不构成外部验收通过**：不产生任何验收证据，不解除任何 hold（外部 IOT 与真实环境采证 hold
-  继续有效）。
-- **本文不构成 REQ 签收或里程碑签收**：不签收任何 REQ，不签收任何里程碑，不改动 `plan.md` §5 未决项表
-  与 §0 决策记录表。
-- **维护约定**：任何一项被裁决后，按 §0-A.5 的做法**追加**记录（写明裁决结果与日期），并同步到
-  `docs/plan.md` §0 决策记录表；**不得静默删除本文条目**。
-- **本次动作边界**：本次只新建本文件一个；未修改、未删除、未移动任何其它文件；未执行 `make` / `pytest` /
-  `docker` / 任何 git 写操作。
-- **落盘日期**：2026-10-11。**状态：已落盘，待维护者评审。**
+- **All items listed in this document are "awaiting maintainer adjudication".** This document contains no adjudicated conclusion and gives no recommended leaning.
+- **This document constitutes no execution authorization**: it authorizes no file modification, no build/test/container action, and no git write operation.
+- **This document constitutes no external acceptance pass**: it produces no acceptance evidence and lifts no hold (the external IOT and real-environment evidence collection hold
+  remains in effect).
+- **This document constitutes no REQ sign-off or milestone sign-off**: it signs off no REQ, signs off no milestone, and changes neither the §5 open-items table
+  nor the §0 decision record table of `plan.md`.
+- **Maintenance convention**: once any item has been adjudicated, **append** a record per the §0-A.5 practice (stating the adjudication result and date) and sync it to
+  the §0 decision record table of `docs/plan.md`; **entries of this document must never be silently deleted**.
+- **Scope of this round's action**: this round only created this one file; it modified, deleted or moved no other file; it ran no `make` / `pytest` /
+  `docker` and no git write operation.
+- **Landed**: 2026-10-11. **Status: landed, awaiting maintainer review.**
 
-### 6.1 更正（2026-10-11，追加；上文 §6 原文一律保留，不删不改）
+### 6.1 Correction (2026-10-11, appended; the original text of §6 above is all retained, nothing deleted or changed)
 
-> **上文 §6 第一条与本更正冲突时，以本更正为准。** 上文写「**本文所列各项全部「待维护者裁决」**」、
-> 「**本文不含任何已裁决结论**」——这两句在**登记日落盘时**成立，§7 落盘后已不再成立。按 §0.1，
-> 上文原文保留为审计链，**本段只追加、不回改**。
+> **Where item 1 of §6 above conflicts with this correction, this correction prevails.** The text above says "**all items listed in this document are 'awaiting maintainer adjudication'**"
+> and "**this document contains no adjudicated conclusion**" — these two sentences **held when it was landed on the registration date**, and no longer hold after §7 was landed. Per §0.1,
+> the original text above is retained as the audit chain and **this paragraph only appends, it does not change anything back**.
 
-**一、本文所列各项并非全部待裁决。** 截至 2026-10-11，**已闭合 5 项**：
+**One: the items listed in this document are not all pending adjudication.** As of 2026-10-11, **5 items are closed**:
 
-| 编号 | 闭合日期 | 闭合依据（所在小节） |
+| ID | Closure date | Closure basis (section) |
 |---|---|---|
-| **G9-a** | 2026-10-11 | §7.1（交付边界判定线：交付产品 / 脚手架二分，判据为「会不会到客户手上」） |
-| **G10** | 2026-10-11 | §7.2（关闭为「不拆仓」，维持单仓形态） |
-| **G11** | 2026-10-11 | §7.2（关闭为「不声明第二种交付形态」） |
-| **P2** | 2026-10-11 | §2 P2 条目「现状更正」段（`docs/plan.md` §5 的 O1 / O4 / O5 / D5 四行已带行内注记） |
-| **P3** | 2026-10-11 | §2 P3 条目「现状更正」段（`security-privacy.md` / `backup-restore.md` 已追加同步注记，`plan.md:66` 已追加解锁说明） |
+| **G9-a** | 2026-10-11 | §7.1 (the delivery boundary decision line: the deliverable-product / scaffolding dichotomy, with the criterion "does the asset reach the customer") |
+| **G10** | 2026-10-11 | §7.2 (closed as "do not split the repo", keeping the single-repo form) |
+| **G11** | 2026-10-11 | §7.2 (closed as "do not declare a second delivery form") |
+| **P2** | 2026-10-11 | the "current-state correction" paragraph of the §2 P2 entry (the four rows O1 / O4 / O5 / D5 of §5 of `docs/plan.md` now carry inline annotations) |
+| **P3** | 2026-10-11 | the "current-state correction" paragraph of the §2 P3 entry (sync notes appended to `security-privacy.md` / `backup-restore.md`, unlock note appended to `plan.md:66`) |
 
-**二、仍待裁决 / 待处理 8 项**：**G9-b、G9-c、P1、P4、P5、P6、X1、S1**。 **〔2026-10-11 收尾轮更正；上句为登记日原文，保留不回改〕现行口径为「仍待裁决 / 待处理 7 项」：G9-b、G9-c、P4、P5、P6、X1、S1** —— **P1 于本轮撤销登记，不计入待裁决**（依据见 §2 P1 的「登记更正」段：§0-A.6 的 G2 / A4-4 是已生效裁决，§8.1 ④ 是被其覆盖的建议）。 **〔2026-10-11 本轮追加更正；上文「8 项」与「7 项」两处原文一律保留不回改〕现行口径为「仍待裁决 / 待处理 5 项」：P4、P5、P6、X1、S1** —— **G9-b 已消解**（由 `docs/environments.md` 环境登记表 + `tools/env-probe.sh` 现场探测以工具探测方式解决：环境名按 `<角色>-<hostname>` 生成、hostname 由 `uname -n` 实测、工具按「✅ 具备 / ❌ 缺失 / ⚠ 装了但不可用」三态判定，不再需要命名与手工登记；依据见 §1 G9-b 状态列）、**G9-c 已降级**（与已生效的 §0-A.6 G2 / A4-4 重叠 —— `2026-10-10-unfinished-assessment-and-next-plan.md` §8.1 ④ 选项 A 风险栏已把「本机没有 kind」列为该选项固有风险，故不构成独立待裁决；依据见 §1 G9-c 状态列）。**两点边界，不得据此再推出新结论：① 上文第一条的「已闭合 5 项」不含 G9-b / G9-c** —— 二者分别是**消解**与**降级**，不是 §7 意义上的「裁决闭合」，故该计数**仍为 5**、**不改**；**② P4 / P5 / P6 / X1 / S1 五项的实质未决内容本轮一字未动、状态仍是待处理**，本段只更正计数与清单口径，不替维护者裁决其中任何一项。** **〔2026-10-11 收尾轮再更正；上文「8 项」「7 项」「5 项」三处原文一律保留，不回改〕现行口径为「仍待裁决 1 项：X1」。** 原 5 项（P4、P5、P6、X1、S1）的去向：**P4 已闭合**（2026-10-11，docker 容器化 promtool v2.45.0 校验 `SUCCESS: 10 rules found`，三元组与依据见 §2 P4「现状更正」）；**P5 已闭合**（2026-10-11，「独立 issue」以仓内载体 [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md) 替代，依据见 §2 P5「现状更正」）；**P6 已澄清**（2026-10-11，FM 经维护者确认为裁决时有意引入、定位为未来项目 / 未来批次的新 feature，依据见 §2 P6「现状更正」）；**S1 第一批已完成且剩余项消解或待授权**（requirements / testing 层第一批 6 任务已处理、design 重叠已由 `docs/architecture/README.md` §1 消解、ADR 0023 漂移已修，依据见 §4 S1「现状更正」）—— **S1 不计入「待裁决」：后续批次是新的授权事项，而非悬空裁决**。据此，待裁决 / 待处理清单现行只剩 **X1**。这与 §8.1 元规则一致：「**本文清单长度不设下限。问题解决即从清单移除，清单变短是正常结果**」—— P4 / P5 是问题解决后的移除，P6 是澄清后的移除，S1 是第一批完成后的口径更新，均非为凑数改动，也不替维护者裁决 X1。**
+**Two: 8 items still pending adjudication / handling**: **G9-b, G9-c, P1, P4, P5, P6, X1, S1**. **〔correction in the closing round of 2026-10-11; the sentence above is the original registration-date text and is retained unchanged〕the current stance is "7 items still pending adjudication / handling": G9-b, G9-c, P4, P5, P6, X1, S1** — **P1 had its registration withdrawn in this round and is not counted as pending adjudication** (basis in the "registration correction" paragraph of §2 P1: the G2 / A4-4 of §0-A.6 is an already effective adjudication, and §8.1 ④ is a recommendation overridden by it). **〔further correction appended in this round on 2026-10-11; the original text of both the "8 items" and the "7 items" above is retained unchanged〕the current stance is "5 items still pending adjudication / handling": P4, P5, P6, X1, S1** — **G9-b has been resolved** (solved by the `docs/environments.md` environment registry + on-the-spot probing by `tools/env-probe.sh` in the tool-probing form: the environment name is generated as `<role>-<hostname>`, the hostname is measured by `uname -n`, and tools are judged in three states ("✅ present / ❌ missing / ⚠ installed but unusable"), so naming and manual registration are no longer needed; basis in the status column of §1 G9-b) and **G9-c has been downgraded** (it overlaps the already effective §0-A.6 G2 / A4-4 — the option A risk column of §8.1 ④ in `2026-10-10-unfinished-assessment-and-next-plan.md` already lists "this machine has no kind" as an inherent risk of that option, so it does not constitute an independent pending adjudication; basis in the status column of §1 G9-c). **Two boundaries, from which no new conclusion may be drawn: ① the "5 items closed" in item one above does not include G9-b / G9-c** — they are respectively **resolution** and **downgrade**, not "adjudication closure" in the sense of §7, so that count **remains 5** and is **not changed**; **② the substantive undecided content of the five items P4 / P5 / P6 / X1 / S1 was not touched by a single character in this round and their status is still pending**, and this paragraph only corrects the counts and the list stance; it does not adjudicate any of them on the maintainer's behalf. ** **〔further correction in the closing round of 2026-10-11; the original text of the three places "8 items", "7 items" and "5 items" above is all retained and not changed back〕the current stance is "1 item pending adjudication: X1".** The destinations of the original 5 items (P4, P5, P6, X1, S1): **P4 is closed** (2026-10-11, containerized promtool v2.45.0 in docker validated `SUCCESS: 10 rules found`; the triple and basis are in the "current-state correction" of §2 P4); **P5 is closed** (2026-10-11, the "separate issue" replaced by the in-repo carrier [`../acceptance/2026-10-11-wave2-replay-register.md`](../acceptance/2026-10-11-wave2-replay-register.md); basis in the "current-state correction" of §2 P5); **P6 is clarified** (2026-10-11, FM confirmed by the maintainer as deliberately introduced at adjudication time and positioned as a new feature of a future project / future batch; basis in the "current-state correction" of §2 P6); **the first batch of S1 is complete and the remainder is resolved or pending authorization** (the 6 tasks of the first batch covered the requirements / testing layers, the design overlap has been resolved by §1 of `docs/architecture/README.md`, and the ADR 0023 drift has been fixed; basis in the "current-state correction" of §4 S1) — **S1 is not counted as "pending adjudication": a follow-up batch is a new authorization item, not a dangling adjudication**. Accordingly, the list of pending adjudication / handling now consists only of **X1**. This is consistent with the §8.1 meta-rule: "**this document's list has no minimum length. Once an issue is resolved it is removed from the list, and the list getting shorter is a normal outcome**" — P4 / P5 are removals after the issue was resolved, P6 is a removal after clarification, and S1 is a stance update after the first batch completed; none is padding for appearance, and none adjudicates X1 on the maintainer's behalf.**
 
-**三、§7「本次未关闭的登记项」清单与 §5 汇总表状态列的一致性核对（本轮逐行核对原文）：**
+**Three: cross-check of the consistency between the "register items not closed this round" list of §7 and the status column of the §5 summary table (row-by-row cross-check of the original text this round):**
 
-| 编号 | §5 汇总表状态列 | §7 的实际记载 | 核对结论 |
+| ID | Status column of the §5 summary table | What §7 actually records | Cross-check conclusion |
 |---|---|---|---|
-| **G9-a** | 待维护者裁决（`:372`） | §7.1「**关闭 G9-a**」 | **不一致** —— §5 状态列是登记日原始状态，关闭时漏改；**〔2026-10-11 收尾轮〕已消除** —— §5 `:372` 状态列已同步为「已闭合（2026-10-11）—— 见 §7.1」 |
-| **G10** | 待维护者裁决（`:375`） | §7.2「关闭为『不拆』」 | **不一致** —— 同上；**〔2026-10-11 收尾轮〕已消除** —— §5 `:375` 状态列已同步为「已闭合（2026-10-11）—— 见 §7.2」 |
-| **G11** | 待维护者裁决（`:376`） | §7.2「关闭为『不声明第二种形态』」 | **不一致** —— 同上；**〔2026-10-11 收尾轮〕已消除** —— §5 `:376` 状态列已同步为「已闭合（2026-10-11）—— 见 §7.2」 |
-| **P2** | 已闭合（2026-10-11）（`:378`） | §7 末尾已追加「P2 / P3 已从本清单移除」 | 一致 |
-| **P3** | 已闭合（2026-10-11）（`:379`） | 同上 | 一致 |
-| **P4** | 待维护者裁决（`:380`） | §7.5「**该缺口保留为待执行项**（需运行 `promtool`，本次不运行）」，但 §7.5 末尾那份「本次未关闭的登记项」清单（`:567`）**只列了 7 项、不含 P4** | **清单漏列** —— §5 表与 §7.5 正文均记 P4 未闭合，故以「实际未闭合事实」为准，**P4 计入仍待处理**；§7 该清单原文保留，不回改 |
+| **G9-a** | awaiting maintainer adjudication (`:372`) | §7.1 "**closes G9-a**" | **inconsistent** — the §5 status column is the original registration-date status and was missed when closing; **〔closing round of 2026-10-11〕eliminated** — the status column at §5 `:372` has been synced to "closed (2026-10-11) — see §7.1" |
+| **G10** | awaiting maintainer adjudication (`:375`) | §7.2 "closed as 'do not split'" | **inconsistent** — same as above; **〔closing round of 2026-10-11〕eliminated** — the status column at §5 `:375` has been synced to "closed (2026-10-11) — see §7.2" |
+| **G11** | awaiting maintainer adjudication (`:376`) | §7.2 "closed as 'do not declare a second form'" | **inconsistent** — same as above; **〔closing round of 2026-10-11〕eliminated** — the status column at §5 `:376` has been synced to "closed (2026-10-11) — see §7.2" |
+| **P2** | closed (2026-10-11) (`:378`) | §7 has appended at the end "P2 / P3 have been removed from this list" | consistent |
+| **P3** | closed (2026-10-11) (`:379`) | same as above | consistent |
+| **P4** | awaiting maintainer adjudication (`:380`) | §7.5 "**that gap is retained as a pending execution item** (running `promtool` is required, it is not run this round)", but the "register items not closed this round" list at the end of §7.5 (`:567`) **lists only 7 items and does not include P4** | **the list omitted it** — both the §5 table and the body of §7.5 record P4 as not closed, so the "actual not-closed fact" governs and **P4 counts as still pending**; the original text of that §7 list is retained and not changed back |
 
-> **坐标说明（2026-10-11 追加，与 §2 P2 的坐标更正说明同一做法）：** 上表行号为**本次追加完成之后**的真实行号，
-> 已逐个打开原文核实；§7 那份清单现位于 `:567`（其「P2 / P3 已移除」的追加段紧随其后）。
-> 本段之前的所有追加（含 §2 P3 的「后续动作已执行」段与本 §6.1 段）都会使后文行号整体下移，
-> 故此处一次性给出现行坐标，**只改坐标，不改任何状态语义**。
+> **Coordinate note (appended 2026-10-11, the same approach as the coordinate correction note of §2 P2):** the line numbers in the table above are the **real line numbers after this append was completed**,
+> each verified by opening the original text; that list of §7 is now at `:567` (its "P2 / P3 removed" append paragraph follows immediately after).
+> All appends before this paragraph (including the "follow-up action already executed" paragraph of §2 P3 and this §6.1 paragraph) shift the later line numbers as a whole,
+> so the current coordinates are given once here: **only coordinates are changed, and no status semantics is changed.**
 
-两点补充说明（避免再次据「清单」误推「已解决」）：
+Two supplementary explanations (to avoid again wrongly deriving "already resolved" from the "list"):
 
-1. §7.5 末尾那份清单的**原文实际只含 7 项**（G9-b、G9-c、P1、P5、P6、X1、S1），**未列 P4**；
-   本更正按 §5 表与 §7.5 正文的实际记载补入 P4，属**登记口径**更正，不是替维护者裁决 P4。 **〔2026-10-11 收尾轮〕该清单原文所列的 P1 已撤销登记、不再计入待裁决；§7.5 清单原文（含 P1）保留不回改。**
-2. §5 汇总表 G9-a / G10 / G11 三行的状态列与 §7 冲突（该三行关闭时漏改），本段只作登记与更正说明，
-   **不回改 §5 原表**；读者判断当前状态以本段与 §7 为准。**〔2026-10-11 收尾轮〕** 该「不回改」是登记日当时的做法；现 §1 / §5 中 G9-a / G10 / G11 的**状态字段**已按「状态列为当前状态字段，随 §7 裁决同步更新」的约定回写为「已闭合（2026-10-11）」并指向 §7.1 / §7.2 —— **状态字段的更新不属于「静默改写既有原文」**（保史约定保护的是描述性正文与证据）；上文的核对记载、正文与坐标一律未删改，**未闭合项的状态一个字未动**。
+1. The **original text of that list at the end of §7.5 actually contains only 7 items** (G9-b, G9-c, P1, P5, P6, X1, S1) and **does not list P4**;
+   this correction adds P4 according to the actual records of the §5 table and the body of §7.5, which is a **registration stance** correction and not a substitute for the maintainer adjudicating P4. **〔closing round of 2026-10-11〕the P1 listed in the original text of that list has had its registration withdrawn and is no longer counted as pending adjudication; the original text of the §7.5 list (including P1) is retained and not changed back.**
+2. The status columns of the three rows G9-a / G10 / G11 of the §5 summary table conflict with §7 (those three rows were missed when closing), and this paragraph only registers and explains the correction;
+   it **does not change back the original §5 table**; readers judging the current status defer to this paragraph and §7. **〔closing round of 2026-10-11〕** that "no change back" was the practice on the registration date; the **status fields** of G9-a / G10 / G11 in §1 / §5 have now been written back as "closed (2026-10-11)" pointing to §7.1 / §7.2 per the convention that "the status column is the current status field and is synced as §7 adjudications are made" — **updating a status field is not "silently rewriting existing original text"** (the history-preservation convention protects descriptive body text and evidence); the cross-check records, body text and coordinates above are all retained unchanged, and **not a single character of any unclosed item's status was touched**.
 
-> **去向指针（2026-10-13 追加；上方「两点补充说明」原文一律保留不改）**：本件剩余的登记口径不一致 ——
-> 第 1 点所指的 **§7.5 清单漏列 P4**、第 2 点所指的 **§5 汇总表 G9-a / G10 / G11 状态漏改** —— 已登记在
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§8 第 3 / 4 行**（零空遗留核对表）与
-> **§5-7**（处置口径：不回改 §0.5 / §5 原表，读者以追加段为准）。**本文原文不回改**，
-> 本文以上各段继续作为当时的审计链保留；后续状态盘点、汇报、handoff 只引该指针，不据此重开上述两项的裁决。
+> **Destination pointer (appended 2026-10-13; the original text of the "two supplementary explanations" above is retained unchanged)**: the remaining registration-stance inconsistencies in this document —
+> the **§7.5 list omitting P4** pointed to by item 1 and the **status omissions for G9-a / G10 / G11 in the §5 summary table** pointed to by item 2 — are registered in
+> rows 3 / 4 of **§8** (the zero-leftover cross-check table) of [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) and in
+> **§5-7** (handling stance: do not change back the original §0.5 / §5 table; readers defer to the appended paragraph). **The original text of this document is not changed back**,
+> the paragraphs above continue to serve as the audit chain of that time; subsequent status inventories, reports and handoffs only cite this pointer and do not reopen the adjudications of those two items on that basis.
 
-**四、同类表述的一并更正：**
+**Four: correction of similar statements in one go:**
 
-- §0「本文不给方案、不选边、不推荐倾向……结论一律写『**待维护者裁决**』」（`:12-13`）——该句是**登记日的书写约定**，
-  对本文中**仍未闭合**的条目**继续有效**；但不得据此认为已闭合的 5 项「仍待裁决」。
-- §0.1 维护约定（`:19-20`）**本身无冲突、继续有效**：本段与 §7 即按该约定追加，未删除任何既有条目。
-- 文末落盘说明（`:575-580`，其中记有「62 passed」）的实测复核记录，见该节末尾的**追加**段；原 62 记录保留。
-- §6 的「**本次动作边界**：本次只新建本文件一个；未修改、未删除、未移动任何其它文件」与「**本文不构成执行授权**：
-  不授权修改任何文件……」**只描述登记日那次 session**，已被 §7 记录的经授权动作取代（§7.4 的 7 个证据文件 `git mv`
-  改名、新建 `docs/environments.md` 与 `tests/test_evidence_discipline.py`）。该矛盾**先于本轮即存在**（§7 session 造成），
-  此处仅作登记更正；§6 其余各条（不构成执行授权 / 不构成外部验收通过 / 不构成 REQ 或里程碑签收 / 维护约定）
-  **继续有效**，本段不改其效力。
+- The §0 text "this document gives no proposal, takes no side, recommends no leaning … the conclusion always reads '**awaiting maintainer adjudication**'" (`:12-13`) — that sentence is a **writing convention of the registration date**,
+  and it **remains in effect** for the items in this document that are **still not closed**; but it must not be taken to mean that the 5 closed items "are still awaiting adjudication".
+- The maintenance convention of §0.1 (`:19-20`) **itself has no conflict and remains in effect**: this paragraph and §7 append per that convention and delete no existing entry.
+- The measured re-check record of the landing note at the end of the document (`:575-580`, which records "62 passed") is in the **appended** paragraph at the end of that section; the original 62 record is retained.
+- The "**scope of this round's action**: this round only created this one file; it modified, deleted or moved no other file" and "**this document constitutes no execution authorization**:
+  it authorizes no file modification …" of §6 **describe only that registration-date session**, and have been superseded by the authorized actions recorded in §7 (the 7 evidence files of §7.4 renamed with `git mv`,
+  the new `docs/environments.md` and `tests/test_evidence_discipline.py`). That contradiction **existed before this round** (caused by the §7 session),
+  and is only registered and corrected here; the remaining items of §6 (constitutes no execution authorization / constitutes no external acceptance pass / constitutes no REQ or milestone sign-off / maintenance convention)
+  **remain in effect**, and this paragraph does not change their force.
 
 ---
 
-## 7. 裁决落盘（2026-10-11）
+## 7. Adjudications Landed (2026-10-11)
 
-> **本节性质：** 以下各项经维护者 2026-10-11 明确批准，**已从「待裁决」转为「已裁决」**。
-> 本节只**追加**，不改写 §1–§6 的既有登记内容 —— 原条目按 §0.1 保留为审计链。
-> 本节**不签收任何 REQ、不签收任何里程碑、不构成外部验收通过**。
+> **Nature of this section:** the following items were explicitly approved by the maintainer on 2026-10-11 and **have moved from "pending adjudication" to "adjudicated"**.
+> This section **only appends** and rewrites no existing registration content of §1–§6 — the original entries are retained as the audit chain per §0.1.
+> This section **signs off no REQ, signs off no milestone, and constitutes no external acceptance pass**.
 
-### 7.1 交付边界判定线
+### 7.1 The Delivery Boundary Decision Line
 
-> **判定线 = 这份资产会不会到客户手上？会 → 交付产品；不会，只有我们自己用 → 脚手架。**
-> 灰色地带的第二判据：**客户会不会为它向我们提工单？会 → 交付产品；永远不会 → 脚手架。**
+> **Decision line = will this asset reach the customer? Yes → deliverable product; no, only we use it → scaffolding.**
+> Second criterion for the grey zone: **will the customer ever raise a support ticket about it to us? Yes → deliverable product; never → scaffolding.**
 
-**脚手架产出的是仪器读数，交付产品是那份质检报告。** 具体到本项目：
+**Scaffolding produces instrument readings; a deliverable product is the inspection report.** Specifically for this project:
 
-| 类别 | 资产 |
+| Category | Assets |
 |---|---|
-| **交付产品** | `deploy/helm/`（chart + values + templates）、容器镜像、`deploy/alerts/` 告警规则、`docs/product/`、`docs/operations/`、`docs/delivery/` |
-| **脚手架** | `deploy/kind/` 全部脚本、`testbed/` 仿真与压测资产、`docs/plan.md`、`docs/handoff/`、ADR |
+| **deliverable product** | `deploy/helm/` (chart + values + templates), container images, the alert rules of `deploy/alerts/`, `docs/product/`, `docs/operations/`, `docs/delivery/` |
+| **scaffolding** | all scripts of `deploy/kind/`, the simulation and load-test assets of `testbed/`, `docs/plan.md`, `docs/handoff/`, ADRs |
 
-**由此推出的结论：** `docs/delivery/install-guide.md` §2 交付清单与第 19 行、第 91 行的既有表述
-**即为该判定线的既有落地**，本次是**追认既有事实，不是新决策**。依据要点：
+**Conclusion drawn from this:** the §2 delivery list of `docs/delivery/install-guide.md` and the existing wording at lines 19 and 91
+**are precisely the existing implementation of that decision line**, so this time it is a **ratification of existing facts, not a new decision**. The essentials of the basis:
 
-- `:19` —— `deploy/kind/m5-gen-certs.sh` 只是 kind 自签先例，**「不是交付物」**；
-- `:91` —— kind / lab 装法**「不得用于客户生产」**；
-- §2 交付清单 —— 所列交付项全部落在「交付产品」栏内，无一项取自脚手架。
+- `:19` — `deploy/kind/m5-gen-certs.sh` is only a kind self-signed precedent, **"not a deliverable"**;
+- `:91` — the kind / lab installation form **"must not be used in customer production"**;
+- the §2 delivery list — every listed deliverable falls inside the "deliverable product" column, and none is taken from scaffolding.
 
-**关闭 G9-a。** 状态：已裁决（交付边界 = 交付产品 / 脚手架二分，判据如上）。
+**Closes G9-a.** Status: adjudicated (the delivery boundary = the deliverable-product / scaffolding dichotomy, with the criterion above).
 
-### 7.2 本次一并关闭的两个待裁决项
+### 7.2 The Two Pending Items Closed Together This Round
 
-**G10（sub-repo）→ 关闭为「不拆」。**
+**G10 (sub-repo) → closed as "do not split".**
 
-- 拆仓的唯一真实动机是「kind 污染主仓印象」；
-- §7.1 已判定 kind 为**脚手架、客户永远看不到**，**动机消失**；
-- 同时现状**无 `.gitmodules`、无 submodule**，8 个 `pyproject.toml` 共享根 `uv.lock`。
+- the only real motive for splitting the repo is "kind polluting the impression of the main repo";
+- §7.1 has determined that kind is **scaffolding that the customer never sees**, so the **motive disappears**;
+- moreover the current state has **no `.gitmodules` and no submodule**, and 8 `pyproject.toml` files share the root `uv.lock`.
 
-状态：已裁决（不拆）。维持现状的单仓形态，不新建 sub-repo / submodule。
+Status: adjudicated (do not split). The single-repo form of the current state is kept; no sub-repo / submodule is created.
 
-**G11（application without infra）→ 关闭为「不声明第二种形态」。**
+**G11 (application without infra) → closed as "do not declare a second form".**
 
-- 交付产品清单已唯一：**chart + 镜像 + 文档**；
-- 与 ADR-0013「Helm-only，不写 Operator，不产生第二套安装器」一致
-  （[`../architecture/adr/README.md`](../architecture/adr/README.md)）；
-- `docs/delivery/install-guide.md:5` 亦已声明此硬边界。
+- the deliverable product list is now unique: **chart + image + documentation**;
+- consistent with ADR-0013 "Helm-only, no Operator, no second installer"
+  ([`../architecture/adr/README.md`](../architecture/adr/README.md));
+- `docs/delivery/install-guide.md:5` also already declares this hard boundary.
 
-状态：已裁决（不声明第二种交付形态）。
+Status: adjudicated (do not declare a second delivery form).
 
-### 7.3 M5「控制面集群部署证明」的性质裁定
+### 7.3 Adjudication of the Nature of the M5 "Control-Plane Cluster Deployment Proof"
 
-`docs/plan.md:183` 中 M5 关门条件里的「控制面集群部署证明（含 7.2d）」=
-**我们用内部脚手架产出的、对外的履约依据**；**不是客户验收项**（客户不签该 transcript）。
+The "control-plane cluster deployment proof (including 7.2d)" among the M5 closure conditions at `docs/plan.md:183` =
+**an external basis for performance produced with our internal scaffolding**; it is **not a customer acceptance item** (the customer does not sign that transcript).
 
-依据：客户会追问的是「chart 能否装起来、升级是否掉话」，不会追问 kind 脚本。
-证据分级见 [`../architecture/README.md`](../architecture/README.md) §3 之第 ② 类。
+Basis: what the customer will press is "can the chart be installed, does an upgrade drop calls", not the kind scripts.
+The evidence grading is in category ② of §3 of [`../architecture/README.md`](../architecture/README.md).
 
-### 7.4 病根裁定与四层机制（本次核心）
+### 7.4 Root-Cause Adjudication and the Four-Layer Mechanism (the core of this round)
 
-**根因判定：**
+**Root-cause determination:**
 
-> 本次反复出现的「项目有没有 infra 能力」类混淆，**不是认知问题，是事实载体没有元数据**。
+> The "does the project have infra capability" confusion that keeps recurring this time **is not a cognition problem; it is that the fact carriers have no metadata**.
 
-已核实事实：
+Verified facts:
 
-| 事实 | 出处 |
+| Fact | Source |
 |---|---|
-| 当前机器 hostname `WIN-03IB7NIEPF0`，**无** helm / kubectl / kind / promtool | 2026-10-11 实测 |
-| 证据文件记录的路径是 `==> helm lint /home/shudong/project/3rdparty-as/deploy/helm` | `docs/acceptance/artifacts/m5/2026-10-05/PASS-chart-check-2026-10-05.txt:2` |
+| the current machine hostname `WIN-03IB7NIEPF0` has **no** helm / kubectl / kind / promtool | measured on 2026-10-11 |
+| the path recorded in the evidence file is `==> helm lint /home/shudong/project/3rdparty-as/deploy/helm` | `docs/acceptance/artifacts/m5/2026-10-05/PASS-chart-check-2026-10-05.txt:2` |
 
-**同一用户名、同一项目路径** ⇒ 证据由**另一台机器**产出，而文档中匿名的「本机」实际指代
-**两台不同的机器** —— 这是每次重新争论的直接原因。
+**The same user name and the same project path** ⇒ the evidence was produced **on another machine**, while the anonymous "local machine" in the documents actually refers to
+**two different machines** — that is the direct cause of every renewed argument.
 
-据此批准并执行**四层机制**：
+On that basis the following **four-layer mechanism** is approved and executed:
 
-| 层 | 机制 | 落地位置 |
+| Layer | Mechanism | Landing location |
 |---|---|---|
-| **1** | **文件名即结论** —— `docs/acceptance/artifacts/**` 下证据文件强制前缀 `PASS-` / `FAILCLOSED-`，格式 `<结论>-<被验项>-<日期>.txt` | 已对 `docs/acceptance/artifacts/m5/2026-10-05/` 全部 7 个文件执行 `git mv` |
-| **2** | **环境必须有名字** —— 新建机器登记表 | [`docs/environments.md`](../environments.md)（本次新建） |
-| **3** | **状态声明三元组** —— 凡写「已验证 / 未验证」，一律写成 `(结论, 证据文件, 日期)`，不允许裸句 | `docs/environments.md` §「引用规范」 |
-| **4** | **守卫测试** —— 禁止回归 | [`tests/test_evidence_discipline.py`](../../tests/test_evidence_discipline.py)（本次新建） |
+| **1** | **the file name is the conclusion** — evidence files under `docs/acceptance/artifacts/**` are forced to carry the prefix `PASS-` / `FAILCLOSED-`, in the format `<verdict>-<item under test>-<date>.txt` | `git mv` has been executed on all 7 files in `docs/acceptance/artifacts/m5/2026-10-05/` |
+| **2** | **environments must have names** — a new machine registry | [`docs/environments.md`](../environments.md) (newly created this round) |
+| **3** | **the status declaration triple** — anything writing "verified / not verified" must be written as `(verdict, evidence file, date)`; a bare sentence is not allowed | §"citation convention" of `docs/environments.md` |
+| **4** | **guard tests** — forbid regression | [`tests/test_evidence_discipline.py`](../../tests/test_evidence_discipline.py) (newly created this round) |
 
-**第 1 层改名对照（供 §1 / §2 的既有引用解析用 —— 那些行按 §0.1 保留原文，不回改）：**
+**Layer 1 rename mapping (for resolving the existing references of §1 / §2 — those rows keep their original text per §0.1 and are not changed back):**
 
-| 改名前（§1 / §2 中的写法） | 改名后 |
+| Before renaming (as written in §1 / §2) | After renaming |
 |---|---|
 | `2026-10-05/gate-full.txt` | `2026-10-05/PASS-gate-2026-10-05.txt` |
 | `2026-10-05/gate-sample.txt` | `2026-10-05/PASS-gate-sample-2026-10-05.txt` |
@@ -643,133 +643,133 @@ sub-repo / 独立仓库）？
 | `2026-10-05/alert-check-sample.txt` | `2026-10-05/PASS-alert-check-sample-2026-10-05.txt` |
 | `2026-10-05/m5-strict-context.txt` | `2026-10-05/FAILCLOSED-m5-strict-context-2026-10-05.txt` |
 
-**索引同步：** [`docs/acceptance/artifacts/m5/README.md`](../acceptance/artifacts/m5/README.md) 已更新索引表，
-并写明三件容易被误读的事（`FAILCLOSED-` 文件不是通过证据；chart-check 的 `[INFO] Fail:` 属预期断言；
-`PASS-gate-*.txt` 含 SKIPPED 项）与「以文件名前缀为准」原则。
+**Index sync:** the index table of [`docs/acceptance/artifacts/m5/README.md`](../acceptance/artifacts/m5/README.md) has been updated,
+and three easily misread facts are stated explicitly (a `FAILCLOSED-` file is not pass evidence; the `[INFO] Fail:` of chart-check is an expected assertion;
+`PASS-gate-*.txt` contains SKIPPED entries), together with the principle "the file name prefix governs".
 
-### 7.5 P4 的责任归属
+### 7.5 Ownership of Responsibility for P4
 
-`deploy/alerts/as-alerts.yaml` 属**交付产品**（§7.1），其**语法校验必须有人负责**。
+`deploy/alerts/as-alerts.yaml` is a **deliverable product** (§7.1), so **its syntax validation must be somebody's responsibility**.
 
-现状与缺口：
+Current state and the gap:
 
-| 事实 | 出处 |
+| Fact | Source |
 |---|---|
-| `SUCCESS: 5 rules found` **只覆盖当时的原 5 条规则** | `docs/acceptance/artifacts/m5/2026-10-05/PASS-alert-check-2026-10-05.txt:1-3` |
-| 2026-10-10 新增了 `as.runtime` / `as.platform` 两组（原 5 条未改） | `docs/plan.md:67` |
-| **这两组至今未被任何机器校验过** | —— |
+| `SUCCESS: 5 rules found` **only covers the original 5 rules as they were at the time** | `docs/acceptance/artifacts/m5/2026-10-05/PASS-alert-check-2026-10-05.txt:1-3` |
+| on 2026-10-10 the two groups `as.runtime` / `as.platform` were added (the original 5 rules unchanged) | `docs/plan.md:67` |
+| **those two groups have never been validated by any machine** | —— |
 
-**该缺口保留为待执行项**（需运行 `promtool`，本次**不运行**）。
-责任归属：交付产品的语法校验属交付责任，不得因「证据来自脚手架环境」而悬空。
+**That gap is retained as a pending execution item** (running `promtool` is required; it is **not run** this round).
+Ownership of responsibility: the syntax validation of a deliverable product is a delivery responsibility and must not be left dangling on the grounds that "the evidence comes from a scaffolding environment".
 
-> **〔2026-10-11 收尾轮追加更正；上方「该缺口保留为待执行项（需运行 promtool，本次不运行）」原文保留，不删改〕**
-> 该缺口**已于 2026-10-11 以 docker 容器化 promtool 执行并闭合**：在已登记环境 `dev-win03ib7niepf0`
-> （host `WIN-03IB7NIEPF0`）上运行 `prom/prometheus:v2.45.0` 的
-> `promtool check rules /alerts/as-alerts.yaml`，输出 `SUCCESS: 10 rules found`
-> （as.call-path 5 + as.runtime 3 + as.platform 2，共 3 组 10 条）。
-> 三元组：**(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**；
-> 主 agent 同日同 host 同命令独立复跑 exit=0。详见 §2 P4「现状更正」。
-> **X1（抓取接线）不在本闭合范围内**：语法校验通过不等于 annotation vs ServiceMonitor/PodMonitor 接线闭合。
+> **〔correction appended in the closing round of 2026-10-11; the original text of "that gap is retained as a pending execution item (running promtool is required, it is not run this round)" above is retained, nothing deleted or changed〕**
+> That gap **was executed with containerized promtool in docker on 2026-10-11 and closed**: on the registered environment `dev-win03ib7niepf0`
+> (host `WIN-03IB7NIEPF0`), `promtool check rules /alerts/as-alerts.yaml` of `prom/prometheus:v2.45.0` was run,
+> outputting `SUCCESS: 10 rules found`
+> (as.call-path 5 + as.runtime 3 + as.platform 2, 3 groups / 10 rules in total).
+> Triple: **(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**;
+> the main agent independently re-ran it on the same day on the same host with the same command, exit=0. See the "current-state correction" of §2 P4 for details.
+> **X1 (the capture wiring) is not within this closure**: syntax validation passing does not mean the annotation vs ServiceMonitor/PodMonitor wiring is closed.
 
-**本次未关闭的登记项（仍待维护者裁决/处理）：** G9-b（机器能力定义，已由第 2 层给出载体但本节不代裁）、
-G9-c（门禁归属）、P1、P5、P6、X1、S1。
+**Register items not closed this round (still awaiting maintainer adjudication/handling):** G9-b (the machine capability definition, which layer 2 has given a carrier for but which this section does not adjudicate for you),
+G9-c (gate ownership), P1, P5, P6, X1, S1.
 
-> **2026-10-11 追加：** **P2 / P3 已从本清单移除**（均**已闭合（2026-10-11）**，闭合依据见 §2 P2 / P3 条目的
-> 「现状更正」段）。上列其余条目一个未动。 **〔2026-10-11 收尾轮追加〕P1 已撤销登记、不再计入待裁决**（依据见 §2 P1 的「登记更正」段：§0-A.6 的 G2 / A4-4 为已生效裁决，§8.1 ④ 为被其覆盖的建议）；**上列清单原文（含 P1）保留不改**。 **〔2026-10-11 本轮追加；上文清单原文（含 G9-b / G9-c / P1）一律保留不改〕G9-b 已消解、G9-c 已降级，二者同样不再计入待裁决**（依据分别见 §1 G9-b / G9-c 的状态列：G9-b 由 `docs/environments.md` + `tools/env-probe.sh` 的现场探测解决，不再需要命名与手工登记；G9-c 与 §0-A.6 G2 / A4-4 重叠（同一议题），同样不计入待裁决）。据此**本清单的现行待裁决 / 待处理口径为 5 项：P4、P5、P6、X1、S1** —— 与 §6.1 第二条的计数同步。**注意本清单 `:567` 起的原文仍只列 7 项且未列 P4**：P4 的计入依据是 §5 表与 §7.5 正文的实际记载（见 §6.1 第三条与两点补充说明 1），该补入口径继续有效，本段不改动它。**
+> **appended 2026-10-11:** **P2 / P3 have been removed from this list** (both are **closed (2026-10-11)**; the closure basis is in the
+> "current-state correction" paragraph of the §2 P2 / P3 entries). Not one of the other listed items was touched. **〔appended in the closing round of 2026-10-11〕the registration of P1 has been withdrawn and it is no longer counted as pending adjudication** (basis in the "registration correction" paragraph of §2 P1: the G2 / A4-4 of §0-A.6 is an already effective adjudication, and §8.1 ④ is a recommendation overridden by it); **the original text of the list above (including P1) is retained unchanged**. **〔appended in this round on 2026-10-11; the original text of the list above (including G9-b / G9-c / P1) is all retained unchanged〕G9-b has been resolved and G9-c has been downgraded, and neither is counted as pending adjudication either** (basis in the status columns of §1 G9-b / G9-c respectively: G9-b is solved by the on-the-spot probing of `docs/environments.md` + `tools/env-probe.sh`, so naming and manual registration are no longer needed; G9-c overlaps §0-A.6 G2 / A4-4 (the same issue) and is likewise not counted as pending adjudication). Accordingly, **the current pending adjudication / handling stance of this list is 5 items: P4, P5, P6, X1, S1** — in sync with the count in item two of §6.1. **Note that the original text of this list, starting at `:567`, still lists only 7 items and does not list P4**: the basis for including P4 is the actual record of the §5 table and the body of §7.5 (see item three of §6.1 and supplementary explanation 1 there), and that supplementation stance remains in effect; this paragraph does not change it.**
 
-> **〔2026-10-11 本地工具链轮追加更正；上文各段原文（含 P4 的 docker 闭合更正）一律保留不改；待维护者评审〕**
-> 本地 promtool **2.55.1**（`tools/bin/promtool`，与 2026-10-05 历史 alert 证据**同版本**）已于同日在已登记环境
-> **`dev-win03ib7niepf0`**（host `WIN-03IB7NIEPF0`）对 `deploy/alerts/as-alerts.yaml` 完成**本机**校验：
-> `promtool check rules` → **`SUCCESS: 10 rules found`**（as.call-path 5 + as.runtime 3 + as.platform 2，共 3 组 10 条，规则集未变）。
-> 三元组：**(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)**。
-> 本追加**升级 P4 的证据基座** —— 由 docker 容器化 prometheus **v2.45.0** 升级为**与历史证据同版本的本地 promtool 2.55.1**，
-> **不改变、不重开** P4 已闭合的裁决：**状态维持「已关闭」**，本次不做任何重新裁决。
-> 本机二进制溯源为官方 quay.io 镜像提取（当日 GitHub release tarball 不可达，非 release tarball 安装），
-> 安装经过与网络偏差见 [`2026-10-11-local-infra-bootstrap-execution-record.md`](2026-10-11-local-infra-bootstrap-execution-record.md)。
+> **〔correction appended in the local-toolchain round of 2026-10-11; all the paragraphs above (including the docker closure correction of P4) are retained unchanged; awaiting maintainer review〕**
+> The local promtool **2.55.1** (`tools/bin/promtool`, the **same version** as the historical alert evidence of 2026-10-05) completed **native** validation
+> of `deploy/alerts/as-alerts.yaml` on the same day on the registered environment **`dev-win03ib7niepf0`** (host `WIN-03IB7NIEPF0`):
+> `promtool check rules` → **`SUCCESS: 10 rules found`** (as.call-path 5 + as.runtime 3 + as.platform 2, 3 groups / 10 rules in total; the rule set is unchanged).
+> Triple: **(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-2026-10-11.txt, 2026-10-11)**.
+> This append **upgrades the evidence basis of P4** — from containerized prometheus **v2.45.0** in docker to **the local promtool 2.55.1 of the same version as the historical evidence**,
+> and it **neither changes nor reopens** the closure of P4: **the status remains "closed"**, and no re-adjudication is performed this time.
+> The native binary was traced back to extraction from the official quay.io image (the GitHub release tarball was unreachable that day, so it is not a release-tarball installation),
+> and the installation path plus the network deviation are in [`2026-10-11-local-infra-bootstrap-execution-record.md`](2026-10-11-local-infra-bootstrap-execution-record.md).
 
 ---
 
-**落盘说明：** 本节为 2026-10-11 追加的裁决记录，**待维护者评审**；未签收任何 REQ 或里程碑，
-不构成外部验收通过，未解除任何 hold。执行边界：本次**未执行** `make`、**未执行** `docker`、
-**未执行** `promtool`（P4 的告警规则校验因此仍未做）；按任务 F 授权仅运行了根 `tests/` 的
-`uv run pytest tests/ -q`（62 passed）与只读的 ruff / git 查询；**未执行任何 git 写操作**
-——仅用 `git mv` 重命名证据文件（rename 检测保留，7 个文件均为 R、零内容变更），**未提交、
-未建分支、未改 remote**。
+**Landing note:** this section is the adjudication record appended on 2026-10-11, **awaiting maintainer review**; it signs off no REQ or milestone,
+constitutes no external acceptance pass and lifts no hold. Execution boundary: this round **did not run** `make`, **did not run** `docker`,
+and **did not run** `promtool` (so the P4 alert rule validation was still not done); only the root `tests/` was run per the task F authorization
+(`uv run pytest tests/ -q` (62 passed)) plus read-only ruff / git queries; **no git write operation was performed**
+— `git mv` was used only to rename evidence files (rename detection is preserved, all 7 files are R with zero content changes), and there was **no commit,
+no branch creation and no remote change**.
 
-> **实测复核追加（2026-10-11 收尾轮；上文「62 passed」原文保留，不删改）：**
-> 同日晚些时候复跑根 `tests/`：**`uv run pytest tests/ -q` → `68 passed`（0.27s）**。
-> **62 与 68 不冲突**，是**两个不同 session 的实测事实**：差额来自守卫用例
-> [`tests/test_evidence_discipline.py`](../../tests/test_evidence_discipline.py) 后续新增的 **2 条** ——
+> **Measured re-check append (closing round of 2026-10-11; the original "62 passed" text above is retained, nothing deleted or changed):**
+> re-running the root `tests/` later that same day: **`uv run pytest tests/ -q` → `68 passed` (0.27s)**.
+> **62 and 68 do not conflict**; they are **measured facts of two different sessions**: the difference comes from the **2** guard cases
+> subsequently added to [`tests/test_evidence_discipline.py`](../../tests/test_evidence_discipline.py) ——
 >
-> | # | 新增守卫用例 | 它锁住的是什么 |
+> | # | New guard case | What it locks down |
 > |---|---|---|
-> | 1 | `test_environment_probe_markdown_mode_actually_runs` | **真正执行** `bash tools/env-probe.sh --markdown`，要求退出码 0 且输出首行含表头 `环境名`；此前只有 `bash -n` 语法检查，而该探针**实际每次调用都失败**于 `tr: when not truncating set1, string2 must be non-empty`（实测 2026-10-11，此前从未被真正运行过） |
-> | 2 | `test_bootstrap_infra_offers_a_dry_run_and_help` | `tools/bootstrap-infra.sh` 存在且仍带 `--dry-run` / `--help` 两个 flag，使无副作用的干跑可行；**只做静态文本断言，不执行该脚本**（避免 unit 测试真的下载安装二进制） |
+> | 1 | `test_environment_probe_markdown_mode_actually_runs` | **actually runs** `bash tools/env-probe.sh --markdown`, requiring exit code 0 and an output whose first line contains the header `环境名`; previously there was only the `bash -n` syntax check, while that probe **in fact failed on every real invocation** with `tr: when not truncating set1, string2 must be non-empty` (measured 2026-10-11; it had never really been run before) |
+> | 2 | `test_bootstrap_infra_offers_a_dry_run_and_help` | `tools/bootstrap-infra.sh` exists and still carries the `--dry-run` / `--help` flags, making a side-effect-free dry run possible; **only a static text assertion, the script is not executed** (to avoid a unit test really downloading and installing binaries) |
 >
-> 该文件现有 15 个 `def test_`（部分为参数化，故收集到 68 条）；上层两层的证据文件名 / 索引标注 /
-> 环境登记表 / 匿名「本机无」行扫描守卫均为此前已存在的部分。
-> **上文「未执行 promtool」「未执行任何 git 写操作」等边界未被本轮放宽**：本轮只做**文档追加**与
-> **只读查询**（`git log` / `git status` / `git diff --stat`），**未执行** `make` / `docker` / `promtool`，
-> **未提交、未建分支、未改 remote、未动 tag**。P4 的告警规则语法校验**仍未做**。
+> That file now has 15 `def test_` (some are parameterized, hence 68 collected); the evidence file name / index annotation /
+> environment registry / anonymous "local machine has none" line scanning guards of the two layers above are all pre-existing parts.
+> **The boundaries stated above ("promtool not run", "no git write operation performed") are not relaxed by this round**: this round only does **document appends** and
+> **read-only queries** (`git log` / `git status` / `git diff --stat`); it **did not run** `make` / `docker` / `promtool`,
+> **did not commit, did not create a branch, did not change the remote and did not touch tags**. The P4 alert rule syntax validation **was still not done**.
 
-> **2026-10-11 收尾轮再追加（P4 闭合；上文「62 passed」「68 passed」「P4 的告警规则语法校验仍未做」等原文全部保留，不删改）：**
-> **P4 已于 2026-10-11 闭合**，三元组 **(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**
-> —— docker 容器化 promtool v2.45.0 校验 3 组 10 条规则 `SUCCESS: 10 rules found`，
-> 主 agent 同日在同一 host（`WIN-03IB7NIEPF0`）用同一命令独立复跑 exit=0；详见 §2 P4「现状更正」与 §7.5 追加更正。
-> 本轮主 agent **仅执行了一次只读的 docker promtool 校验**：容器 `--rm`、除挂载的校验路径外无其它副作用，
-> **未改 `deploy/alerts/` 任何字节**；本轮文档收尾**未执行任何 git 写操作**（未 commit / add / push / tag / 建分支 / 改 remote），
-> 未运行 `make`。根 `tests/` 复跑：**`uv run pytest tests/ -q` → `76 passed`（0.27s）**
-> —— 与 62 / 68 同为不同 session 的实测事实（守卫用例随批次持续新增），三个数字不冲突。
-
----
-
-## 8. 元规则（2026-10-11 追加）
-
-### 8.1 清单长度与条目撤销
-
-本文清单长度不设下限。问题解决即从清单移除，清单变短是正常结果；不得为维持形式、为凑足条目或为让登记看起来完整而新增条目。若某条目此前被误列为待裁决，应撤销而非保留。
-
-**背景**：本规则产生于 2026-10-11 复核，背景是当日出现「已裁决事项被重新列为待裁决」「本已被实际工作消解的事项仍被列为待裁决」的反复。撤销登记的标准做法是：在原条目处追加更正说明（写明撤销原因与日期），并在 §5 汇总表与 §6/§7 相关计数处追加更正，原文一律保留为审计链。
+> **Closing round further append of 2026-10-11 (P4 closed; the original texts "62 passed", "68 passed", "the P4 alert rule syntax validation was still not done" etc. are all retained, nothing deleted or changed):**
+> **P4 was closed on 2026-10-11**, triple **(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-alert-check-full-2026-10-11.txt, 2026-10-11)**
+> — containerized promtool v2.45.0 in docker validated the 3 groups / 10 rules with `SUCCESS: 10 rules found`,
+> and the main agent independently re-ran the same command on the same day on the same host (`WIN-03IB7NIEPF0`) with exit=0; see the "current-state correction" of §2 P4 and the appended correction of §7.5.
+> This round the main agent **performed only one read-only docker promtool validation**: the container was `--rm` and had no side effects other than the mounted validation path,
+> **not a single byte of `deploy/alerts/` was changed**; the document wrap-up of this round **performed no git write operation** (no commit / add / push / tag / branch creation / remote change),
+> and `make` was not run. Re-run of the root `tests/`: **`uv run pytest tests/ -q` → `76 passed` (0.27s)**
+> — like 62 / 68, these are measured facts of different sessions (the guard cases keep being added batch by batch), and the three numbers do not conflict.
 
 ---
 
-## 9. `docs/plan.md` 行号引用偏移更正（2026-10-12 追加）
+## 8. Meta-Rule (appended 2026-10-11)
 
-> 本节只**追加**更正，本文 §1–§8 中登记的所有 `docs/plan.md:<行号>` 引用**一律保留不回改**
-> （与 §7.5「`:180` → `:184`」的既有做法一致）。
+### 8.1 List Length and Withdrawal of Entries
 
-**起因**：2026-10-11 至 2026-10-12 期间，`docs/plan.md` 被**追加**了内容（§0 决策记录表新增 3 行、
-§5.1 表后新增「O1 口径建议」段 26 行），使本文登记的部分行号引用发生偏移。
-本文登记的是**登记当时的行号**，不是错误；本节给出按锚文本重新定位后的当前行号。
+This document's list has no minimum length. Once an issue is resolved it is removed from the list, and the list getting shorter is a normal outcome; entries must not be added in order to maintain the form, to pad the item count, or to make the register look complete. If an entry was previously listed as pending adjudication by mistake, it should be withdrawn rather than kept.
 
-| 本文登记的引用 | 锚文本（用于重新定位） | 当前行号 | 偏移 |
+**Background**: this rule emerged from the 2026-10-11 review; the background is that on that day "already-adjudicated items were re-listed as pending adjudication" and "items already resolved by actual work were still listed as pending adjudication" kept recurring. The standard practice for withdrawing a registration is: append a correction note at the original entry (stating the reason and date for withdrawal), and append corrections to the §5 summary table and the relevant counts in §6/§7; the original text is always retained as the audit chain.
+
+---
+
+## 9. Correction of Line-Number Reference Drift in `docs/plan.md` (appended 2026-10-12)
+
+> This section **only appends** corrections; all `docs/plan.md:<line number>` references registered in §1–§8 of this document are **all retained and not changed back**
+> (consistent with the existing practice of §7.5 "`:180` → `:184`").
+
+**Cause**: between 2026-10-11 and 2026-10-12, content was **appended** to `docs/plan.md` (3 new rows in the §0 decision record table,
+26 lines of the "O1 stance recommendation" paragraph after the §5.1 table), which shifted some of the line references registered here.
+What is registered is **the line numbers at the time of registration**, which is not an error; this section gives the current line numbers relocated by anchor text.
+
+| Reference registered here | Anchor text (used for relocation) | Current line number | Drift |
 |---|---|---|---|
-| `docs/plan.md:15` | §0 状态表「当前进行中的步骤」（M7.1 demo 在 kind 上跑通） | `15` | 0（未受影响） |
-| `docs/plan.md:39` | §0 决策记录表 **G2 / A4-3**（Wave 2 回放） | `39` | 0 |
-| `docs/plan.md:40` | §0 决策记录表 **G2 / A4-4**（kind e2e 与 PR 边界） | `40` | 0 |
-| `docs/plan.md:41` | §0 决策记录表 **G3 / A5**（监控接线） | `41` | 0 |
-| `docs/plan.md:53` | §0 决策记录表 **2026-10-11 注记**（G3(A5) 抄录）所在行 | `53` | 0 |
-| `docs/plan.md:65` | 「产品化包装交付状态」下的 **受阻项** 段 | `76` | +11 |
-| `docs/plan.md:66` | 同上「上行的解锁状态」段（三项剩余依赖） | `77` | +11 |
-| `docs/plan.md:67` | 同上「代码侧：仅 `deploy/alerts/` 两个文件新增告警规则组」 | `78` | +11 |
-| `docs/plan.md:183` | 里程碑表 **M5** 行（关门条件含「控制面集群部署证明（含 7.2d）」） | `194` | +11 |
-| `docs/plan.md:396` | §5.1 未决项表 **O1** 行 | `407` | +11 |
-| `docs/plan.md:399` | §5.1 未决项表 **O4** 行 | `410` | +11 |
-| `docs/plan.md:400` | §5.1 未决项表 **O5** 行 | `411` | +11 |
-| `docs/plan.md:406` | §5.2 未决项表 **D1** 行 | `456` | +50 |
-| `docs/plan.md:408` | §5.2 未决项表 **D3** 行 | `458` | +50 |
-| `docs/plan.md:410` | §5.2 未决项表 **D5** 行 | `460` | +50 |
+| `docs/plan.md:15` | §0 status table "the step currently in progress" (the M7.1 demo runs on kind) | `15` | 0 (unaffected) |
+| `docs/plan.md:39` | **G2 / A4-3** of the §0 decision record table (Wave 2 replay) | `39` | 0 |
+| `docs/plan.md:40` | **G2 / A4-4** of the §0 decision record table (kind e2e and the PR boundary) | `40` | 0 |
+| `docs/plan.md:41` | **G3 / A5** of the §0 decision record table (monitoring wiring) | `41` | 0 |
+| `docs/plan.md:53` | the row holding the **2026-10-11 note** of the §0 decision record table (the G3(A5) copy) | `53` | 0 |
+| `docs/plan.md:65` | the **blocked items** paragraph under "product packaging delivery status" | `76` | +11 |
+| `docs/plan.md:66` | the "unlock status of the row above" paragraph of the same section (the three remaining dependencies) | `77` | +11 |
+| `docs/plan.md:67` | the "code side: only two alert rule groups added under `deploy/alerts/`" of the same section | `78` | +11 |
+| `docs/plan.md:183` | the **M5** row of the milestone table (the closure condition contains "control-plane cluster deployment proof (including 7.2d)") | `194` | +11 |
+| `docs/plan.md:396` | the **O1** row of the §5.1 open-items table | `407` | +11 |
+| `docs/plan.md:399` | the **O4** row of the §5.1 open-items table | `410` | +11 |
+| `docs/plan.md:400` | the **O5** row of the §5.1 open-items table | `411` | +11 |
+| `docs/plan.md:406` | the **D1** row of the §5.2 open-items table | `456` | +50 |
+| `docs/plan.md:408` | the **D3** row of the §5.2 open-items table | `458` | +50 |
+| `docs/plan.md:410` | the **D5** row of the §5.2 open-items table | `460` | +50 |
 
-**偏移量说明**：§5.1 及其之前的引用统一 **+11**（§0 决策记录表累计新增 5 行）；
-§5.2 的引用再叠加 **+39**（§5.1 表后新增的「O1 口径建议」段与「采纳与确认」段），合计 **+50**。
+**Drift explanation**: references up to §5.1 and before are uniformly **+11** (5 rows accumulated in the §0 decision record table);
+the §5.2 references add **+39** on top (the "O1 stance recommendation" paragraph and the "adopted and confirmed" paragraph added after the §5.1 table), totalling **+50**.
 
-> **第三次刷新（2026-10-12 同日再次追加；上表「当前行号」列已刷新，偏移量口径改为 `+11` / `+50`）**：
-> 2026-10-12 又向 `docs/plan.md` 追加了 §0 决策表的「A6 执行口径」行与「M8 N2 九项已由 agent 代签」行
-> （合计再 +1 于 §0，累计 +5），以及 §5 的「§5.2-bis · M5 defer 项落定（M5D-1…M5D-6）」段。
-> 注意 §5.2-bis 插在 §5.2 表格**之后**、§5.3 **之前**，故 §5.2 表内的 D1 / D3 / D5 三行
-> **只受 §0 的 +5 与 §5.1 的 +39 影响**，不受 §5.2-bis 影响。
-> 本节只更正行号定位，§5 汇总表与 §7 清单的实质口径**一字未改**。
+> **Third refresh (appended again later on 2026-10-12; the "current line number" column above has been refreshed, and the drift stance is now `+11` / `+50`)**:
+> on 2026-10-12 `docs/plan.md` had appended the "A6 execution stance" row and the "the nine M8 N2 items have been counter-signed by the agent" row
+> of the §0 decision table (+1 in §0 in total, +5 accumulated), plus the "§5.2-bis · the M5 defer items are settled (M5D-1…M5D-6)" section of §5.
+> Note that §5.2-bis is inserted **after** the §5.2 table and **before** §5.3, so the D1 / D3 / D5 rows inside the §5.2 table
+> are **affected only by the +5 of §0 and the +39 of §5.1**, and not by §5.2-bis.
+> This section only corrects line-number positioning; the substantive stance of the §5 summary table and the §7 lists is **not changed by a single character**.
 
-**边界**：本节只更正**行号定位**，**不改动**任何条目的实质内容、结论或状态。
-§5 汇总表与 §7 清单的「已闭合 / 待处理」口径**一个字未改**；
-**X1 仍是现行唯一待裁决项**。
+**Boundary**: this section only corrects **line-number positioning** and **does not change** the substantive content, conclusion or status of any item.
+The "closed / pending" stance of the §5 summary table and the §7 lists is **not changed by a single character**;
+**X1 remains the only current pending adjudication item**.

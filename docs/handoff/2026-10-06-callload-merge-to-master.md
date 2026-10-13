@@ -12,59 +12,59 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# callload → master 合并准备（2026-10-06）
+# callload → master merge preparation (2026-10-06)
 
-> **状态（2026-10-06）**：**已合入** — `master` @ `139d299`（squash；**未**变更门禁配置）；见 §6 执行记录。  
-> **范围**：维护者将 `callload` 工程切片合入 `master` 前的检查清单与口径（历史记录保留）。  
-> **依据**：[`2026-10-05-callload-review-response-plan.md`](2026-10-05-callload-review-response-plan.md)、[`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md)、[`cross-milestone-final-adjudication-2026-10-05.md`](../reviews/cross-milestone-final-adjudication-2026-10-05.md)。
+> **Status (2026-10-06)**: **merged** — `master` @ `139d299` (squash; gate configuration **unchanged**); see §6 execution record.  
+> **Scope**: the checklist and framing the maintainer uses before merging the `callload` engineering slice into `master` (historical record retained).  
+> **Basis**: [`2026-10-05-callload-review-response-plan.md`](2026-10-05-callload-review-response-plan.md), [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md), [`cross-milestone-final-adjudication-2026-10-05.md`](../reviews/cross-milestone-final-adjudication-2026-10-05.md).
 
 ---
 
-## 6. 执行记录（2026-10-06）
+## 6. Execution record (2026-10-06)
 
-| 步骤 | 结果 |
+| Step | Result |
 |------|------|
-| `923a8c1` on `callload` | 门禁配置 + merge handoff docs |
-| `merge master` → `callload` | 拉入 `m5-full-chain-review-2026-10-05.md` |
+| `923a8c1` on `callload` | gate configuration + merge handoff docs |
+| `merge master` → `callload` | pulled in `m5-full-chain-review-2026-10-05.md` |
 | `make gate` on `callload` | 964 passed, 2 skipped |
 | `merge callload` → `master` | **fast-forward** → `4b4566b` |
-| 收尾 `764aa75` | 门禁触发范围收窄 + 合入记录文档 |
-| `origin` push | 首次推送被拒；**已去掉** 门禁配置变更后 squash 重推 |
+| follow-up `764aa75` | narrowed gate trigger scope + merge record doc |
+| `origin` push | first push rejected; gate configuration changes **removed**, then squash re-pushed |
 
-## 6b. 维护者签收（可选补签）
+## 6b. Maintainer sign-off (optional countersignature)
 
-| 项 | 维护者 | 日期 | 备注 |
-|----|--------|------|------|
-| 批准 callload → master | 维护者 chat | 2026-10-06 | |
-| 合入后 master SHA | `4b4566b` | 2026-10-06 | 含 merge `master` into `callload` |
-| F10 口径已读 | | | 故事 C L1 |
+| Item | Maintainer | Date | Note |
+|----|------------|------|------|
+| Approve callload → master | maintainer chat | 2026-10-06 | |
+| master SHA after merge | `4b4566b` | 2026-10-06 | includes `merge master` into `callload` |
+| F10 framing read | | | Story C L1 |
 
 ---
 
-## 1. 分支事实（authoring 时）
+## 1. Branch facts (at authoring time)
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| `callload` HEAD | `dc3c951`（`fix`） |
-| `master` HEAD | `04afc5a`（`M5 review`） |
+| `callload` HEAD | `dc3c951` (`fix`) |
+| `master` HEAD | `04afc5a` (`M5 review`) |
 | merge-base | `2318f9c` |
-| `callload` 独有提交 | 7 个（含 `6778030`…`dc3c951`；见 `git log master..callload`） |
-| `master` 独有提交 | **1 个**：`04afc5a` — 新增 [`m5-full-chain-review-2026-10-05.md`](../reviews/m5-full-chain-review-2026-10-05.md)（结论「不通过」） |
-| 工作区未提交 | 门禁配置、`.gitignore`（见 §2.1） |
+| Commits unique to `callload` | 7 (including `6778030`…`dc3c951`; see `git log master..callload`) |
+| Commits unique to `master` | **1**: `04afc5a` — added [`m5-full-chain-review-2026-10-05.md`](../reviews/m5-full-chain-review-2026-10-05.md) (conclusion "does not pass") |
+| Uncommitted working tree | gate configuration, `.gitignore` (see §2.1) |
 
-**合入方向**：维护者批准后将 `callload` 合并进 `master`（推荐先 `merge master` 进 `callload` 解决分歧，再 fast-forward 或 merge commit 进 `master`）。
+**Merge direction**: once the maintainer approves, merge `callload` into `master` (recommended: first `merge master` into `callload` to resolve divergence, then fast-forward or merge commit into `master`).
 
 ---
 
-## 2. 合并前硬门禁
+## 2. Hard gates before merging
 
-### 2.1 工作区必须先入库
+### 2.1 The working tree must be committed first
 
-评审 **F9** 要求 native 扩展参与阻塞门禁。本地等价物：`make m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`；`chart-check` / `alert-check`（M5-0c）对应 `make chart-check` / `make alert-check`；`m2-native-smoke`、`m2-platform-resip`、`m7-recovery`、`m7-two-leg` 对应 `make m2-native-smoke`、`make m2-platform-resip-build` 与对应 integration 目标。
+Review **F9** requires the native extension to participate in the blocking gate. Local equivalents: `make m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`; `chart-check` / `alert-check` (M5-0c) correspond to `make chart-check` / `make alert-check`; `m2-native-smoke`, `m2-platform-resip`, `m7-recovery`, `m7-two-leg` correspond to `make m2-native-smoke`, `make m2-platform-resip-build` and the matching integration targets.
 
-**合并前**：在 `callload` 上单独 commit `.gitignore`（`.cache/`、`!docs/acceptance/artifacts/`）与其它工作区改动，并跑绿 **至少** `make gate` + `make m2-platform-resip-build` 后的 native 路径。
+**Before merging**: commit `.gitignore` (`.cache/`, `!docs/acceptance/artifacts/`) and the other working-tree changes separately on `callload`, and pass green **at least** `make gate` + the native path after `make m2-platform-resip-build`.
 
-### 2.2 本地验证（维护者）
+### 2.2 Local verification (maintainer)
 
 ```bash
 make gate
@@ -74,67 +74,67 @@ uv run pytest platform/tests/test_e1_contract_resip_runtime.py \
 # 可选：m7-platform-recovery-build / two-leg-build + 对应 integration
 ```
 
-### 2.3 与 `04afc5a` 的内容对账（F10，非阻塞 git）
+### 2.3 Content reconciliation with `04afc5a` (F10, not a git blocker)
 
-- 合入后仓库 **同时** 持有 M5 全链「不通过」评审与 Pre-M8 **故事 C L1 话术**（[`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md) F10 段）。
-- **不得**因 merge 改变对外口径：故事 C 仍仅 chart/告警 **形态** + kind 摘要，不宣称 M5 全链已验收。
-- `cur` 上 M5.1 Remediation 闭合后，再更新 pre-m8 F10 段（与合并无关）。
+- After the merge the repository **simultaneously** holds the M5 full-chain "does not pass" review and the Pre-M8 **Story C L1 framing** ([`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md) F10 section).
+- The external framing **must not** change because of the merge: Story C still covers only the chart/alert **shape** plus a kind summary, and does not claim M5 full-chain acceptance.
+- Update the pre-M8 F10 section only after M5.1 Remediation is closed on `cur` (unrelated to the merge).
 
-### 2.4 已知开放项（不挡工程合入，挡里程碑/REQ 签收）
+### 2.4 Known open items (do not block the engineering merge, but do block milestone/REQ sign-off)
 
-| ID | 状态 | 合并后跟踪 |
-|----|------|------------|
-| F8 | 未闭合 | M8 前结构化日志 |
-| F6 | 部分修复 | native transport close 回调 |
-| F11 | 维护者 | 历史 commit 形态，不重组 |
-| M2/M6/M7 **里程碑退出** | 未签收 | [`plan.md`](../plan.md) §4 |
-| REQ-NF-1 / 全 E1 / O1 发布 | 未验收 | M8 |
-
----
-
-## 3. 建议维护者操作顺序
-
-1. **拍板**：显式批准「`callload` → `master`」（AGENT.md §11）。
-2. **Commit** §2.1 工作区；必要时 rebase/merge 前再跑 §2.2。
-3. **`git checkout callload && git merge master`**（拉入 `04afc5a`）；冲突时以 **保留两边 review 文档**、代码以 callload 工程切片为准 为原则。
-4. **门禁绿** 后 `git checkout master && git merge callload`（或 PR + squash，由维护者定）。
-5. 更新 [`plan.md`](../plan.md) §0「当前进行中的步骤」— 标记 callload 已合入；下一入口 **M8**。
-6. 可选：在 [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md) 追加「合入 master @ `<sha>` `<date>`」一行。
+| ID | Status | Tracked after the merge |
+|----|--------|-------------------------|
+| F8 | not closed | structured logging before M8 |
+| F6 | partially fixed | native transport close callback |
+| F11 | maintainer | historical commit shape, do not restructure |
+| M2/M6/M7 **milestone exit** | not signed off | [`plan.md`](../plan.md) §4 |
+| REQ-NF-1 / all E1 / O1 publication | not accepted | M8 |
 
 ---
 
-## 4. 合入后声明（对外 / 对内）
+## 3. Suggested maintainer operation order
 
-### 4.1 合入 **等于**
-
-- `master` 含 M2 后半 native 产品 runtime、M6 harness + O1 dev-host 报告链、M7 E1/FORWARD/D10 工程切片、Pre-M8 demo 脚本与评审修复（F1–F7、F9–F18 等，见 adjudication）。
-- 仓库根 `make m2-native` / `make m2-platform-resip-build` 与 `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`（F9 落地后）成为 **主干默认** 工程路径。
-
-### 4.2 合入 **不等于**
-
-- M2 / M6 / M7 **维护者里程碑签收**
-- M5 全链或 M5.1 **验收通过**
-- REQ-S-2/3、REQ-NF-1、对外 O1/SLA、客户 NF-1 正式签收
-- Pre-M8 **全量**客户 Demo（故事 C 全量运维叙事仍受 F10 约束）
+1. **Decide**: explicitly approve "`callload` → `master`" (AGENT.md §11).
+2. **Commit** the §2.1 working tree; re-run §2.2 before rebase/merge if needed.
+3. **`git checkout callload && git merge master`** (pulls in `04afc5a`); on conflict the principle is **keep both review documents**, and for code follow the callload engineering slice.
+4. Once the **gate is green**, `git checkout master && git merge callload` (or PR + squash, the maintainer's call).
+5. Update [`plan.md`](../plan.md) §0 "Current step in progress" — mark callload as merged; the next entry point is **M8**.
+6. Optional: append a "merged into master @ `<sha>` `<date>`" line to [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md).
 
 ---
 
-## 5. 关联文档
+## 4. Post-merge statement (external / internal)
 
-| 文档 | 角色 |
-|------|------|
-| [`callload-m2-m6-m7-demo-branch-review-2026-10-05.md`](../reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md) | 分支评审原文 + Adjudication 表 |
-| [`2026-10-05-callload-review-response-plan.md`](2026-10-05-callload-review-response-plan.md) | P0/P1/P2 处置与跟踪表 |
-| [`2026-10-05-milestones-engineering-complete.md`](2026-10-05-milestones-engineering-complete.md) | M2/M6/M7 工程 inventory |
-| [`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md) | 客户 Demo 边界（含 F10） |
+### 4.1 The merge **equals**
+
+- `master` contains the post-M2 first-half native product runtime, the M6 harness + O1 dev-host report chain, the M7 E1/FORWARD/D10 engineering slice, the Pre-M8 demo script and review fixes (F1–F7, F9–F18 etc., see adjudication).
+- Repository-root `make m2-native` / `make m2-platform-resip-build` and `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate` (once F9 lands) become the **trunk default** engineering path.
+
+### 4.2 The merge **does not equal**
+
+- M2 / M6 / M7 **maintainer milestone sign-off**
+- M5 full-chain or M5.1 **acceptance passed**
+- REQ-S-2/3, REQ-NF-1, external O1/SLA, customer NF-1 formal sign-off
+- Pre-M8 **full** customer demo (the full Story C operations narrative remains constrained by F10)
 
 ---
 
-## 6. 维护者签收（历史模板；执行见文首 §6 执行记录）
+## 5. Related documents
 
-| 项 | 维护者 | 日期 | 备注 |
-|----|--------|------|------|
-| 批准 callload → master | | | |
-| 门禁 + §2.2 已绿 | | | |
-| 合入后 master SHA | | | |
-| F10 口径已读 | | | 故事 C L1 |
+| Document | Role |
+|----------|------|
+| [`callload-m2-m6-m7-demo-branch-review-2026-10-05.md`](../reviews/callload-m2-m6-m7-demo-branch-review-2026-10-05.md) | branch review original + Adjudication table |
+| [`2026-10-05-callload-review-response-plan.md`](2026-10-05-callload-review-response-plan.md) | P0/P1/P2 disposition and tracking table |
+| [`2026-10-05-milestones-engineering-complete.md`](2026-10-05-milestones-engineering-complete.md) | M2/M6/M7 engineering inventory |
+| [`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md) | customer demo boundary (includes F10) |
+
+---
+
+## 6. Maintainer sign-off (historical template; execution see §6 execution record at the top of this document)
+
+| Item | Maintainer | Date | Note |
+|----|------------|------|------|
+| Approve callload → master | | | |
+| Gate + §2.2 green | | | |
+| master SHA after merge | | | |
+| F10 framing read | | | Story C L1 |

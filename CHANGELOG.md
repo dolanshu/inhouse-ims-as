@@ -1,87 +1,100 @@
-# 更新日志（Changelog）
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
 
-本项目的所有重要变更都记录在这里。格式遵循 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)；
-版本遵循 SemVer，`./VERSION` 是产品 release 版本的唯一源头（ADR-0018）。
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-## [0.2.0] - 未发布（Unreleased）
+    http://www.apache.org/licenses/LICENSE-2.0
 
-### 新增（Added）
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
 
-- M8 发布候选执行计划：[`docs/handoff/2026-10-06-m8-release-candidate-plan.md`](docs/handoff/2026-10-06-m8-release-candidate-plan.md)（阶段 A→E、`plan.md` §0/§4 入口更新）。
-- Helm chart 首次版本同步（A6，维护者 2026-10-12 定时机与取值）：`deploy/helm/Chart.yaml` 的 `version` / `appVersion` 随根 `VERSION`（`0.2.0`）落定，并声明 `kubeVersion: ">=1.23.0-0"`（由 chart 实际 API 反推，约束最大者为 `autoscaling/v2` 与 Job TTL）。同步由 `scripts/sync-chart-version.sh` 执行（默认 `--check` 只读校验并 exit 1，显式 `--apply` 才写入）；`make chart-check` 复跑 `chart-check: OK`。
-- 产品 SIP runtime：`AS_SIP_BIND_ADDRESS` / `AS_SIP_ADVERTISED_ADDRESS` 与 `AS_TLS_*` / `AS_PEER_*` 环境变量接缝（`transport_env.py`）。
-- `platform/tests/native_extensions.py`：`AS_REQUIRE_NATIVE_EXTENSIONS=1` 时无 native 扩展则契约测 fail。
-- Demo：故事 C M5 对账话术、故事 B 增加 S4/487 步骤、`run-all-automated` PASS/SKIP/FAIL 汇总。
-- 阻塞式 native 门禁目标（`m2-platform-resip-build` / `m2-native-smoke` / `m7-*` integration，缺 `_resip_runtime` 即 fail）+ `chart-check` / `gate-strict` 进门禁①（F9）。
-- `resip_runtime_log_contract`（`RESIP_RUNTIME_*` 字段契约）+ 13 例契约测试 + NF-13 映射（F8）。
-- Helm H-1…H-4 fail-closed（secret key 补全 / stateStores 生产组合 fail / `tls.secretName` 空 fail / `peerAllowlist` 空 fail）+ chart-check onprem 矩阵；kind 脚本 fail-closed（K-1/K-2）。
-- HLD/LLD M5 delta + ADR-0008 SPoF 缺口 amendment + ADR-0013 amendment 注记。
-- M8 签收矩阵（`m8-test-plan-matrix.md`）+ 环境证据（`m8-environment-evidence.md`）+ 退出评审（`m8-exit-review-2026-10-06.md`）；M8 RC 不宣称全绿，签字待维护者。
+# Changelog
 
-### 变更（Changed）
+All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows SemVer, and `./VERSION` is the single source of the product release version (ADR-0018).
 
-- REQ-F-10：下游 408/480/486/503/504 透传至上游（`CallController` + native runtime）。
-- FORWARD 双腿建立后 native 回传真实 UAC checkpoint 字段；恢复 BYE 使用 checkpoint Contact/route_set。
-- `as_load` 支持 `--min-success-rate` / `--max-unresolved` 退出码策略。
-- M5 关门含义降级为工程关门（非 REQ 验收）；M5 REQ 级不通过，10 项 defer（见 `m5-req-acceptance-review-2026-10-06.md`，拟新增 plan §5 行 M5D-1…M5D-6 由维护者落定）。
-- performance 门禁层自 M6 首个用例起阻塞；e2e 层仍不阻塞（0 tests）。
-- `m2-platform-resip` 缺 `_resip_runtime` 时 integration 用例 fail（非 skip）。
+## [0.2.0] - Unreleased
+
+### Added
+
+- M8 release-candidate execution plan: [`docs/handoff/2026-10-06-m8-release-candidate-plan.md`](docs/handoff/2026-10-06-m8-release-candidate-plan.md) (phases A→E; `plan.md` §0/§4 entry updated).
+- First Helm chart version sync (A6, maintainer to set timing and value on 2026-10-12): `deploy/helm/Chart.yaml`'s `version` / `appVersion` are fixed to the root `VERSION` (`0.2.0`), and `kubeVersion: ">=1.23.0-0"` declared (derived from the chart's actual APIs; the most constraining are `autoscaling/v2` and Job TTL). Sync is driven by `scripts/sync-chart-version.sh` (default `--check` is read-only and exits 1; explicit `--apply` writes); `make chart-check` re-runs `chart-check: OK`.
+- Product SIP runtime: `AS_SIP_BIND_ADDRESS` / `AS_SIP_ADVERTISED_ADDRESS` and `AS_TLS_*` / `AS_PEER_*` environment-variable seams (`transport_env.py`).
+- `platform/tests/native_extensions.py`: when `AS_REQUIRE_NATIVE_EXTENSIONS=1`, contract tests fail if the native extension is absent.
+- Demo: story C M5 reconciliation talking points, story B adds S4/487 steps, `run-all-automated` PASS/SKIP/FAIL summary.
+- Blocking native gate targets (`m2-platform-resip-build` / `m2-native-smoke` / `m7-*` integration, fail when `_resip_runtime` is missing) + `chart-check` / `gate-strict` enter gate layer ① (F9).
+- `resip_runtime_log_contract` (`RESIP_RUNTIME_*` field contract) + 13 contract tests + NF-13 mapping (F8).
+- Helm H-1…H-4 fail-closed (secret key completion / stateStores production combination fails / empty `tls.secretName` fails / empty `peerAllowlist` fails) + chart-check onprem matrix; kind script fail-closed (K-1/K-2).
+- HLD/LLD M5 delta + ADR-0008 SPoF gap amendment + ADR-0013 amendment note.
+- M8 sign-off matrix (`m8-test-plan-matrix.md`) + environment evidence (`m8-environment-evidence.md`) + exit review (`m8-exit-review-2026-10-06.md`); M8 RC does not claim all-green, sign-off pending maintainer.
+
+### Changed
+
+- REQ-F-10: downstream 408/480/486/503/504 pass-through to upstream (`CallController` + native runtime).
+- After the FORWARD two-leg is established, the native side returns the real UAC checkpoint fields; BYE recovery uses the checkpoint Contact/route_set.
+- `as_load` supports `--min-success-rate` / `--max-unresolved` exit-code strategy.
+- M5 closure meaning downgraded to engineering closure (not REQ acceptance); M5 REQ-level fails, 10 items deferred (see `m5-req-acceptance-review-2026-10-06.md`; proposed new plan §5 lines M5D-1…M5D-6 to be set by the maintainer).
+- The performance gate layer has been blocking since the first M6 use case; the e2e layer still does not block (0 tests).
+- `m2-platform-resip` fails integration cases when `_resip_runtime` is missing (not skip).
 
 ### Internal build (2026-10-12)
 
-> **这是内部版本，不是发行版。** 版本号维持 `0.2.0`（`VERSION` 文件不变），镜像 tag 后缀为 `-internal-<date>`。
+> **This is an internal build, not a release.** The version stays `0.2.0` (the `VERSION` file unchanged); the image tag suffix is `-internal-<date>`.
 
-- **Docker 镜像带 SIP 监听**：`deploy/docker/Dockerfile` 新增多阶段构建（`resip-builder` / `py-builder` / `runtime`），builder 阶段从 `testbed/simulators/resip-probe/vendor/` 源码构建 reSIProcate 共享库（rutil/resip/dum）+ 三个 native Python 扩展（`_resip_runtime`、`_resip_two_leg`、`_resip_recovery`）；runtime 阶段 reSIProcate 共享库放 `/app/lib`（`LD_LIBRARY_PATH=/app/lib`）、native 扩展放 `/app/native`（`AS_RESIP_RUNTIME_BUILD` / `AS_RESIP_TWO_LEG_BUILD` / `AS_RESIP_RECOVERY_BUILD=/app/native`）。
-- **发布镜像默认开启 SIP 监听**：runtime 阶段设置 `AS_ENABLE_SIP_RUNTIME=1`，容器启动即拉起 native listener（UDP/TCP/TLS 取决于 `AS_SIP_*` / `AS_TLS_*` 环境变量）；未设置端口时 UDP 绑定 5060。
-- **进程入口接入 SIP 栈**：`platform/src/as_platform/__main__.py` 的 `main()` 在 try 块内、shell 创建后调用 `SipStackService.from_env()` + `start()`；drain 时调用 `sip_service.stop()`，finally 兜底停止；fail-closed：`AS_ENABLE_SIP_RUNTIME=1` 但 native 扩展缺失时 `from_env` 抛 RuntimeError → except 返回 exit code 2（非崩溃）；未设置 env var 时行为与旧版一致。
-- **EXPOSE 修正**：由 `5060/udp 5061/tcp` 改为 `5060/udp 5060/tcp 5061/tcp`（TCP 与 UDP 共用 5060，TLS 用 5061，与 Helm `values.yaml` 的 `sip.port` / `sip.tlsPort` 一致）。
-- **镜像可重复构建 + digest 记录**：基础镜像固定 tag、uv `--frozen`、源码 tarball 带 SHA256 校验；构建后记录 image ID 到 `docs/acceptance/artifacts/m5/2026-10-12/PASS-docker-build-digest-2026-10-12.txt`。
-- **脱敏复检通过**：镜像内无 `.pem` / `.key` / `.pcap` / `.pcapng` 等敏感文件，无含口令日志。
-- **镜像 tag 格式**：`as-platform:0.2.0-internal-<date>`（date 格式 `YYYYMMDD`）。
-- **chart 不同步**：Helm chart 维持 `0.2.0`，不随 internal build 变更。
-- **本版定位**：function 完整 + 模拟器证据 + 可重复构建；不签收任何 REQ、不构成 M8 里程碑关闭、不对外发布。
+- **Docker image carries SIP listener**: `deploy/docker/Dockerfile` adds a multi-stage build (`resip-builder` / `py-builder` / `runtime`); the builder stage builds the reSIProcate shared library (rutil/resip/dum) from `testbed/simulators/resip-probe/vendor/` source plus three native Python extensions (`_resip_runtime`, `_resip_two_leg`, `_resip_recovery`); the runtime stage places the reSIProcate shared library at `/app/lib` (`LD_LIBRARY_PATH=/app/lib`) and the native extensions at `/app/native` (`AS_RESIP_RUNTIME_BUILD` / `AS_RESIP_TWO_LEG_BUILD` / `AS_RESIP_RECOVERY_BUILD=/app/native`).
+- **Release image enables SIP listener by default**: the runtime stage sets `AS_ENABLE_SIP_RUNTIME=1`, so the container starts the native listener on boot (UDP/TCP/TLS depending on `AS_SIP_*` / `AS_TLS_*`); when no port is set, UDP binds 5060.
+- **Process entry wires in the SIP stack**: `platform/src/as_platform/__main__.py`'s `main()` calls `SipStackService.from_env()` + `start()` inside the try block after the shell is created; on drain it calls `sip_service.stop()`, with a finally fallback to stop; fail-closed: when `AS_ENABLE_SIP_RUNTIME=1` but the native extension is missing, `from_env` raises RuntimeError → the except returns exit code 2 (not a crash); when the env var is unset, behavior matches the old version.
+- **EXPOSE correction**: changed from `5060/udp 5061/tcp` to `5060/udp 5060/tcp 5061/tcp` (TCP and UDP share 5060, TLS uses 5061, consistent with Helm `values.yaml`'s `sip.port` / `sip.tlsPort`).
+- **Image reproducible build + digest record**: base image pinned tag, uv `--frozen`, source tarball with SHA256 verification; after build, the image ID is recorded to `docs/acceptance/artifacts/m5/2026-10-12/PASS-docker-build-digest-2026-10-12.txt`.
+- **Desensitization re-check passed**: no `.pem` / `.key` / `.pcap` / `.pcapng` sensitive files in the image, no password-bearing logs.
+- **Image tag format**: `as-platform:0.2.0-internal-<date>` (date format `YYYYMMDD`).
+- **Chart not synced**: the Helm chart stays at `0.2.0` and does not change with the internal build.
+- **Positioning of this build**: function complete + simulator evidence + reproducible build; it signs off no REQ, does not constitute M8 milestone closure, and is not published externally.
 
-## [0.1.0] - 未发布（Unreleased）
+## [0.1.0] - Unreleased
 
-### 新增（Added）
+### Added
 
-- 仓库骨架：uv workspace，七个成员，分别位于 `platform/`、`apps/`、`services/`、`testbed/`。
-- 结构守卫：依赖方向（`platform/tests/`）、workspace 布局、版本一致性（`tests/`）。
-- 四层测试门禁：fast → integration → e2e → performance。
-- `AGENT.md` —— 产品的协作守则（rules of engagement）。
-- ADR 注册表：把 19 项已确认决策映射到 ADR 编号，外加 ADR 模板。
-- `docs/plan.md` —— 里程碑计划与未决项注册表。
-- `docs/migration/triage.md` —— POC 与库代码的清点、初步分类，以及把关采纳的甄别规则。
-- `docs/architecture/新系统整体架构.md` —— 已确认的设计基线。
-- feature 能力门控决策：分层开关（部署级总开关 + 运行态细粒度覆盖，ADR-0020），并定义新 feature 的实现流程（`AGENT.md` §3.4）。
-- M1 行为基线：`testbed/contracts/sip-baseline/` 下 S1 基本呼叫（14 条）、S2 无匹配 404（4 条）、S3 策略拒绝 603（4 条）、S4 主叫放弃 CANCEL（12 条）四条消息样例；S5-S8 裁决为派生基线、S10/S11 转 M2 probe，见 `docs/plan.md` §4.1。
-- SIP 栈选型验证：reSIProcate E1 probe 与构建脚本（ADR-0019）。
-- requirement → ADR 双向引用：各 ADR 头部加"回应 REQ"字段。
-- 需求标准 `docs/requirements/prd.md` v0.2：新增 REQ-S-* 安全需求类、REQ-F-12（规则 CRUD）、REQ-F-14（审批流程），并订正 RFC 3261 章节号。
-- M1 验收报告 `docs/acceptance/report.md` 与退出评审记录 `docs/reviews/m1-exit-review.md`。
-- M2a 内核（`platform/`）：`decide()` 判决纯函数与规则匹配（最长前缀、block 优先）、`StateStore` seam 及 `InMemoryStateStore` / `RedisStateStore` 双实现、feature 门控 seam（分层、默认关、fail-closed）、有界队列遥测（导出不阻塞呼叫路径）、进程壳与 draining、内部 API 契约模型。
-- 依赖：运行时状态存储接入 `redis>=5.0`（ADR-0002 / ADR-0007）。
-- 设计与评审：`docs/architecture/hld.md`、`lld.md`；`docs/reviews/m2-design-review.md`、`m2a-kernel-review.md`。
-- M2b 边界 seam（`platform/src/as_platform/sip/`）：对端白名单与 TLS 配置热轮换（不可变重载、不重启不丢呼叫）、SIP 适配 seam（仅 Protocol，不含栈实现）、判决到 SIP 状态码映射（603 / 404）。
-- M3 决策模块：`apps/translation`（号码翻译，含基线事实 `+8613800138000` → `013800138000` 的断言）与 `apps/anti-fraud`（速率窗口超限判定，`RATE_LIMIT`），均建立在内核 `decide()` 之上，纯函数、TDD。
-- M3 契约用例集：`testbed/contracts/decision/`（14 例声明式用例），由 `apps/translation` 与 `apps/anti-fraud` 各自重放（marker `contract`）。
-- 首个 `integration` 层用例：`platform/tests/test_telemetry_export_integration.py`（真 socket 验证遥测导出不阻塞呼叫路径）；层② 同步改为阻塞。
-- M4 配置治理内核（`services/config-service`）：变更单状态机（审批留痕、非法跳转拒绝）、不可变配置版本库、分批灰度分发与自动回滚。
-- 开关走变更链路：`ConfigBundle` 新增 `ToggleDTO`（含强制的移除条件），与规则同属一个配置版本；开 / 关两态均有测试覆盖。
-- M4 控制台鉴权与审计（`services/console`）：角色 / 权限矩阵、提交者不得审批自己的变更、允许与拒绝均留痕、审计记录不可变。
-- M4b 控制面工程切片（2026-10-02/03）：持久化鉴权 / 审计集成、控制台实时读取 / 会话、复用 ChangeOrder 提交 / 批准 / 拒绝工作流、同源 ASGI 静态资源 / runtime factory / CLI，以及可选 Helm config-service 接线；仅为工程切片，不代表 REQ/M4b 验收。真实部署 HTTPS / ingress / proxy、无损规则编译、实时 trace、集群通知 / 健康、Helm 渲染与镜像构建仍未验证或待办。
-- 新增 owner-only PostgreSQL 设置命令 `as-config-migrate`：通过 store schema API 初始化专用 `as_config` 与 audit schema，仅向预配置 runtime role 授予所需的 config 表/列权限。数据库角色由 DBA 预先创建；owner DSN 仅供手动操作，绝不进入 web Pod。Runtime startup 仍无 DDL。Fake connection focused tests 通过；不声明 Helm render/deployment 或 M4b/M4/REQ acceptance。
-- 未决项 D7 裁决（ADR-0021）：运行态覆盖粒度为号段 + 稳定哈希百分比，判定幂等；`gating/overrides.py` 与其测试。
-- M5 部署产物：Helm 模板（每用例一 Deployment / Service、ConfigMap / Secret、HPA、PDB、SA、NOTES）与告警规则集（`deploy/alerts/`，8 条，只含比例 / 相对量 / 状态量阈值）。
-- 容量数字纪律：HPA 阈值与副本上下限留空并由 `required` 守卫，`deploy/` 全目录不含 CPS 或并发绝对值（O1 待 M6 实测）。
-- PostgreSQL 版 `VersionStore`（`services/config-service`）：不可变追加（无 UPDATE / DELETE）、表名白名单、`psycopg` 惰性 import；真实 PostgreSQL 16 容器 integration 用例 9 条（`pytest -m integration` 共 12 passed）。
-- 内核指标 seam（`platform/src/as_platform/telemetry/metrics.py`）：`MetricsRegistry` / `CallMetrics`，每实例 `as_active_calls` 及 `as_sip_responses_total` / `as_rule_hits_total` / `as_telemetry_dropped_total`，与 `deploy/alerts/` 的指标契约同名；不含任何阈值或默认值。
-- M5 容器镜像：`deploy/docker/Dockerfile`（多阶段 uv 构建，非 root，`python -m as_platform` 入口）与进程入口点 `platform/src/as_platform/__main__.py`；镜像内 SIGTERM 排空实测退出码 0。
-- `testbed/probe/`：SIP 栈选型探针（E1 基线对拍、E4 TLS 热轮换）与序列比对器；绑定缺失时以退出码 2 响亮失败。
+- Repository skeleton: uv workspace, seven members, in `platform/`, `apps/`, `services/`, `testbed/`.
+- Structure guards: dependency direction (`platform/tests/`), workspace layout, version consistency (`tests/`).
+- Four-layer test gate: fast → integration → e2e → performance.
+- `AGENT.md` — the product's collaboration rules of engagement.
+- ADR registry: maps the 19 confirmed decisions to ADR numbers, plus an ADR template.
+- `docs/plan.md` — milestone plan and open-item registry.
+- `docs/migration/triage.md` — POC and library code inventory, initial classification, and the triage rules for gated adoption.
+- `docs/architecture/system-architecture.md` — the confirmed design baseline.
+- Feature capability-gating decision: layered toggles (deployment-level master switch + runtime fine-grained override, ADR-0020), and defines the new-feature implementation flow (`AGENT.md` §3.4).
+- M1 behavior baseline: under `testbed/contracts/sip-baseline/`, S1 basic call (14 messages), S2 no-match 404 (4 messages), S3 policy-reject 603 (4 messages), S4 caller-cancel CANCEL (12 messages) — four message samples; S5–S8 ruled as derived baseline, S10/S11 moved to M2 probe, see `docs/plan.md` §4.1.
+- SIP stack selection validation: reSIProcate E1 probe and build scripts (ADR-0019).
+- Requirement → ADR bidirectional references: each ADR header adds a "responds to REQ" field.
+- Requirement standard `docs/requirements/prd.md` v0.2: added REQ-S-* security requirement class, REQ-F-12 (rule CRUD), REQ-F-14 (approval workflow), and corrected RFC 3261 section numbers.
+- M1 acceptance report `docs/acceptance/report.md` and exit review record `docs/reviews/m1-exit-review.md`.
+- M2a core (`platform/`): `decide()` decision pure function and rule matching (longest prefix, block first), `StateStore` seam and `InMemoryStateStore` / `RedisStateStore` dual implementations, feature-gating seam (layered, default off, fail-closed), bounded-queue telemetry (export does not block the call path), process shell and draining, internal API contract model.
+- Dependency: runtime state store wired to `redis>=5.0` (ADR-0002 / ADR-0007).
+- Design and review: `docs/architecture/hld.md`, `lld.md`; `docs/reviews/m2-design-review.md`, `m2a-kernel-review.md`.
+- M2b boundary seam (`platform/src/as_platform/sip/`): peer allowlist and TLS config hot-rotation (immutable reload, no restart, no dropped calls), SIP adaptor seam (Protocol only, no stack implementation), decision-to-SIP-status-code mapping (603 / 404).
+- M3 decision module: `apps/translation` (number translation, with baseline fact `+8613800138000` → `013800138000` assertion) and `apps/anti-fraud` (rate-window over-limit judgment, `RATE_LIMIT`), both built on the core `decide()`, pure functions, TDD.
+- M3 contract case set: `testbed/contracts/decision/` (14 declarative cases), replayed by both `apps/translation` and `apps/anti-fraud` (marker `contract`).
+- First `integration`-layer case: `platform/tests/test_telemetry_export_integration.py` (real-socket verification that telemetry export does not block the call path); layer ② switched to blocking.
+- M4 config-governance core (`services/config-service`): change-order state machine (approval trail, illegal transitions rejected), immutable config version store, batched canary distribution with auto-rollback.
+- Toggles go through the change pipeline: `ConfigBundle` adds `ToggleDTO` (with a mandatory removal condition), in the same config version as rules; both on/off states covered by tests.
+- M4 console auth and audit (`services/console`): role / permission matrix, submitter cannot approve their own change, both allow and deny are trailed, audit records immutable.
+- M4b control-plane engineering slice (2026-10-02/03): persistent auth / audit integration, console real-time read / session, reuse of the ChangeOrder submit / approve / reject workflow, same-origin ASGI static assets / runtime factory / CLI, and optional Helm config-service wiring; engineering slice only, not REQ/M4b acceptance. Real deployment HTTPS / ingress / proxy, lossless rule compilation, real-time trace, cluster notification / health, Helm render and image build remain unverified or TODO.
+- New owner-only PostgreSQL setup command `as-config-migrate`: initializes the dedicated `as_config` and audit schema via the store schema API, granting the pre-provisioned runtime role only its required config table/column permissions. The database role is pre-created by the DBA; the owner DSN is for manual operations only and never enters the web Pod. Runtime startup still performs no DDL. Fake-connection-focused tests pass; no Helm render/deployment or M4b/M4/REQ acceptance is claimed.
+- Open item D7 adjudication (ADR-0021): runtime-override granularity is number range + stable-hash percentage, judgment idempotent; `gating/overrides.py` and its tests.
+- M5 deployment artifacts: Helm templates (one Deployment / Service, ConfigMap / Secret, HPA, PDB, SA, NOTES per use case) and alert rule set (`deploy/alerts/`, 8 rules, only ratio / relative-quantity / state-quantity thresholds).
+- Capacity-number discipline: HPA threshold and replica bounds left empty and guarded by `required`; the entire `deploy/` directory contains no absolute CPS or concurrency values (O1 pending M6 measurement).
+- PostgreSQL-version `VersionStore` (`services/config-service`): immutable append (no UPDATE / DELETE), table-name allowlist, lazy `psycopg` import; 9 real PostgreSQL 16 container integration cases (`pytest -m integration` totals 12 passed).
+- Core metric seam (`platform/src/as_platform/telemetry/metrics.py`): `MetricsRegistry` / `CallMetrics`, per-instance `as_active_calls` and `as_sip_responses_total` / `as_rule_hits_total` / `as_telemetry_dropped_total`, same names as the metric contract in `deploy/alerts/`; no thresholds or defaults.
+- M5 container image: `deploy/docker/Dockerfile` (multi-stage uv build, non-root, `python -m as_platform` entry) and process entry point `platform/src/as_platform/__main__.py`; in-image SIGTERM drain measured exit code 0.
+- `testbed/probe/`: SIP stack selection probes (E1 baseline diff, E4 TLS hot-rotation) and sequence comparator; fails loudly with exit code 2 when the binding is missing.
 
-### 说明（Notes）
+### Notes
 
-- 还没有产品代码：骨架刻意不含业务逻辑，以便在代码迁入前先评审结构。
-- 门禁 ② ③ ④ 三层在首个引入该类测试的里程碑之前不阻塞。见 `docs/plan.md` §2.4。
-- M1 为文档与基线里程碑，**无产品代码交付**，故 `VERSION` 维持 `0.1.0`，未 bump（ADR-0018）。
-- M2a 有产品代码交付，但产品尚未发布，故 `VERSION` 维持 `0.1.0`，全部增量归入未发布段；首次发布时再按 ADR-0018 定版本号。
+- No product code yet: the skeleton deliberately contains no business logic, so the structure can be reviewed before code is migrated in.
+- Gate layers ② ③ ④ do not block before the milestone that first introduces that class of test. See `docs/plan.md` §2.4.
+- M1 is a documentation and baseline milestone, **with no product code delivered**, so `VERSION` stays `0.1.0`, not bumped (ADR-0018).
+- M2a has product code delivered, but the product is not yet released, so `VERSION` stays `0.1.0`, with all increments going into the Unreleased section; the version number is set at first release per ADR-0018.

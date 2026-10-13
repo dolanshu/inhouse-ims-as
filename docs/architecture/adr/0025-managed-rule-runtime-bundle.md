@@ -17,15 +17,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - **Status**: draft · pending maintainer review
 - **Date**: 2026-10-03
 - **Decides**: M4b-7.3b lossless mapping from management-plane `ManagedRule` rows to internal API `ConfigBundle` / `RuleDTO` (REQ-F-12 → runtime kernel)
-- **回应 REQ**: REQ-F-12, REQ-F-14, REQ-NF-10
+- **Responds to REQ**: REQ-F-12, REQ-F-14, REQ-NF-10
 
-## Context（背景）
+## Context
 
 - REQ-F-12 stores rules in the control plane with match object (calling/called), match mode (prefix/regex), target business type (translation / anti-fraud / routing / block / default), enablement, and optional routing detail.
 - The internal API contract (`RuleDTO` v0.1.0, `INTERNAL_API_VERSION`) carries only `rule_id`, normalized `prefix`, `action` (`forward` | `translate` | `block`), and optional `target`. The kernel `RuleSet` matches **called** numbers only, using **prefix** semantics (`as_platform.decision.rules`, REQ-F-6).
 - M4b-7.3b is blocked until this mapping is explicit and test-backed. Placeholder bundles or silently dropped non-compilable rules are forbidden.
 
-## Decision（决策）
+## Decision
 
 ### Management → `RuleDTO` field mapping
 
@@ -75,21 +75,21 @@ Kernel `Action` strings on the wire match `as_platform.decision.rules.Action` va
 
 Use `normalize_number` on `match_value` so management prefixes align with runtime longest-prefix matching (separators dropped, leading `+` ensured when digits remain).
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
 - Management and runtime share one tested mapping; blocked features fail loudly instead of publishing lossy bundles.
 - Disabled rules stay in PostgreSQL but never reach AS instances.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
 - **Calling-party rules** need a future internal API / `RuleSet` contract bump; v1 rejects them.
 - **Regex rules** need executable semantics and wire fields; v1 rejects them.
 - **Per-use-case bundles** (translation vs anti-fraud filtering) are not split here; one compiled bundle is shared. Fleet filtering by process remains a follow-up if needed.
 - Anti-fraud “hard block” vs “screen forward” is expressed only via `TargetService` (`BLOCK` vs `ANTI_FRAUD`); rate-limit policy stays in the anti-fraud app layer.
 
-## Evidence（证据）
+## Evidence
 
 - Unit tests: `services/config-service/tests/test_runtime_bundle.py` (marker `unit`).
 - Implementation: `services/config-service/src/as_config_service/runtime_bundle.py`.
@@ -100,7 +100,7 @@ Use `normalize_number` on `match_value` so management prefixes align with runtim
 - `ConfigBundle.version` on fleet publish is the distribution plan’s monotonic integer rendered as a decimal string (e.g. plan version `12` → bundle version `"12"`), not the internal `ConfigVersion.version` row counter.
 - Production activation with `version_store` set **rejects** an empty compiled `rules` tuple (`EmptyActiveBundleError`); unit-test `compile_bundle` may still emit `rules=()` when explicitly requested.
 
-## Related（相关）
+## Related
 
 - [ADR-0006 — Configuration Governance](0006-config-governance.md)
 - [ADR-0002 — Per-use-case process](0002-per-usecase-process-state-redis.md)

@@ -92,7 +92,7 @@ Does **not** claim REQ / `test-plan` acceptance or production cluster sign-off.
 | HPA `minReplicas` / custom thresholds | §4.4.3 → **M6** |
 | H12 capacity alerts (CPS/concurrency) | §4.4.3 → **M6** |
 | D3 Redis Sentinel | **M2/O5** |
-| Real SIP “不掉呼叫” under load | **M7** |
+| Real SIP “no dropped calls” under load | **M7** |
 | REQ / `test-plan` full green | **§5.4** / M8 |
 | Production cluster (non-kind) mandatory re-run | Not in plan as hard gate; kind satisfies §217 for engineering |
 

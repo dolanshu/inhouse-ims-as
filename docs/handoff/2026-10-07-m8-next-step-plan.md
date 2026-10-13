@@ -12,74 +12,74 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 下一步（2026-10-07）
+# M8 next step (2026-10-07)
 
-> **状态**：**仍搁置（2026-10-07）**。M7.1 已工程关门。剩下的搁置条件是 Close 前不做真实运营商 S-SBC / 客户 K8s 测试，见 [`acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)。搁置期间不执行 N2–N4，不填 M8 总审确认栏。重开之前，发布镜像再带上 SIP 监听。  
-> **上游**：[`2026-10-06-m8-release-candidate-plan.md`](2026-10-06-m8-release-candidate-plan.md)（阶段 A–E 的总计划，本文不重开）  
-> **事实**：`master` / `origin/master` @ `20e3d07`（`M8 part 1`）。
+> **Status**: **still on hold (2026-10-07)**. M7.1 has closed on the engineering side. The remaining hold condition is that no real operator S-SBC / customer K8s testing is done before Close; see [`acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md). N2–N4 are not executed during the hold, and the M8 final-review confirmation column is not filled in. Before reopening, the published image carries SIP listening again.  
+> **Upstream**: [`2026-10-06-m8-release-candidate-plan.md`](2026-10-06-m8-release-candidate-plan.md) (the master plan for phases A–E; not reopened here)  
+> **Facts**: `master` / `origin/master` @ `20e3d07` (`M8 part 1`).
 
-本文只排 **落地已有产物** 和 **不依赖实验室的维护者裁决**。M8 退出签字、tag、现场采证不在本步。
+This document only schedules **landing existing artifacts** and **maintainer adjudications that do not depend on the lab**. The M8 exit signature, tagging, and on-site evidence collection are not part of this step.
 
 ---
 
-## 1. 现在在哪
+## 1. Where we are now
 
-| 已在 `20e3d07` |
+| Already in `20e3d07` |
 |---|
-| F8 字段契约 + 契约测试 + `emit_native_log_event` JSON 富化 |
-| F6：指纹表淘汰处的 ADR 注释（行为未改） |
-| 最小 M5.1：Helm H-1…H-4 fail-closed、`chart-check` onprem 与退出码断言、kind 脚本 K-1/K-2 |
-| `make gate-strict`、`scripts/check_adr_annotations.py` |
-| 签收矩阵、环境证据、M5 REQ 复评、M8 退出评审、Phase A F6/F8 记录、`report.md` §0 |
+| F8 field contract + contract tests + `emit_native_log_event` JSON enrichment |
+| F6: an ADR annotation at the fingerprint table eviction point (behaviour unchanged) |
+| Minimal M5.1: Helm H-1…H-4 fail-closed, `chart-check` onprem and exit-code assertions, kind scripts K-1/K-2 |
+| `make gate-strict`, `scripts/check_adr_annotations.py` |
+| Sign-off matrix, environment evidence, M5 REQ re-adjudication, M8 exit review, Phase A F6/F8 record, `report.md` §0 |
 
 ---
 
-## 2. 顺序
+## 2. Order
 
-### N2 — 维护者书面裁决（不依赖实验室，不关门）
+### N2 — Maintainer written adjudication (does not depend on the lab, does not close)
 
-每一项改 **正本**，引用处跟着改，避免一处已签、backlog 仍写「未闭合」。
+For each item, change the **authoritative source** and update the references along with it, so that one place being signed off does not leave the backlog still writing "not closed".
 
-| # | 签署的结论 | 正本 | 须同步 |
+| # | Conclusion signed | Authoritative source | Must be synchronized |
 |---|---|---|---|
-| 1 | 进入 M8 的授权补记（2026-10-06 已发生） | RC 计划 §10「批准进入 M8」 | — |
-| 2 | B-1 最小 M5.1；B-2 维持 2026-10-04 工程关门并降级为非 REQ 验收；B-3 故事 C 保持 L1 | [`m5-req-acceptance-review-2026-10-06.md`](../reviews/m5-req-acceptance-review-2026-10-06.md) 确认栏 | RC 计划 §10「阶段 B 范围」 |
-| 3 | F8 接受「字段契约已落地」；C++ JSON 回调留在 RC 后 | [`m8-phase-a-f6-f8-note-2026-10-06.md`](../reviews/m8-phase-a-f6-f8-note-2026-10-06.md) §5 | [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md) F8 行（现为「未闭合」） |
-| 4 | F6 **接受 documented limitation**（长连接无 dialog 终止时只靠 2048 指纹 LRU 与 4096 连接上限） | 同上 §5 | adjudication F6 行。结论不是「已修复」 |
-| 5 | D6 testbed 客户验收放 **v1.1** | [`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) D-3 | 矩阵 `D6-testbed验收` 改为 n-a；RC 计划 §10 |
-| 6 | NF-3 标 **n-a**（固定容量数字与 AGENT.md §2 冲突；O1 目标仍不发布） | [`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md) | — |
-| 7 | 确认四项排除：主叫/正则、PM/AM/UM、D1、D10 极端扩展 | 矩阵对应 n-a 行 `signed_by` | D1 在备注里写成已接受风险，或另立迁移项 |
-| 8 | M5D-1…M5D-6 **移出 v1** | `plan.md` §5 新行（维护者写） | M5 REQ 复评会签栏。不落这 6 行，M5 REQ 维持不通过 |
-| 9 | M1 / M2 / M6 / M7 签 **工程完成** | M1：[`m1-exit-review.md`](../reviews/m1-exit-review.md) 与 `report.md` 历史 §6；M2/M6/M7：各自 2026-10-05 engineering adjudication | [`m8-exit-review-2026-10-06.md`](../reviews/m8-exit-review-2026-10-06.md) §3 引用，不单独充当正本 |
+| 1 | Authorization to enter M8, countersigned (already happened on 2026-10-06) | RC plan §10 "Approval to enter M8" | — |
+| 2 | B-1 minimal M5.1; B-2 keep the 2026-10-04 engineering closure and downgrade it to non-REQ acceptance; B-3 Story C stays L1 | [`m5-req-acceptance-review-2026-10-06.md`](../reviews/m5-req-acceptance-review-2026-10-06.md) confirmation column | RC plan §10 "Phase B scope" |
+| 3 | F8 accepts "the field contract has landed"; the C++ JSON callback stays after RC | [`m8-phase-a-f6-f8-note-2026-10-06.md`](../reviews/m8-phase-a-f6-f8-note-2026-10-06.md) §5 | the F8 row of [`callload-remediation-adjudication-2026-10-05.md`](../reviews/callload-remediation-adjudication-2026-10-05.md) (currently "not closed") |
+| 4 | F6 **accepts the documented limitation** (a long-lived connection with no dialog termination relies only on the 2048-entry fingerprint LRU and the 4096 connection cap) | same §5 | the F6 row of the adjudication. The conclusion is not "fixed" |
+| 5 | D6 testbed customer acceptance is pushed to **v1.1** | [`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) D-3 | change `D6-testbed验收` in the matrix to n-a; RC plan §10 |
+| 6 | NF-3 is marked **n-a** (a fixed capacity number conflicts with AGENT.md §2; the O1 target is still not published) | [`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md) | — |
+| 7 | Confirm the four exclusions: calling/regex, PM/AM/UM, D1, D10 extreme expansion | the `signed_by` cells of the corresponding n-a rows in the matrix | write D1 in the note as an accepted risk, or raise a separate migration item |
+| 8 | M5D-1…M5D-6 are **moved out of v1** | a new row in `plan.md` §5 (written by the maintainer) | the co-signature column of the M5 REQ re-adjudication. Without these 6 rows landing, M5 REQ stays "does not pass" |
+| 9 | M1 / M2 / M6 / M7 sign **engineering complete** | M1: [`m1-exit-review.md`](../reviews/m1-exit-review.md) and the historical §6 of `report.md`; M2/M6/M7: their respective 2026-10-05 engineering adjudications | referenced by §3 of [`m8-exit-review-2026-10-06.md`](../reviews/m8-exit-review-2026-10-06.md); not serving as the authoritative source on their own |
 
-N2 完成后，M5 REQ 级仍是不通过，M8 仍是「RC 就绪、待退出签字」。
+After N2, M5 at the REQ level is still "does not pass", and M8 is still "RC ready, awaiting exit signature".
 
-### N3 — 矩阵里证据已经对齐的行
+### N3 — Rows in the matrix whose evidence is already aligned
 
-N2 之后都可以做。签字备注写「工程证据接受」，不把 test-plan 整句标成全绿。
+All of these can be done after N2. The signature note reads "engineering evidence accepted"; do not mark a whole test-plan row all-green.
 
-- 已标 pass 的 9 行：NF-6、NF-8、NF-11、NF-12、KERNEL-§5；G-1/G-2/G-3 注明逐次 PR 仍由维护者审；G-4 注明本地 `make gate` 绿、e2e 仍非阻塞。
-- open 里可签的 7 行：F-1、F-2、F-3、F-6、F-7、F-12、F-14。F-12/F-14 范围是被叫+前缀。
+- The 9 rows already marked pass: NF-6, NF-8, NF-11, NF-12, KERNEL-§5; G-1/G-2/G-3 note that each PR is still reviewed by the maintainer; G-4 notes that the local `make gate` is green and e2e is still non-blocking.
+- The 7 signable rows among the open ones: F-1, F-2, F-3, F-6, F-7, F-12, F-14. The scope of F-12/F-14 is callee + prefix.
 
-### N4 — 停止线
+### N4 — Stop line
 
-本步结束时下面各项保持原样：
+At the end of this step, the following items stay as they are:
 
-- M8 总审确认栏不填；不打 tag（AGENT.md §10.4）。
-- `plan.md` §4 M8 行保持「RC就绪、待维护者退出签字」。
-- 这 16 个 open 行不改成 pass：F-4、F-5、F-8、F-9、F-10、F-11、F-16、NF-2、NF-5、NF-9、NF-10、NF-13、NF-14、NF-15、S-1、S-4，以及 D12/O5-HA。F-5 在 Route/Record-Route 补采前明确不签 pass。
-- 12 个 blocked 只可写成 defer 或 v1.1，不能写成 pass：F-13、5.4-F-13、F-15、5.4-F-15 真 AS、NF-1、NF-4、NF-7、S-2、S-3、ADR-0008 演练；NF-3 与 D6 若已按 N2 改成 n-a，则从这份 blocked 清单划出。
-- D-1（运营商 PKI / 外网 S-SBC，矩阵 S-2/S-3）与 D-2（客户 K8s NF-1 live）本步不采证。这两条单独写成 defer，也不够填 M8 总审确认栏。
+- The M8 final-review confirmation column is not filled in; no tag is cut (AGENT.md §10.4).
+- The M8 row in `plan.md` §4 stays "RC ready, awaiting maintainer exit signature".
+- These 16 open rows are not changed to pass: F-4, F-5, F-8, F-9, F-10, F-11, F-16, NF-2, NF-5, NF-9, NF-10, NF-13, NF-14, NF-15, S-1, S-4, plus D12/O5-HA. F-5 is explicitly not signed as pass before Route/Record-Route re-collection.
+- The 12 blocked items may only be written as defer or v1.1, not as pass: F-13, 5.4-F-13, F-15, 5.4-F-15 real AS, NF-1, NF-4, NF-7, S-2, S-3, ADR-0008 drill; if NF-3 and D6 have already been changed to n-a per N2, then remove them from this blocked list.
+- D-1 (operator PKI / public-network S-SBC, matrix S-2/S-3) and D-2 (customer K8s NF-1 live) get no evidence collected in this step. These two are written as defer separately, which is still not enough to fill the M8 final-review confirmation column.
 
 ---
 
-## 3. 本步之后才发生的事
+## 3. What happens only after this step
 
-D-1/D-2 都闭合，仍然不能签 M8。确认栏只在下面每一行都已是终态（通过 / n-a / 书面 defer 或 v1.1）之后才填；只要还留着 defer，结论是有条件通过，不是全绿。tag 仅在该栏填写之后由维护者执行（AGENT.md §10.4）。
+Even when D-1/D-2 are both closed, M8 still cannot be signed. The confirmation column is filled in only after every row below is already in a terminal state (pass / n-a / written defer or v1.1); as long as a defer remains, the conclusion is conditional pass, not all-green. The tag is executed by the maintainer only after that column is filled in (AGENT.md §10.4).
 
-| 之后的动作 | 它能闭合的行 | 它闭合不了的行 |
+| Action afterwards | Rows it can close | Rows it cannot close |
 |---|---|---|
-| 排期采证，或书面接受 D-1 / D-2 | S-2、S-3、NF-1 | F-4、F-5、F-8、F-9、F-10、F-11、F-13、F-15、F-16、NF-2、NF-4、NF-5、NF-7、NF-9、NF-10、NF-13、NF-14、NF-15、S-1、S-4、D12/O5-HA、ADR-0008 |
-| 对其余行逐项补证据，或写成 n-a / defer / v1.1 | 上表右列 | — |
+| Schedule evidence collection, or accept D-1 / D-2 in writing | S-2, S-3, NF-1 | F-4, F-5, F-8, F-9, F-10, F-11, F-13, F-15, F-16, NF-2, NF-4, NF-5, NF-7, NF-9, NF-10, NF-13, NF-14, NF-15, S-1, S-4, D12/O5-HA, ADR-0008 |
+| Supplement evidence for the remaining rows item by item, or write them as n-a / defer / v1.1 | the right-hand column above | — |
 
-右列里的行在写成终态之前，M8 总审确认栏保持空白，`plan.md` §4 M8 行保持「RC就绪、待维护者退出签字」。
+Until the rows in the right-hand column are written as terminal states, the M8 final-review confirmation column stays blank, and the M8 row in `plan.md` §4 stays "RC ready, awaiting maintainer exit signature".

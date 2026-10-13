@@ -12,238 +12,238 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M0 骨架评审 — Gap Register
+# M0 skeleton review — Gap Register
 
-> 评审人：AI agent（grilling session）
-> 日期：2026-09-27
-> 范围：当前 `master` 上的 M0 骨架，对照 `docs/plan.md` §2–§3 与 `docs/architecture/新系统整体架构.md` §0 决策账本
-> 状态：**M0 已签字**（维护者授权 AI agent 代签，2026-09-28）。O-F/O-H/G1/G4 已关闭；G3/G5/G6/G7/G8/G9/G10/G11/G12 待后续里程碑处理（非 M0 签字阻塞项）
+> Reviewer: AI agent (grilling session)
+> Date: 2026-09-27
+> Scope: the M0 skeleton on the current `master`, checked against `docs/plan.md` §2–§3 and the §0 decision ledger of `docs/architecture/system-architecture.md`
+> Status: **M0 signed off** (the maintainer authorised the AI agent to sign on their behalf, 2026-09-28). O-F/O-H/G1/G4 are closed; G3/G5/G6/G7/G8/G9/G10/G11/G12 are deferred to later milestones (they do not block the M0 sign-off)
 
-## 评审方法
+## Review method
 
-1. 运行 `make gate`，确认当前门禁状态。
-2. 逐条对照 `plan.md` M0 退出标准。
-3. 对照架构文档 §0 的 18 项已确认决策，检查 ADR 落盘情况。
-4. 检查 `AGENT.md` 与 `plan.md` / 架构文档 / `migration/triage.md` 的职责边界。
+1. Run `make gate` to confirm the current gate state.
+2. Check against the M0 exit criteria of `plan.md` item by item.
+3. Check against the 18 confirmed decisions in §0 of the architecture document and verify how the ADRs were landed.
+4. Check the responsibility boundaries between `AGENT.md` and `plan.md` / the architecture documents / `migration/triage.md`.
 
 ---
 
-## 1. 门禁状态
+## 1. Gate status
 
-| 检查 | 命令 | 结果 |
+| Check | Command | Result |
 |---|---|---|
-| ruff format --check | `uv run ruff format --check .` | 通过（36 files already formatted） |
-| ruff check | `uv run ruff check .` | 通过 |
-| mypy | `uv run mypy` | 通过（7 source files） |
-| unit / contract | `uv run pytest -m "unit or contract" -q` | 通过（44 passed） |
-| integration | `uv run pytest -m integration -q` | **失败**：44 deselected，pytest exit 5 |
-| e2e / performance | 未跑到 | — |
+| ruff format --check | `uv run ruff format --check .` | Pass (36 files already formatted) |
+| ruff check | `uv run ruff check .` | Pass |
+| mypy | `uv run mypy` | Pass (7 source files) |
+| unit / contract | `uv run pytest -m "unit or contract" -q` | Pass (44 passed) |
+| integration | `uv run pytest -m integration -q` | **Fail**: 44 deselected, pytest exit 5 |
+| e2e / performance | not reached | — |
 
-**结论**：`make gate` 当前不绿。失败原因是 `Makefile` 的 `test` 目标在骨架阶段直接调用 integration 层，而没有任何 integration 测试。
-
----
-
-## 2. Gap 清单
-
-### G1 — `make gate` 在骨架阶段失败
-
-- **位置**：`Makefile` 第 24–28 行
-- **表现**：`make test` 调用 `uv run pytest -m integration -q`，无测试时 pytest 返回 exit 5
-- **影响**：违反 `AGENT.md` §8 本地门禁不绿不能提交的规则；M0 无法签字
-- **建议修复**：
-  - 方案 A：`gate` 目标改为 `lint type test-unit`，本地只跑 ① 层（推荐）
-  - 方案 B：`test` 目标用 shell 条件跳过当前无测试的 marker，待 M2/M3/M6 移除
-
-### G3 — 18 个 ADR 只有注册表，没有正文文件
-
-- **位置**：`docs/architecture/adr/README.md`
-- **表现**：全部 18 项决策状态为 `skeleton`
-- **分析**：按 `AGENT.md` 规则，ADR 与所授权的改动一起写。M0 不授权具体行为改动，只授权结构，所以 M0 本身可接受 skeleton；但需明确 M1 之前必须写出来的第一批 ADR
-- **建议**：M0 签字后立即写 ADR-0001、0002、0003、0018，作为结构决策的落盘；其余随里程碑推进
-
-### G4 — `platform/pyproject.toml` 注释与双栈决策不一致
-
-- **位置**：`platform/pyproject.toml` 第 18–20 行
-- **表现**：注释写 “One SIP stack version in one interpreter”
-- **分析**：架构决策 8 是双栈并行（sippy 生产 + go-b2bua 试点），不是单一栈
-- **建议修复**：更新注释为 “sippy 是当前唯一 Python 生产依赖；go-b2bua 是 M7 实验栈，不通过 uv workspace 引入”
-
-### G5 — `AGENT.md` 与 `plan.md` / 架构文档大量重复
-
-- **位置**：`AGENT.md` 全文
-- **表现**：目录结构、里程碑、ADR 注册表、未决项等细节与 `plan.md` / `adr/README.md` / `新系统整体架构.md` 重复
-- **分析**：维护者 Q3 明确 AGENT.md 应聚焦“一致性规则”，不与 plan 重复
-- **建议修复**：重写 `AGENT.md`，重复内容用链接指回专门文档，保留：定位、非目标、分层、编码约定、测试策略原则、ADR 规则、版本依赖原则、门禁、AI 辅助、Git 规则、POC 采纳规则、安全、DoD、未决项引用
-
-### G6 — `AGENT.md` 缺少 POC 中已有的 subagent / 协作规则
-
-- **位置**：`AGENT.md` §9（AI 辅助）
-- **表现**：只有 3 条高层规则，缺少 POC `AGENT.md` §14 中的 delegation policy、team mode 规则、message timing、分支冲突预防等
-- **影响**：当前项目比 POC 更复杂（monorepo、多里程碑、跨语言），却缺少 agent 协作细则
-- **建议修复**：在 `AGENT.md` 中增加“AI Agent 协作规则”一节，明确：
-  - 读写子代理必须用 team mode（`name` + `acceptEdits`）
-  - 探索性任务用同步 search subagent
-  - 一个工作树同时只能有一个 writing subagent
-  - 消息异步/可能丢失的处理
-  - 里程碑 handover 协议
-  - 禁止 agent 自行创建分支、push、tag
-
-### G7 — `services/config-service` 和 `services/console` 未声明依赖
-
-- **位置**：`services/config-service/pyproject.toml`、`services/console/pyproject.toml`
-- **表现**：`dependencies = []`
-- **分析**：骨架阶段可接受空依赖，但 README 应说明未来依赖方向（PG、platform 契约、OTel 等）
-- **建议修复**：在各自 `README.md` 中列出“未来会依赖的工作区成员 / 外部包”
-
-### G8 — 所有 README 都是占位符
-
-- **位置**：`apps/*/README.md`、`services/*/README.md`、`testbed/*/README.md`、`deploy/*/README.md`、`platform/README.md`
-- **表现**：只有标题，没有职责说明
-- **分析**：`plan.md` §2.1 要求“每个目录都带一个 README 说明该放什么”
-- **建议修复**：每个 README 加 3–5 行职责说明 + 指向 `plan.md` / 架构文档的链接；不写未来实现细节
-
-### G9 — 缺少 `.env.example` / 配置样本
-
-- **位置**：仓库根目录
-- **表现**：无 `.env.example`
-- **分析**：POC 有 `.env.example`，M0 虽然不需要完整配置，但环境变量清单模板有助于明确进程边界
-- **建议修复**：添加最小 `.env.example`，列出各进程会读取的 env var（地址、端口、规则文件路径、peer 白名单等），值用占位符
-
-### G10 — `deploy/helm/` 和 `deploy/compose/` 只有 README
-
-- **位置**：`deploy/helm/README.md`、`deploy/compose/README.md`
-- **表现**：没有 `Chart.yaml`、`values.yaml` 或 `compose.yml`
-- **分析**：M0 可接受空 chart，但应有一个最小骨架说明目标形态
-- **建议修复**：
-  - `deploy/compose/`：添加最小 `compose.yml`（未来运行 platform、apps、services、redis、postgres）
-  - `deploy/helm/`：添加最小 `Chart.yaml` + 空 `values.yaml` + `templates/` 目录
-
-### G11 — 当前 commit 已 push，但维护者说明“不作为 roadmap”
-
-- **位置**：`docs/plan.md` §0、§3
-- **表现**：没有记录当前 `master` 的 baseline 状态
-- **分析**：需要明确当前提交是 pre-roadmap 骨架，M0 签字后的首次正式 commit 才是基线
-- **建议修复**：在 `CHANGELOG.md` 或 `plan.md` §0 增加说明，区分“已 push 的 pre-roadmap 骨架”与“M0 签字后的正式基线”
-
-### G12 — 未记录 POC 冻结点
-
-- **位置**：`docs/migration/triage.md` §1
-- **表现**：没有记录 `3rtparty_AS_POC` 的 commit hash
-- **分析**：M1 行为基线抓取需要可复现的 POC 版本
-- **建议修复**：在 `migration/triage.md` 顶部记录 POC 当前 HEAD hash
+**Conclusion**: `make gate` is currently not green. The reason for the failure is that the `test` target of the `Makefile` calls the integration layer directly at the skeleton stage, while there are no integration tests at all.
 
 ---
 
-## 3. 建议的 M0 修正顺序
+## 2. Gap list
 
-按依赖关系排序，先修阻塞项，再补文档：
+### G1 — `make gate` fails at the skeleton stage
 
-1. **G1**：修复 `Makefile`，使 `make gate` 绿
-2. **G5 + G6**：重写 `AGENT.md`，聚焦一致性规则，补 subagent 协作细则
-3. **G3**：M0 签字后写第一批 ADR（0001、0002、0003、0018）
-4. **G4**：更新 `platform/pyproject.toml` 双栈注释
-5. **G8**：填充各目录 README
-6. **G9 + G10**：添加 `.env.example`、最小 compose、最小 helm 骨架
-7. **G7**：在 service README 中说明未来依赖
-8. **G11 + G12**：记录 baseline 与 POC 冻结点
+- **Location**: `Makefile` lines 24–28
+- **Symptom**: `make test` calls `uv run pytest -m integration -q`, and pytest returns exit 5 when there are no tests
+- **Impact**: violates the `AGENT.md` §8 rule that nothing may be committed while the local gate is not green; M0 cannot be signed off
+- **Suggested fix**:
+  - Option A: change the `gate` target to `lint type test-unit` so that locally only layer ① runs (recommended)
+  - Option B: use a shell condition in the `test` target to skip markers that currently have no tests, and remove it at M2/M3/M6
+
+### G3 — 18 ADRs have only a registry, no body files
+
+- **Location**: `docs/architecture/adr/README.md`
+- **Symptom**: all 18 decision statuses are `skeleton`
+- **Analysis**: by the `AGENT.md` rule, an ADR is written together with the change it authorises. M0 does not authorise concrete behaviour changes, only structure, so skeletons are acceptable for M0 itself; however, the first batch of ADRs that must be written before M1 needs to be made explicit
+- **Suggestion**: immediately after the M0 sign-off, write ADR-0001, 0002, 0003 and 0018 as the landed structural decisions; the rest follow with the milestones
+
+### G4 — `platform/pyproject.toml` comment is inconsistent with the dual-stack decision
+
+- **Location**: `platform/pyproject.toml` lines 18–20
+- **Symptom**: the comment says "One SIP stack version in one interpreter"
+- **Analysis**: architecture decision 8 is dual-stack in parallel (sippy in production + go-b2bua as a pilot), not a single stack
+- **Suggested fix**: update the comment to "sippy is currently the only Python production dependency; go-b2bua is the M7 experimental stack and is not brought in through the uv workspace"
+
+### G5 — `AGENT.md` duplicates a lot of `plan.md` / architecture-document content
+
+- **Location**: `AGENT.md` in full
+- **Symptom**: details such as the directory structure, milestones, the ADR registry and open items are duplicated with `plan.md` / `adr/README.md` / `system-architecture.md`
+- **Analysis**: maintainer Q3 explicitly stated that AGENT.md should focus on "consistency rules" and must not duplicate the plan
+- **Suggested fix**: rewrite `AGENT.md`, pointing duplicated content back to the dedicated documents via links, and retaining: positioning, non-goals, layering, coding conventions, test-strategy principles, ADR rules, version-dependency principles, the gate, AI assistance, Git rules, POC adoption rules, security, DoD, open-item references
+
+### G6 — `AGENT.md` lacks the subagent / collaboration rules already present in the POC
+
+- **Location**: `AGENT.md` §9 (AI assistance)
+- **Symptom**: only 3 high-level rules exist; the delegation policy, team mode rules, message timing, branch-conflict prevention etc. from POC `AGENT.md` §14 are missing
+- **Impact**: the current project is more complex than the POC (monorepo, multiple milestones, cross-language), yet it lacks agent collaboration details
+- **Suggested fix**: add an "AI Agent collaboration rules" section to `AGENT.md` that specifies:
+  - reading/writing subagents must use team mode (`name` + `acceptEdits`)
+  - exploratory tasks use a synchronous search subagent
+  - only one writing subagent may operate on a worktree at a time
+  - how to handle asynchronous / possibly-lost messages
+  - the milestone handover protocol
+  - agents are forbidden from creating branches, pushing or tagging on their own
+
+### G7 — `services/config-service` and `services/console` declare no dependencies
+
+- **Location**: `services/config-service/pyproject.toml`, `services/console/pyproject.toml`
+- **Symptom**: `dependencies = []`
+- **Analysis**: empty dependencies are acceptable at the skeleton stage, but the READMEs should state the future dependency direction (PG, platform contracts, OTel, etc.)
+- **Suggested fix**: list the "workspace members / external packages that will be depended on in future" in each `README.md`
+
+### G8 — All READMEs are placeholders
+
+- **Location**: `apps/*/README.md`, `services/*/README.md`, `testbed/*/README.md`, `deploy/*/README.md`, `platform/README.md`
+- **Symptom**: there are only titles, no responsibility description
+- **Analysis**: `plan.md` §2.1 requires "every directory carries a README explaining what belongs there"
+- **Suggested fix**: add 3–5 lines of responsibility description plus links to `plan.md` / the architecture documents to each README; do not write future implementation details
+
+### G9 — Missing `.env.example` / configuration sample
+
+- **Location**: repository root directory
+- **Symptom**: there is no `.env.example`
+- **Analysis**: the POC has an `.env.example`; M0 does not need a full configuration, but an environment-variable list template helps clarify process boundaries
+- **Suggested fix**: add a minimal `.env.example` listing the env vars each process will read (addresses, ports, rule file paths, peer allowlists, etc.), with placeholder values
+
+### G10 — `deploy/helm/` and `deploy/compose/` contain only a README
+
+- **Location**: `deploy/helm/README.md`, `deploy/compose/README.md`
+- **Symptom**: there is no `Chart.yaml`, `values.yaml` or `compose.yml`
+- **Analysis**: an empty chart is acceptable for M0, but there should be a minimal skeleton describing the target shape
+- **Suggested fix**:
+  - `deploy/compose/`: add a minimal `compose.yml` (to eventually run platform, apps, services, redis, postgres)
+  - `deploy/helm/`: add a minimal `Chart.yaml` + an empty `values.yaml` + a `templates/` directory
+
+### G11 — The current commit has been pushed, but the maintainer states it is "not a roadmap"
+
+- **Location**: `docs/plan.md` §0, §3
+- **Symptom**: the baseline state of the current `master` is not recorded
+- **Analysis**: it needs to be made clear that the current commit is the pre-roadmap skeleton, and that the first formal commit after the M0 sign-off is the baseline
+- **Suggested fix**: add a note in `CHANGELOG.md` or `plan.md` §0 distinguishing the "pushed pre-roadmap skeleton" from the "formal baseline after the M0 sign-off"
+
+### G12 — The POC freeze point is not recorded
+
+- **Location**: `docs/migration/triage.md` §1
+- **Symptom**: the commit hash of `3rtparty_AS_POC` is not recorded
+- **Analysis**: the M1 behavioural baseline capture needs a reproducible POC version
+- **Suggested fix**: record the current POC HEAD hash at the top of `migration/triage.md`
 
 ---
 
-## 4. 重大决策偏移（2026-09-27 会话中暴露）
+## 3. Suggested M0 correction order
 
-### SIP Stack 选型：从“双栈并行”转向“替换 sippy”
+Ordered by dependency: fix the blocking items first, then fill in the documentation:
 
-维护者在 grilling Q5 中明确：**新项目的起点是换掉 sippy**。具体替换目标仍在评估中：
+1. **G1**: fix the `Makefile` so that `make gate` is green
+2. **G5 + G6**: rewrite `AGENT.md`, focusing on consistency rules and adding subagent collaboration details
+3. **G3**: write the first batch of ADRs (0001, 0002, 0003, 0018) after the M0 sign-off
+4. **G4**: update the dual-stack comment in `platform/pyproject.toml`
+5. **G8**: populate the READMEs of each directory
+6. **G9 + G10**: add `.env.example`, a minimal compose file and a minimal helm skeleton
+7. **G7**: describe future dependencies in the service READMEs
+8. **G11 + G12**: record the baseline and the POC freeze point
 
-- `go-b2bua`（sippy 作者的官方 Go 移植）
-- 某个 C/C++ base 的 SIP stack（如 reSIProcate、libre/baresip、sofia-sip 等）
+---
 
-在最终选型完成之前，**不能冒进**。
+## 4. Major decision deviation (exposed during the 2026-09-27 session)
 
-#### 对当前骨架的影响
+### SIP stack selection: from "dual-stack in parallel" to "replacing sippy"
 
-| 原假设 | 当前状态 | 影响 |
+The maintainer made explicit in grilling Q5: **the starting point of the new project is to swap out sippy**. The specific replacement target is still under evaluation:
+
+- `go-b2bua` (the official Go port by the sippy author)
+- a C/C++-based SIP stack (such as reSIProcate, libre/baresip, sofia-sip, etc.)
+
+Before the final selection is complete, **we must not rush ahead**.
+
+#### Impact on the current skeleton
+
+| Original assumption | Current state | Impact |
 |---|---|---|
-| 架构决策 8：双栈并行，sippy 保生产 + go-b2bua 试点 | 需要推翻或重写 | `docs/architecture/新系统整体架构.md` §0 决策 8、§10 双栈迁移路径、ADR-0011 全部需要更新 |
-| `platform/pyproject.toml` 锁死 `sippy==2.4.2` | 与“换掉 sippy”冲突 | 需要改为可插拔 seam，或至少明确 sippy 只是当前占位 |
-| M2 计划：在 platform/ 上基于 sippy 建内核 | 被阻塞 | 在 SIP stack 选型完成前，M2 不能写绑定 sippy 的代码 |
-| M7 Go 迁移 | 可能提前或取消 | 如果最终选 go-b2bua，M7 不是“迁移”，而是“主力实现”；如果选 C/C++，go-b2bua 只是评估对象之一 |
-| `testbed/simulators` 基于 sippy | 需要重新评估 | 仿真网元是否必须和 AS 同栈？POC 是这么做的，但产品不一定 |
+| Architecture decision 8: dual-stack in parallel, sippy stays in production + go-b2bua pilot | needs to be overturned or rewritten | decision 8 in §0 of `docs/architecture/system-architecture.md`, the §10 dual-stack migration path and ADR-0011 all need updating |
+| `platform/pyproject.toml` pins `sippy==2.4.2` | conflicts with "swapping out sippy" | needs to become a pluggable seam, or at minimum state explicitly that sippy is only a current placeholder |
+| M2 plan: build the kernel on platform/ based on sippy | blocked | M2 cannot write sippy-bound code before the SIP stack selection is complete |
+| M7 Go migration | may be pulled forward or cancelled | if go-b2bua is finally selected, M7 is not a "migration" but the "primary implementation"; if a C/C++ stack is selected, go-b2bua is only one of the evaluation candidates |
+| `testbed/simulators` based on sippy | needs re-evaluation | must the simulated network element share the same stack as the AS? the POC does it this way, but the product may not |
 
-#### 需要立即回答的问题
+#### Questions requiring an immediate answer
 
-1. “换掉 sippy”是**绝对排除 sippy**，还是“sippy 不作为生产栈，但评估期仍可作参考”？
-2. 选型的**硬约束**是什么？（许可、容量目标、团队 Go/C++ 技能、行为兼容性、vendoring 可行性）
-3. 是否允许**并行 spike** 多个候选栈，还是先定评估框架再逐个试？
-4. 这个决策是否阻塞 M0 签字？即：M0 是否可以在“栈未选定”的情况下签字，把选型作为 M0 之后的独立研究任务？
-5. 当前骨架中的 `sippy==2.4.2` 是立即移除，还是保留为“当前占位依赖，待 ADR 更新后替换”？
+1. Does "swapping out sippy" mean **absolutely excluding sippy**, or "sippy is not the production stack but may still serve as a reference during the evaluation period"?
+2. What are the **hard constraints** of the selection (licence, capacity targets, the team's Go/C++ skills, behavioural compatibility, vendoring feasibility)?
+3. Are **parallel spikes** of multiple candidate stacks allowed, or should the evaluation framework be defined first and each candidate tried in turn?
+4. Does this decision block the M0 sign-off? I.e. can M0 be signed off in the "stack not yet selected" state, with the selection becoming a standalone research task after M0?
+5. Is `sippy==2.4.2` in the current skeleton to be removed immediately, or retained as a "current placeholder dependency to be replaced after the ADR update"?
 
 ---
 
-## 5. 需要维护者裁决的开放问题
+## 5. Open questions requiring maintainer adjudication
 
-| # | 问题 | 当前建议 |
+| # | Question | Current suggestion |
 |---|---|---|
-| O-A | `make gate` 是否只在 M0 跑 ① 层？ | 是，直到 M2 引入首个 integration 测试 |
-| O-B | ADR-0001/0002/0003/0018 是否作为 M0 签字后的第一批？ | 是；但若 SIP stack 选型推翻原 ADR-0011，则 ADR-0011/0019 优先 |
-| O-C | `AGENT.md` 重写后是否需要单独 review？ | 是，维护者 Q7 已确认 |
-| O-D | `.env.example` 和最小 compose/helm 是否纳入 M0？ | 是，作为目标形态的占位；但若栈未定，helm/compose 中不绑定具体 SIP 镜像 |
-| O-E | 当前 `master` 上的 pre-roadmap commit 是否保留历史？ | 由维护者决定；建议保留，但在文档中标注 baseline |
-| O-F | SIP stack 选型是否阻塞 M0 签字？ | **已裁决：阻塞 M0 签字**。M0 签字前必须完成 SIP stack 选型并写出对应 ADR |
-| O-G | 当前 `sippy==2.4.2` 是保留占位还是立即移除？ | **已裁决：立即从 `platform/pyproject.toml` 移除**。sippy 降级为 POC 行为基线参考，不进入产品生产依赖 |
-| O-H | 是否新增 ADR-0019 取代原 ADR-0011？ | 待裁决；建议推翻原决策时用新 ADR，不覆盖旧编号 |
+| O-A | Should `make gate` run only layer ① during M0? | Yes, until M2 introduces the first integration test |
+| O-B | Should ADR-0001/0002/0003/0018 be the first batch after the M0 sign-off? | Yes; but if the SIP stack selection overturns the original ADR-0011, then ADR-0011/0019 take priority |
+| O-C | Does the rewritten `AGENT.md` need a separate review? | Yes, confirmed by maintainer Q7 |
+| O-D | Are `.env.example` and the minimal compose/helm part of M0? | Yes, as placeholders for the target shape; but if the stack is undecided, do not bind a specific SIP image in helm/compose |
+| O-E | Is the history of the pre-roadmap commit on the current `master` to be preserved? | For the maintainer to decide; recommended to preserve it, but annotate the baseline in the documents |
+| O-F | Does the SIP stack selection block the M0 sign-off? | **Adjudicated: it blocks the M0 sign-off.** The SIP stack selection must be completed and the corresponding ADR written before the M0 sign-off |
+| O-G | Is the current `sippy==2.4.2` to be kept as a placeholder or removed immediately? | **Adjudicated: remove immediately from `platform/pyproject.toml`**. sippy is downgraded to a reference for the POC behavioural baseline and does not enter the product production dependencies |
+| O-H | Should a new ADR-0019 be added to replace the original ADR-0011? | Pending adjudication; recommended to use a new ADR when overturning the original decision rather than overwriting the old number |
 
 ---
 
 ## Adjudication
 
-> 维护者裁决日期：2026-09-28
-> 裁决人：维护者
+> Maintainer adjudication date: 2026-09-28
+> Adjudicator: maintainer
 
-| ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
+| ID | Source | Question summary | Adjudication | Change plan | Status | Verification method | Notes |
 |---|---|---|---|---|---|---|---|
-| G1 | §2 G1 | `make gate` 在骨架阶段失败（integration 层无测试导致 exit 5） | 接受 | `gate` 目标改为 `lint type test-unit`，M0 只跑 ① 层 | 已修改 | `make gate` 全绿 | G1 与 O-A 为同一问题的 gap 与 open question 两面 |
-| G3 | §2 G3 | 18 个 ADR 只有注册表无正文 | 接受 | M0 签字后写第一批 ADR（0001/0002/0003/0018） | 待修改 | ADR 文件存在且通过评审 | 与 O-B 对应 |
-| G4 | §2 G4 | `platform/pyproject.toml` 注释与双栈决策不一致 | 部分接受 | 注释改为反映 ADR-0019 当前候选状态（sippy 退出生产栈，选型进行中） | 已关闭 | platform/pyproject.toml L18-24 注释已更新，明确 ADR-0019 记录选型结果 | 之前会话中已被更新，自动解决 |
-| G5 | §2 G5 | `AGENT.md` 与 `plan.md`/架构文档大量重复 | 接受 | 重写 `AGENT.md`，聚焦一致性规则，重复内容用链接 | 已关闭 | AGENT.md 通过链接指向 plan.md/架构文档，无重复内容（见 §1 L14、§4 L112、§15 L273） | 与 G6 同属 AGENT.md 重写范围 |
-| G6 | §2 G6 | `AGENT.md` 缺少 subagent/协作规则 | 接受 | 在 `AGENT.md` 中增加 AI Agent 协作规则节 | 已关闭 | AGENT.md §10 已含完整 subagent 协作规则（§10.1-10.4，见 L168-224） | 与 G5 同属 AGENT.md 重写范围 |
-| G7 | §2 G7 | services 未声明依赖 | 接受 | 在各 service README 中列出未来依赖方向 | 已关闭 | `services/config-service/README.md` 与 `services/console/README.md` 已添加未来依赖节（含 platform/PG/Redis/OTel 等依赖方向说明） | |
-| G8 | §2 G8 | 所有 README 都是占位符 | 接受 | 每个 README 加 3–5 行职责说明 + 链接 | 已关闭 | 全仓库 README 扫描确认均含实质内容（apps/translation、apps/anti-fraud、platform、services/*、testbed/*、deploy/* 均有 10+ 行内容 + ADR/架构文档链接） | |
-| G9 | §2 G9 | 缺少 `.env.example` | 接受 | 添加最小 `.env.example`，列出各进程 env var | 已关闭 | 仓库根目录 `.env.example` 已创建，分 5 节列出 SIP 信令面/Redis Sentinel/PostgreSQL/OTel/进程通用环境变量模板 | |
-| G10 | §2 G10 | deploy/helm 和 deploy/compose 只有 README | 接受 | 添加最小 compose.yml 和 Chart.yaml + values.yaml | 已关闭 | `deploy/helm/Chart.yaml` + `values.yaml` + `deploy/compose/compose.yml` 骨架文件已创建 | 与 O-D 对应 |
-| G11 | §2 G11 | 当前 commit 已 push 但不作为 roadmap | 接受 | 在 plan.md §0 或 CHANGELOG 中增加 baseline 说明 | 已关闭 | plan.md §0 新增基线说明小节 | 与 O-E 对应 |
-| G12 | §2 G12 | 未记录 POC 冻结点 | 接受 | 在 `migration/triage.md` 顶部记录 POC HEAD hash | 已关闭 | `docs/migration/triage.md` L14 记录 POC 冻结点 `4ddf3df3` | |
-| O-A | §5 O-A | `make gate` 是否只在 M0 跑 ① 层 | 接受 | M0 期间 `gate` 依赖 `test-unit`，M2 引入 integration 测试后再调整 | 已修改 | `make gate` 全绿 | 与 G1 为同一问题 |
-| O-B | §5 O-B | ADR-0001/0002/0003/0018 是否作为 M0 签字后第一批 | 接受 | M0 签字后优先写这四个 ADR；若 ADR-0019 先 Accepted 则优先 | 待修改 | ADR 文件存在且通过评审 | 与 G3 对应 |
-| O-C | §5 O-C | `AGENT.md` 重写后是否需要单独 review | 接受 | 重写后由维护者单独评审 | 待修改 | 有独立 review record | 与 G5/G6 对应 |
-| O-D | §5 O-D | `.env.example` 和最小 compose/helm 是否纳入 M0 | 接受 | 纳入 M0，作为目标形态占位；不绑定具体 SIP 镜像 | 待修改 | 文件存在 | 与 G9/G10 对应 |
-| O-E | §5 O-E | 当前 master 上的 pre-roadmap commit 是否保留历史 | 待裁决 | 由维护者决定；建议保留并标注 baseline | 待修改 | 维护者签字确认 | 与 G11 对应 |
-| **O-F** | **§5 O-F** | **SIP stack 选型是否阻塞 M0 签字** | **接受（维持原裁决）** | **ADR-0019 必须 Accepted 后 M0 才能签字** | **已关闭** | **ADR-0019 状态已转为 Accepted，plan.md O2 解除阻塞** | **维护者 2026-09-28 完成选型（reSIProcate）** |
-| O-G | §5 O-G | 当前 `sippy==2.4.2` 是保留占位还是立即移除 | 接受 | 立即从 `platform/pyproject.toml` 移除，sippy 降级为 testbed 基线参考 | 待修改 | platform/pyproject.toml 不含 sippy 生产依赖 | 原裁决已生效，待执行 |
-| O-H | §5 O-H | 是否新增 ADR-0019 取代原 ADR-0011 | 接受 | 新增 ADR-0019，不覆盖原 ADR-0011 编号 | 已修改 | ADR-0019 草案已存在 | ADR-0019 已于 2026-09-28 转为 Accepted，选定 reSIProcate |
+| G1 | §2 G1 | `make gate` fails at the skeleton stage (no tests in the integration layer causes exit 5) | Accept | Change the `gate` target to `lint type test-unit`, M0 runs only layer ① | Modified | `make gate` fully green | G1 and O-A are two sides of the same problem, as gap and open question respectively |
+| G3 | §2 G3 | 18 ADRs have only a registry and no bodies | Accept | Write the first batch of ADRs (0001/0002/0003/0018) after the M0 sign-off | Pending modification | ADR files exist and pass review | Corresponds to O-B |
+| G4 | §2 G4 | `platform/pyproject.toml` comment is inconsistent with the dual-stack decision | Partially accept | Change the comment to reflect the current candidate status of ADR-0019 (sippy out of the production stack, selection in progress) | Closed | the comment at platform/pyproject.toml L18-24 has been updated and explicitly records that ADR-0019 records the selection result | already updated in an earlier session, resolved automatically |
+| G5 | §2 G5 | `AGENT.md` heavily duplicates `plan.md` / architecture documents | Accept | Rewrite `AGENT.md`, focus on consistency rules, use links for duplicated content | Closed | AGENT.md points to plan.md / the architecture documents via links with no duplicated content (see §1 L14, §4 L112, §15 L273) | G5 and G6 fall within the scope of the AGENT.md rewrite |
+| G6 | §2 G6 | `AGENT.md` lacks subagent / collaboration rules | Accept | Add an "AI Agent collaboration rules" section to `AGENT.md` | Closed | AGENT.md §10 now contains the complete subagent collaboration rules (§10.1-10.4, see L168-224) | G6 and G5 fall within the scope of the AGENT.md rewrite |
+| G7 | §2 G7 | services declare no dependencies | Accept | List the future dependency direction in each service README | Closed | `services/config-service/README.md` and `services/console/README.md` have added a future-dependency section (including the dependency directions of platform/PG/Redis/OTel etc.) | |
+| G8 | §2 G8 | All READMEs are placeholders | Accept | Add 3–5 lines of responsibility description + links to each README | Closed | a repository-wide README scan confirms all contain substantive content (apps/translation, apps/anti-fraud, platform, services/*, testbed/*, deploy/* all have 10+ lines of content + links to the ADR/architecture documents) | |
+| G9 | §2 G9 | Missing `.env.example` | Accept | Add a minimal `.env.example` listing the env vars of each process | Closed | a repository-root `.env.example` has been created, listing environment-variable templates for the SIP signalling plane / Redis Sentinel / PostgreSQL / OTel / common process variables in 5 sections | |
+| G10 | §2 G10 | deploy/helm and deploy/compose contain only a README | Accept | Add a minimal compose.yml and Chart.yaml + values.yaml | Closed | the skeleton files `deploy/helm/Chart.yaml` + `values.yaml` + `deploy/compose/compose.yml` have been created | Corresponds to O-D |
+| G11 | §2 G11 | The current commit has been pushed but does not count as roadmap | Accept | Add a baseline note in plan.md §0 or the CHANGELOG | Closed | plan.md §0 has a new baseline-note subsection | Corresponds to O-E |
+| G12 | §2 G12 | The POC freeze point is not recorded | Accept | Record the POC HEAD hash at the top of `migration/triage.md` | Closed | `docs/migration/triage.md` L14 records the POC freeze point `4ddf3df3` | |
+| O-A | §5 O-A | Should `make gate` run only layer ① during M0 | Accept | During M0 `gate` depends on `test-unit`; it is adjusted once M2 introduces integration tests | Modified | `make gate` fully green | Same problem as G1 |
+| O-B | §5 O-B | Should ADR-0001/0002/0003/0018 be the first batch after the M0 sign-off | Accept | Prioritise these four ADRs after the M0 sign-off; if ADR-0019 is Accepted first it takes priority | Pending modification | ADR files exist and pass review | Corresponds to G3 |
+| O-C | §5 O-C | Does the rewritten `AGENT.md` need a separate review | Accept | Separate maintainer review after the rewrite | Pending modification | there is an independent review record | Corresponds to G5/G6 |
+| O-D | §5 O-D | Are `.env.example` and the minimal compose/helm part of M0 | Accept | Include in M0 as placeholders for the target shape; do not bind a specific SIP image | Pending modification | files exist | Corresponds to G9/G10 |
+| O-E | §5 O-E | Is the history of the pre-roadmap commit on the current master to be preserved | Pending adjudication | For the maintainer to decide; recommended to preserve it and annotate the baseline | Pending modification | maintainer sign-off confirmation | Corresponds to G11 |
+| **O-F** | **§5 O-F** | **Does the SIP stack selection block the M0 sign-off** | **Accept (original adjudication maintained)** | **M0 can only be signed off after ADR-0019 is Accepted** | **Closed** | **The status of ADR-0019 has moved to Accepted, plan.md O2 unblocked** | **The maintainer completed the selection on 2026-09-28 (reSIProcate)** |
+| O-G | §5 O-G | Is the current `sippy==2.4.2` a retained placeholder or to be removed immediately | Accept | Remove immediately from `platform/pyproject.toml`; sippy is downgraded to a testbed baseline reference | Pending modification | platform/pyproject.toml contains no sippy production dependency | The original adjudication has taken effect, execution pending |
+| O-H | §5 O-H | Should a new ADR-0019 be added to replace the original ADR-0011 | Accept | Add ADR-0019, do not overwrite the original ADR-0011 number | Modified | the ADR-0019 draft already exists | ADR-0019 moved to Accepted on 2026-09-28, selecting reSIProcate |
 
 ---
 
-## 6. M0 签字记录
+## 6. M0 sign-off record
 
-- **签字日期**：2026-09-28
-- **签字人**：维护者授权 AI agent 代签
-- **授权依据**：维护者口头授权（当前对话）
-- **签字条件**：
-  - ✅ `make gate` 全绿（44 passed）
-  - ✅ ADR-0019 已 Accepted（reSIProcate 选定，O2 阻塞解除）
-  - ✅ 架构文档决策 8 已同步
-  - ✅ G1（make gate）已修复
-  - ✅ G4（platform/pyproject.toml 注释）自动解决
-  - ✅ O-F（ADR-0019 阻塞）已关闭
-  - ✅ O-H（ADR-0019 取代 ADR-0011）已关闭
-- **已知后续项**（不阻塞 M0 签字）：G3（ADR skeleton）、G5+G6（AGENT.md 重写）、G7–G12（README/配置/部署骨架）—— 归入 M1+ 处理
+- **Sign-off date**: 2026-09-28
+- **Signatory**: maintainer authorised the AI agent to sign on their behalf
+- **Authorisation basis**: verbal authorisation from the maintainer (current conversation)
+- **Sign-off conditions**:
+  - ✅ `make gate` fully green (44 passed)
+  - ✅ ADR-0019 is Accepted (reSIProcate selected, O2 unblocked)
+  - ✅ architecture document decision 8 has been synchronised
+  - ✅ G1 (make gate) has been fixed
+  - ✅ G4 (platform/pyproject.toml comment) resolved automatically
+  - ✅ O-F (ADR-0019 blocking) is closed
+  - ✅ O-H (ADR-0019 replacing ADR-0011) is closed
+- **Known follow-up items** (not blocking the M0 sign-off): G3 (ADR skeleton), G5+G6 (AGENT.md rewrite), G7–G12 (README / configuration / deployment skeleton) — folded into M1+ handling
 
 ---
 
-## 7. M1 阶段 M0 gap 补全记录
+## 7. M0 gap backfill record for the M1 phase
 
-- **补全日期**：2026-09-28
-- **补全范围**：G5/G6/G12（已完成确认）+ G7–G11（实际补全）+ G3（ADR-0001/0002/0003/0018 从 skeleton → draft）
-- **未处理**：无。全部 M0 gap 已关闭或转为 draft 状态待后续评审
-- **门禁**：`make gate` 全绿（49 files formatted、ruff/mypy 干净、44 tests passed）
+- **Backfill date**: 2026-09-28
+- **Backfill scope**: G5/G6/G12 (completion confirmed) + G7–G11 (actually backfilled) + G3 (ADR-0001/0002/0003/0018 from skeleton → draft)
+- **Not handled**: none. All M0 gaps are closed or moved to draft status pending later review
+- **Gate**: `make gate` fully green (49 files formatted, ruff/mypy clean, 44 tests passed)

@@ -12,94 +12,94 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0008：站点内 N+1 零单点；跨站点 1+1 温备，非双活
+# ADR-0008: In-site N+1 zero single points of failure; cross-site 1+1 warm standby, not active-active
 
 - **Status**: accepted
 - **Date**: 2026-09-30
-- **Decides**: §0 账本条目 7 —— Redundancy：站点内 N+1 零单点 + 跨站点 1+1 温备
-- **回应 REQ**: REQ-NF-1, REQ-NF-3
+- **Decides**: §0 ledger entry 7 — Redundancy: in-site N+1 zero single points of failure + cross-site 1+1 warm standby
+- **Responds to REQ**: REQ-NF-1, REQ-NF-3
 
 ---
 
-## Context（背景）
+## Context
 
-运营商级系统的第一问是"单台机器能不能坏"。坏一台就要停业务的系统进不了运营商机房，这一点不需要论证，它是入场条件。
+The first question for a carrier-grade system is "can a single machine break". A system that stops service when one machine fails cannot enter the operator's machine room; this needs no argument — it is an entry condition.
 
-我们交付的是**单租户 on-premises**（REQ-NF-9）：每客户一个独立实例，部署在客户自己的机房里。这意味着冗余不能外包 —— 没有云厂商的可用区承诺替我们兜底，每一层由谁承担、承担到什么程度，必须在交付前写清。
+What we deliver is **single-tenant on-premises** (REQ-NF-9): one independent instance per customer, deployed in the customer's own machine room. This means redundancy cannot be outsourced — no cloud vendor's availability-zone commitment covers for us; who bears each layer, and to what degree, must be written down before delivery.
 
-计算侧的前提已经由 [ADR-0002](0002-per-usecase-process-state-redis.md) 解决：一个用例一个进程，会话状态、对话状态、速率窗口全部外置到 Redis，进程自身不持有需要持久化的会话级状态。因此"多副本"是 ADR-0002 的自然推论，而不是本 ADR 新增的负担：**任一副本失效时，它上面没有"唯一的那份状态"**。但 ADR-0002 只解决了计算侧；状态侧（Redis、PostgreSQL）与站点侧（跨地理）仍是空白，本 ADR 填的就是这两块。
+The computing premise has already been solved by [ADR-0002](0002-per-usecase-process-state-redis.md): one process per use case, with session state, dialog state, and rate windows all externalized to Redis, and the process itself holding no session-level state that needs persistence. Therefore "multi-replica" is a natural corollary of ADR-0002, not a new burden introduced by this ADR: **when any single replica fails, there is no "the one and only copy of state" on it**. But ADR-0002 only solved the computing side; the state side (Redis, PostgreSQL) and the site side (cross-geography) remain blank, and this ADR fills exactly those two gaps.
 
-跨站点这一块还有一个我方无法控制的事实：**流量如何在两个站点之间分担，由运营商网元（S-CSCF / S-SBC 的 trunk 优先级）配置决定，不在我方交付范围内**。架构文档 §6.1 把这一点作为不采用双活的第一条理由记下。我们能决定的只有"备站以什么状态常驻"。
+On the cross-site side there is also a fact outside our control: **how traffic is shared between the two sites is decided by the operator's network elements (S-CSCF / S-SBC trunk priority) configuration, and is not within our delivery scope**. Architecture doc §6.1 records this as the first reason for not adopting active-active. The only thing we can decide is "in what state the standby site resides".
 
-另一个约束来自 ADR-0002 本身：AS 的运行态在 Redis。一旦要求跨站点双活，就必然要求跨站点共享或复制运行态（会话、速率窗口、信誉衰减），这会直接撞上 ADR-0002 的"Redis 是唯一真源"以及**未决项 O5**（容灾等级 N+1 还是 N+M）。ADR-0002 已经把 O5 列为自己的已知缺口，本 ADR 不越权替它裁决。
+Another constraint comes from ADR-0002 itself: AS runtime state is in Redis. Once cross-site active-active is required, cross-site sharing or replication of runtime state (sessions, rate windows, reputation decay) becomes necessary, which would directly collide with ADR-0002's "Redis is the single source of truth" and with **open item O5** (disaster-recovery level N+1 or N+M). ADR-0002 has already listed O5 as its own known gap; this ADR does not overreach to decide it on O5's behalf.
 
-## Decision（决策）
+## Decision
 
-- **站点内：零单点。** 容忍单节点故障（按 N+1 记）：
-  - AS 无状态多副本（每用例一个 Deployment，见 ADR-0002）；
-  - `config-service` / `console` / 可观测汇聚多副本；
-  - Redis 升 Sentinel（1 主 2 从 3 哨兵）；
-  - PostgreSQL 流复制 + 定期备份 + PITR；
-  - 有状态组件（Redis、PG）**均纳入**冗余与备份清单 —— 计算侧无状态不等于系统无状态。
-- **站点内任一副本失效不影响业务。** 副本上不持有唯一状态，在途呼叫的状态在 Redis 中存活；其余副本继续承载新话务。这是"零单点"的可验证形式，不是口号。
-- **跨站点：1+1 温备，非双活。** 备站**常驻**且容量 ≥ 主站，但**不承载常态话务**；规则与配置经 `config-service` 同步到备站；切换靠 S-SBC 侧 trunk 优先级 + 自动或手动脚本。切换是**运维动作**，不是实时负载分担 —— 常态下备站的 capacity 是闲置的。
-- **为什么不双活（active-active）**，三条理由，缺一不可：
-  1. 流量如何两站点分担由运营商网元配置决定，不在我方控制范围；
-  2. 双活要么跨站点共享会话状态（复制延迟 + 脑裂），要么接受故障瞬间在途呼叫丢失 —— 而这个 SLA 应由运营商定义，不是由我们替它定义；
-  3. AS 的运行态在 Redis（ADR-0002），跨站点复制运行态会与 ADR-0002 的单一真源前提、以及与未决项 O5 冲突。温备的切换语义最简单：**备站无在途呼叫**，因此切换不需要状态迁移，也不需要与 [ADR-0009](0009-issu-draining.md) 的 draining 语义打架。
-- **容灾等级本身仍是未决项 O5。** 具体是 N+1（节点级）还是 N+M（机架 / AZ 级）**不由本 ADR 裁决**。本 ADR 只确立一条下限：**站点内必须零单点**。架构文档 §6.1 当前按 N+1（单节点）记，并注明「若要求容忍整个机架/AZ 故障（N+M），Redis 需跨 AZ、Pod 强制打散 —— 需变更请指出」。O5 由客户 SLA 裁决（`docs/plan.md` §5.1，影响 M5 的 Redis 拓扑）。
+- **In-site: zero single points of failure.** Tolerates single-node failure (counted as N+1):
+  - AS stateless multi-replica (one Deployment per use case, see ADR-0002);
+  - `config-service` / `console` / observability aggregation multi-replica;
+  - Redis raised to Sentinel (1 primary 2 replicas 3 sentinels);
+  - PostgreSQL streaming replication + periodic backup + PITR;
+  - stateful components (Redis, PG) are **all included** in the redundancy and backup checklist — a stateless computing side does not mean a stateless system.
+- **Failure of any single in-site replica does not affect the business.** Replicas hold no unique state; in-flight calls' state survives in Redis; the remaining replicas continue carrying new traffic. This is the verifiable form of "zero single points of failure", not a slogan.
+- **Cross-site: 1+1 warm standby, not active-active.** The standby site is **resident** with capacity ≥ the primary site, but **carries no normal traffic**; rules and configuration are synced to the standby site via `config-service`; failover relies on S-SBC-side trunk priority + automatic or manual scripts. Failover is an **operations action**, not real-time load sharing — the standby site's capacity is idle under normal conditions.
+- **Why not active-active** — three reasons, none dispensable:
+  1. How traffic is shared between the two sites is decided by operator network-element configuration, outside our control;
+  2. active-active either shares session state across sites (replication latency + split-brain), or accepts losing in-flight calls at the moment of failure — and that SLA should be defined by the operator, not by us on its behalf;
+  3. AS runtime state is in Redis (ADR-0002); replicating runtime state across sites would conflict with ADR-0002's single-source-of-truth premise and with open item O5. Warm standby's failover semantics are the simplest: **the standby site has no in-flight calls**, so failover requires no state migration and does not clash with the draining semantics of [ADR-0009](0009-issu-draining.md).
+- **The disaster-recovery level itself remains open item O5.** Whether specifically N+1 (node level) or N+M (rack / AZ level) is **not decided by this ADR**. This ADR only establishes a lower bound: **in-site must have zero single points of failure**. Architecture doc §6.1 currently records N+1 (single node), noting "if tolerance of an entire rack/AZ failure (N+M) is required, Redis needs to span AZs and Pods must be forcibly spread — please point out any needed changes". O5 is decided by customer SLA (`docs/plan.md` §5.1, affecting M5's Redis topology).
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **站点内可容忍单副本 / 单节点失效。** 这是与 ADR-0002 的组合结果：无状态进程 + 外部化状态 + 多副本，三者缺一则这条不成立。
-- **无状态多副本让扩缩容与升级有意义。** HPA 可以独立扩缩每个用例（[ADR-0010](0010-autoscaling-hpa-downscale-guard.md)），ISSU 只需 draining 而不需要状态迁移（[ADR-0009](0009-issu-draining.md)）。冗余与这两条是同一套前提的两个用法。
-- **温备的切换语义最简单。** 备站无在途呼叫，切换不需要搬运状态，也没有"两站点同时在跑同一通呼叫的一半"这类无法推理的中间态。可推理性在事故现场比吞吐量更重要。
-- **冗余清单是交付物的一部分。** Redis、PG 明确纳入冗余与备份清单，避免"AS 多副本了所以系统高可用了"这种只算一半的判断。
+- **In-site tolerates single-replica / single-node failure.** This is the combined result with ADR-0002: stateless processes + externalized state + multi-replica; the statement does not hold if any of the three is missing.
+- **Stateless multi-replica makes scaling and upgrades meaningful.** HPA can scale each use case independently ([ADR-0010](0010-autoscaling-hpa-downscale-guard.md)), and ISSU only needs draining without state migration ([ADR-0009](0009-issu-draining.md)). Redundancy and these two are two uses of the same set of premises.
+- **Warm standby's failover semantics are the simplest.** The standby site has no in-flight calls, failover requires no state movement, and there is no intermediate state like "both sites running half of the same call at once" that defies reasoning. Predictability matters more than throughput at an incident scene.
+- **The redundancy checklist is part of the deliverable.** Redis and PG are explicitly included in the redundancy and backup checklist, avoiding the half-counted judgment of "AS is multi-replica, so the system is highly available".
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **跨站点切换是运维动作，存在切换窗口。** 窗口长度由 S-SBC / trunk 侧配置与我方切换脚本共同决定，不在我方单方面控制内。它必须**演练**，而不只是写在方案里；切换演练归属 M5（运维里程碑）与 M8（发布候选的验收运行）。未被演练过的切换流程等于没有切换流程。
-- **温备站点长期闲置的成本。** 一整套常驻但不接话务的容量（AS 副本组、config-service、Redis、PG）是纯支出。接受：它是站点级 SLA 的对价，且换来的是最简单的切换语义。
-- **Redis 与 PostgreSQL 的高可用细节不在本 ADR 内裁决。** Sentinel 拓扑（1 主 2 从 3 哨兵）是架构文档 §6.1 记下的形态，而 Sentinel 的接线方式、脑裂窗口内判决如何保持幂可接受属未决项 D3；Redis 成为新 SPoF 是风险登记表里的 R5。本 ADR 只要求"有状态组件纳入冗余与备份清单"，不给定拓扑参数。
-- **本 ADR 不给出任何跨站点 RTO / RPO 数字。** 它们在 O5 与客户 SLA 裁决之前无法给出；给出一个未裁决的数字比不给更危险。
-- **N+1 还是 N+M 未定，意味着当前设计可能在客户要求机架级容灾时返工。** 接受：这是 O5 的代价，不是本 ADR 能消除的。
+- **Cross-site failover is an operations action, and there is a failover window.** The window length is jointly determined by S-SBC / trunk-side configuration and our failover scripts, and is not under our unilateral control. It must be **drilled**, not just written in the plan; failover drills belong to M5 (operations milestone) and M8 (release-candidate acceptance runs). A failover process that has never been drilled is no failover process.
+- **The warm-standby site's long-term idle cost.** An entire set of resident capacity carrying no traffic (AS replica groups, config-service, Redis, PG) is pure expense. Accepted: it is the price of site-level SLA, and it buys the simplest failover semantics.
+- **Redis and PostgreSQL high-availability details are not decided within this ADR.** The Sentinel topology (1 primary 2 replicas 3 sentinels) is the form recorded in architecture doc §6.1, while Sentinel's wiring and how decisions remain idempotently acceptable within the split-brain window belong to open item D3; Redis becoming a new SPoF is risk R5 in the risk register. This ADR only requires "stateful components are included in the redundancy and backup checklist" and does not give topology parameters.
+- **This ADR gives no cross-site RTO / RPO figures.** They cannot be given before O5 and customer SLA are decided; giving an undecided figure is more dangerous than giving none.
+- **N+1 vs N+M is undecided, which means the current design may be reworked if the customer requires rack-level disaster recovery.** Accepted: this is the cost of O5, and not something this ADR can eliminate.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 站点内单副本 + 快速恢复 | 单点故障即停业务，不满足入场条件；REQ-NF-1（进程重启或故障时正在进行的呼叫不能断）在单副本下无法被满足 |
-| 跨站点双活（active-active） | 流量分担由运营商网元配置决定，不在我方控制范围；且要么跨站点共享会话状态（复制延迟 + 脑裂），要么接受故障瞬间丢失在途呼叫 —— 该 SLA 应由运营商定义。ADR-0002 把运行态放在 Redis，跨站点复制运行态与单一真源前提及 O5 冲突 |
-| 跨站点冷备（备站不常驻，故障后再起） | 切换需要先拉起容量，RTO 不可控且依赖备站资源即时可得；运营商机房不会出现"按需扩容"的弹性 |
-| 跨站点温备 1+1 + 站点内 N+1（本决策） | 采纳。站点内容忍单节点故障；跨站点以闲置容量换最简单的切换语义（备站无在途呼叫，无需状态迁移） |
-| 三站点 / 多站点容灾 | 需求方（运营商 SLA）未提出；在 O5 未裁决前增加站点数只会放大未决面 |
+| In-site single replica + fast recovery | Single-point failure stops the business and fails the entry condition; REQ-NF-1 (ongoing calls must not break when a process restarts or fails) cannot be satisfied with a single replica |
+| Cross-site active-active | Traffic sharing is decided by operator network-element configuration, outside our control; and it either shares session state across sites (replication latency + split-brain), or accepts losing in-flight calls at the moment of failure — that SLA should be defined by the operator. ADR-0002 puts runtime state in Redis; replicating runtime state across sites conflicts with the single-source-of-truth premise and with O5 |
+| Cross-site cold standby (standby site not resident, started after failure) | Failover requires spinning up capacity first; RTO is uncontrollable and depends on standby resources being immediately available; operator machine rooms do not offer "scale on demand" elasticity |
+| Cross-site warm standby 1+1 + in-site N+1 (this decision) | Adopted. In-site tolerates single-node failure; cross-site trades idle capacity for the simplest failover semantics (standby site has no in-flight calls, no state migration needed) |
+| Three-site / multi-site disaster recovery | Not requested by the requiring party (operator SLA); increasing the site count before O5 is decided would only amplify the undecided surface |
 
-## Evidence（证据）
+## Evidence
 
-- 架构文档 §6.1「Redundancy」原文：**「站点内：零单点（N+1，容忍单节点故障）」** —— AS 无状态多副本；config-service / console / 可观测汇聚多副本；Redis 升 Sentinel；PG 流复制 + 定期备份 + PITR；有状态组件（Redis、PG）均纳入冗余与备份清单。同节 **「跨站点：1+1 温备」** —— 备站常驻但不接流量，规则/配置经 config-service 同步；切换靠 S-SBC 侧 trunk 优先级 + 自动/手动脚本。
-- 架构文档 §6.1 不采用双活的原文：**「不采用双活（active-active）：流量如何两站点分担由运营商网元配置决定，不在我方控制范围；且双活要么跨站点共享会话状态（延迟 + 脑裂），要么接受故障瞬间在途呼叫丢失 —— 这个 SLA 应由运营商定义。温备的切换语义最简单：备站无在途呼叫。」**
-- 架构文档 §6.1 的 N+M 注：**「⚠️ 若要求容忍整个机架/AZ 故障（N+M），Redis 需跨 AZ、Pod 强制打散 —— 当前按 N+1（单节点）记，需变更请指出。」**
-- 架构文档 §0 决策账本条目 7 原文：「Redundancy | 站点内 N+1 零单点 + 跨站点 1+1 温备」。
-- `docs/plan.md` §5.1 未决项 O5 原文：「容灾等级：N+1（节点）还是 N+M（机架 / AZ） | M5 Redis 拓扑 | 客户 SLA」；架构文档 §12.1 O5 行：「跨站点容灾等级：N+1（单节点）还是 N+M（机架/AZ） | Redis 是否跨 AZ、Pod 打散策略 | 客户 SLA」。两处均未裁决。
-- 架构文档 §12.2 风险登记 R5 原文：「**Redis 成为新 SPoF** | 无状态化之后 | Sentinel + 脑裂窗口下判决保持幂可接受」。
-- [ADR-0002](0002-per-usecase-process-state-redis.md) Evidence / Consequences：进程无状态 → 可水平扩展、可随时重启；「Redis + Sentinel 成为硬依赖……Sentinel 拓扑（1 主 + 2 从 + 3 哨兵）需在 M2 前设计完毕（未决项 O5、D3）」。
-- PRD REQ-NF-1（进程重启不丢会话）原文：「进程重启或故障时，正在进行的呼叫不能断——会话状态、对话状态、业务处理状态必须持久化在进程之外。」
-- PRD REQ-NF-3（可水平扩展）原文：「支持水平扩展：业务量增加时能增加处理实例，不影响存量呼叫；业务量减少时能安全缩容。」
-- `docs/plan.md` §4 里程碑表 M5（运维）与 M8（发布候选）：M8 的退出标准为「带证据的验收运行、文档链完整、统一产品版本」—— 切换演练的取证归入这两处。
-- 实现证据（多副本的实跑、Sentinel 拓扑的接线）随 M5 / M8 落地后补；本 ADR 确立的是形态与下限，不虚构已存在的冗余实现。
+- Architecture doc §6.1 "Redundancy" verbatim: **"In-site: zero single points of failure (N+1, tolerates single-node failure)"** — AS stateless multi-replica; config-service / console / observability aggregation multi-replica; Redis raised to Sentinel; PG streaming replication + periodic backup + PITR; stateful components (Redis, PG) all included in the redundancy and backup checklist. Same section, **"Cross-site: 1+1 warm standby"** — the standby site is resident but carries no traffic; rules/configuration synced via config-service; failover relies on S-SBC-side trunk priority + automatic/manual scripts.
+- Architecture doc §6.1 verbatim on not adopting active-active: **"Not adopting active-active: how traffic is shared between the two sites is decided by operator network-element configuration, outside our control; and active-active either shares session state across sites (latency + split-brain), or accepts losing in-flight calls at the moment of failure — this SLA should be defined by the operator. Warm standby's failover semantics are the simplest: the standby site has no in-flight calls."**
+- Architecture doc §6.1 N+M note: **"⚠️ If tolerance of an entire rack/AZ failure (N+M) is required, Redis needs to span AZs and Pods must be forcibly spread — currently recorded as N+1 (single node); please point out any needed changes."**
+- Architecture doc §0 decision ledger entry 7 verbatim: "Redundancy | In-site N+1 zero single points of failure + cross-site 1+1 warm standby".
+- `docs/plan.md` §5.1 open item O5 verbatim: "Disaster-recovery level: N+1 (node) or N+M (rack / AZ) | M5 Redis topology | Customer SLA"; architecture doc §12.1 O5 row: "Cross-site disaster-recovery level: N+1 (single node) or N+M (rack/AZ) | Whether Redis spans AZs, Pod spread policy | Customer SLA". Neither is decided.
+- Architecture doc §12.2 risk register R5 verbatim: "**Redis becomes a new SPoF** | after statelessization | Sentinel + decisions remain idempotently acceptable under the split-brain window".
+- [ADR-0002](0002-per-usecase-process-state-redis.md) Evidence / Consequences: process is stateless → horizontally scalable, restartable at any time; "Redis + Sentinel becomes a hard dependency……the Sentinel topology (1 primary + 2 replicas + 3 sentinels) must be fully designed before M2 (open items O5, D3)".
+- PRD REQ-NF-1 (process restart does not lose sessions) verbatim: "When a process restarts or fails, ongoing calls must not break — session state, dialog state, and business processing state must be persisted outside the process."
+- PRD REQ-NF-3 (horizontally scalable) verbatim: "Supports horizontal scaling: when traffic increases, processing instances can be added without affecting existing calls; when traffic decreases, capacity can be safely reduced."
+- `docs/plan.md` §4 milestone table M5 (operations) and M8 (release candidate): M8's exit criteria are "evidence-backed acceptance runs, a complete documentation chain, and a unified product version" — failover drill evidence is attributed to these two.
+- Implementation evidence (multi-replica live runs, Sentinel topology wiring) to be added after M5 / M8 land; this ADR establishes the form and the lower bound, and does not fabricate redundancy implementations that do not yet exist.
 
-## Related（相关）
+## Related
 
-- [ADR-0002](0002-per-usecase-process-state-redis.md) 每用例一进程 + 状态外置 Redis —— 站点内零单点的计算侧前提
-- [ADR-0009](0009-issu-draining.md) ISSU 是 draining，不是状态迁移 —— 温备切换无需状态迁移，与此一致
-- [ADR-0010](0010-autoscaling-hpa-downscale-guard.md) 扩缩容 HPA + 缩容保护 —— 与冗余共用"无状态多副本"前提
-- [ADR-0007](0007-data-plane-split.md) 数据面拆分 —— Redis 与 PostgreSQL 各自的冗余与备份对象
-- [`../新系统整体架构.md`](../新系统整体架构.md) §6.1 Redundancy、§12.1 未决项 O5、§12.2 风险 R5
-- 未决项 O5（N+1 vs N+M / M5 / 客户 SLA）与 D3（Redis 接线与脑裂窗口）—— 均**未裁决**，本 ADR 不替其做决定
+- [ADR-0002](0002-per-usecase-process-state-redis.md) One process per use case + state externalized to Redis — the computing-side premise for in-site zero single points of failure
+- [ADR-0009](0009-issu-draining.md) ISSU is draining, not state migration — warm-standby failover needs no state migration, consistent with this
+- [ADR-0010](0010-autoscaling-hpa-downscale-guard.md) Autoscaling HPA + downscale guard — shares the "stateless multi-replica" premise with redundancy
+- [ADR-0007](0007-data-plane-split.md) Data-plane split — the redundancy and backup targets for Redis and PostgreSQL respectively
+- [`../system-architecture.md`](../system-architecture.md) §6.1 Redundancy, §12.1 open item O5, §12.2 risk R5
+- Open items O5 (N+1 vs N+M / M5 / customer SLA) and D3 (Redis wiring and split-brain window) — both **undecided**; this ADR does not decide them on their behalf
 
-## Amendment 2026-10-06（M5.1 最小集；相对 ADR-0026 的 SPoF 缺口登记）
+## Amendment 2026-10-06 (M5.1 minimal set; SPoF gap registration relative to ADR-0026)
 
-- 本 ADR 要求的"站点内零单点"（Redis Sentinel 1 主 2 从 3 哨兵 + PG 流复制 + 备份 + PITR）与 ADR-0026 标准路径实际渲染的单副本内建状态存储（PostgreSQL StatefulSet `replicas: 1`、Redis Deployment `replicas: 1`）**存在缺口**：内建路径是单点，生产 HA 按 runbook 声明为 customer-owned（见 `docs/acceptance/m5-state-stores-runbook.md`）。
-- 本 Amendment 只登记缺口，不放宽本站点内零单点要求；生产 HA 的最终形态与验收口径推迟到 **M8 退出评审**（O5 客户 SLA 裁决），届时或接受 customer-owned HA，或补 Sentinel/流复制实现。跨站点切换演练（A-2）同样 defer，见 `docs/reviews/m5-req-acceptance-review-2026-10-06.md`。（REQ-NF-1， REQ-NF-3；ADR-0026；plan §5.1 O5/D12。）
+- This ADR's requirement of "in-site zero single points of failure" (Redis Sentinel 1 primary 2 replicas 3 sentinels + PG streaming replication + backup + PITR) and the single-replica built-in state stores actually rendered by ADR-0026's standard path (PostgreSQL StatefulSet `replicas: 1`, Redis Deployment `replicas: 1`) **have a gap**: the built-in path is a single point, and production HA is declared as customer-owned per the runbook (see `docs/acceptance/m5-state-stores-runbook.md`).
+- This Amendment only registers the gap and does not relax this ADR's in-site zero-single-point-of-failure requirement; the final form of production HA and its acceptance criteria are deferred to the **M8 exit review** (O5 customer SLA decision), at which point either customer-owned HA is accepted or Sentinel/streaming-replication implementation is added. The cross-site failover drill (A-2) is likewise deferred, see `docs/reviews/m5-req-acceptance-review-2026-10-06.md`. (REQ-NF-1, REQ-NF-3; ADR-0026; plan §5.1 O5/D12.)

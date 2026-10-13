@@ -99,7 +99,7 @@ flowchart TB
     style TEST fill:#f1f3f4,stroke:#5f6368,stroke-dasharray: 5 5
 ```
 
-**Decision seams (swap parts, not architecture)**: `decide()` is a pure-function decision seam (no socket, no clock, no global state inside the module, TDD enforceable); the Transport seam makes peer admission and transport policy replaceable (ADR-0016); the StateStore seam makes the runtime store replaceable (ADR-0007); `apps/` one process per use case = one Deployment / one fault domain / one canary unit (ADR-0002); scale-down and upgrade use **ISSU = draining** (drain traffic → draining → exit only at zero, no in-flight call migration, ADR-0009). The full design baseline is in [`docs/architecture/新系统整体架构.md`](docs/architecture/新系统整体架构.md).
+**Decision seams (swap parts, not architecture)**: `decide()` is a pure-function decision seam (no socket, no clock, no global state inside the module, TDD enforceable); the Transport seam makes peer admission and transport policy replaceable (ADR-0016); the StateStore seam makes the runtime store replaceable (ADR-0007); `apps/` one process per use case = one Deployment / one fault domain / one canary unit (ADR-0002); scale-down and upgrade use **ISSU = draining** (drain traffic → draining → exit only at zero, no in-flight call migration, ADR-0009). The full design baseline is in [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md).
 
 ## Key KPIs (definitional, no values)
 
@@ -173,7 +173,7 @@ Layered by reader. Full documentation navigation is in [`docs/README.md`](docs/R
 | **Review** | [`docs/product/one-pager.md`](docs/product/one-pager.md) one-pager · [`ne-datasheet.md`](docs/product/ne-datasheet.md) NE profile · [`compliance-matrix.md`](docs/product/compliance-matrix.md) spec compliance · [`responsibility-matrix.md`](docs/product/responsibility-matrix.md) responsibility boundaries RACI · [`version-lifecycle.md`](docs/product/version-lifecycle.md) version lifecycle & EOL · [`security-privacy.md`](docs/product/security-privacy.md) security & privacy (PDPO) |
 | **Operations** | [`docs/operations/README.md`](docs/operations/README.md) section overview · [`runbook-l1.md`](docs/operations/runbook-l1.md) L1/NOC · [`runbook-l2.md`](docs/operations/runbook-l2.md) L2/second-line · [`fault-demarcation.md`](docs/operations/fault-demarcation.md) fault demarcation · [`rollback-playbook.md`](docs/operations/rollback-playbook.md) drain-and-rollback · [`backup-restore.md`](docs/operations/backup-restore.md) backup & restore · [`alert-response-matrix.md`](docs/operations/alert-response-matrix.md) alert-to-action matrix · [`grafana-dashboards/README.md`](docs/operations/grafana-dashboards/README.md) dashboard templates |
 | **Delivery** | [`docs/delivery/README.md`](docs/delivery/README.md) overview · [`install-guide.md`](docs/delivery/install-guide.md) install & deploy guide · [`airgap-package.md`](docs/delivery/airgap-package.md) offline install package · [`preflight.sh`](docs/delivery/preflight.sh) environment preflight · [`deploy/helm/README.md`](deploy/helm/README.md) Helm parameter authority |
-| **Engineering** | [`AGENT.md`](AGENT.md) collaboration rules (read first) · [`docs/architecture/新系统整体架构.md`](docs/architecture/新系统整体架构.md) design baseline · [`docs/architecture/adr/`](docs/architecture/adr/) decision records · [`docs/requirements/prd.md`](docs/requirements/prd.md) requirements · [`docs/plan.md`](docs/plan.md) milestones & open items · [`docs/migration/triage.md`](docs/migration/triage.md) POC triage · [`docs/acceptance/report.md`](docs/acceptance/report.md) acceptance report · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`CHANGELOG.md`](CHANGELOG.md) · [`docs/product-packaging-plan.md`](docs/product-packaging-plan.md) packaging plan |
+| **Engineering** | [`AGENT.md`](AGENT.md) collaboration rules (read first) · [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md) design baseline · [`docs/architecture/adr/`](docs/architecture/adr/) decision records · [`docs/requirements/prd.md`](docs/requirements/prd.md) requirements · [`docs/plan.md`](docs/plan.md) milestones & open items · [`docs/migration/triage.md`](docs/migration/triage.md) POC triage · [`docs/acceptance/report.md`](docs/acceptance/report.md) acceptance report · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`CHANGELOG.md`](CHANGELOG.md) · [`docs/product-packaging-plan.md`](docs/product-packaging-plan.md) packaging plan |
 
 ## Development & gate
 
@@ -220,7 +220,7 @@ Makefile            make gate = gate layer ① (lint → type → unit/contract)
 | ⑤ Cross-cutting | — | Observability, security, operations | Stateless (except backends) |
 | ⑥ Testbed | `testbed/` | Contract case set, simulated NEs, real-socket load test | R&D asset |
 
-The full design is in [`docs/architecture/新系统整体架构.md`](docs/architecture/新系统整体架构.md).
+The full design is in [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md).
 
 ## Current status
 

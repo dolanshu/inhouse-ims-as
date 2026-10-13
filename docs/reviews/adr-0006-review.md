@@ -12,46 +12,46 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0006 评审记录
+# ADR-0006 Review Record
 
-> 评审对象：`docs/architecture/adr/0006-config-governance.md`（2026-09-28 新建，Status: draft）
-> 评审日期：2026-09-28
-> 评审人：AI agent（对照 AGENT.md 红线与非目标、PRD REQ、已在册 ADR 交叉核对）
-> 评审结论：**通过** —— 转 accepted；共 3 项缺口，其中 0 项阻塞
+> Review target: `docs/architecture/adr/0006-config-governance.md` (newly created on 2026-09-28, Status: draft)
+> Review date: 2026-09-28
+> Reviewer: AI agent (cross-checked against the AGENT.md red lines and non-goals, PRD REQs, and the ADRs already on record)
+> Review conclusion: **Pass** — moved to accepted; 3 gaps in total, none of them blocking
 
-## 评审方法
+## Review Method
 
-| 维度 | 方法 |
+| Dimension | Method |
 |---|---|
-| 与红线一致性 | 逐条比对 `AGENT.md` §2（非目标：配置不走 GitOps）、§4（分层）、§13（安全）原文 |
-| 与需求一致性 | 核对 PRD v0.2 的 REQ-NF-10 / REQ-F-12 / REQ-F-14 / REQ-G-1 / REQ-S-4 |
-| 与既有 ADR 一致性 | 是否与 ADR-0007（治理态在 PG）、ADR-0002（状态外置）、ADR-0020（开关复用流水线）冲突 |
-| 结构完整性 | 是否具备 Context / Decision / Consequences / Alternatives / Evidence / Related |
+| Consistency with red lines | Clause-by-clause comparison against the original text of `AGENT.md` §2 (non-goal: configuration does not go through GitOps), §4 (layering), §13 (security) |
+| Consistency with requirements | Checked PRD v0.2 REQ-NF-10 / REQ-F-12 / REQ-F-14 / REQ-G-1 / REQ-S-4 |
+| Consistency with existing ADRs | Whether it conflicts with ADR-0007 (governance state in PG), ADR-0002 (state externalization), ADR-0020 (feature flags reuse the pipeline) |
+| Structural completeness | Whether it has Context / Decision / Consequences / Alternatives / Evidence / Related |
 
-## 发现与裁决
+## Findings and Adjudication
 
-| # | 发现 | 裁决 |
+| # | Finding | Adjudication |
 |---|---|---|
-| 1 | Context 以 `AGENT.md` §2 非目标原文为直接依据（"不能要求运营商运维人员为了改一个号段去学 Git"），并引用 PRD REQ-NF-10 原文，不是凭记忆复述 | 接受，作为 L1 依据；两条约束（不走 GitOps / 必须可版本化可回滚）共同夹出设计空间的论证成立 |
-| 2 | 决策覆盖"不可变版本行 + 变更单状态机 + 灰度分发 + 自动回滚"四要素，与 REQ-NF-10 的"可版本化、可追溯、可灰度、可回滚"逐项对应；审批人与审批时间落库对应 REQ-F-14 | 接受；四项要求无遗漏，且"审批通过才写新版本"把审批从流程环节变成了写入前提 |
-| 3 | 版本上报契约已在内核就位：`platform/src/as_platform/api/contract.py` 的 `ConfigBundle` 与 `AppliedVersionReport` 已定义，不是待补的接口 | 接受；"配置面认为生效"与"运行态实际生效"可对齐，避免了靠写库时间推断生效状态 |
-| 4 | 与 ADR-0007（治理态在 PG）、ADR-0020（开关复用流水线）无冲突且互相支撑；本 ADR 明确不重复论证存储选型，只定义治理态形态与变更流 | 接受；边界清晰，无重复裁决，无循环引用 |
-| 5 | 已知缺口三项：① PostgreSQL 成为治理态单点（降级模式已描述，M5 高可用覆盖）；② 灰度粒度与配置 schema 未决（D7）；③ 审计数据保留期未定 | 接受为**已知缺口**，均不阻塞；①②已写入 Consequences 负面段并标明解决时点（M5 / 控制面设计前） |
-| 6 | Related 中指向未落地 ADR 的条目已降级为纯文本，仅链接已存在文件（0007 / 0020 / 新系统整体架构.md） | 接受；无失效链接 |
+| 1 | The Context is based directly on the original text of the AGENT.md §2 non-goal ("operators must not be required to learn Git just to change a number range"), and quotes PRD REQ-NF-10 verbatim rather than paraphrasing from memory | Accept, as the L1 basis; the argument that the two constraints (no GitOps / must be versionable and rollbackable) jointly squeeze out the design space holds |
+| 2 | The decision covers the four elements "immutable version rows + change-ticket state machine + canary distribution + automatic rollback", corresponding item by item to REQ-NF-10's "versionable, traceable, canary-able, rollbackable"; storing the approver and approval time corresponds to REQ-F-14 | Accept; none of the four requirements is missing, and "write a new version only after approval passes" turns approval from a process step into a precondition for writing |
+| 3 | The version reporting contract is already in place in the kernel: `ConfigBundle` and `AppliedVersionReport` are already defined in `platform/src/as_platform/api/contract.py`; it is not an interface still to be added | Accept; "the configuration plane considers it effective" and "the runtime actually has it effective" can be aligned, avoiding the need to infer the effective state from the write timestamp |
+| 4 | No conflict with ADR-0007 (governance state in PG) or ADR-0020 (feature flags reuse the pipeline), and they support each other; this ADR explicitly does not re-argue the storage choice and defines only the shape of governance state and the change flow | Accept; the boundary is clear, there is no duplicate adjudication, and no circular reference |
+| 5 | Three known gaps: ① PostgreSQL becomes the single point of failure for governance state (the degraded mode is described, and M5 high availability covers it); ② canary granularity and the configuration schema are undecided (D7); ③ the audit data retention period is undefined | Accept as **known gaps**, none blocking; ① and ② are written into the negative part of Consequences with the resolution points marked (M5 / before control-plane design) |
+| 6 | Entries in Related that point at ADRs not yet implemented have been downgraded to plain text; only existing files are linked (0007 / 0020 / system-architecture.md) | Accept; no dead links |
 
-## Adjudication 汇总
+## Adjudication Summary
 
-| 类别 | 条数 | 处置 |
+| Category | Count | Disposition |
 |---|---|---|
-| 接受且无需修改 | 4（发现 1、2、3、4） | — |
-| 接受为已知缺口 | 2（发现 5、6 中的缺口项） | 发现 5 的三项分别列入 M5 高可用 / D7 控制面设计前 / 保留策略；发现 6 无缺口 |
-| 需要修改 | 0 | — |
+| Accepted with no changes needed | 4 (findings 1, 2, 3, 4) | — |
+| Accepted as known gaps | 2 (the gap entries in findings 5, 6) | The three items of finding 5 are assigned respectively to M5 high availability / D7 before control-plane design / the retention policy; finding 6 has no gap |
+| Changes required | 0 | — |
 
-## 确认签字
+## Sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 通过 |
-| 状态流转 | ADR-0006 `draft` → `accepted`；注册表同步 |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | 待填 |
+| Review conclusion | Pass |
+| State transition | ADR-0006 `draft` → `accepted`; registry synchronized |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer sign-off | To be filled in |

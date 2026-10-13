@@ -12,150 +12,150 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 执行计划：infra 本机安装（helm / kubectl / kind / promtool）
+# Execution plan: local installation of infra (helm / kubectl / kind / promtool)
 
-> **落盘日期：2026-10-11。状态：已落盘，待维护者评审。本计划尚未执行。**
+> **Landing date: 2026-10-11. Status: landed, awaiting maintainer review. This plan has not been executed.**
 >
-> **本文是给下一个 session 执行的计划，不是执行记录。** 它不依赖任何对话上下文：
-> 从第 2 节照做即可。执行完请另写执行记录，不要把执行结果回填成本文的「已完成」。
+> **This document is a plan for the next session to execute, not an execution record.** It depends on no conversation context:
+> just follow §2 onwards. After execution, write a separate execution record; do not back-fill execution results into "already done" in this document.
 
-## 0. 为什么要做这件事
+## 0. Why this is being done
 
-2026-10-11 的实测结论：本机（`WIN-03IB7NIEPF0`）具备 `docker` / `uv` / `python3.10`，
-**不具备** `helm` / `kubectl` / `kind` / `promtool`。因此本机**不能**运行
-`make chart-check`、`make alert-check`，也不能做任何 kind 集群级验证。
+The measured conclusion of 2026-10-11: this machine (`WIN-03IB7NIEPF0`) has `docker` / `uv` / `python3.10`,
+and **does not have** `helm` / `kubectl` / `kind` / `promtool`. Therefore this machine **cannot** run
+`make chart-check`, `make alert-check`, nor any kind cluster-level verification.
 
-而 2026-10-05 的 chart / alert 证据是由**另一台机器**产出的（证据里记着
-`==> helm lint /home/shudong/project/3rdparty-as/deploy/helm`，同一用户名、同一项目路径），
-那台机器具备上述全部四件工具，**但它的身份至今未知、也无法补填**。
+Yet the chart / alert evidence of 2026-10-05 was produced by **another machine** (the evidence records
+`==> helm lint /home/shudong/project/3rdparty-as/deploy/helm`, the same user name and the same project path);
+that machine has all four of the above tools, **but its identity is still unknown and cannot be back-filled**.
 
-后果不是「少几个工具」，而是两条：
+The consequence is not "a few missing tools" but two things:
 
-1. **`deploy/alerts/` 属交付产品**（[`../architecture/README.md`](../architecture/README.md) §2 判定线），
-   其 `as.runtime` / `as.platform` 两组新规则**至今没被任何机器用 promtool 校验过**
-   （register §7.5 的 P4）。交付质量校验悬空，责任无处可落。
-2. 「项目到底有没有 infra 能力」被反复重新讨论。病根已裁定为**事实载体没有元数据**
-   （register §7.4），本计划是该结论的落地动作之一。
+1. **`deploy/alerts/` is part of the delivery product** (the decision line in §2 of [`../architecture/README.md`](../architecture/README.md)),
+   and its two new rule groups, `as.runtime` / `as.platform`, **have still never been validated by any machine with promtool**
+   (P4 in register §7.5). Delivery quality validation is left hanging, with nowhere for the responsibility to land.
+2. "Does this project actually have infra capability" is repeatedly re-litigated. The root cause has been adjudicated as **the carrier of fact having no metadata**
+   (register §7.4); this plan is one of the landing actions of that conclusion.
 
-## 1. 目标与范围
+## 1. Goal and scope
 
-### 1.1 目标
+### 1.1 Goal
 
-在**本机**具备 `helm` / `kubectl` / `kind` / `promtool`，使下列验证可在本机运行：
+Have `helm` / `kubectl` / `kind` / `promtool` **on this machine**, so that the following verifications can run locally:
 
-| 目标 | 现状 | 达成后的判定依据 |
+| Goal | Current state | Basis for the verdict after it is achieved |
 |---|---|---|
-| `make chart-check` | 本机不可运行 | 末行 `chart-check: OK` |
-| `make alert-check` | 本机不可运行 | 末行 `SUCCESS: N rules found`（N 覆盖新增两组） |
-| kind 集群级验证（`make m5-cluster-evidence` 等） | 本机不可运行 | 集群起来且脚本 exit 0 |
+| `make chart-check` | cannot run locally | last line `chart-check: OK` |
+| `make alert-check` | cannot run locally | last line `SUCCESS: N rules found` (N covers the two new groups) |
+| kind cluster-level verification (`make m5-cluster-evidence` etc.) | cannot run locally | the cluster comes up and the script exits 0 |
 
-### 1.2 范围边界（先读这段，可以省掉很多返工）
+### 1.2 Scope boundary (read this first, it saves a lot of rework)
 
-- **kind / testbed 是脚手架，不得用于客户生产。** 判定线见
-  [`../architecture/README.md`](../architecture/README.md) §2；既有落地见
-  [`../delivery/install-guide.md`](../delivery/install-guide.md) `:19`、`:91`。
-  本计划装出来的 kind 集群只用于**我们自己的**验证，产出的 transcript 属证据分级第 ② 类
-  （对外履约依据，**不是客户验收项**）。
-- 本计划**不改变任何交付物**：`deploy/helm/`、`deploy/alerts/` 一个字节都不动。
-  本计划只往**这台机器**上装工具。
-- 本计划**不解决**「2026-10-05 那台机器是谁」。那件事已判定为**无法回填**（见 §8.5）。
+- **kind / testbed is scaffolding and must not be used in customer production.** The decision line is in
+  §2 of [`../architecture/README.md`](../architecture/README.md); the existing landing is in
+  [`../delivery/install-guide.md`](../delivery/install-guide.md) `:19`, `:91`.
+  The kind cluster installed by this plan is only for **our own** verification; the transcripts it produces are evidence class ②
+  (a basis for external performance, **not** a customer acceptance item).
+- This plan **changes no deliverable**: not a single byte of `deploy/helm/` or `deploy/alerts/` is touched.
+  It only installs tools on **this machine**.
+- This plan **does not solve** "who was the machine of 2026-10-05". That has been adjudicated as **not back-fillable** (see §8.5).
 
-## 2. 第 0 步：前置条件核查（先跑，装之前）
+## 2. Step 0: prerequisite checks (run before installing anything)
 
-> **在装任何东西之前先跑完这一节。** 其中第 1 项是硬闸门。
+> **Finish this section before installing anything.** Item 1 in it is the hard gate.
 
-| # | 查什么 | 命令 | 期望输出 | 不满足时 |
+| # | What is checked | Command | Expected output | If not satisfied |
 |---|---|---|---|---|
-| 1 | **docker daemon 是否真的在跑** | `docker info` | 打印 Server 段（`Containers:` / `Server Version:` 等），exit 0 | **本计划在此中止**（见下方硬闸门） |
-| 2 | docker 客户端位置 | `command -v docker` | `/usr/bin/docker`（本机已知） | 先解决 docker 本身，与本计划无关 |
-| 3 | 是否有 sudo | `sudo -n true 2>/dev/null && echo yes \|\| echo no` | `yes` 或 `no` 均可 | 本计划**全程不需要 root**；`no` 不影响执行 |
-| 4 | 当前用户 | `id -un` | 非 root 更佳 | root 下也能跑，但请改用普通用户执行 |
-| 5 | CPU 架构 | `uname -m` | `x86_64` 或 `aarch64` | 其它架构需手工装，`bootstrap-infra.sh` 会明确报错退出 |
-| 6 | 可用磁盘 | `df -h . \| tail -1` | 至少 2 GB 可用 | 清理后重试；kind 拉镜像会再吃 1–2 GB |
-| 7 | 是否 WSL | `grep -qi microsoft /proc/version && echo WSL \|\| echo native` | `native` 或 `WSL` | WSL2 可用 kind（需 systemd 或手动起 dockerd）；WSL1 **不可用**，中止 |
-| 8 | 下载器 | `command -v curl \|\| command -v wget` | 至少一个存在 | 两个都没有则中止，先解决 |
+| 1 | **is the docker daemon really running** | `docker info` | prints the Server section (`Containers:` / `Server Version:` etc.), exit 0 | **this plan stops here** (see the hard gate below) |
+| 2 | location of the docker client | `command -v docker` | `/usr/bin/docker` (known on this machine) | resolve docker itself first; unrelated to this plan |
+| 3 | whether sudo is available | `sudo -n true 2>/dev/null && echo yes \|\| echo no` | either `yes` or `no` is fine | this plan **never needs root**; `no` does not block execution |
+| 4 | current user | `id -un` | non-root is better | it also runs as root, but please execute as a normal user instead |
+| 5 | CPU architecture | `uname -m` | `x86_64` or `aarch64` | other architectures need a manual install; `bootstrap-infra.sh` errors out explicitly |
+| 6 | available disk | `df -h . \| tail -1` | at least 2 GB available | clean up and retry; kind pulling images consumes another 1–2 GB |
+| 7 | whether it is WSL | `grep -qi microsoft /proc/version && echo WSL \|\| echo native` | `native` or `WSL` | WSL2 can use kind (needs systemd or starting dockerd manually); WSL1 **cannot**, stop |
+| 8 | downloader | `command -v curl \|\| command -v wget` | at least one exists | if neither exists, stop and resolve that first |
 
-### 硬闸门（原文写死，不得绕过）
+### Hard gate (written into the original text, must not be bypassed)
 
-> **若 `docker info` 不通（daemon 没起来 / 未安装 / 无权限），kind 一律装不了，本计划在此中止。**
+> **If `docker info` does not work (daemon not started / not installed / no permission), kind cannot be installed at all, and this plan stops here.**
 >
-> 这不是「先装上再说」的情况：kind 创建集群靠的就是 docker daemon。daemon 不通时装好的
-> kind 只是一个跑不起来的二进制，会制造「工具已具备」的假象 —— 那正是本轮要消灭的那类混淆。
+> This is not an "install it first and see" situation: creating a kind cluster depends precisely on the docker daemon. When the daemon does not work, an installed
+> kind is just a binary that cannot run, which creates the illusion of "the tools are present" — exactly the kind of confusion this round is meant to eliminate.
 >
-> 此时**允许**做的事只有一件：把 helm / kubectl / promtool 装上（它们与 docker 无关），
-> 在执行记录里写明「kind 因 docker daemon 不可用未安装」，并且**不得**在任何文档里把本机
-> 登记成具备 kind。
+> In that case there is **one** thing that is **allowed**: install helm / kubectl / promtool (they are independent of docker),
+> write in the execution record that "kind was not installed because the docker daemon was unavailable", and **not** register this machine
+> as having kind in any document.
 
-## 3. 安装清单
+## 3. Installation list
 
-**统一方式：解压官方 tarball / 单文件到 `tools/bin/`，无需 root，与仓库同生命周期。**
+**Uniform method: unpack the official tarball / single file into `tools/bin/`, no root needed, same lifecycle as the repository.**
 
-### 3.1 为什么不首选 apt
+### 3.1 Why apt is not the first choice
 
-| 理由 | 说明 |
+| Reason | Explanation |
 |---|---|
-| 需要 root | 本项目任何步骤都不应依赖 sudo；root 步骤会成为「下次还会不会记得」的隐患 |
-| 版本不受控 | apt 给的是发行版当时打包的版本，仓库里没有任何地方记着它是哪个版本 ⇒ 同一份告警规则在两台机器上被两个 promtool 校验出不同结论，事后不可复现 |
-| 生命周期错位 | 发行版包装在 checkout 之外，`git clean -xfd` 清不掉，也不会出现在 `git status` 里；工具与仓库同生共死才是本项目要的形态 |
-| 供应链不可见 | tarball 有官方 sha256，可写进 `tools/VERSIONS` 强制校验；apt 的来源对本文不可见 |
+| root is required | no step of this project should depend on sudo; a root step becomes a "will anyone remember next time" hazard |
+| the version is uncontrolled | apt gives whatever version the distribution packaged at the time, and nowhere in the repository is it recorded which version that was ⇒ the same alert rules are validated by two different promtools on two machines with different conclusions, which is not reproducible after the fact |
+| lifecycle mismatch | distribution packages live outside the checkout, cannot be removed by `git clean -xfd`, and do not show up in `git status`; tools that live and die with the repository is the form this project wants |
+| the supply chain is invisible | a tarball has an official sha256 that can be written into `tools/VERSIONS` for mandatory verification; the origin of an apt package is invisible to this document |
 
-**apt 不是错的，只是不该是默认。** 若日后维护者裁定用 apt，本计划的 §5 版本固定策略必须同步改写。
+**apt is not wrong, it just should not be the default.** If the maintainer later adjudicates in favour of apt, the version-pinning strategy of §5 of this plan must be rewritten accordingly.
 
-### 3.2 清单
+### 3.2 List
 
-| 工具 | 建议版本 | 官方来源 | 安装位置 | 校验命令 | 期望 |
+| Tool | Suggested version | Official source | Install location | Verification command | Expected |
 |---|---|---|---|---|---|
 | `helm` | `3.16.4` | `https://get.helm.sh/helm-v3.16.4-linux-amd64.tar.gz` | `tools/bin/helm` | `tools/bin/helm version --short` | `v3.16.4+…` |
 | `kubectl` | `1.31.4` | `https://dl.k8s.io/release/v1.31.4/bin/linux/amd64/kubectl` | `tools/bin/kubectl` | `tools/bin/kubectl version --client=true` | `Client Version: v1.31.4` |
 | `kind` | `0.24.0` | `https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-amd64` | `tools/bin/kind` | `tools/bin/kind version` | `kind v0.24.0 … linux/amd64` |
-| `promtool` | `2.55.1`（取自 prometheus tarball） | `https://github.com/prometheus/prometheus/releases/download/v2.55.1/prometheus-2.55.1.linux-amd64.tar.gz` | `tools/bin/promtool` | `tools/bin/promtool --version` | `promtool, version 2.55.1` |
+| `promtool` | `2.55.1` (taken from the prometheus tarball) | `https://github.com/prometheus/prometheus/releases/download/v2.55.1/prometheus-2.55.1.linux-amd64.tar.gz` | `tools/bin/promtool` | `tools/bin/promtool --version` | `promtool, version 2.55.1` |
 
-版本取值依据：
+Basis for the version choices:
 
-- **helm 3.16.4** —— chart 为 `apiVersion: v2`，需要 Helm 3.x
-  （[`../delivery/install-guide.md`](../delivery/install-guide.md) 前置条件第 2 项）。
-- **kubectl 1.31.4 + kind 0.24.0** —— 二者配套：kind v0.24.0 的默认节点镜像是
-  `kindest/node:v1.31.0`，kubectl 与集群的版本偏移要求是 ±1 minor，取同一 minor 最省事。
-  `deploy/kind/m5-kind-up.sh` **没有**固定节点镜像，所以 kind 版本就是节点版本来源。
-- **promtool 2.55.1** —— **故意不动**。`deploy/kind/m5-record-artifacts.sh` 里的历史 `/tmp`
-  兜底路径用的就是 2.55.1；同一版本的 promtool 校验过的证据，语义上才可比。
+- **helm 3.16.4** — the chart is `apiVersion: v2` and needs Helm 3.x
+  (item 2 of the prerequisites in [`../delivery/install-guide.md`](../delivery/install-guide.md)).
+- **kubectl 1.31.4 + kind 0.24.0** — the two go together: the default node image of kind v0.24.0 is
+  `kindest/node:v1.31.0`, the allowed version skew between kubectl and the cluster is ±1 minor, and picking the same minor is least effort.
+  `deploy/kind/m5-kind-up.sh` does **not** pin the node image, so the kind version is the source of the node version.
+- **promtool 2.55.1** — **deliberately unchanged**. The historical `/tmp` fallback path in `deploy/kind/m5-record-artifacts.sh`
+  uses exactly 2.55.1; evidence validated by the same version of promtool is semantically comparable.
 
-> 执行前请与官方发布页核对上表版本号。`tools/bootstrap-infra.sh` 的 URL 由
-> `tools/VERSIONS` + `uname` 拼出，**不联网校验版本是否存在**；下错版本号会表现为下载 404。
+> Before executing, check the version numbers in the table above against the official release pages. The URLs in `tools/bootstrap-infra.sh` are assembled from
+> `tools/VERSIONS` + `uname` and **do not check online whether a version exists**; a wrong version number shows up as a 404 on download.
 
-### 3.3 不装 kustomize（判断与理由）
+### 3.3 kustomize is not installed (the judgement and the reason)
 
-本仓库**没有任何 kustomize 依赖**：
+This repository has **no kustomize dependency**:
 
-- chart 渲染走 `helm template`（`deploy/helm/scripts/chart-check.sh`、`make chart-check`）；
-- `deploy/` 下无 `kustomization.yaml`；
-- kind 清单是裸 YAML（`deploy/kind/manifests/`）。
+- chart rendering goes through `helm template` (`deploy/helm/scripts/chart-check.sh`, `make chart-check`);
+- there is no `kustomization.yaml` under `deploy/`;
+- the kind manifests are plain YAML (`deploy/kind/manifests/`).
 
-因此 **kustomize 不列入本计划**。若将来引入：`tools/VERSIONS` 加一行，
-`tools/bootstrap-infra.sh` 的 `url_for` / `pinned_for` / `checksum_for` 各加一个分支即可。
+Therefore **kustomize is not listed in this plan**. If it is introduced later: add one line to `tools/VERSIONS`,
+and add one branch each to `url_for` / `pinned_for` / `checksum_for` in `tools/bootstrap-infra.sh`.
 
-## 4. 脚本设计
+## 4. Script design
 
-本轮已落盘两个脚本（**本 session 未执行任何一个**，见 §6.0）：
+Two scripts have been landed in this round (**none of them was executed in this session**, see §6.0):
 
-| 脚本 | 职责 | 调用方式 |
+| Script | Responsibility | Invocation |
 |---|---|---|
-| [`../../tools/env-probe.sh`](../../tools/env-probe.sh) | **只读**探测：hostname / OS / 架构 + docker / uv / python3.10 / helm / kubectl / kind / promtool / make / git，区分「具备 / 缺失 / **装了但不可用**」三态 | `tools/env-probe.sh`、`--markdown`、`--json`、`--name`、`--role` |
-| [`../../tools/bootstrap-infra.sh`](../../tools/bootstrap-infra.sh) | 把四件工具装进 `tools/bin/`：**无 root、幂等、支持 `--dry-run`、装完自动调用 `env-probe.sh` 验证** | `tools/bootstrap-infra.sh [--dry-run] [--only <tool>] [--force]` |
+| [`../../tools/env-probe.sh`](../../tools/env-probe.sh) | **read-only** probing: hostname / OS / architecture + docker / uv / python3.10 / helm / kubectl / kind / promtool / make / git, distinguishing the three states "present / missing / **installed but unusable**" | `tools/env-probe.sh`, `--markdown`, `--json`, `--name`, `--role` |
+| [`../../tools/bootstrap-infra.sh`](../../tools/bootstrap-infra.sh) | installs the four tools into `tools/bin/`: **no root, idempotent, supports `--dry-run`, automatically calls `env-probe.sh` after installing to verify** | `tools/bootstrap-infra.sh [--dry-run] [--only <tool>] [--force]` |
 
-辅助文件：[`../../tools/VERSIONS`](../../tools/VERSIONS)（版本唯一存放处，见 §5）。
-`tools/bin/` 已在 `.gitignore` 中：**二进制不入库**。
+Auxiliary file: [`../../tools/VERSIONS`](../../tools/VERSIONS) (the single storage place for versions, see §5).
+`tools/bin/` is already in `.gitignore`: **binaries are not committed**.
 
-### 4.1 设计约束（写死，改动需维护者确认）
+### 4.1 Design constraints (written in stone, changes need maintainer confirmation)
 
-1. **无 root。** 任何需要 root 的路径必须**显式报错**，绝不允许脚本内部偷偷 `sudo`。
-   目录不可写时报「请修权限或设 `TOOLS_BIN=<可写目录>`」并退出。
-2. **幂等。** 已在锁定版本 ⇒ 跳过；`--force` 才重装。中途失败后直接重跑即可。
-3. **不写仓库以外的地方。** 只写 `tools/bin/` 与 `$TMPDIR`。
-4. **缺工具不是失败。** `env-probe.sh` 缺任何工具仍 exit 0 —— 缺工具是常态。
-5. **不打印凭据。** 两个脚本都不打印环境变量、token、内网地址（`AGENT.md` §11 / §13）。
+1. **No root.** Any path requiring root must **error explicitly**; a script must never quietly `sudo` internally.
+   When the directory is not writable, report "fix the permissions or set `TOOLS_BIN=<writable directory>`" and exit.
+2. **Idempotent.** Already at the locked version ⇒ skip; only `--force` reinstalls. After a mid-way failure, just re-run.
+3. **Do not write outside the repository.** Only `tools/bin/` and `$TMPDIR` are written.
+4. **A missing tool is not a failure.** `env-probe.sh` still exits 0 when any tool is missing — missing tools are the normal case.
+5. **Do not print credentials.** Neither script prints environment variables, tokens or internal addresses (`AGENT.md` §11 / §13).
 
-### 4.2 执行顺序（下一 session 的实际操作）
+### 4.2 Execution order (the actual operation for the next session)
 
 ```bash
 # 0) 前置核查（§2），尤其 docker info
@@ -177,15 +177,15 @@ export PATH="$PWD/tools/bin:$PATH"
 tools/env-probe.sh
 ```
 
-## 5. 版本固定策略
+## 5. Version-pinning strategy
 
-### 5.1 一处存放
+### 5.1 One storage place
 
-全部版本在 [`../../tools/VERSIONS`](../../tools/VERSIONS)，格式 `TOOL_VERSION=x.y.z`，
-可另附 `TOOL_SHA256=`（留空则只打印警告、不阻断安装）。**升级 = 只改这一个文件**，
-脚本本身不硬编码版本号。
+All versions live in [`../../tools/VERSIONS`](../../tools/VERSIONS), in the format `TOOL_VERSION=x.y.z`,
+optionally with `TOOL_SHA256=` appended (if left empty, only a warning is printed and installation is not blocked). **Upgrading = changing only this one file**;
+the scripts themselves do not hard-code version numbers.
 
-### 5.2 升级方式
+### 5.2 Upgrade procedure
 
 ```bash
 vim tools/VERSIONS                  # 改版本号，并顺手填上官方 sha256
@@ -193,72 +193,72 @@ tools/bootstrap-infra.sh --dry-run   # 确认 URL 变了
 tools/bootstrap-infra.sh             # 幂等重跑，只更新变化的那几个
 ```
 
-### 5.3 与仓库内既有硬编码版本的关系
+### 5.3 Relationship with the version numbers already hard-coded in the repository
 
-| 位置 | 硬编码内容 | 本计划如何处理 |
+| Location | What is hard-coded | How this plan handles it |
 |---|---|---|
-| `deploy/kind/m5-record-artifacts.sh` | `/tmp/prometheus-2.55.1.linux-amd64/promtool` 作为**最后兜底** | **保留**（不删历史路径），查找顺序已改为 ① `tools/bin/promtool` → ② `PATH` → ③ `/tmp` 旧路径。三者都没有时 `alert-check` 落 `FAIL-` 产物并写明 promtool 不可用，**不静默跳过** |
-| `Makefile:59`（`alert-check`） | 裸 `promtool` | **不改**。装完用 `export PATH="$PWD/tools/bin:$PATH"` 满足它 |
-| `deploy/kind/m5-kind-up.sh` | 未固定节点镜像 | **不改**。节点版本随 kind 版本走（§3.2） |
-| `deploy/kind/m5-ingress-evidence.sh:30` | ingress-nginx 清单跟随 `main` 分支 | 与本计划无关；属另一条可复现性问题，**本次不处理** |
+| `deploy/kind/m5-record-artifacts.sh` | `/tmp/prometheus-2.55.1.linux-amd64/promtool` as the **last fallback** | **kept** (the historical path is not deleted); the lookup order is changed to ① `tools/bin/promtool` → ② `PATH` → ③ the old `/tmp` path. When none of the three is present, `alert-check` writes a `FAIL-` artifact stating that promtool is unavailable, and does **not** skip silently |
+| `Makefile:59` (`alert-check`) | bare `promtool` | **unchanged**. Satisfy it after installing with `export PATH="$PWD/tools/bin:$PATH"` |
+| `deploy/kind/m5-kind-up.sh` | node image not pinned | **unchanged**. The node version follows the kind version (§3.2) |
+| `deploy/kind/m5-ingress-evidence.sh:30` | the ingress-nginx manifest follows the `main` branch | unrelated to this plan; it belongs to another reproducibility problem, **not handled this time** |
 
-**约束**：`PROMETHEUS_VERSION` 一旦与 `/tmp` 旧路径的 2.55.1 分叉，
-`tools/VERSIONS` 的注释里必须写明「自 X 起 promtool 版本与历史证据不同源，旧证据不可直接对比」。
+**Constraint**: once `PROMETHEUS_VERSION` diverges from the 2.55.1 of the old `/tmp` path,
+the comments in `tools/VERSIONS` must state "from X onwards the promtool version no longer shares a source with the historical evidence; the old evidence cannot be compared directly".
 
-## 6. 验证步骤（可证伪）
+## 6. Verification steps (falsifiable)
 
-> **没跑出证据就不算装完。** 每一条都必须给出可核对的产物路径。
+> **Without evidence produced, the installation is not done.** Every item must give a checkable artifact path.
 
-### 6.0 执行前的已知状态（不得当成已验证）
+### 6.0 Known state before execution (must not be treated as verified)
 
-本 session **只写了脚本、没有执行任何脚本**（受全局约束：shell 脚本除 `bash -n` 语法检查外不执行）。
-因此下列两条**尚未被验证过**，下一 session 必须先跑一遍：
+This session **only wrote the scripts and executed none of them** (constrained globally: shell scripts are not executed apart from the `bash -n` syntax check).
+Therefore the two commands below **have not been verified yet**, and the next session must run them first:
 
 ```bash
 tools/env-probe.sh                  # 期望：docker/uv/python3.10 为 ✅，helm/kubectl/kind/promtool 为 ❌
 tools/bootstrap-infra.sh --dry-run   # 期望：四条 url 打印出来，exit 0，不下载任何东西
 ```
 
-若二者报错，**先修脚本再装工具**，不要绕过。
+If either errors out, **fix the script first, then install the tools**; do not work around it.
 
-### 6.1 工具就位
+### 6.1 Tools in place
 
-| 检查 | 命令 | 期望 |
+| Check | Command | Expected |
 |---|---|---|
-| 四件齐全 | `tools/env-probe.sh` | helm / kubectl / kind / promtool 四行全为 `✅ 具备` |
-| 版本正确 | `tools/env-probe.sh` | 版本号与 `tools/VERSIONS` 逐字一致 |
-| 无「装了但不可用」 | 同上 | 「装了但不可用」一栏为（无） |
+| all four present | `tools/env-probe.sh` | the helm / kubectl / kind / promtool lines are all `✅ 具备` |
+| versions correct | `tools/env-probe.sh` | the version numbers match `tools/VERSIONS` verbatim |
+| no "installed but unusable" | same | the "installed but unusable" column is (none) |
 
-### 6.2 chart-check（交付产品质量证据）
+### 6.2 chart-check (delivery product quality evidence)
 
 ```bash
 export PATH="$PWD/tools/bin:$PATH"
 make chart-check
 ```
 
-- 期望：exit 0，末行 `chart-check: OK`，含 `1 chart(s) linted, 0 chart(s) failed`。
-- `[INFO] Fail:` 行属**预期断言**（fail-closed 渲染守卫），不代表失败。
-- 产物：`docs/acceptance/artifacts/m5/<日期>/PASS-chart-check-<日期>.txt`
-  与 `PASS-chart-check-sample-<日期>.txt`。
-- **命名由脚本负责**：直接跑 `bash deploy/kind/m5-record-artifacts.sh` 会自动按退出码分流
-  `PASS-` / `FAIL-` 并写明真实退出码；代价是它会先跑 `make gate`（较慢）。
-  只想要 chart / alert 两份证据时，可手工执行本节与 §6.3 的命令，再按上述文件名落盘。
+- Expected: exit 0, last line `chart-check: OK`, containing `1 chart(s) linted, 0 chart(s) failed`.
+- `[INFO] Fail:` lines are an **expected assertion** (the fail-closed rendering guard) and do not indicate a failure.
+- Artifacts: `docs/acceptance/artifacts/m5/<date>/PASS-chart-check-<date>.txt`
+  and `PASS-chart-check-sample-<date>.txt`.
+- **Naming is the script's responsibility**: running `bash deploy/kind/m5-record-artifacts.sh` directly routes automatically by exit code into
+  `PASS-` / `FAIL-` and writes the real exit code; the price is that it first runs `make gate` (slow).
+  When only the chart / alert evidence is wanted, the commands in this section and §6.3 can be run manually and landed under the file names above.
 
-### 6.3 alert-check（**P4：本次的核心目标**）
+### 6.3 alert-check (**P4: the core goal of this round**)
 
 ```bash
 make alert-check
 ```
 
-- 期望：exit 0，末行 `SUCCESS: N rules found`，且 **N 必须大于 5** ——
-  2026-10-10 新增了 `as.runtime` / `as.platform` 两组，原 5 条未改。
-  **`N == 5` 说明这次校验没覆盖到新增组，不足以划掉 P4。**
-- 产物：`PASS-alert-check-<日期>.txt` / `PASS-alert-check-sample-<日期>.txt`。
-- 记录写法必须是三元组：`(已验证, docs/acceptance/artifacts/m5/<日期>/PASS-alert-check-<日期>.txt, <日期>)`。
+- Expected: exit 0, last line `SUCCESS: N rules found`, and **N must be greater than 5** —
+  `as.runtime` / `as.platform` were added on 2026-10-10, and the original 5 rules are unchanged.
+  **`N == 5` means this validation did not reach the new groups, which is not enough to close out P4.**
+- Artifacts: `PASS-alert-check-<date>.txt` / `PASS-alert-check-sample-<date>.txt`.
+- The record must be written as a triple: `(verified, docs/acceptance/artifacts/m5/<date>/PASS-alert-check-<date>.txt, <date>)`.
 
-### 6.4 kind 集群级验证（**脚手架，不是客户验收项**）
+### 6.4 kind cluster-level verification (**scaffolding, not a customer acceptance item**)
 
-前置：`docker info` 通过（§2 第 1 项）。
+Prerequisite: `docker info` passes (item 1 of §2).
 
 ```bash
 export PATH="$PWD/tools/bin:$PATH"
@@ -266,120 +266,119 @@ kind create cluster --name as-m5 --wait 120s
 kubectl config get-contexts -o name | grep -qx kind-as-m5 && echo "context OK"
 ```
 
-- 期望：打印 `context OK`。
-- **拉镜像需要外网**；离线环境下 kind 必然失败，不要反复重试（见 §8.2）。
-- 产物若落进 `docs/acceptance/**` 或 handoff 记录，属证据分级第 ② 类
-  （[`../architecture/README.md`](../architecture/README.md) §3）：**对外履约依据，不是客户验收项**。
+- Expected: prints `context OK`.
+- **Pulling images requires external network access**; in an offline environment kind will inevitably fail, so do not retry repeatedly (see §8.2).
+- If the artifacts land in `docs/acceptance/**` or in a handoff record, they are evidence class ②
+  ([`../architecture/README.md`](../architecture/README.md) §3): **a basis for external performance, not a customer acceptance item**.
 
-### 6.5 产物命名的强制约定
+### 6.5 Mandatory naming convention for artifacts
 
-所有 `docs/acceptance/artifacts/**` 下的证据按**文件名即结论**落盘，由
-[`../../tests/test_evidence_discipline.py`](../../tests/test_evidence_discipline.py) 守卫：
+All evidence under `docs/acceptance/artifacts/**` is landed as **the file name is the conclusion**, guarded by
+[`../../tests/test_evidence_discipline.py`](../../tests/test_evidence_discipline.py):
 
-| 前缀 | 含义 | 是通过证据？ |
+| Prefix | Meaning | Is it pass evidence? |
 |---|---|---|
-| `PASS-` | 命令 exit 0 | 是 |
-| `FAIL-` | 命令跑了但非零退出 | **不是** |
-| `FAILCLOSED-` | 显式拒绝而非猜测 | **不是** |
+| `PASS-` | the command exited 0 | yes |
+| `FAIL-` | the command ran but exited non-zero | **no** |
+| `FAILCLOSED-` | an explicit refusal rather than a guess | **no** |
 
-格式 `<结论>-<被验项>[-sample]-<YYYY-MM-DD>.txt`。
-**不得**把失败的运行写成 `PASS-`；守卫会拒绝这种文件名。
+Format `<conclusion>-<item-under-test>[-sample]-<YYYY-MM-DD>.txt`.
+A failing run **must not** be written as `PASS-`; the guard rejects such a file name.
 
-### 6.6 全量自检
+### 6.6 Full self-check
 
 ```bash
 uv run pytest tests/ -q        # 证据纪律 + 工作区布局守卫
 uv run ruff check .
 ```
 
-期望：全绿。若 `tests/` 红，多半是产物命名违规（§6.5），**不要改测试去迁就产物**。
+Expected: all green. If `tests/` is red, it is most likely an artifact-naming violation (§6.5); **do not change the tests to accommodate the artifacts**.
 
-## 7. 收尾回写清单
+## 7. Close-out write-back checklist
 
-装完之后，以下位置**必须**同步更新（缺一项就等于没做完）：
+After the installation, the following locations **must** be updated in sync (missing one means the work is not done):
 
-| # | 位置 | 改什么 |
+| # | Location | What to change |
 |---|---|---|
-| 1 | [`../environments.md`](../environments.md) §2.1 | 跑 `tools/env-probe.sh --markdown`，把逐工具矩阵的数据行粘进去 |
-| 2 | [`../environments.md`](../environments.md) §2 | 登记表「缺失工具」栏去掉已补齐的四项；**保留 `WIN-03IB7NIEPF0` 这行真值** |
-| 3 | [`../environments.md`](../environments.md) §2.3 | 勾掉「P4 待校验」，并**注明校验所用环境名** |
-| 4 | register §7.5 与 [`../plan.md`](../plan.md) §0 | **P4 状态更新**：写明 `as.runtime` / `as.platform` 已由 promtool 2.55.1 校验，附三元组 `(结论, 证据文件, 日期)` |
-| 5 | [`../../tools/VERSIONS`](../../tools/VERSIONS) | 填入四件工具的官方 sha256（若未填，须在执行记录里列为待办） |
-| 6 | 新建执行记录 | `docs/handoff/<日期>-local-infra-bootstrap-execution-record.md`，逐条写「命令 / 实际输出 / 结论」 |
+| 1 | §2.1 of [`../environments.md`](../environments.md) | run `tools/env-probe.sh --markdown` and paste in the data rows of the per-tool matrix |
+| 2 | §2 of [`../environments.md`](../environments.md) | remove the four now-complete items from the "missing tools" column; **keep the `WIN-03IB7NIEPF0` row as the truth** |
+| 3 | §2.3 of [`../environments.md`](../environments.md) | tick off "P4 pending validation" and **note the name of the environment used for the validation** |
+| 4 | register §7.5 and §0 of [`../plan.md`](../plan.md) | **update the P4 status**: state that `as.runtime` / `as.platform` has been validated by promtool 2.55.1, with the triple `(conclusion, evidence file, date)` |
+| 5 | [`../../tools/VERSIONS`](../../tools/VERSIONS) | fill in the official sha256 of the four tools (if not filled in, it must be listed as a to-do in the execution record) |
+| 6 | create a new execution record | `docs/handoff/<date>-local-infra-bootstrap-execution-record.md`, writing "command / actual output / conclusion" for each item |
 
-> **全部 review record 一律标「待维护者评审」，不得自行签收。**
-> 本计划**不签收**任何 REQ、任何里程碑、任何 M5 / M8 关门条件。
-> 装齐工具**不等于**「集群级验证已通过」—— 后者要有它自己的证据。
+> **Every review record is marked "awaiting maintainer review"; it must not be signed off on its own.**
+> This plan **signs off** no REQ, no milestone, and no M5 / M8 closure condition.
+> Having all the tools installed **is not the same as** "cluster-level verification has passed" — the latter needs its own evidence.
 
-> 环境名按默认规则 **`<角色>-<hostname 小写去分隔符>`** 生成，**默认角色 `dev`**：
-> `WIN-03IB7NIEPF0` → `dev-win03ib7niepf0`，与登记表既有行一致（维护者 2026-10-11 裁决：角色作前缀）。
-> 要换前缀用 `tools/env-probe.sh --role infra`，要完全覆盖用 `--name`。
-> 环境名以**登记表为准**：改名等于换环境，须经维护者确认。
+> The environment name is generated by the default rule **`<role>-<hostname lowercased, separators removed>`**, with the **default role `dev`**:
+> `WIN-03IB7NIEPF0` → `dev-win03ib7niepf0`, consistent with the existing rows of the registry (maintainer adjudication of 2026-10-11: the role goes first).
+> To change the prefix use `tools/env-probe.sh --role infra`; to override completely use `--name`.
+> The **registry is authoritative** for the environment name: renaming means changing environments, which requires maintainer confirmation.
 
-## 8. 风险与回退
+## 8. Risks and rollback
 
-### 8.1 分步失败怎么办
+### 8.1 What to do when a step fails
 
-| 失败点 | 现象 | 处理 |
+| Failure point | Symptom | Handling |
 |---|---|---|
-| 下载失败 | `download failed` | 检查外网 / 代理；`bootstrap-infra.sh` 可重复跑，已装好的自动跳过 |
-| 校验和不符 | `checksum mismatch` | **立即停止**。不要用 `--force` 绕过。核对官方发布页；仍不符则上报，**不要**改 `tools/VERSIONS` 去凑 |
-| `promtool` 存在但跑不出版本 | 探测显示「装了但不可用」 | 多为解压层级不对；`rm -f tools/bin/promtool` 后 `--only promtool` 重装 |
-| `make chart-check` 仍找不到 helm | PATH 未生效 | `export PATH="$PWD/tools/bin:$PATH"`。若需长期生效（写 shell 配置），**先问维护者** —— 改用户环境超出本计划 |
-| kind 创建集群超时 | `--wait 120s` 超时 | 多为镜像拉不下来（网络）。见 §8.2。**不要**反复重试 |
+| download failure | `download failed` | check external network / proxy; `bootstrap-infra.sh` can be re-run and already-installed tools are skipped automatically |
+| checksum mismatch | `checksum mismatch` | **stop immediately**. Do not bypass with `--force`. Check the official release page; if it still mismatches, report it, and **do not** edit `tools/VERSIONS` to make it fit |
+| `promtool` exists but cannot report its version | the probe shows "installed but unusable" | usually a wrong extraction level; `rm -f tools/bin/promtool` then reinstall with `--only promtool` |
+| `make chart-check` still cannot find helm | PATH is not in effect | `export PATH="$PWD/tools/bin:$PATH"`. If a permanent effect is needed (writing shell config), **ask the maintainer first** — changing the user environment is outside this plan |
+| kind cluster creation times out | `--wait 120s` times out | usually the image cannot be pulled (network). See §8.2. **Do not** retry repeatedly |
 
-### 8.2 docker 镜像拉取的网络前提
+### 8.2 Network prerequisite for pulling docker images
 
-`kind create cluster` 需要从公网拉 `kindest/node:v1.31.0`（约 1 GB）。
-**无外网或受限时 kind 必然失败**，且失败信息通常是 timeout，容易被误读成「kind 装坏了」。
-遇到这种情况：在执行记录里写明「kind 因镜像不可达未验证」，**不得**写「kind 不可用」。
-helm / kubectl / promtool 与镜像无关，照常可用。
+`kind create cluster` needs to pull `kindest/node:v1.31.0` (about 1 GB) from the public network.
+**Without external network access or under restrictions kind will inevitably fail**, and the failure message is usually a timeout, which is easily misread as "kind is broken".
+When this happens: write in the execution record that "kind was not validated because the image was unreachable"; **do not** write "kind is unavailable".
+helm / kubectl / promtool are independent of the image and remain usable.
 
-### 8.3 只回退某一个工具
+### 8.3 Rolling back a single tool
 
 ```bash
 rm -f tools/bin/kind && tools/bootstrap-infra.sh --only kind
 ```
 
-回退 = 删除单个文件 + 幂等重装：不需要 root、不影响其它工具、不产生任何 git 变更。
-整体回退：`rm -rf tools/bin`（该目录在 `.gitignore` 中，删除不产生 git 变更）。
+Rollback = deleting one file + an idempotent reinstall: no root needed, no effect on other tools, no git change of any kind.
+Full rollback: `rm -rf tools/bin` (that directory is in `.gitignore`, and deleting it produces no git change).
 
-### 8.4 哪些动作不可逆
+### 8.4 Which actions are irreversible
 
-| 动作 | 可逆性 |
+| Action | Reversibility |
 |---|---|
-| `rm -rf tools/bin` | **可逆**（重装即可） |
-| 改 `tools/VERSIONS` 的版本号 | 可逆，但**已产出的证据随之失去可比性** —— 证据里记录的是当时的版本。改版本前先想清楚 |
-| `kind delete cluster --name as-m5` | **不可逆**：集群里的运行态数据全部消失。本计划不删集群；要删先确认 |
-| `kind create cluster` 拉取的镜像 | 占磁盘（1–2 GB），删集群不一定回收镜像 |
-| 修改 `deploy/` 下任何文件 | **不在本计划授权范围内**（见 §9） |
+| `rm -rf tools/bin` | **reversible** (just reinstall) |
+| changing the version number in `tools/VERSIONS` | reversible, but **the evidence already produced loses comparability** — the evidence records the version at the time. Think it through before changing the version |
+| `kind delete cluster --name as-m5` | **irreversible**: all runtime data in the cluster disappears. This plan does not delete the cluster; confirm first if it is to be deleted |
+| the images pulled by `kind create cluster` | occupy disk (1–2 GB); deleting the cluster does not necessarily reclaim the images |
+| modifying any file under `deploy/` | **outside this plan's authorization** (see §9) |
 
-### 8.5 无法回退 / 无法解决的事项
+### 8.5 Items that cannot be rolled back / cannot be resolved
 
-- **2026-10-05 那台机器的身份**：已判定**无法回填**（维护者 2026-10-11）。
-  不要为了「让登记表好看」去猜一个 hostname 填进去 —— 那是本轮明令禁止的空占位回潮。
-  该批证据的归属保持「未登记」，见 [`../environments.md`](../environments.md) §2.2。
+- **The identity of the machine of 2026-10-05**: adjudicated as **not back-fillable** (maintainer, 2026-10-11).
+  Do not guess a hostname to fill it in "so the registry looks better" — that is exactly the recurrence of empty placeholder back-filling that this round forbids.
+  The attribution of that batch of evidence stays "unregistered", see §2.2 of [`../environments.md`](../environments.md).
 
-## 9. 停止线
+## 9. Stop line
 
-**本计划不授权以下任何一项。执行中发现需要越过，停下并上报维护者：**
+**This plan authorizes none of the following. If execution finds that one of them must be crossed, stop and report to the maintainer:**
 
-| 不授权 | 说明 |
+| Not authorized | Explanation |
 |---|---|
-| `git push` / `git tag` / 建分支 / 改 remote | 未经维护者在**当次对话**中明确批准，绝不做 |
-| 改根 `VERSION` 或 `deploy/helm/Chart.yaml` | 版本口径（G4/A6）仍待裁决 |
-| 把 kind 集群证据当**客户验收项** | M5「控制面集群部署证明」已裁定为**对外履约依据，不是客户验收项**（register §7.3） |
-| 签收任何 REQ / 里程碑 | 一律标「待维护者评审」 |
-| 改 `deploy/alerts/` 以让 promtool 通过 | 告警规则若校验失败，是**要修的缺陷**，不是要改的规则 |
-| 用 `sudo` 绕过权限问题 | 脚本会显式报错；绕过脚本的 sudo 等于让本计划的「无 root」承诺失效 |
-| 为「让 gate 变绿」而放宽守卫测试 | 守卫红 = 产物或环境不合规，应修产物/环境，不应改守卫 |
+| `git push` / `git tag` / creating a branch / changing remote | never done without the maintainer's explicit approval in **that conversation** |
+| changing the root `VERSION` or `deploy/helm/Chart.yaml` | the version framing (G4/A6) is still awaiting adjudication |
+| treating kind cluster evidence as a **customer acceptance item** | M5 "control plane cluster deployment proof" has been adjudicated as **a basis for external performance, not a customer acceptance item** (register §7.3) |
+| signing off any REQ / milestone | always mark "awaiting maintainer review" |
+| changing `deploy/alerts/` to make promtool pass | if an alert rule fails validation, that is a **defect to be fixed**, not a rule to be changed |
+| using `sudo` to work around a permission problem | the script errors out explicitly; sudo that bypasses the script renders this plan's "no root" promise void |
+| relaxing the guard tests to "make the gate green" | a red guard means the artifact or environment is non-compliant; fix the artifact/environment, do not change the guard |
 
-**遇上下表任一情形，立即停止并在执行记录中写明「已停下 + 原因 + 需要谁裁决」：**
-需要越过停止线、需要 root、需要改交付物、发现计划与仓库实际状态不符。
+**On encountering any of the following situations, stop immediately and write in the execution record "stopped + the reason + who must adjudicate":**
+it is necessary to cross the stop line, root is needed, a deliverable has to be changed, or the plan is found not to match the actual state of the repository.
 
 ---
 
-**本计划未执行任何安装动作**：本 session 未运行 `tools/env-probe.sh`、未运行
-`tools/bootstrap-infra.sh`、未下载任何 tarball、未创建任何 kind 集群、未执行任何 `make` target。
-**落盘日期：2026-10-11。状态：已落盘，待维护者评审。**
-
+**This plan has executed no installation action**: this session did not run `tools/env-probe.sh`, did not run
+`tools/bootstrap-infra.sh`, did not download any tarball, did not create any kind cluster, and did not execute any `make` target.
+**Landing date: 2026-10-11. Status: landed, awaiting maintainer review.**

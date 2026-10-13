@@ -12,268 +12,270 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 产品化包装 16 份文档 · 评审项目清单（B6）
+# Productization Packaging 16 Documents · Review Item Checklist (B6)
 
-> **落盘日期：2026-10-12。状态：评审已执行（2026-10-12），16 份结论全部为「需修改」（accept 0 / 驳回 0）；结论由 agent 分批评审 + 主 agent 抽查复核后填写，待维护者确认。**
+> **Written to disk: 2026-10-12. Status: the review has been executed (2026-10-12), and all 16 conclusions are "needs modification" (accept 0 / rejected 0); the conclusions were filled in by the agent after reviewing by batch + spot-check re-verification by the primary agent, and await maintainer confirmation.**
 >
-> **本文是 B6 的评审载体**：[`../handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](../handoff/2026-10-10-unfinished-assessment-and-next-plan.md)
-> §4 **B6 · 产品化包装 16 份文档的评审**，出口判据为
-> 「16 份文档逐份评审，结论（accept / 需修改 / 驳回）留 review record；需修改项闭环后复评；
-> `docs/product-packaging-plan.md` §5 的批次状态按评审结果更新」。**谁做：维护者。**
+> **This document is the review vehicle of B6**: §4 **B6 · Review of the 16 productization packaging documents** of [`../handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](../handoff/2026-10-10-unfinished-assessment-and-next-plan.md),
+> and its exit criterion is
+> "review the 16 documents one by one, leave the conclusion (accept / needs modification / rejected) in a review record; re-review after the needs-modification items are closed;
+> the batch status in §5 of `docs/product-packaging-plan.md` is updated per the review results". **Who does it: the maintainer.**
 >
-> 维护者 2026-10-12 要求「评审项目单独落盘」——本文件即该落盘物：
-> 它把「评审什么」固定下来，**不替维护者填任何结论**。
+> On 2026-10-12 the maintainer required that "the review items be written to disk separately" —— this document is that deliverable:
+> it fixes "what is reviewed" and **fills in no conclusion on the maintainer's behalf**.
 >
-> **2026-10-12 追加：维护者指示执行评审并落盘，结论栏由 agent 填写（依据为 2026-10-12 已生效的 G6/G7/G8/G4 等已裁口径与仓库实测）；结论留待维护者确认，不构成对外交付或验收依据。**
+> **Appended 2026-10-12: the maintainer instructed that the review be executed and written to disk, with the conclusion column filled in by the agent (based on the G6/G7/G8/G4 etc. adjudicated positions already in effect on 2026-10-12 and the repository measurements); the conclusions await maintainer confirmation and do not constitute a basis for external delivery or acceptance.**
 >
-> **2026-10-12 再追加（闭环复评）**：16 份「需修改」项已全部闭环并复评 —— 复评结论见 **§7**（accept 16 / 需修改 0 / 驳回 0，**待维护者确认**）；§1–§6 为闭环前记录，原文未改。
+> **Appended again 2026-10-12 (closure re-review)**: all 16 "needs modification" items have been closed and re-reviewed —— the re-review conclusions are in **§7** (accept 16 / needs modification 0 / rejected 0, **awaiting maintainer confirmation**); §1–§6 are the pre-closure record, unchanged.
 >
-> **本文件所填结论不代替维护者的最终判断**；结论栏已于 2026-10-12 由 agent 填写（见 §3 与 §6），维护者确认前不作为任何签收依据。
+> **The conclusions filled in this document do not replace the maintainer's final judgment**; the conclusion column was filled in by the agent on 2026-10-12 (see §3 and §6), and before maintainer confirmation it is not a basis for any sign-off.
 
 ---
 
-## 1. 计数口径（先对齐，避免"16 份"指的不是同一批东西）
+## 1. Counting Basis (align first, to avoid "16 documents" not meaning the same set of things)
 
-| 目录 | 计入的 `.md` 份数 | 明细 |
+| Directory | Number of `.md` Files Counted | Details |
 |---|---|---|
-| `docs/product/` | **6** | `one-pager.md`、`compliance-matrix.md`、`ne-datasheet.md`、`responsibility-matrix.md`、`security-privacy.md`、`version-lifecycle.md` |
-| `docs/operations/` | **7** | `README.md`、`runbook-l1.md`、`runbook-l2.md`、`alert-response-matrix.md`、`fault-demarcation.md`、`rollback-playbook.md`、`backup-restore.md` |
-| `docs/delivery/` | **3** | `README.md`、`install-guide.md`、`airgap-package.md` |
-| **合计** | **16** | — |
+| `docs/product/` | **6** | `one-pager.md`, `compliance-matrix.md`, `ne-datasheet.md`, `responsibility-matrix.md`, `security-privacy.md`, `version-lifecycle.md` |
+| `docs/operations/` | **7** | `README.md`, `runbook-l1.md`, `runbook-l2.md`, `alert-response-matrix.md`, `fault-demarcation.md`, `rollback-playbook.md`, `backup-restore.md` |
+| `docs/delivery/` | **3** | `README.md`, `install-guide.md`, `airgap-package.md` |
+| **Total** | **16** | — |
 
-**不计入 16 份、但同批需要过目的附带资产**（评审 16 份时通常要一并看）：
+**Incidental assets not counted among the 16 but needing a look in the same batch** (usually reviewed together with the 16):
 
-- `docs/operations/grafana-dashboards/` 下 **2 份 Grafana 看板 JSON** + 看板 `README.md`
+- **2 Grafana dashboard JSONs** under `docs/operations/grafana-dashboards/` + the dashboard `README.md`
 - `docs/delivery/preflight.sh`
-- `docs/delivery/scripts/` 下 `bundle-images.sh`、`load-images.sh`、`images.txt`
+- `bundle-images.sh`, `load-images.sh`, `images.txt` under `docs/delivery/scripts/`
 
 ---
 
-## 2. 每份都要过的四个通用维度
+## 2. The Four Common Dimensions Every Document Must Pass
 
-维护者逐份评审时，建议对**每一份**都回答这四个问题（结论栏即填这四项）：
+When the maintainer reviews document by document, it is suggested to answer these four questions for **each** document (the conclusion column records these four items):
 
-| # | 维度 | 要回答什么 |
+| # | Dimension | What Must Be Answered |
 |---|---|---|
-| **D-1** | **事实准确性** | 文档所述与仓库**当前实际状态**是否一致？有无 stale 表述（例如仍写「待裁决」但取值已裁、或反过来的） |
-| **D-2** | **与已裁决口径的一致性** | 是否与 §0 决策记录表里**已生效**的裁决一致（尤其 O4 / D5 / O5 / D3 / G4 版本口径 / 目标场景与命名 G8） |
-| **D-3** | **对外可用性** | 这份能不能作为**对外交付或验收依据**？若不能，缺什么 |
-| **D-4** | **follow-up** | 是否需要修改 / 补写 / 等别的裁决；需要的写明依赖 |
+| **D-1** | **Factual accuracy** | Is what the document states consistent with the repository's **current actual state**? Are there stale statements (for example still writing "pending adjudication" when the value has been adjudicated, or the other way round)? |
+| **D-2** | **Consistency with adjudicated positions** | Is it consistent with the adjudications already **in effect** in the §0 decision record table (especially O4 / D5 / O5 / D3 / the G4 version basis / the G8 target scenario and naming)? |
+| **D-3** | **External usability** | Can this serve as a basis for **external delivery or acceptance**? If not, what is missing? |
+| **D-4** | **follow-up** | Does it need modification / supplementary writing / another adjudication? If so, state the dependency explicitly |
 
-结论取值：**accept** / **需修改（写明项）** / **驳回（写明理由）**。
+Conclusion values: **accept** / **needs modification (with the items specified)** / **rejected (with the reasons specified)**.
 
 ---
 
-## 3. 逐份清单（结论栏已于 2026-10-12 由 agent 填写，待维护者确认）
+## 3. Document-by-Document List (the conclusion column was filled in by the agent on 2026-10-12, awaiting maintainer confirmation)
 
-### 3.1 `docs/product/`（6 份）
+### 3.1 `docs/product/` (6 documents)
 
-| # | 文件 | 已知需重点核对的点 | 结论 | 备注 |
+| # | File | Known Points Requiring Focused Verification | Conclusion | Notes |
 |---|---|---|---|---|
-| 1 | [`one-pager.md`](../product/one-pager.md) | 目标场景口径是否为已裁的「xx运营商 内部生产就绪 / 发版评审」（G8）；产品描述名是否为 `In-house IMS Application Server` | 需修改 | G8 三项 stale（:5/:6/:7）；O4/D5/O5 stale（:170-172）；e2e=0（:168） |
-| 2 | [`compliance-matrix.md`](../product/compliance-matrix.md) | `:79` / `:117` / `:234` / `:266` 记录的「14 条全文回放未签收」—— 2026-10-12 后 REQ-F-1 已进入「自动化**子集**已覆盖 / 全文仍 open」，此处表述是否需要同步 | 需修改 | G8 stale（:5）；REQ-F-1「14 条未签收」4 处 stale（:79/:117/:234/:266）；e2e 0 条（:263） |
-| 3 | [`ne-datasheet.md`](../product/ne-datasheet.md) | **容量取值是否已填** —— O1 取值仍未裁，本次只落了「内部工程目标下限基线」，**对外容量取值应仍为空** | 需修改 | 容量纪律合规（无 1280 数值）；命名 + O4/D5/O5/D3/e2e 共 10 处 stale（:11/:26/:40/:234/:302/:356-359/:367/:382） |
-| 4 | [`responsibility-matrix.md`](../product/responsibility-matrix.md) | 与产品定位（部署在运营商网络之外、单租户 on-prem）是否一致 | 需修改 | 产品定位一致性合规；命名 + e2e 2 处 + O4/D5/O5/D3 5 处 stale（:5/:11/:167/:192-194/:198/:213） |
-| 5 | [`security-privacy.md`](../product/security-privacy.md) | 2026-10-11 已按 O4 / D5 裁决**追加同步**；但 §4.1 记录的「chart **无备份 Job**」这一事实**未变**，备份恢复方案因此仍未闭合 | 需修改 | O4/D5/O5 已同步且无完成时表述、chart 无备份 Job 事实未变（合规）；残留 :289 状态纪律行 + :5 正文 stale |
-| 6 | [`version-lifecycle.md`](../product/version-lifecycle.md) | §7「API 版本兼容策略」是以「**候选、未决策**」形式列出的，**无 ADR** —— 与 Lane D 的 **4.3** 是同一件事 | 需修改 | §7 与 Lane D 4.3 表述正确、§3 纯转述 ADR-0027（合规）；命名 3 处 stale；:118「无自动化」stale（sync-chart-version.sh 已落地） |
+| 1 | [`one-pager.md`](../product/one-pager.md) | Whether the target scenario matches the adjudicated "xxCarrier internal production readiness / release review" (G8); whether the descriptive product name is `In-house IMS Application Server` | needs modification | Three G8 stale items (:5/:6/:7); O4/D5/O5 stale (:170-172); e2e=0 (:168) |
+| 2 | [`compliance-matrix.md`](../product/compliance-matrix.md) | The "14 full-replay items unsigned" recorded at `:79` / `:117` / `:234` / `:266` —— after 2026-10-12 REQ-F-1 has entered "automated **subset** covered / full text still open"; does this wording need to be synced | needs modification | G8 stale (:5); 4 stale instances of REQ-F-1 "14 items unsigned" (:79/:117/:234/:266); e2e 0 items (:263) |
+| 3 | [`ne-datasheet.md`](../product/ne-datasheet.md) | **Whether capacity values have been filled in** —— the O1 values are still unadjudicated; this round only landed the "internal engineering target lower-bound baseline", so **the external capacity values should still be empty** | needs modification | Capacity discipline compliant (no 1280 value); 10 stale instances in total for naming + O4/D5/O5/D3/e2e (:11/:26/:40/:234/:302/:356-359/:367/:382) |
+| 4 | [`responsibility-matrix.md`](../product/responsibility-matrix.md) | Whether it is consistent with the product positioning (deployed outside the carrier network, single-tenant on-prem) | needs modification | Product positioning consistency compliant; 2 stale for naming + e2e, and 5 stale for O4/D5/O5/D3 (:5/:11/:167/:192-194/:198/:213) |
+| 5 | [`security-privacy.md`](../product/security-privacy.md) | It was **additively synced** per the O4 / D5 adjudications on 2026-10-11; but the fact recorded in §4.1 that the "chart has **no backup Job**" has **not changed**, so the backup-restore approach is still not closed | needs modification | O4/D5/O5 are synced with no "completed" statements, and the unchanged fact that the chart has no backup Job is compliant; residual :289 status-discipline line + :5 body text stale |
+| 6 | [`version-lifecycle.md`](../product/version-lifecycle.md) | §7 "API version compatibility policy" is listed in the form of "**candidate, undecided**" with **no ADR** —— it is the same thing as Lane D **4.3** | needs modification | §7's wording and Lane D 4.3 are correct and §3 is a pure restatement of ADR-0027 (compliant); 3 stale instances of naming; :118 "no automation" is stale (sync-chart-version.sh has landed) |
 
-### 3.2 `docs/operations/`（7 份）
+### 3.2 `docs/operations/` (7 documents)
 
-| # | 文件 | 已知需重点核对的点 | 结论 | 备注 |
+| # | File | Known Points Requiring Focused Verification | Conclusion | Notes |
 |---|---|---|---|---|
-| 7 | [`README.md`](../operations/README.md) | 导航是否覆盖全部 8 份文档 + 看板 | 需修改 | :25 O4/O5/D3/D5 列未决 stale；:80 e2e=0；§1 分层表缺 4 层致 alert-response-matrix:6 定位落空 |
-| 8 | [`runbook-l1.md`](../operations/runbook-l1.md) | 一线处置步骤与实际告警规则集（`deploy/alerts/` 3 组 10 条）是否对得上 | 需修改 | :29 引用错误（7.2d 出处应为 plan §3.2/交付物 2.4 行）；:47/:194 O5/D3 未决 stale；:7 e2e=0 |
-| 9 | [`runbook-l2.md`](../operations/runbook-l2.md) | 二线步骤；是否引用了尚未实现的能力（如轨迹查询、Redis Sentinel） | 需修改 | 未发现把未实现能力写成可执行步骤（合规）；:21 O4/D5 未决、:98/:180 O5/D3 未决 stale；:5 e2e=0 |
-| 10 | [`alert-response-matrix.md`](../operations/alert-response-matrix.md) | 是否与 `deploy/alerts/as-alerts.yaml` 的 3 组 10 条规则逐条对应 | 需修改 | :68「查 Sentinel/failover 状态」在单副本 chart 下不可执行；O5/D3 未决 stale；4 处 e2e=0；promtool 2026-10-11 通过结果未留痕 |
-| 11 | [`fault-demarcation.md`](../operations/fault-demarcation.md) | 与 `responsibility-matrix.md` 的边界口径是否一致 | 需修改 | 与 responsibility-matrix 边界口径一致（合规）；:38/:117/:298/:299 O4/D5/O5/D3 stale；:15 e2e=0 |
-| 12 | [`rollback-playbook.md`](../operations/rollback-playbook.md) | 回滚步骤是否依赖 chart 版本一致性 —— A6 已裁「自动同步」但**当前仍未同步** | 需修改 | 未声称已演练（合规）；全篇 0 处提及 VERSION/Chart.yaml/kubeVersion，L3 回滚缺版本映射；:126/:162 O5/D3 stale |
-| 13 | [`backup-restore.md`](../operations/backup-restore.md) | 2026-10-11 已按 O5 / D3 裁决**追加同步**；但 **RPO / RTO 数值仍未裁**，且 D5（in-cluster PostgreSQL）**实现未落** | 需修改 | RPO/RTO 未给数值、D5 实现未落如实（合规）；:166 注记被写成单列表格行打断 §7 表格；:27/:150/:162-164 主单元格仍写待裁决；:164 与 :166 自相矛盾 |
+| 7 | [`README.md`](../operations/README.md) | Whether the navigation covers all 8 documents + the dashboards | needs modification | :25 the O4/O5/D3/D5 "undecided" column is stale; :80 e2e=0; the §1 layering table lacks the layer, making the location claimed by alert-response-matrix:6 fall through |
+| 8 | [`runbook-l1.md`](../operations/runbook-l1.md) | Whether the front-line handling steps match the actual alert rule set (3 groups, 10 rules in `deploy/alerts/`) | needs modification | :29 wrong citation (the source of 7.2d should be plan §3.2 / deliverable 2.4 row); :47/:194 O5/D3 undecided is stale; :7 e2e=0 |
+| 9 | [`runbook-l2.md`](../operations/runbook-l2.md) | Second-line steps; whether capabilities that are not yet implemented (such as trace query, Redis Sentinel) are cited | needs modification | No instance was found of unimplemented capabilities being written as executable steps (compliant); :21 O4/D5 undecided, :98/:180 O5/D3 undecided is stale; :5 e2e=0 |
+| 10 | [`alert-response-matrix.md`](../operations/alert-response-matrix.md) | Whether it corresponds rule by rule to the 3 groups and 10 rules in `deploy/alerts/as-alerts.yaml` | needs modification | :68 "check Sentinel/failover status" is not executable under a single-replica chart; O5/D3 undecided is stale; 4 instances of e2e=0; the promtool pass result of 2026-10-11 was not recorded |
+| 11 | [`fault-demarcation.md`](../operations/fault-demarcation.md) | Whether the boundary wording is consistent with `responsibility-matrix.md` | needs modification | The boundary wording is consistent with responsibility-matrix (compliant); :38/:117/:298/:299 O4/D5/O5/D3 stale; :15 e2e=0 |
+| 12 | [`rollback-playbook.md`](../operations/rollback-playbook.md) | Whether the rollback steps depend on chart version consistency —— A6 has adjudicated "automatic sync" but **the sync has still not happened** | needs modification | It does not claim a drill was performed (compliant); the whole document has 0 mentions of VERSION/Chart.yaml/kubeVersion, so the L3 rollback lacks a version mapping; :126/:162 O5/D3 stale |
+| 13 | [`backup-restore.md`](../operations/backup-restore.md) | It was **additively synced** per the O5 / D3 adjudications on 2026-10-11; but the **RPO / RTO values are still unadjudicated**, and D5 (in-cluster PostgreSQL) **is not implemented** | needs modification | RPO/RTO given no values and D5 not implemented are recorded faithfully (compliant); the :166 note was written as a single-column table row breaking the §7 table; :27/:150/:162-164 the main cells still say pending adjudication; :164 and :166 are self-contradictory |
 
-### 3.3 `docs/delivery/`（3 份）
+### 3.3 `docs/delivery/` (3 documents)
 
-| # | 文件 | 已知需重点核对的点 | 结论 | 备注 |
+| # | File | Known Points Requiring Focused Verification | Conclusion | Notes |
 |---|---|---|---|---|
-| 14 | [`README.md`](../delivery/README.md) | 导航是否覆盖 3 份文档 + 脚本 | 需修改 | 导航无死链（合规）；L82「人工核对 VERSION/Chart」stale（应引 sync-chart-version.sh --check）；交付清单缺 deploy/alerts/（G9-a 四类只落三类） |
-| 15 | [`install-guide.md`](../delivery/install-guide.md) | §2 交付清单与 `:19` / `:91` 是「交付边界判定线」的既有落地；安装步骤是否依赖 chart 版本（`kubeVersion` 已定为 `>=1.23.0-0`，**尚未写入 Chart.yaml**） | 需修改 | §2 缺告警规则；:39 chart 包名不实（当前 0.0.0-skeleton.tgz）；§5 fail-closed 文案漏 deployment.yaml 同义文案且未提示 allowEmptyAllowlistForTest 生产须 false；:195 人工核对 stale |
-| 16 | [`airgap-package.md`](../delivery/airgap-package.md) | 离线包步骤与 `scripts/bundle-images.sh` / `load-images.sh` / `images.txt` 是否一致 | 需修改 | §5/§6 所教 digest 写法会被 bundle-images.sh:205 拒绝（文档与脚本相悖）；产物命名未如实；L191「未落盘时」括注过期；§2 缺告警规则交付路径 |
+| 14 | [`README.md`](../delivery/README.md) | Whether the navigation covers the 3 documents + the scripts | needs modification | The navigation has no dead links (compliant); L82 "manually verify VERSION/Chart" is stale (it should cite sync-chart-version.sh --check); the delivery manifest lacks deploy/alerts/ (only three of the four categories in G9-a have landed) |
+| 15 | [`install-guide.md`](../delivery/install-guide.md) | §2's delivery manifest and `:19` / `:91` are the existing landing of the "delivery boundary decision line"; do the installation steps depend on the chart version (`kubeVersion` has been set to `>=1.23.0-0` but is **not yet written into Chart.yaml**)? | needs modification | §2 lacks the alert rules; :39 the chart package name is inaccurate (currently 0.0.0-skeleton.tgz); the §5 fail-closed wording misses the synonymous wording in deployment.yaml and does not point out that allowEmptyAllowlistForTest must be false in production; :195 manual verification is stale |
+| 16 | [`airgap-package.md`](../delivery/airgap-package.md) | Whether the offline package steps are consistent with `scripts/bundle-images.sh` / `load-images.sh` / `images.txt` | needs modification | The digest syntax taught by §5/§6 will be rejected by bundle-images.sh:205 (the document contradicts the script); the artifact naming is not faithful; the L191 "when not yet written to disk" parenthetical is outdated; §2 lacks the alert-rule delivery path |
 
 ---
 
-## 4. 三条评审时最容易漏的边界
+## 4. The Three Boundaries Most Easily Missed During Review
 
-1. **「已裁决」不等于「已实现」。** O4（10 天保留）/ D5（in-cluster PG）/ O5（N+1+跨站 1+1）/ D3（Redis Sentinel）
-   都只裁了**取值**；轨迹存储查询删除、Redis Sentinel **均未实现**。
-   凡文档中出现「系统按 10 天清理」「Sentinel 自动切换」一类**完成时**表述，都属需修改项。
-2. **本机真栈绿不等于对外容量。** 2026-10-12 的饱和点探测（CPS 1280 无失败）是
-   **本机 loopback 模型下的下限基线**，不是容量目标值，也不是承诺值；
-   `ne-datasheet.md` 的容量取值**不得**据此填写。
-3. **`promtool` 通过不等于告警可用。** 语法校验已过（3 组 10 条），但**抓取接线 X1 未闭合**；
-   涉及「告警能收到」的表述都需留意。
-
----
-
-## 5. 评审完成后的回写（维护者或按其指示执行）
-
-- [x] 16 份逐份填结论（accept / 需修改 / 驳回）与备注 —— **2026-10-12 完成**：结论见 §3，需修改项明细见 §6
-- [ ] 需修改项闭环后复评，并在本文件**追加**复评结果（原文不改） —— **未执行（2026-10-12）**：需修改项均未闭环，复评待闭环后进行
-- [x] 需修改项闭环后复评，并在本文件追加复评结果（原文不改） —— **2026-10-12 执行（本行为追加；上一行的「未执行」为闭环前状态，保留为审计链）**：16 份复评结论见 §7（accept 16 / 需修改 0 / 驳回 0，待维护者确认）；附带资产中看板 README 与三个交付脚本由「需修改」转 accept。
-- [x] `docs/product-packaging-plan.md` §5 的批次状态按评审结果更新 —— **2026-10-12 完成**
-- [x] 评审结论同步回 [`../handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](../handoff/2026-10-10-unfinished-assessment-and-next-plan.md) §4 **B6** 的出口判据 —— **2026-10-12 完成**
+1. **"Adjudicated" does not mean "implemented".** O4 (10-day retention) / D5 (in-cluster PG) / O5 (N+1 + cross-site 1+1) / D3 (Redis Sentinel)
+   have only had their **values** adjudicated; trace storage query/deletion and Redis Sentinel are **both not implemented**.
+   Any completion-tense statement of the form "the system cleans up after 10 days" or "Sentinel switches over automatically" in a document is a needs-modification item.
+2. **A green real stack on this machine is not external capacity.** The saturation-point probe of 2026-10-12 (CPS 1280 with no failures) is
+   a **lower-bound baseline under this machine's loopback model**, not a capacity target value and not a commitment value;
+   the capacity values of `ne-datasheet.md` **must not** be filled in on that basis.
+3. **A `promtool` pass does not mean the alerts are usable.** Syntax validation has passed (3 groups, 10 rules), but **the scrape wiring X1 is not closed**;
+   any statement involving "the alerts can be received" needs attention.
 
 ---
 
-**落盘日期：2026-10-12。状态：清单已建，评审结论待维护者填写。**
-（本文件不评审、不签收任何文档，不代替维护者判断，不构成对外交付或验收依据。）
-**2026-10-12 追加（上方落款为清单建立时原文，保留为审计链）：评审已执行，结论见 §3 与 §6；16 份全部「需修改」（accept 0 / 驳回 0），待维护者确认。**
-**2026-10-12 再追加（上方各行为闭环前状态，保留为审计链）**：需修改项已闭环并复评，结论见 §7（accept 16 / 需修改 0 / 驳回 0，待维护者确认）。
+## 5. Write-back After the Review Is Complete (by the maintainer or per their instruction)
+
+- [x] Fill in the conclusion and notes for all 16 documents one by one (accept / needs modification / rejected) —— **completed 2026-10-12**: conclusions in §3, the detail of the needs-modification items in §6
+- [ ] Re-review after the needs-modification items are closed, and **append** the re-review results to this document (the original text is unchanged) —— **not executed (2026-10-12)**: none of the needs-modification items has been closed, and the re-review will be performed after closure
+- [x] Re-review after the needs-modification items are closed, and append the re-review results to this document (the original text is unchanged) —— **executed 2026-10-12 (this row is an append; the "not executed" in the previous row is the pre-closure state, preserved as an audit chain)**: the 16 re-review conclusions are in §7 (accept 16 / needs modification 0 / rejected 0, awaiting maintainer confirmation); among the incidental assets, the dashboard README and the three delivery scripts moved from "needs modification" to accept.
+- [x] Update the batch status in §5 of `docs/product-packaging-plan.md` per the review results —— **completed 2026-10-12**
+- [x] Sync the review conclusions back into the exit criterion of §4 **B6** of [`../handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](../handoff/2026-10-10-unfinished-assessment-and-next-plan.md) —— **completed 2026-10-12**
 
 ---
 
-## 6. 评审记录（2026-10-12）
+**Written to disk: 2026-10-12. Status: the checklist has been created, and the review conclusions await the maintainer's filling in.**
+(This document reviews nothing and signs off no document; it does not replace the maintainer's judgment and does not constitute a basis for external delivery or acceptance.)
+**Appended 2026-10-12 (the signature block above is the original text at checklist creation, preserved as an audit chain): the review has been executed, the conclusions are in §3 and §6; all 16 are "needs modification" (accept 0 / rejected 0), awaiting maintainer confirmation.**
+**Appended again 2026-10-12 (the rows above are the pre-closure states, preserved as an audit chain)**: the needs-modification items have been closed and re-reviewed, the conclusions are in §7 (accept 16 / needs modification 0 / rejected 0, awaiting maintainer confirmation).
 
-> **性质**：本节是 B6 第一项出口判据（「16 份逐份评审，结论留 review record」）的落地记录。
-> **不签收任何 REQ、不签收任何里程碑、不构成对外交付或验收通过**；结论由 agent 填写，**待维护者确认**。
-> 评审方式：三个只读评审代理分批评审（product / operations / delivery）+ 主 agent 抽查复核 4 条关键证据。
+---
 
-### 6.1 汇总
+## 6. Review Record (2026-10-12)
 
-| 批次 | 份数 | accept | 需修改 | 驳回 |
+> **Nature**: this section is the landing record of the first exit criterion of B6 ("review the 16 documents one by one and leave the conclusion in a review record").
+> **It signs off no REQ, signs off no milestone, and does not constitute external delivery or an acceptance pass**; the conclusions were filled in by the agent and **await maintainer confirmation**.
+> Review method: three read-only review agents reviewed by batch (product / operations / delivery) + the primary agent spot-checked and re-verified 4 pieces of key evidence.
+
+The quoted original text in §6.2 and §6.4 is the exact wording in the documents under review and is kept verbatim.
+
+### 6.1 Summary
+
+| Batch | Count | accept | needs modification | rejected |
 |---|---|---|---|---|
 | `docs/product/` | 6 | 0 | 6 | 0 |
 | `docs/operations/` | 7 | 0 | 7 | 0 |
 | `docs/delivery/` | 3 | 0 | 3 | 0 |
-| **合计** | **16** | **0** | **16** | **0** |
+| **Total** | **16** | **0** | **16** | **0** |
 
-**附带资产（不计入 16 份）**：`grafana-dashboards/overview.json`、`sip-signaling.json`、`scripts/images.txt` = **accept**；
-`grafana-dashboards/README.md`、`preflight.sh`、`scripts/bundle-images.sh`、`scripts/load-images.sh` = **需修改**（明细见 6.4）。
+**Incidental assets (not counted among the 16)**: `grafana-dashboards/overview.json`, `sip-signaling.json`, `scripts/images.txt` = **accept**;
+`grafana-dashboards/README.md`, `preflight.sh`, `scripts/bundle-images.sh`, `scripts/load-images.sh` = **needs modification** (details in 6.4).
 
-### 6.2 逐份需修改项明细
+### 6.2 Document-by-Document Details of the Needs-Modification Items
 
-（每份列要点与行号；「合规点」是该份已核实无问题的部分，一并记录以免复评时重复劳动。）
+(For each document the key points and line numbers are listed; the "compliant points" are the parts of that document already verified as problem-free, recorded together so as to avoid duplicated effort at re-review time.)
 
 #### docs/product/
 
-1. **one-pager.md**：① `:7` 目标场景 stale —— 仍写「xx运营商 内部上线评审 / 当前默认方向 / 尚未形成正式决策落点」，应为已裁口径「xx运营商 内部生产就绪/发版评审」（G8-1）；② `:5` 命名 stale ——「文档暂用名 / 不是已正式批准的产品名」已被 G8-2 推翻（描述名正式采用，非商标/品牌宣称）；③ `:6`「repo 名拟改为」stale（G8-3 记为已完成）；④ `:168`「e2e marker 为 0」stale（实际 8 条稳定通过）；⑤ `:170` O4「未决」stale（已裁默认 10 天、部署可配；实现未落）；⑥ `:171` D5「未决」stale（已裁 in-cluster PostgreSQL）；⑦ `:172` O5「未决」且仍列「N+1 单节点 / N+M 机架或 AZ」选项 stale（已裁站点内 N+1 + 跨站 1+1；未裁项仅剩 RPO/RTO 数值）。合规点：`:10/:34/:142/:169` 关于 O1 未裁、不写容量数字的表述与现状一致。
-2. **compliance-matrix.md**：① `:5` 命名 stale（同 1②③）；② `:79`/`:117`/`:234`/`:266`「14 条全文回放未签收」stale —— REQ-F-1 现为「自动化子集已覆盖 / 全文仍 open」（Wave2 归一化对拍覆盖 S1 双腿骨架、C_in≠C_out、SDP 逐字节恒等；14 条逐条 header 对拍未做）；③ `:263`「e2e 0 条」stale。合规点：`:12`/`:13`/`:35`/`:187`/`:220-222` 的 open 标注与证据等级纪律如实。
-3. **ne-datasheet.md**：容量纪律**完全合规** —— 全篇无 CPS/BHCA/CAPS 数值，§3 只给模型结构与测量方法学，§3.6 填值准入三前置状态标注准确，未把 2026-10-12 CPS 1280 下限基线写成容量值。需修改：① `:1`/`:5` 命名 stale；② `:11`/`:382`「O1/O4/O5/D3/D5 未决」stale；③ `:26`/`:367`「e2e=0」stale；④ `:40`/`:234`/`:270-271`/`:274`/`:297`/`:302`/`:358`/`:359` O5/D3「未决」且 `:302` 仍列「机架/AZ」待选 stale；⑤ `:356`/`:357` O4/D5「未决」stale。合规点：版本不同步（`:23`/`:314`/`:340`）、X1 抓取缺口（`:216`/`:300`/`:328`/`:364`）、告警 3 组 10 条对应均如实；「chart 无备份 Job」事实未变。
-4. **responsibility-matrix.md**：产品定位一致性**完全合规**（单租户 on-prem、部署在运营商网络之外、S-CSCF 经 S-SBC 触发，与 ADR-0003/G-P0-5 一致）。需修改：① `:5` 命名 stale；② `:11`/`:198`「e2e=0」stale；③ `:167`/`:192`/`:193`/`:194`/`:213` O4/D5/O5/D3「未决」stale，其中 `:194` 与 `:168`（ADR-0008 N+1 + 1+1 温备）自相矛盾。
-5. **security-privacy.md**：O4/D5/O5 同步质量最好（9 处追加式注记，无任何「系统按 10 天清理」完成时表述；「chart 无备份 Job」事实未变且已实证）。需修改：① `:289` 状态纪律总结行 stale 且无注记覆盖（「e2e marker 为 0；O1/O4/O5/D1/D3/D5 未决」）；② `:5` 正文命名 stale（`:6` 注记已覆盖，建议正文改写、注记保留为审计链）；③ `:259-260` 正文与注记并存易误读，建议同步。
-6. **version-lifecycle.md**：§7「API 版本兼容策略 = 候选、未决策、无 ADR」与 Lane D 4.3 为同一件事且出口条件完整（合规）；§3 逐条转述 ADR-0027 不新增承诺（合规）。需修改：① `:5`/`:6`/`:231` 命名 stale；② `:118`「版本 bump 无自动化」stale —— `scripts/sync-chart-version.sh` 已于 2026-10-12 落地（默认 `--check` 只读、drift exit 1；`--apply` 未执行，G4「当前不修改」继续有效）；③ `:79`/`:241` 的「建议修法」应升级为「已裁自动同步、脚本就绪、首次执行时机待维护者决定」。
+1. **one-pager.md**: ① `:7` target scenario stale —— it still writes "xxCarrier internal go-live review / current default direction / a formal decision landing point has not yet been formed", which should be the adjudicated position "xxCarrier internal production readiness / release review" (G8-1); ② `:5` naming stale —— "文档暂用名 / 不是已正式批准的产品名" has been overturned by G8-2 (the descriptive name is formally adopted, not a trademark/brand claim); ③ `:6` "repo name planned to be changed to" is stale (G8-3 records it as completed); ④ `:168` "e2e marker is 0" is stale (actually 8 items pass stably); ⑤ `:170` O4 "undecided" is stale (the default of 10 days has been adjudicated and is deployment-configurable; the implementation has not landed); ⑥ `:171` D5 "undecided" is stale (in-cluster PostgreSQL has been adjudicated); ⑦ `:172` O5 "undecided" and still listing the "N+1 single node / N+M racks or AZ" options is stale (in-site N+1 + cross-site 1+1 has been adjudicated; the only remaining unadjudicated items are the RPO/RTO values). Compliant points: `:10/:34/:142/:169` statements about O1 being unadjudicated and no capacity figures being written are consistent with reality.
+2. **compliance-matrix.md**: ① `:5` naming stale (same as 1②③); ② `:79`/`:117`/`:234`/`:266` "14 full-replay items unsigned" is stale —— REQ-F-1 is now "automated subset covered / full text still open" (the Wave2 normalized cross-check covers the S1 two-leg skeleton, C_in≠C_out, and SDP byte-for-byte identity; the 14 item-by-item header cross-check was not done); ③ `:263` "e2e 0 items" is stale. Compliant points: the open annotations and the evidence-grading discipline at `:12`/`:13`/`:35`/`:187`/`:220-222` are faithful.
+3. **ne-datasheet.md**: the capacity discipline is **fully compliant** —— the whole document contains no CPS/BHCA/CAPS values, §3 only gives the model structure and measurement methodology, the §3.6 entry-approval three-precondition status annotation is accurate, and the CPS 1280 lower-bound baseline of 2026-10-12 has not been written as a capacity value. Needs modification: ① `:1`/`:5` naming stale; ② `:11`/`:382` "O1/O4/O5/D3/D5 undecided" stale; ③ `:26`/`:367` "e2e=0" stale; ④ `:40`/`:234`/`:270-271`/`:274`/`:297`/`:302`/`:358`/`:359` O5/D3 "undecided" and `:302` still listing "rack/AZ" as to be chosen is stale; ⑤ `:356`/`:357` O4/D5 "undecided" stale. Compliant points: the version desynchronization (`:23`/`:314`/`:340`), the X1 scrape gap (`:216`/`:300`/`:328`/`:364`), and the correspondence of the 3 alert groups and 10 rules are all faithful; the fact that the "chart has no backup Job" has not changed.
+4. **responsibility-matrix.md**: product positioning consistency is **fully compliant** (single-tenant on-prem, deployed outside the carrier network, S-CSCF triggered via S-SBC, consistent with ADR-0003/G-P0-5). Needs modification: ① `:5` naming stale; ② `:11`/`:198` "e2e=0" stale; ③ `:167`/`:192`/`:193`/`:194`/`:213` O4/D5/O5/D3 "undecided" stale, among which `:194` contradicts `:168` (ADR-0008 N+1 + 1+1 warm standby).
+5. **security-privacy.md**: the O4/D5/O5 sync quality is the best (9 additive notes, with no completion-tense statement of the form "the system cleans up after 10 days"; the fact that the "chart has no backup Job" has not changed and has been empirically verified). Needs modification: ① `:289` the status-discipline summary line is stale and not covered by any note ("e2e marker is 0; O1/O4/O5/D1/D3/D5 undecided"); ② `:5` body-text naming is stale (the `:6` note already covers it; it is suggested to rewrite the body text and keep the note as an audit chain); ③ `:259-260` the coexistence of body text and note is easy to misread, and it is suggested to synchronize them.
+6. **version-lifecycle.md**: §7 "API version compatibility policy = candidate, undecided, no ADR" is the same thing as Lane D 4.3 and its exit conditions are complete (compliant); §3 restates ADR-0027 item by item without adding new promises (compliant). Needs modification: ① `:5`/`:6`/`:231` naming stale; ② `:118` "version bump has no automation" is stale —— `scripts/sync-chart-version.sh` landed on 2026-10-12 (read-only by default with `--check`, exit 1 on drift; `--apply` not executed, and G4 "currently no modification" remains in effect); ③ the "suggested fix" at `:79`/`:241` should be upgraded to "automatic sync adjudicated, script ready, first execution timing pending the maintainer's decision".
 
 #### docs/operations/
 
-7. **README.md**：导航覆盖 7 份 + 看板且链接有效（合规）。需修改：① `:25` 仍把 O4/O5/D3/D5 列为「未决项」；② `:80`「e2e = 0」stale；③ §1 分层表只有 L1/L2 两行，`alert-response-matrix.md:6` 自称的「L1/L2 之上层」位置在 README 中不存在（跨文档断链）。
-8. **runbook-l1.md**：告警 10 条逐条对应、X1 抓取缺口未被掩盖、可触发性判断准确（合规）。需修改：① `:29` 引用错误 ——「M4b-7.2d / M8 7.2d blocked」的出处标为 `product-packaging-plan.md` §0.3 第 1、3 条，但该两条分别是「M8 退出签字搁置」「运营商 PKI 无 lab 证据」，7.2d 的真实出处是 §3.2 与交付物 2.4 行；② `:47`/`:194`「Redis HA 仍是未决项 O5/D3」stale；③ `:7`「e2e marker = 0」stale。
-9. **runbook-l2.md**：未发现把未实现能力（轨迹查询、Sentinel 切换）写成可执行步骤（合规）；`:202` 主动标注原件引用无法解析（良好自查）。需修改：① `:21`「O4/D5 未裁决」stale；② `:98`/`:180`「Sentinel 拓扑 / Redis HA 属未决 O5/D3」stale（应改为取值已裁、chart 仍单副本、failover 实测行为无证据）；③ `:5`「e2e marker = 0」stale。
-10. **alert-response-matrix.md**：与 as-alerts.yaml 3 组 10 条逐条对应、与 ne-datasheet §6 一致（合规）。需修改：① `:68` 首查动作第 3 步「查 Sentinel/failover 状态」在单副本 chart 下无对象可查（不可执行步骤）；② `:192` 及 `:68` 证据列「O5/D3 未决」stale；③ `:10`/`:14`/`:109`/`:189` 共 4 处「e2e=0」stale；④ `promtool check rules` 2026-10-11 通过（10 rules found）的结果未在本文留痕；⑤ `:6` 位置描述与 README §1 断链（同 7③）。
-11. **fault-demarcation.md**：与 responsibility-matrix 的归属/抓包责任口径逐行一致（合规）。需修改：① `:38` 第⑤项「O4/D5 未裁决」stale；② `:117`/`:298`「O5/D3 未决」stale；③ `:299`「O4/D5 待裁决」stale；④ `:15`「e2e marker = 0」stale。
-12. **rollback-playbook.md**：未声称做过真实集群演练（`:115`/`:134`/`:157` 均如实标注）（合规）。需修改：① **全篇（乃至全目录）0 处提及 VERSION/Chart.yaml/appVersion/kubeVersion** —— L3 `helm rollback <revision>` 缺「revision → 产品版本」映射前置，§5 演练记录模板无法回填产品版本，回退证据链对外不可验证；② `:126`/`:162`「O5/D3 未决」stale。
-13. **backup-restore.md**：RPO/RTO 不单方面给数值、D5 实现未落、无「按 10 天清理」完成时表述（合规）；是 operations 批唯一被 2026-10-11 任务 E 覆盖的一份。需修改：① `:166` 的追加注记被写成单列表格行，插在 §7 四列表格中间，渲染后列数不匹配；② `:27`/`:150`/`:162`/`:163`/`:164` 主单元格仍写「待裁决/未决」（有注记覆盖但读者先读到过期结论）；③ `:164`「只能写待裁决」与 `:166` 注记自相矛盾。
+7. **README.md**: the navigation covers 7 documents + the dashboards and the links are valid (compliant). Needs modification: ① `:25` still lists O4/O5/D3/D5 as "undecided items"; ② `:80` "e2e = 0" is stale; ③ the §1 layering table has only the L1/L2 rows, so the "layer above L1/L2" position claimed by `alert-response-matrix.md:6` does not exist in the README (a cross-document broken link).
+8. **runbook-l1.md**: the 10 alerts correspond rule by rule, the X1 scrape gap is not glossed over, and the triggerability judgments are accurate (compliant). Needs modification: ① `:29` wrong citation —— the source of "M4b-7.2d / M8 7.2d blocked" is marked as items 1 and 3 of §0.3 of `product-packaging-plan.md`, but those two items are respectively "the M8 exit sign-off is shelved" and "no lab evidence for carrier PKI"; the true source of 7.2d is §3.2 and the deliverable 2.4 row; ② `:47`/`:194` "Redis HA is still the undecided item O5/D3" is stale; ③ `:7` "e2e marker = 0" is stale.
+9. **runbook-l2.md**: no instance was found of unimplemented capabilities (trace query, Sentinel switchover) being written as executable steps (compliant); `:202` proactively notes that a citation to the original cannot be resolved (good self-check). Needs modification: ① `:21` "O4/D5 unadjudicated" is stale; ② `:98`/`:180` "Sentinel topology / Redis HA belongs to undecided O5/D3" is stale (it should be changed to: the values have been adjudicated, the chart is still single-replica, and there is no evidence of measured failover behaviour); ③ `:5` "e2e marker = 0" is stale.
+10. **alert-response-matrix.md**: it corresponds rule by rule to the 3 groups and 10 rules in as-alerts.yaml and is consistent with ne-datasheet §6 (compliant). Needs modification: ① `:68` step 3 of the first-check action "check Sentinel/failover status" has nothing to check under a single-replica chart (a non-executable step); ② `:192` and the `:68` evidence column "O5/D3 undecided" are stale; ③ `:10`/`:14`/`:109`/`:189` — 4 instances of "e2e=0" are stale; ④ the result of `promtool check rules` passing on 2026-10-11 (10 rules found) was not recorded in this document; ⑤ the position description at `:6` is broken against README §1 (same as 7③).
+11. **fault-demarcation.md**: it is line-by-line consistent with responsibility-matrix on attribution/packet-capture responsibility (compliant). Needs modification: ① `:38` item ⑤ "O4/D5 unadjudicated" is stale; ② `:117`/`:298` "O5/D3 undecided" are stale; ③ `:299` "O4/D5 pending adjudication" is stale; ④ `:15` "e2e marker = 0" is stale.
+12. **rollback-playbook.md**: it does not claim a real-cluster drill was performed (`:115`/`:134`/`:157` are all annotated faithfully) (compliant). Needs modification: ① **the whole document (indeed the whole directory) has 0 mentions of VERSION/Chart.yaml/appVersion/kubeVersion** —— the L3 `helm rollback <revision>` lacks the "revision → product version" mapping precondition, the §5 drill record template cannot be back-filled with the product version, and the rollback evidence chain is not externally verifiable; ② `:126`/`:162` "O5/D3 undecided" are stale.
+13. **backup-restore.md**: RPO/RTO are not unilaterally given values, D5 is not implemented, and there is no completion-tense statement of the form "cleanup after 10 days" (compliant); it is the only document of the operations batch covered by 2026-10-11 task E. Needs modification: ① the additive note at `:166` was written as a single-column table row inserted in the middle of the four-column §7 table, so the column count does not match after rendering; ② the main cells at `:27`/`:150`/`:162`/`:163`/`:164` still say "pending adjudication / undecided" (the notes cover them but the reader reads the stale conclusion first); ③ `:164` "can only write pending adjudication" contradicts the note at `:166`.
 
 #### docs/delivery/
 
-14. **README.md**：导航覆盖 3 份 + 4 个脚本资产、无死链、三步流程表与 preflight.sh 12 个检查段对应（合规）。需修改：① L82（及 §5 第 4 行）「VERSION/Chart 不同步 → 打包时人工核对」stale，应改为「跑 `scripts/sync-chart-version.sh --check`（只读，drift 即 exit 1）；`--apply` 留待维护者首次同步」；② §2/§3 交付清单未列入 `deploy/alerts/` 告警规则 —— G9-a 定义的四类交付产品只落地三类。
-15. **install-guide.md**：§2 判定线落地（`:19`/`:91`）、命令序列与 runbook 逐字一致（合规）。需修改：① §2 交付清单缺告警规则行；② `:39`「`3rdparty-as-<version>.tgz`」不实 —— `helm package` 按 Chart.yaml name/version 命名，当前产物实为 `3rdparty-as-0.0.0-skeleton.tgz`（与 VERSION 0.2.0 未同步）；③ §5 fail-closed 文案只引 `validate-install.yaml:6/9/12`，漏 `deployment.yaml:12/15` 同义文案（2026-10-11 chart-check 工件实证一次 lint 输出 4 条 Fail），且未提示 `sip.allowEmptyAllowlistForTest`（values.yaml:165）生产必须为 false；④ `:195`「人工核对三者」stale（同 14①）；⑤（建议）`:148`「已绿」为裸状态句，应补 (结论, 证据文件, 日期) 三元组。
-16. **airgap-package.md**：与 bundle/load 脚本的步骤、产物、退出码逐项对应，无第二套安装形态（合规）。需修改：① **§5/§6 与 images.txt 所教的 digest 固定写法（`repository:tag@sha256:...`）会被 `bundle-images.sh:205` 的格式校验拒绝**（该校验 glob 写反，任何 digest 条目必中 `die`）——文档与脚本相悖，属对外交付硬伤；② §3 产物命名未如实（tgz 按 Chart.yaml 命名当前为 `0.0.0-skeleton`；未传 `--platform` 时 tar 后缀为 `unspecified`）；③ L191「install-guide.md 未落盘时」括注过期（已落盘）；④ §2 缺告警规则交付路径说明。
+14. **README.md**: the navigation covers 3 documents + 4 script assets, has no dead links, and the three-step process table corresponds to the 12 check sections of preflight.sh (compliant). Needs modification: ① L82 (and row 4 of §5) "VERSION/Chart not synchronized → manual verification at packaging time" is stale and should be changed to "run `scripts/sync-chart-version.sh --check` (read-only, exit 1 on drift); `--apply` is left to the maintainer's first synchronization"; ② the §2/§3 delivery manifest does not list the `deploy/alerts/` alert rules —— only three of the four delivery product categories defined by G9-a have landed.
+15. **install-guide.md**: §2's decision line has landed (`:19`/`:91`) and the command sequence is word-for-word consistent with the runbook (compliant). Needs modification: ① the §2 delivery manifest lacks an alert-rule row; ② `:39` "`3rdparty-as-<version>.tgz`" is inaccurate —— `helm package` is named after the name/version in Chart.yaml, and the current artifact is actually `3rdparty-as-0.0.0-skeleton.tgz` (not synchronized with VERSION 0.2.0); ③ the §5 fail-closed wording only cites `validate-install.yaml:6/9/12` and misses the synonymous wording at `deployment.yaml:12/15` (the 2026-10-11 chart-check artifact empirically shows one lint output with 4 Fails), and does not point out that `sip.allowEmptyAllowlistForTest` (values.yaml:165) must be false in production; ④ `:195` "manually verify all three" is stale (same as 14①); ⑤ (suggested) `:148` "already green" is a bare status sentence and should be supplemented with the (conclusion, evidence file, date) triple.
+16. **airgap-package.md**: it corresponds item by item to the steps, artifacts and exit codes of the bundle/load scripts, with no second installation form (compliant). Needs modification: ① **the digest pinning syntax taught by §5/§6 together with images.txt (`repository:tag@sha256:...`) will be rejected by the format validation at `bundle-images.sh:205`** (that validation's glob is written backwards, so any digest entry hits `die`) —— the document contradicts the script, which is a hard defect for external delivery; ② the artifact naming in §3 is not faithful (the tgz is named after Chart.yaml and is currently `0.0.0-skeleton`; without `--platform`, the tar suffix is `unspecified`); ③ the L191 "when install-guide.md is not yet written to disk" parenthetical is outdated (it has landed); ④ §2 lacks the alert-rule delivery path description.
 
-### 6.3 跨文件共性问题（建议单独立项，本评审不执行修改）
+### 6.3 Cross-File Common Issues (it is suggested to open a separate item; this review does not execute the modifications)
 
-1. **「任务 E」同步覆盖缺口**：2026-10-11 的下游文档同步（register §2 P3）只覆盖 `product/security-privacy.md` 与 `operations/backup-restore.md`；其余 14 份 .md 仍写「O4/O5/D3/D5 未决」。本批 16 份中 15 份的 stale 直接源于此。建议按同一纪律补同步后复评。
-2. **e2e 口径过期**：全批 9+ 处「e2e marker = 0」；实际已有 8 条稳定通过。根源在 `docs/acceptance/test-plan.md` marker 表未同步（其 REQ-F-1 段已更新）。建议先修该表再回填各册。
-3. **chart 版本一致性缺位**：VERSION 0.2.0 与 Chart.yaml 0.0.0-skeleton 未同步、kubeVersion 未写入 —— 直接影响 rollback-playbook L3 可执行性、install-guide/airgap 产物命名、version-lifecycle 的「无自动化」表述。`scripts/sync-chart-version.sh` 已就绪，首次 `--apply` 时机待维护者决定。
-4. **交付清单缺告警规则**：delivery 三份 + README 均未按 G9-a 列入 `deploy/alerts/`（promtool 已验 3 组 10 条；X1 抓取接线未闭合需向客户说明）。
-5. **附带资产功能缺陷**：`bundle-images.sh:205` digest 校验写反；`load-images.sh` `--values` 承诺推断 Secret 名未实现（仅存在性检查）；`preflight.sh:509-510` 外部 Redis/Sentinel 部署误报「运行态状态存储不可用」（--strict 下阻断安装；Sentinel 时 REDIS_URL 本就不该出现）；`preflight.sh:34` 注释坏字节。另：`load-images.sh:146/196` 用 mapfile、preflight 用 bash 4.4 数组展开，三脚本未声明 bash 版本底线。
+1. **The "task E" sync coverage gap**: the downstream document sync of 2026-10-11 (register §2 P3) only covered `product/security-privacy.md` and `operations/backup-restore.md`; the other 14 .md files still write "O4/O5/D3/D5 undecided". 15 of the 16 documents in this batch have stale items stemming directly from this. It is suggested to complete the sync under the same discipline and then re-review.
+2. **The e2e basis is outdated**: there are 9+ instances of "e2e marker = 0" across the batch, while 8 items actually pass stably. The root cause is that the marker table in `docs/acceptance/test-plan.md` was not synced (its REQ-F-1 section has been updated). It is suggested to fix that table first and then back-fill each document.
+3. **Chart version consistency is missing**: VERSION 0.2.0 and Chart.yaml 0.0.0-skeleton are not synchronized, and kubeVersion is not written —— this directly affects the executability of rollback-playbook L3, the artifact naming of install-guide/airgap, and the "no automation" statement of version-lifecycle. `scripts/sync-chart-version.sh` is ready; the timing of the first `--apply` is pending the maintainer's decision.
+4. **The delivery manifest lacks the alert rules**: none of the three delivery documents + README lists `deploy/alerts/` per G9-a (promtool has verified 3 groups and 10 rules; the X1 scrape wiring being unclosed must be explained to the customer).
+5. **Functional defects in the incidental assets**: the digest validation at `bundle-images.sh:205` is written backwards; the `--values` promise in `load-images.sh` to infer the Secret name is not implemented (only an existence check); `preflight.sh:509-510` falsely reports "runtime state store unavailable" for external Redis/Sentinel deployments (blocking installation under --strict; REDIS_URL should not be present at all under Sentinel); `preflight.sh:34` has a bad byte. In addition: `load-images.sh:146/196` uses mapfile and preflight uses bash 4.4 array expansion, and the three scripts do not declare a bash version floor.
 
-### 6.4 附带资产结论明细
+### 6.4 Details of the Incidental Asset Conclusions
 
-| 资产 | 结论 | 要点 |
+| Asset | Conclusion | Key Points |
 |---|---|---|
-| `grafana-dashboards/overview.json` | accept | 15 面板与 README 声明一致；指标名全部命中 `platform/src/as_platform/telemetry/metrics.py:34-39`；无容量数字、无 Sh 面板、description 已声明抓取未闭合 |
-| `grafana-dashboards/sip-signaling.json` | accept | 7 面板；同上；label 使用合规 |
-| `grafana-dashboards/README.md` | 需修改 | `:46` 面板 5 描述与 JSON 两个独立 target 不一致；`:141`「O5/D3 未决」stale；`:9`「e2e=0」stale |
-| `delivery/preflight.sh` | 需修改 | `:509-510` 外部 Redis/Sentinel 误报 WARN（--strict 阻断）；bash≥4.4 底线未声明；`:34` 坏字节。检查项与 chart/values 对应关系总体正确 |
-| `delivery/scripts/bundle-images.sh` | 需修改 | `:205` digest 校验 glob 写反；`:95` `--destination` 为 usage 未文档化的孤儿选项 |
-| `delivery/scripts/load-images.sh` | 需修改 | `--values` 帮助文本承诺「推断必需 Secret 名」但仅做存在性检查；其余行为与文档一致 |
-| `delivery/scripts/images.txt` | accept | 与 values.yaml 默认镜像逐条一致；tag 留空回落 appVersion（当前 0.0.0）已如实说明；digest 先例待脚本修复后可用 |
+| `grafana-dashboards/overview.json` | accept | The 15 panels are consistent with the README statement; all metric names hit `platform/src/as_platform/telemetry/metrics.py:34-39`; no capacity figures, no Sh panel, and the description declares that scraping is unclosed |
+| `grafana-dashboards/sip-signaling.json` | accept | 7 panels; same as above; label usage is compliant |
+| `grafana-dashboards/README.md` | needs modification | The description of panel 5 at `:46` is inconsistent with the two independent targets in the JSON; `:141` "O5/D3 undecided" is stale; `:9` "e2e=0" is stale |
+| `delivery/preflight.sh` | needs modification | External Redis/Sentinel falsely reported as WARN at `:509-510` (blocking under --strict); the bash≥4.4 floor is not declared; bad byte at `:34`. The correspondence between the check items and chart/values is correct overall |
+| `delivery/scripts/bundle-images.sh` | needs modification | The digest validation glob at `:205` is written backwards; `:95` `--destination` is an orphan option not documented in the usage |
+| `delivery/scripts/load-images.sh` | needs modification | The `--values` help text promises "inferring the required Secret name" but only performs an existence check; the remaining behaviour is consistent with the documentation |
+| `delivery/scripts/images.txt` | accept | Consistent item by item with the default images in values.yaml; the empty tag falling back to appVersion (currently 0.0.0) is explained faithfully; the digest precedent will be usable after the script is fixed |
 
-### 6.5 复评与闭环
+### 6.5 Re-review and Closure
 
-- 16 份需修改项**均未闭环**，复评**未执行**；闭环后须在本文件**追加**复评结果（原文不改）。
-- 修改动作本身**未获授权执行**：本评审只填结论，不改动 16 份文档与附带资产的任何字节。
-- 维护者确认本评审结论后，B6 出口判据第 2 项（需修改项闭环后复评）方可推进。
+- The needs-modification items of the 16 documents are **all unclosed**, and the re-review is **not executed**; after closure the re-review results must be **appended** to this document (the original text is unchanged).
+- The modification actions themselves are **not authorized to be executed**: this review only fills in conclusions and does not change a single byte of the 16 documents or the incidental assets.
+- After the maintainer confirms this review's conclusions, item 2 of the B6 exit criterion (re-review after the needs-modification items are closed) can be advanced.
 
-**（本文件 §6 不评审、不签收任何文档之外的既有结论，不构成对外交付或验收依据。）**
+**(§6 of this document reviews nothing beyond the documents and signs off no existing conclusions, and does not constitute a basis for external delivery or acceptance.)**
 
 ---
 
-## 7. 复评（2026-10-12；需修改项闭环后执行）
+## 7. Re-review (2026-10-12; executed after the needs-modification items were closed)
 
-> **性质**：本节是 B6 出口判据第 2 项（「需修改项闭环后复评」）的落地记录，落实 §6.5「闭环后须在本文件**追加**复评结果（原文不改）」的约定 —— **§1–§6 原文一律未改**。
+> **Nature**: this section is the landing record of item 2 of the B6 exit criterion ("re-review after the needs-modification items are closed"), implementing the convention in §6.5 that "after closure the re-review results must be **appended** to this document (the original text is unchanged)" —— **the original text of §1–§6 is unchanged throughout**.
 >
-> **复评范围**：§6.2 逐份列出的 16 份「需修改」项 + §6.3 五条跨文件共性问题 + §6.4 附带资产结论。
+> **Re-review scope**: the 16 "needs modification" items listed document by document in §6.2 + the 5 cross-file common issues in §6.3 + the incidental asset conclusions in §6.4.
 >
-> **复评方式**：三个可写 subagent 分批评审-闭环（product / operations / delivery）+ 主 agent 以 `git status` / `git diff` 逐批核对改动面，并抽查关键实证（`bash -n` 三脚本全过；`bundle-images.sh --dry-run` 四条目实证：合法 digest / 缺 tag / 非 sha256 / 纯 tag 分别 exit 0 / 1 / 1 / 0；stale 残留全批扫描）后复评填写。
+> **Re-review method**: three writable subagents reviewed and closed by batch (product / operations / delivery) + the primary agent verified the change surface batch by batch with `git status` / `git diff`, and spot-checked the key empirical evidence (`bash -n` passed for all three scripts; four items of `bundle-images.sh --dry-run` empirically verified: a valid digest / a missing tag / a non-sha256 / a pure tag exited 0 / 1 / 1 / 0 respectively; a full-batch scan of stale residue) before filling in the re-review conclusions.
 >
-> **边界（与 §6 相同）**：本节不签收任何 REQ、不签收任何里程碑、不构成对外交付或验收通过；全部结论**待维护者确认**。
+> **Boundaries (the same as §6)**: this section signs off no REQ, signs off no milestone, and does not constitute external delivery or an acceptance pass; all conclusions **await maintainer confirmation**.
 
-### 7.1 汇总
+### 7.1 Summary
 
-| 批次 | 份数 | 闭环前结论（§6） | 闭环后复评结论 | 说明 |
+| Batch | Count | Pre-closure conclusion (§6) | Post-closure re-review conclusion | Notes |
 |---|---|---|---|---|
-| `docs/product/` | 6 | 需修改 6 | **accept 6**（待维护者确认） | 需修改项全部闭环 |
-| `docs/operations/` | 7 | 需修改 7 | **accept 7**（待维护者确认） | 需修改项全部闭环 |
-| `docs/delivery/` | 3 | 需修改 3 | **accept 3**（待维护者确认） | 需修改项全部闭环 |
-| **合计** | **16** | **需修改 16** | **accept 16**（待维护者确认） | accept 16 / 需修改 0 / 驳回 0 |
+| `docs/product/` | 6 | needs modification 6 | **accept 6** (awaiting maintainer confirmation) | All needs-modification items closed |
+| `docs/operations/` | 7 | needs modification 7 | **accept 7** (awaiting maintainer confirmation) | All needs-modification items closed |
+| `docs/delivery/` | 3 | needs modification 3 | **accept 3** (awaiting maintainer confirmation) | All needs-modification items closed |
+| **Total** | **16** | **needs modification 16** | **accept 16** (awaiting maintainer confirmation) | accept 16 / needs modification 0 / rejected 0 |
 
-**附带资产复评**：`grafana-dashboards/README.md`、`delivery/preflight.sh`、`delivery/scripts/bundle-images.sh`、`delivery/scripts/load-images.sh` 由「需修改」转为 **accept（待维护者确认）**；`grafana-dashboards/overview.json`、`sip-signaling.json`、`scripts/images.txt` 维持 **accept**（本轮未改动；`images.txt` 备注中「digest 先例待脚本修复后可用」一项已随 `bundle-images.sh:205` 修复而消解）。
+**Incidental asset re-review**: `grafana-dashboards/README.md`, `delivery/preflight.sh`, `delivery/scripts/bundle-images.sh`, `delivery/scripts/load-images.sh` moved from "needs modification" to **accept (awaiting maintainer confirmation)**; `grafana-dashboards/overview.json`, `sip-signaling.json`, `scripts/images.txt` remain **accept** (unchanged this round; the item "the digest precedent will be usable after the script is fixed" in the `images.txt` notes has been resolved by the fix at `bundle-images.sh:205`).
 
-### 7.2 逐份复评（对应 §6.2 各条）
+### 7.2 Document-by-Document Re-review (corresponding to each item in §6.2)
 
-| # | 文件 | 需修改项闭环情况（对应 §6.2 第 N 条） | 复评结论 |
+| # | File | Closure Status of the Needs-Modification Items (corresponding to item N of §6.2) | Re-review Conclusion |
 |---|---|---|---|
-| 1 | `one-pager.md` | ① `:7` 目标场景 → G8-1 正式口径（xx运营商 内部生产就绪 / 发版评审）；② `:5` 命名 → G8-2 描述名正式采用；③ `:6` repo 名 → G8-3 报告已完成；④ `:168` e2e → 8 条稳定通过 + REQ-F-1「自动化子集已覆盖 / 全文仍 open」；⑤⑥⑦ `:170-172` O4 / D5 / O5 → G6 / G7 已裁口径（删「N+M 机架或 AZ」列举）。O1 未裁决保持不动 | accept |
-| 2 | `compliance-matrix.md` | ① `:5` 命名 → G8；② `:79` / `:117` / `:234` / `:266` 四处 REQ-F-1 表述 → 「自动化子集已覆盖 / 全文仍 open」（未写成全文已签收）；③ `:263` e2e → 8 条 | accept |
-| 3 | `ne-datasheet.md` | 命名 + `:11` / `:382` 术语纪律拆分（O1 仍未裁 / O4·D5 已裁 G6 / O5·D3 已裁 G7）；`:26` / `:367` e2e；`:40` / `:234` / `:270-271` / `:274` / `:297` / `:302` / `:356-359` O4/D5/O5/D3 → G6/G7（`:302` 删 N+M 列举）；`:314` / `:340` / `:327` 版本与 kubeVersion → G4/A6（脚本就绪、首次 `--apply` 待维护者、`>=1.23.0-0` 未写入）。**容量纪律仍为零数值（合规）** | accept |
-| 4 | `responsibility-matrix.md` | 命名 + `:11` / `:198` e2e；`:27` / `:47`（mermaid label）O4；`:167` / `:192-194` O5/D3（`:194` 删 N+M 列举、与 `:168` ADR-0008 矛盾已消除）；`:213` 状态纪律同步。产品定位一致性仍合规 | accept |
-| 5 | `security-privacy.md` | `:5` 正文命名改写（`:6` G8 注记保留为审计链）；`:10` / `:259` / `:260` / `:264` O4/D5/O5 → G6/G7 主单元格更新；`:289` 状态纪律行同步。「chart 无备份 Job」事实未变（合规）；无「系统按 10 天清理」完成时表述（合规） | accept |
-| 6 | `version-lifecycle.md` | `:5` / `:6` / `:231` 命名；`:118`「版本 bump 无自动化」→ `scripts/sync-chart-version.sh` 已落地（默认 `--check` 只读、drift exit 1；`--apply` 未执行，G4 继续有效）；`:79` / `:241`「建议修法」→ 已裁自动同步 + 脚本就绪 + 首次执行时机待维护者。§7 与 Lane D 4.3 表述、§3 纯转述 ADR-0027 仍合规 | accept |
-| 7 | `operations/README.md` | `:25` 未决项列举同步（O1 仍未裁 / O4·O5·D3·D5 已裁）；`:80` e2e；§1 分层表补「跨层参考（L1 / L2 之上层）」行（`alert-response-matrix:6` 断链已修）；`:86` 命名纪律 | accept |
-| 8 | `runbook-l1.md` | `:29` 引用错误已修（7.2d 出处改为 `product-packaging-plan.md` §3.2 交付物 2.4 行，不再指向 §0.3 第 1、3 条）；`:47` / `:194` O5/D3；`:7` e2e。告警 10 条对应仍合规 | accept |
-| 9 | `runbook-l2.md` | `:21` O4/D5；`:98` / `:180` O5/D3（「脑裂窗口幂等契约仍未实现」保留）；`:5` e2e。仍未把未实现能力写成可执行步骤（合规） | accept |
-| 10 | `alert-response-matrix.md` | `:68` 「查 Sentinel / failover 状态」改为「先确认部署形态（chart 单副本无 Sentinel 可查）→ 客户侧外部 Redis 按客户工具查」两步；`:192` 及 `:68` 证据列 O5/D3；4 处 e2e（`:10` / `:14` / `:109` / `:189`）；`promtool check rules` 2026-10-11 通过结果已留痕（三元组 + 「语法通过 ≠ 抓取接线闭合」）；`:6` 与 README §1 新行对齐。3 组 10 条逐条对应仍合规 | accept |
-| 11 | `fault-demarcation.md` | `:38` 第⑤项、`:117`、`:298` / `:299` O4/D5/O5/D3；`:15` e2e。与 responsibility-matrix 边界口径仍一致（合规） | accept |
-| 12 | `rollback-playbook.md` | L3 已补「版本映射前置」（revision ↔ chart `version` / `appVersion` ↔ 根 `VERSION` 三者入证据链）+ 如实标注当前不同步 / `--check` / 首次 `--apply` 待维护者 / `kubeVersion` 已定未写入；§5 演练记录模板「版本 from → to」行补版本映射填写要求；`:126` / `:162` O5/D3。未声称已演练（合规） | accept（附注：chart 实际同步待维护者，见 §7.4-1） |
-| 13 | `backup-restore.md` | `:166` 注记已移出 §7 表格（列数不匹配渲染事故已修，表格恢复连续四列）；`:27` / `:150` / `:162` / `:163` / `:164` 主单元格更新为已裁口径，`:164`「只能写待裁决」与注记的矛盾已消除。RPO/RTO 仍未给数值、D5 实现未落如实（合规） | accept（附注：RPO/RTO 待客户 + 维护者，见 §7.4-2） |
-| 14 | `delivery/README.md` | §5 第 4 行 / L82「人工核对 VERSION/Chart」→ `scripts/sync-chart-version.sh --check`（只读、drift exit 1；`--apply` 留待维护者）；§2 目录表补 `deploy/alerts/` 告警规则行（G9-a 四类交付产品补齐）；§3 依赖服务行 O5/D3；§5 第 7 行 e2e；命名。导航无死链（合规） | accept |
-| 15 | `install-guide.md` | §2 交付清单补告警规则行；`:39` 包名如实化（当前产物 `3rdparty-as-0.0.0-skeleton.tgz`）；§5 补 `deployment.yaml` 两条同义 fail 文案 + `sip.allowEmptyAllowlistForTest` 生产必须 false 提示；`:148`「已绿」补 (结论, 证据文件, 日期) 三元组；`:195` 人工核对 stale；`:18` / `:200` / `:201` O5/D3/e2e | accept |
-| 16 | `airgap-package.md` | §5 / §6 所教 digest 写法与脚本相悖 → `bundle-images.sh:205` 已修且 `--dry-run` 实证接受（正文未改写，实证见 §7.3 第 5 条）；产物命名如实化（tgz 按 Chart.yaml 命名；未传 `--platform` 时 tar 后缀 `unspecified`）；L191「未落盘时」过期括注已删；§2 补告警规则行；§7 第 1 / 8 行版本与 O5/D3。与 bundle/load 脚本步骤对应仍合规 | accept |
+| 1 | `one-pager.md` | ① `:7` target scenario → the official G8-1 position (xxCarrier internal production readiness / release review); ② `:5` naming → G8-2 descriptive name formally adopted; ③ `:6` repo name → G8-3 records it as completed; ④ `:168` e2e → 8 items pass stably + REQ-F-1 "automated subset covered / full text still open"; ⑤⑥⑦ `:170-172` O4 / D5 / O5 → the adjudicated G6 / G7 positions (the "N+M racks or AZ" enumeration was removed). O1 remains unadjudicated and unchanged | accept |
+| 2 | `compliance-matrix.md` | ① `:5` naming → G8; ② the four REQ-F-1 statements at `:79` / `:117` / `:234` / `:266` → "automated subset covered / full text still open" (not written as fully signed off); ③ `:263` e2e → 8 items | accept |
+| 3 | `ne-datasheet.md` | Naming + the terminology discipline split at `:11` / `:382` (O1 still unadjudicated / O4·D5 adjudicated per G6 / O5·D3 adjudicated per G7); `:26` / `:367` e2e; `:40` / `:234` / `:270-271` / `:274` / `:297` / `:302` / `:356-359` O4/D5/O5/D3 → G6/G7 (the N+M enumeration was removed at `:302`); `:314` / `:340` / `:327` version and kubeVersion → G4/A6 (script ready, first `--apply` pending the maintainer, `>=1.23.0-0` not written). **The capacity discipline still has zero values (compliant)** | accept |
+| 4 | `responsibility-matrix.md` | Naming + `:11` / `:198` e2e; `:27` / `:47` (mermaid label) O4; `:167` / `:192-194` O5/D3 (the N+M enumeration was removed at `:194` and the contradiction with `:168` ADR-0008 has been eliminated); `:213` status discipline synced. Product positioning consistency remains compliant | accept |
+| 5 | `security-privacy.md` | The `:5` body-text naming rewritten (the `:6` G8 note is kept as an audit chain); `:10` / `:259` / `:260` / `:264` O4/D5/O5 → G6/G7 main cells updated; the `:289` status-discipline line synced. The fact that the "chart has no backup Job" has not changed (compliant); there is no completion-tense statement of the form "the system cleans up after 10 days" (compliant) | accept |
+| 6 | `version-lifecycle.md` | `:5` / `:6` / `:231` naming; `:118` "version bump has no automation" → `scripts/sync-chart-version.sh` has landed (read-only by default with `--check`, exit 1 on drift; `--apply` not executed, G4 remains in effect); `:79` / `:241` "suggested fix" → automatic sync adjudicated + script ready + first execution timing pending the maintainer. §7's wording and Lane D 4.3, and §3 being a pure restatement of ADR-0027, remain compliant | accept |
+| 7 | `operations/README.md` | The `:25` undecided-item enumeration synced (O1 still unadjudicated / O4·O5·D3·D5 adjudicated); `:80` e2e; the §1 layering table gained a "cross-layer reference (layer above L1 / L2)" row (the `alert-response-matrix:6` broken link is fixed); `:86` naming discipline | accept |
+| 8 | `runbook-l1.md` | The `:29` wrong citation is fixed (the source of 7.2d was changed to the deliverable 2.4 row of §3.2 of `product-packaging-plan.md` and no longer points at items 1 and 3 of §0.3); `:47` / `:194` O5/D3; `:7` e2e. The correspondence of the 10 alerts remains compliant | accept |
+| 9 | `runbook-l2.md` | `:21` O4/D5; `:98` / `:180` O5/D3 ("the split-brain window idempotency contract is still not implemented" is retained); `:5` e2e. Unimplemented capabilities are still not written as executable steps (compliant) | accept |
+| 10 | `alert-response-matrix.md` | `:68` "check Sentinel / failover status" was changed into two steps "first confirm the deployment form (the single-replica chart has no Sentinel to check) → for the customer's external Redis, check with the customer's tooling"; `:192` and the `:68` evidence column O5/D3; 4 instances of e2e (`:10` / `:14` / `:109` / `:189`); the result of `promtool check rules` passing on 2026-10-11 has been recorded (triple + "syntax pass ≠ scrape wiring closed"); `:6` aligned with the new row of README §1. The rule-by-rule correspondence of the 3 groups and 10 rules remains compliant | accept |
+| 11 | `fault-demarcation.md` | `:38` item ⑤, `:117`, `:298` / `:299` O4/D5/O5/D3; `:15` e2e. The boundary wording is still consistent with responsibility-matrix (compliant) | accept |
+| 12 | `rollback-playbook.md` | L3 has gained the "version mapping precondition" (revision ↔ chart `version` / `appVersion` ↔ root `VERSION`, all three in the evidence chain) + it faithfully annotates that they are currently not synchronized / `--check` / the first `--apply` pending the maintainer / `kubeVersion` set but not written; the "version from → to" row of the §5 drill record template now requires the version mapping to be filled in; `:126` / `:162` O5/D3. No claim of a drill having been performed (compliant) | accept (with a note: the actual chart synchronization is pending the maintainer, see §7.4-1) |
+| 13 | `backup-restore.md` | The `:166` note has been moved out of the §7 table (the column-mismatch rendering incident is fixed and the table is back to a continuous four columns); the main cells at `:27` / `:150` / `:162` / `:163` / `:164` were updated to the adjudicated positions, and the contradiction between `:164` "can only write pending adjudication" and the note is eliminated. RPO/RTO still given no values and D5 not implemented are faithful (compliant) | accept (with a note: RPO/RTO pending the customer + maintainer, see §7.4-2) |
+| 14 | `delivery/README.md` | §5 row 4 / L82 "manually verify VERSION/Chart" → `scripts/sync-chart-version.sh --check` (read-only, exit 1 on drift; `--apply` left to the maintainer); the §2 directory table gained the `deploy/alerts/` alert-rule row (the four G9-a delivery products are now complete); the §3 dependent-service row O5/D3; §5 row 7 e2e; naming. The navigation has no dead links (compliant) | accept |
+| 15 | `install-guide.md` | The §2 delivery manifest gained an alert-rule row; the package name at `:39` made faithful (current artifact `3rdparty-as-0.0.0-skeleton.tgz`); §5 gained the two synonymous fail texts of `deployment.yaml` + the note that `sip.allowEmptyAllowlistForTest` must be false in production; `:148` "already green" gained the (conclusion, evidence file, date) triple; `:195` manual verification stale; `:18` / `:200` / `:201` O5/D3/e2e | accept |
+| 16 | `airgap-package.md` | The digest syntax taught by §5 / §6 contradicted the script → `bundle-images.sh:205` has been fixed and `--dry-run` empirically accepts it (the body text was not rewritten, the evidence is in §7.3 item 5); artifact naming made faithful (the tgz is named after Chart.yaml; without `--platform` the tar suffix is `unspecified`); the outdated L191 "when not yet written to disk" parenthetical was deleted; §2 gained an alert-rule row; §7 rows 1 / 8 version and O5/D3. The correspondence with the bundle/load script steps remains compliant | accept |
 
-### 7.3 跨文件共性问题复评（对应 §6.3 五条）
+### 7.3 Re-review of the Cross-File Common Issues (corresponding to the 5 items in §6.3)
 
-| # | 共性问题（§6.3） | 复评结果 |
+| # | Common Issue (§6.3) | Re-review Result |
 |---|---|---|
-| 1 | 「任务 E」同步覆盖缺口（其余 14 份仍写 O4/O5/D3/D5 未决） | **已闭环**：14 份 + 看板 README 的「未决」表述已按 G6 / G7 同步为已裁口径（保留「实现未落 / RPO-RTO 未裁」限定）；security-privacy 与 backup-restore 的既有追加注记保留为审计链 |
-| 2 | e2e 口径过期（全批 9+ 处「e2e marker = 0」） | **已闭环**：根因 `docs/acceptance/test-plan.md` 自动化分层表 ③ 行已修（0 条 → 8 条稳定通过 + REQ-F-1 口径），16 份 + 看板 README 的全部 e2e 表述已回填 |
-| 3 | chart 版本一致性缺位 | **部分闭环**：文档侧已全部同步为「G4/A6 已裁 + 脚本就绪 + 首次 `--apply` 待维护者」；rollback-playbook L3 已补 revision → chart version → 产品 VERSION 映射；install-guide / airgap 产物命名已如实化。**未闭环**：Chart.yaml 实际同步与 kubeVersion 写入（见 §7.4-1） |
-| 4 | 交付清单缺告警规则（G9-a 四类只落三类） | **已闭环**：delivery 三份文档均已补入 `deploy/alerts/`（3 组 10 条 + promtool 2026-10-11 通过三元组 + X1 抓取未闭合需向客户说明） |
-| 5 | 附带资产功能缺陷 | **已闭环**：`bundle-images.sh:205` digest 校验 glob 已修（并新增非 sha256 拒绝、`--destination` 文档化）；`load-images.sh` `--values` 文案改为如实（不解析、不推断）；`preflight.sh` 外部 Redis/Sentinel 误报已修（Sentinel 已配置 → PASS）、`:34` 坏字节已修；三脚本统一声明 bash ≥ 4.4 底线 |
+| 1 | The "task E" sync coverage gap (the other 14 documents still write O4/O5/D3/D5 undecided) | **Closed**: the "undecided" wording of the 14 documents + the dashboard README has been synced to the adjudicated positions per G6 / G7 (retaining the "implementation has not landed / RPO-RTO unadjudicated" qualifiers); the existing additive notes in security-privacy and backup-restore are kept as an audit chain |
+| 2 | The e2e basis is outdated (9+ instances of "e2e marker = 0" across the batch) | **Closed**: the root cause `docs/acceptance/test-plan.md` automation layering table row ③ is fixed (0 items → 8 items passing stably + the REQ-F-1 position), and all e2e statements of the 16 documents + the dashboard README have been back-filled |
+| 3 | Chart version consistency is missing | **Partially closed**: the document side has all been synced to "G4/A6 adjudicated + script ready + the first `--apply` pending the maintainer"; rollback-playbook L3 has gained the revision → chart version → product VERSION mapping; the artifact naming of install-guide / airgap has been made faithful. **Not closed**: the actual Chart.yaml synchronization and the kubeVersion writing (see §7.4-1) |
+| 4 | The delivery manifest lacks the alert rules (only three of the four G9-a categories landed) | **Closed**: all three delivery documents have added `deploy/alerts/` (3 groups and 10 rules + the triple for the promtool pass of 2026-10-11 + a note that the X1 scrape wiring being unclosed must be explained to the customer) |
+| 5 | Functional defects in the incidental assets | **Closed**: the digest validation glob at `bundle-images.sh:205` is fixed (and non-sha256 rejection plus `--destination` documentation were added); the `load-images.sh` `--values` wording was made faithful (no parsing, no inference); the external Redis/Sentinel false report in `preflight.sh` is fixed (Sentinel configured → PASS), and the bad byte at `:34` is fixed; the three scripts uniformly declare the bash ≥ 4.4 floor |
 
-### 7.4 复评中仍未闭环的项（不构成文档缺陷，列明依赖）
+### 7.4 Items Still Unclosed in the Re-review (these do not constitute document defects; the dependencies are stated)
 
-| # | 未闭环项 | 依赖 |
+| # | Unclosed Item | Dependency |
 |---|---|---|
-| 1 | 首次 `scripts/sync-chart-version.sh --apply`（Chart.yaml `version` / `appVersion` 对齐 `VERSION`）与 `kubeVersion: ">=1.23.0-0"` 写入 | 维护者决定时机与取值（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效） |
-| 2 | RPO / RTO 数值 | 客户与维护者共同记录（backup-restore.md 按纪律留空） |
-| 3 | O1 容量取值 | 维护者裁决（各文档容量章节按纪律留空） |
-| 4 | X1 告警抓取接线 | 运营商 monitoring-integration 标准输入 + 维护者裁决（G3 维持待决，当前不改 chart） |
-| 5 | 7.2d / 真实集群演练与 M8 退出签字 | 外部环境（外部 IOT 与真实环境采证后置的裁决继续有效） |
-| 6 | 轨迹存储 / 查询 / 删除与 Redis Sentinel 的**实现** | B2 / B3 已单独留 item（`docs/handoff/2026-10-12-b2-b3-deferred-items.md`），本轮不启动 |
+| 1 | The first `scripts/sync-chart-version.sh --apply` (aligning the Chart.yaml `version` / `appVersion` with `VERSION`) and the writing of `kubeVersion: ">=1.23.0-0"` | The maintainer decides the timing and the values (G4 "currently no modification of `VERSION` and `Chart.yaml`" remains in effect) |
+| 2 | RPO / RTO values | Recorded jointly by the customer and the maintainer (backup-restore.md is left blank per the discipline) |
+| 3 | O1 capacity values | Maintainer adjudication (the capacity chapters of each document are left blank per the discipline) |
+| 4 | X1 alert scrape wiring | Carrier monitoring-integration standard input + maintainer adjudication (G3 remains pending, the chart is not changed currently) |
+| 5 | 7.2d / real-cluster drill and the M8 exit sign-off | External environment (the adjudication deferring external IOT and real-environment evidence collection remains in effect) |
+| 6 | The **implementation** of trace storage / query / deletion and Redis Sentinel | B2 / B3 already have separate items left open (`docs/handoff/2026-10-12-b2-b3-deferred-items.md`); not started this round |
 
-### 7.5 本轮改动面与边界
+### 7.5 The Change Surface of This Round and Its Boundaries
 
-- **改动文件共 21 个**：`docs/acceptance/test-plan.md`（e2e 口径根因）+ `docs/product/` 6 份 + `docs/operations/` 8 份（7 份 + 看板 README）+ `docs/delivery/` 6 份（3 份文档 + 3 个脚本）。
-- **未改动**：`deploy/`（含 `Chart.yaml` / `as-alerts.yaml`）、根 `VERSION`、任何产品代码与测试、`docs/plan.md` 与 handoff / reviews 既有文字、两份看板 JSON 与 `scripts/images.txt`。
-- **未执行**：任何 git 写操作；`sync-chart-version.sh --apply`；任何构建 / 测试 / 容器动作。全部改动停留在工作树，commit 拆分由维护者决定。
-- 复评结论**待维护者确认**；确认前本清单 §7 不构成对外交付或验收依据。
+- **21 files changed in total**: `docs/acceptance/test-plan.md` (the root cause of the e2e basis) + 6 documents in `docs/product/` + 8 documents in `docs/operations/` (7 + the dashboard README) + 6 files in `docs/delivery/` (3 documents + 3 scripts).
+- **Unchanged**: `deploy/` (including `Chart.yaml` / `as-alerts.yaml`), the root `VERSION`, any product code or tests, `docs/plan.md` and the existing handoff / reviews text, the two dashboard JSONs and `scripts/images.txt`.
+- **Not executed**: any git write operation; `sync-chart-version.sh --apply`; any build / test / container action. All changes stay in the working tree, and the commit split is decided by the maintainer.
+- The re-review conclusions **await maintainer confirmation**; before confirmation, §7 of this checklist does not constitute a basis for external delivery or acceptance.
 
-**（本文件 §7 不签收任何 REQ / 里程碑，不构成对外交付或验收依据。）**
+**(§7 of this document signs off no REQ / milestone and does not constitute a basis for external delivery or acceptance.)**

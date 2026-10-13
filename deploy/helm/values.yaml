@@ -284,7 +284,7 @@ autoscaling:
 # Downscale guard: never delete a Pod that still carries calls. The threshold is
 # a state condition ("more than zero calls in flight"), not a capacity figure —
 # any non-zero value would leave a call to be dropped. See ADR-0010 and
-# docs/architecture/新系统整体架构.md §4.1.
+# docs/architecture/system-architecture.md §4.1.
 downscaleGuard:
   enabled: true
   protectWhenActiveCallsAbove: 0

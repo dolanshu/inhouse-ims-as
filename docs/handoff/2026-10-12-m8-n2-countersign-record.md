@@ -12,133 +12,135 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 N2 九项裁决代签记录（2026-10-12）
+# M8 N2 Nine-Item Adjudication Counter-Signature Record (2026-10-12)
 
-> **状态：已代签，待维护者评审。**
+> **Status: counter-signed, pending maintainer review.**
 >
-> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决
-> （指令原文：「B5 -- 我授权你代签」）。
+> **Authorization source**: on **2026-10-12 the maintainer explicitly authorized the agent to counter-sign** the M8 N2
+> nine written adjudications (instruction verbatim: "B5 -- I authorize you to counter-sign on my behalf").
 >
-> **本文是代签总记录。** 每一项的结论都落到了该行「正本」里，本文汇总清单、依据与边界，
-> 以便维护者一次核完，也便于追溯「哪一项签在哪儿」。
+> **This document is the master counter-signature record.** Each item's conclusion was written into that item's "original"
+> (canonical) document; this document aggregates the list, the basis, and the boundaries,
+> so the maintainer can verify them in one pass and so that "which item was signed where" can be traced.
 >
-> **本文不是维护者亲笔签字。** 各正本处的签字一律写作
-> 「**agent 代签（维护者 2026-10-12 授权）**」，不伪装成亲签。
+> **This document is not the maintainer's own signature.** The signature at each canonical location is always written as
+> "**counter-signed by agent (maintainer authorization 2026-10-12)**", never disguised as a personal signature.
 
 ---
 
-## 0. 为什么可以做、以及为什么必须逐项附依据
+## 0. Why This Can Be Done, and Why Each Item Must Carry Its Basis
 
-`2026-10-07-m8-next-step-plan.md` §N2 九项的原始定位是「**维护者书面裁决**」，
-其正本都是**已有的评审结论**（多数是 2026-10-06 已发生、只差签字栏的事项）。
-维护者授权后，agent 的职责是**把这些既有结论正式化**，
-**不是创造新结论**。因此：
+The original positioning of the nine items in §N2 of `2026-10-07-m8-next-step-plan.md` was "**maintainer written adjudication**",
+and their canonical documents are **existing review conclusions** (mostly items that already happened on 2026-10-06 and
+were only missing the signature block). After the maintainer's authorization, the agent's duty is to **formalize these
+existing conclusions**, **not to create new conclusions**. Therefore:
 
-- 每一项都**引用正本原文**作为依据；
-- 凡正本里**没有**既有结论的事项，本文**如实说明未签**，不代签。
+- Each item **cites the canonical document's original text** as its basis;
+- For any item where the canonical document has **no** existing conclusion, this document **truthfully states that it is
+  not signed**, and does not counter-sign it.
 
 ---
 
-## 1. 九项逐项结果
+## 1. Per-Item Results for the Nine Items
 
-| # | 要签署的结论（N2 原文要点） | 代签结果 | 落点（正本 / 同步处） | 依据 |
+| # | Conclusion to be signed (key points of the N2 original) | Counter-signature result | Location (canonical / synchronized location) | Basis |
 |---|---|---|---|---|
-| **1** | 进入 M8 的授权补记（**2026-10-06 已发生**） | ✅ 已签（**补记**性质，非新授权） | `2026-10-06-m8-release-candidate-plan.md` §10「批准进入 M8」栏 | N2 第 1 项原文 |
-| **2** | B-1 最小 M5.1；B-2 维持 2026-10-04 工程关门并**降级为非 REQ 验收**；B-3 故事 C 保持 **L1** | ✅ 三项**确认** | `m5-req-acceptance-review-2026-10-06.md` §9.1；RC 计划 §10「阶段 B 范围」栏 | 该文件 §1 B-1 / B-2 / B-3 行原文 |
-| **3** | F8 接受「**字段契约已落地**」；C++ JSON 回调留在 RC 后 | ✅ 已签 | `m8-phase-a-f6-f8-note-2026-10-06.md` §5.1；同步 `callload-remediation-adjudication-2026-10-05.md` | 该文件 §「结论」表 F8 行原文 |
-| **4** | F6 **接受 documented limitation**（长连接无 dialog 终止时只靠 2048 指纹 LRU 与 4096 连接上限） | ✅ 已签（**结论不是「已修复」**） | 同上 §5.1；同步 `callload-remediation-adjudication-2026-10-05.md` | 该文件 §「结论」表 F6 行 + §「修改」第 2 条 grep 核查 |
-| **5** | D6 testbed 客户验收放 **v1.1** | ✅ 已签（采纳 D-3 二选一的 **(a)**） | `m8-environment-evidence.md` D-3.1；RC 计划 §10「D-3 / D6 裁决」栏；矩阵 `D6-testbed验收` 行转 `n-a` | D-3 原文给出的二选一 (a) |
-| **6** | NF-3 标 **n-a**（固定容量数字与 `AGENT.md` §2 冲突；O1 目标仍不发布） | ✅ 已签 | `m8-test-plan-matrix.md` 2026-10-12 代签节（`REQ-NF-3` 行转 `n-a`） | 矩阵该行自带的理由栏 + `plan.md` §5.1 O1 仍 open |
-| **7** | 确认四项排除：主叫 / 正则、PM/AM/UM、D1、D10 极端扩展 | ✅ 已签（`signed_by` 由「维护者待签」填为代签；status 维持 `n-a`） | `m8-test-plan-matrix.md` 2026-10-12 代签节 | 矩阵 `NA-*` 四行自带的理由栏 |
-| **8** | M5D-1…M5D-6 **移出 v1** | ✅ 已签并落行 | **`docs/plan.md` §5.2-bis 新行**（六行）；依据与映射见 `m5-req-acceptance-review-2026-10-06.md` §9.2 | 复评 §6 表逐项标注的 `M5D-*` 归属 |
-| **9** | M1 / M2 / M6 / M7 签**工程完成** | ✅ 已签（M1 签「门禁达成（有条件通过）」；M2/M6/M7 签「工程完成（2026-10-05）」）；**M8 未签** | `m8-exit-review-2026-10-06.md` §3.1 | `m1-exit-review.md`；`m2/m6/m7` 各自 2026-10-05 engineering adjudication |
+| **1** | Authorization note for entering M8 (**already happened on 2026-10-06**) | ✅ Signed (a **note**, not a new authorization) | `2026-10-06-m8-release-candidate-plan.md` §10 "Approval to enter M8" block | The original text of N2 item 1 |
+| **2** | B-1 minimal M5.1; B-2 keep the 2026-10-04 engineering gate closure and **downgrade it to non-REQ acceptance**; B-3 story C stays at **L1** | ✅ Three items **confirmed** | `m5-req-acceptance-review-2026-10-06.md` §9.1; RC plan §10 "Stage B scope" block | The original text of the B-1 / B-2 / B-3 rows in §1 of that document |
+| **3** | F8 accepts "**the field contract has landed**"; the C++ JSON callback stays after RC | ✅ Signed | `m8-phase-a-f6-f8-note-2026-10-06.md` §5.1; synchronized `callload-remediation-adjudication-2026-10-05.md` | The original text of the F8 row in the "Conclusion" table of that document |
+| **4** | F6 **accepts the documented limitation** (when a long-lived connection has no dialog termination, it relies only on the 2048-entry fingerprint LRU and the 4096 connection cap) | ✅ Signed (**the conclusion is not "fixed"**) | Same §5.1; synchronized `callload-remediation-adjudication-2026-10-05.md` | The original text of the F6 row in the "Conclusion" table of that document + item 2 of the "Changes" grep check |
+| **5** | D6 testbed customer acceptance deferred to **v1.1** | ✅ Signed (adopting option **(a)** of the D-3 either/or) | `m8-environment-evidence.md` D-3.1; RC plan §10 "D-3 / D6 adjudication" block; matrix row `D6-testbed验收` → `n-a` | Option (a) as given in the original D-3 text |
+| **6** | NF-3 marked **n-a** (fixed capacity numbers conflict with `AGENT.md` §2; the O1 target is still not published) | ✅ Signed | `m8-test-plan-matrix.md` 2026-10-12 counter-signature section (`REQ-NF-3` row → `n-a`) | The rationale column already in that matrix row + `plan.md` §5.1 where O1 is still open |
+| **7** | Confirm the four exclusions: caller / regex, PM/AM/UM, D1, D10 extreme extension | ✅ Signed (`signed_by` filled from "pending maintainer signature" to counter-signature; status stays `n-a`) | `m8-test-plan-matrix.md` 2026-10-12 counter-signature section | The rationale columns already in the four `NA-*` matrix rows |
+| **8** | M5D-1…M5D-6 **moved out of v1** | ✅ Signed and written as rows | **`docs/plan.md` §5.2-bis new rows** (six rows); basis and mapping see `m5-req-acceptance-review-2026-10-06.md` §9.2 | The `M5D-*` attributions marked per item in the §6 table of the re-review |
+| **9** | M1 / M2 / M6 / M7 sign **engineering completion** | ✅ Signed (M1 signs "gate achieved (conditional pass)"; M2/M6/M7 sign "engineering complete (2026-10-05)"); **M8 not signed** | `m8-exit-review-2026-10-06.md` §3.1 | `m1-exit-review.md`; each of `m2/m6/m7`'s 2026-10-05 engineering adjudication |
 
-**结论：九项全部有既有结论可引，已逐项代签；无一项是凭空签的。**
+**Conclusion: all nine items have existing conclusions to cite and were counter-signed one by one; not one was signed out of thin air.**
 
 ---
 
-## 2. 同步后的计数变化（只登记，不改历史）
+## 2. Post-Synchronization Count Changes (recorded only; history is not changed)
 
-`docs/acceptance/m8-test-plan-matrix.md` 的计数因第 5 / 6 项而变：
+The counts in `docs/acceptance/m8-test-plan-matrix.md` change because of items 5 and 6:
 
-| 计数 | 原值 | 现值 |
+| Count | Original value | Current value |
 |---|---|---|
-| blocked | 12 | **10**（`NF-3`、`D6-testbed验收` 各转 `n-a`） |
+| blocked | 12 | **10** (`NF-3` and `D6-testbed验收` each → `n-a`) |
 | n-a | 4 | **6** |
-| pass / open / fail | 9 / 24 / 0 | 不变 |
+| pass / open / fail | 9 / 24 / 0 | unchanged |
 
-**`docs/acceptance/report.md` §0.5 的 open 24 / blocked 12 一个字未改** ——
-矩阵计数是矩阵自己的口径，本文**不**据此回写 report。
-
----
-
-## 3. 五条不得据本次代签推出的结论
-
-1. **M5 REQ 级仍是不通过**；M8 仍是「**RC 就绪、待退出签字**」（N2 原文末句）。
-2. **「工程完成」≠「里程碑签收」≠「REQ 全绿」**。`plan.md` 所载「维护者 **M6 里程碑签收**仍 open」
-   **原样保留**；`report.md` 的 open / blocked 计数未改。
-3. **M5D-1…M5D-6 全部保持未实现** —— 六行只是「移出 v1」，不是「已解决」。
-4. **NF-3 转 `n-a` ≠ REQ-NF-3 被放弃** —— 按 G5 裁决，REQ-NF-3 **保持 applicable 且 blocked**；
-   转 `n-a` 的只是矩阵这一行的**验收口径**（固定数值断言与 `AGENT.md` §2 冲突）。
-5. **D6 放 v1.1 ≠ D6 取消** —— 仍在 v1.1 范围内，本期不验收、**永不记 pass**。
+**The open 24 / blocked 12 in §0.5 of `docs/acceptance/report.md` have not been changed by a single word** —
+the matrix counts are the matrix's own basis, and this document does **not** write back to report based on them.
 
 ---
 
-## 4. 未代签的两处（不在授权范围内）
+## 3. Five Conclusions That Must Not Be Drawn from This Counter-Signature
 
-| 位置 | 为什么未签 |
+1. **M5 at the REQ level still fails**; M8 is still "**RC-ready, pending exit sign-off**" (last sentence of the N2 original).
+2. **"Engineering complete" ≠ "milestone sign-off" ≠ "all REQs green"**. The "maintainer **M6 milestone sign-off is still open**" recorded in `plan.md` is **retained as is**; the open / blocked counts in `report.md` are unchanged.
+3. **M5D-1…M5D-6 all remain unimplemented** — the six rows are only "moved out of v1", not "resolved".
+4. **NF-3 → `n-a` ≠ REQ-NF-3 being abandoned** — per the G5 adjudication, REQ-NF-3 **remains applicable and blocked**; only the **acceptance basis of that matrix row** changes to `n-a` (fixed numeric assertions conflict with `AGENT.md` §2).
+5. **D6 deferred to v1.1 ≠ D6 cancelled** — it is still within v1.1 scope, is not accepted in this cycle, and is **never recorded as pass**.
+
+---
+
+## 4. Two Items Not Counter-Signed (outside the authorization scope)
+
+| Location | Why not signed |
 |---|---|
-| RC 计划 §10「阶段 A 完成」栏 | 不在 N2 九项清单内 |
-| RC 计划 §10「M8 退出签字」栏 + 里程碑签字表 **M8** 行 | M8 退出签字属收尾动作；N2 原文明写 N2 完成后 M8 仍是「待退出签字」 |
+| RC plan §10 "Stage A completion" block | Not within the N2 nine-item list |
+| RC plan §10 "M8 exit sign-off" block + **M8** row of the milestone signature sheet | The M8 exit sign-off is a wrap-up action; the N2 original explicitly states that after N2 is completed M8 is still "pending exit sign-off" |
 
 ---
 
-## 5. 本轮落盘的文件
+## 5. Files Written in This Round
 
-| 文件 | 追加内容 |
+| File | Appended content |
 |---|---|
-| `docs/plan.md` | §5.2-bis「M5 defer 项落定（M5D-1…M5D-6）」六行 |
-| `docs/acceptance/m8-test-plan-matrix.md` | 「M8 N2 代签结果」节（第 5 / 6 / 7 项 + 计数更新） |
-| `docs/reviews/m8-phase-a-f6-f8-note-2026-10-06.md` | §5.1 代签填写（第 3 / 4 项） |
-| `docs/reviews/m5-req-acceptance-review-2026-10-06.md` | §9.1 B-1/B-2/B-3 会签、§9.2 M5D 行落定（第 2 / 8 项） |
-| `docs/reviews/callload-remediation-adjudication-2026-10-05.md` | 代签补记（第 3 项须同步的 F6 行） |
-| `docs/acceptance/m8-environment-evidence.md` | D-3.1 代签结果（第 5 项） |
-| `docs/handoff/2026-10-06-m8-release-candidate-plan.md` | §10.1 代签填写（第 1 / 5 项须同步） |
-| `docs/reviews/m8-exit-review-2026-10-06.md` | §3.1 里程碑签字栏代签（第 9 项） |
-| `docs/handoff/2026-10-12-m8-n2-countersign-record.md` | **本文** |
+| `docs/plan.md` | §5.2-bis six rows "M5 defer items settled (M5D-1…M5D-6)" |
+| `docs/acceptance/m8-test-plan-matrix.md` | "M8 N2 counter-signature results" section (items 5 / 6 / 7 + count update) |
+| `docs/reviews/m8-phase-a-f6-f8-note-2026-10-06.md` | §5.1 counter-signature fill-in (items 3 / 4) |
+| `docs/reviews/m5-req-acceptance-review-2026-10-06.md` | §9.1 B-1/B-2/B-3 countersignature, §9.2 M5D rows settled (items 2 / 8) |
+| `docs/reviews/callload-remediation-adjudication-2026-10-05.md` | Counter-signature note (the F6 row that item 3 must synchronize) |
+| `docs/acceptance/m8-environment-evidence.md` | D-3.1 counter-signature result (item 5) |
+| `docs/handoff/2026-10-06-m8-release-candidate-plan.md` | §10.1 counter-signature fill-in (items 1 / 5 must synchronize) |
+| `docs/reviews/m8-exit-review-2026-10-06.md` | §3.1 milestone signature block counter-signed (item 9) |
+| `docs/handoff/2026-10-12-m8-n2-countersign-record.md` | **This document** |
 
-**全部为追加，未改写任何既有原文。未执行任何 git 写操作。**
-
----
-
-**落盘日期：2026-10-12。状态：已代签，待维护者评审。**
-不签收任何 REQ、不签收任何里程碑、不构成 M8 关门或外部验收通过。
+**All are appends; no existing original text was rewritten. No git write operation was performed.**
 
 ---
 
-## 6. N3 执行结果（2026-10-12 晚些时候追加）
+**Write date: 2026-10-12. Status: counter-signed, pending maintainer review.**
+No REQ is signed off, no milestone is signed off, and this does not constitute M8 closure or a pass for external acceptance.
 
-> **授权来源**：维护者 2026-10-12 指令「B1 容量目标值 + B5 的 N3 …… 其余的全部完成，
-> 你自己做判断，执行，不用问」。N3 口径出自 `2026-10-07-m8-next-step-plan.md` §N3：
-> 「矩阵里证据已经对齐的行 …… 签字备注写『工程证据接受』，不把 test-plan 整句标成全绿」。
+---
 
-| # | 行 | 代签结果 | 落点 |
+## 6. N3 Execution Result (appended later on 2026-10-12)
+
+> **Authorization source**: maintainer instruction of 2026-10-12 "B1 capacity target value + N3 for B5 …… complete everything
+> else, you make the judgment yourself, execute, no need to ask". The N3 basis comes from §N3 of
+> `2026-10-07-m8-next-step-plan.md`: "for rows in the matrix whose evidence is already aligned …… the signature note
+> reads 'engineering evidence accepted'; do not mark the whole test-plan sentence as fully green".
+
+| # | Row | Counter-signature result | Location |
 |---|---|---|---|
-| 1 | **REQ-F-1** | open → **pass**（工程证据接受；14 条逐条 header 对拍仍未实现，**不构成全文签收**） | `m8-test-plan-matrix.md`「M8 N3 执行结果」节 |
-| 2 | **REQ-F-2** | open → **pass**（C_in ≠ C_out 子集 + E1 契约 + forward-two-leg integration） | 同上 |
-| 3 | **REQ-F-3** | open → **pass**（出腿用户号翻译断言 + derived baseline S1 翻译场景） | 同上 |
-| 4 | **REQ-F-6** | open → **pass**（decide 矩阵用例 5 + e2e 404） | 同上 |
-| 5 | **REQ-F-7** | open → **pass**（decide 矩阵用例 3 / 7 + e2e 603） | 同上 |
-| 6 | **REQ-F-12** | open → **pass**（M4 工程关门；**范围 = 被叫 + 前缀**） | 同上 |
-| 7 | **REQ-F-14** | open → **pass**（M4 工程关门，审批流四态 + self-approve 禁止） | 同上 |
+| 1 | **REQ-F-1** | open → **pass** (engineering evidence accepted; the 14 item-by-item header differential checks are still unimplemented, **this does not constitute a full-text sign-off**) | `m8-test-plan-matrix.md` "M8 N3 execution results" section |
+| 2 | **REQ-F-2** | open → **pass** (C_in ≠ C_out subset + E1 contract + forward-two-leg integration) | Same |
+| 3 | **REQ-F-3** | open → **pass** (outbound-leg user-number translation assertion + derived baseline S1 translation scenario) | Same |
+| 4 | **REQ-F-6** | open → **pass** (decide matrix case 5 + e2e 404) | Same |
+| 5 | **REQ-F-7** | open → **pass** (decide matrix cases 3 / 7 + e2e 603) | Same |
+| 6 | **REQ-F-12** | open → **pass** (M4 engineering gate closure; **scope = called party + prefix**) | Same |
+| 7 | **REQ-F-14** | open → **pass** (M4 engineering gate closure, approval flow four states + self-approve prohibition) | Same |
 
-**计数**：矩阵 **pass 9 → 16、open 24 → 17**（剩余 17 行与 N4 停止线清单逐行一致）；
-blocked 10 / n-a 6 / fail 0 不变。**`report.md` §0.5 的 open 24 / blocked 12 一字未改。**
+**Counts**: matrix **pass 9 → 16, open 24 → 17** (the remaining 17 rows match the N4 stop-line list row by row);
+blocked 10 / n-a 6 / fail 0 unchanged. **The open 24 / blocked 12 in §0.5 of `report.md` have not been changed by a single word.**
 
-**追加五条不得据本次代签推出的结论**（与 §3 五条并列，不互相替代）：
+**Five additional conclusions that must not be drawn from this counter-signature** (parallel to the five in §3, not
+substituting for each other):
 
-1. **「工程证据接受」≠ REQ 级验收通过** —— N3 口径原文；17 行 open + 10 行 blocked 仍在，不宣称 test-plan 整句全绿。
-2. **N4 停止线未被越过** —— 16+1 行未改 pass；`test-plan.md` 所有 `- [ ]` 一项未打勾。
-3. **M5 REQ 级仍不通过、M8 仍「RC 就绪、待退出签字」**；M8 总审确认栏不填、不打 tag。
-4. **F-12 / F-14 的签收范围仅限被叫 + 前缀** —— 主叫 / 正则仍为 `n-a`（v1.1）。
-5. **本代签不改变任何 REQ 的验收标准本身**，只把「证据已经对齐」的行正式化；签字一律为「agent 代签（维护者 2026-10-12 授权）」。
+1. **"Engineering evidence accepted" ≠ REQ-level acceptance passed** — the original N3 basis; 17 open + 10 blocked rows remain, and we do not claim the whole test-plan sentence is fully green.
+2. **The N4 stop line was not crossed** — the 16+1 rows were not changed to pass; not a single `- [ ]` in `test-plan.md` was ticked.
+3. **M5 still fails at the REQ level, and M8 is still "RC-ready, pending exit sign-off"**; the M8 final review confirmation block is not filled in and no tag is created.
+4. **The sign-off scope of F-12 / F-14 is limited to called party + prefix** — caller / regex remains `n-a` (v1.1).
+5. **This counter-signature does not change the acceptance criteria of any REQ itself**; it only formalizes the rows "whose evidence is already aligned"; every signature reads "counter-signed by agent (maintainer authorization 2026-10-12)".

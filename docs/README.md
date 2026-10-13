@@ -12,92 +12,92 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 文档导航（Documentation map）
+# Documentation map
 
-按读者角色阅读。全部是纯文本 —— Mermaid 或 ASCII 图，绝不放无法 diff 的渲染图片。
+Read by reader role. Everything is plain text — Mermaid or ASCII diagrams, never rendered images that cannot be diffed.
 
-> `docs/` 下新增了三个面向不同读者的目录：**评审** [`product/`](#面向评审产品与评审文档)、**运维** [`operations/`](#运维与值守)、**交付** [`delivery/`](#交付形态)。它们都来自同一份包装计划：[`product-packaging-plan.md`](product-packaging-plan.md)。
+> Three new reader-facing directories were added under `docs/`: **review** [`product/`](#for-reviewers-product-and-review-documents), **operations** [`operations/`](#operations-and-on-call), **delivery** [`delivery/`](#delivery-form). All three come from the same packaging plan: [`product-packaging-plan.md`](product-packaging-plan.md).
 
-## 决定要做什么
+## Deciding what to build
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| [`architecture/README.md`](architecture/README.md) | **架构入口。** 文档地图与优先级（**规范文档 = `hld.md` / `lld.md`**）、交付边界、证据分级、当前已知待确认项 |
-| [`architecture/新系统整体架构.md`](architecture/新系统整体架构.md) | **设计基线。** 每一项已确认决策、其理由、未决清单与风险登记 |
-| [`architecture/adr/`](architecture/adr/) | 决策记录；先看它的 README 里的注册表 |
-| [`plan.md`](plan.md) | 交付计划：里程碑、顺序、退出标准 |
-| [`environments.md`](environments.md) | **环境登记表。** 长期事实登记：每台机器的名字、hostname、具备/缺失工具、已产出的证据。引用环境必须用表中的名字。**数据由 `tools/env-probe.sh` 现场探测生成，不手工维护**（见「本机环境与工具」） |
-| [`product-packaging-plan.md`](product-packaging-plan.md) | **产品化包装计划。** 四批交付物、`product/`·`operations/`·`delivery/` 三个新目录的由来与执行顺序 |
-| [`migration/triage.md`](migration/triage.md) | 在采纳任何东西之前，POC 代码如何被甄别 |
-| [`next-release-v1.1-plan.md`](next-release-v1.1-plan.md) | **下一 release（v1.1 批次）的单一追踪载体。** 本版（M8 内部版）close 后的全部遗留项去向在此收口；其余文档只留指针 |
+| [`architecture/README.md`](architecture/README.md) | **Architecture entry point.** The document map and priorities (**specification documents = `hld.md` / `lld.md`**), delivery boundaries, evidence grading, currently known open items |
+| [`architecture/system-architecture.md`](architecture/system-architecture.md) | **Design baseline.** Every confirmed decision, its rationale, the open-items list and the risk register |
+| [`architecture/adr/`](architecture/adr/) | Decision records; start with the registry in its README |
+| [`plan.md`](plan.md) | Delivery plan: milestones, ordering, exit criteria |
+| [`environments.md`](environments.md) | **Environment registry.** Register of long-lived facts: each machine's name, hostname, tools present/absent, evidence already produced. When citing an environment you must use the name in the table. **The data is generated on the spot by `tools/env-probe.sh` probing and is not maintained by hand** (see "Local environment and tooling") |
+| [`product-packaging-plan.md`](product-packaging-plan.md) | **Product packaging plan.** Four batches of deliverables, the origin and execution order of the three new directories `product/`·`operations/`·`delivery/` |
+| [`migration/triage.md`](migration/triage.md) | How POC code was triaged before anything was adopted |
+| [`next-release-v1.1-plan.md`](next-release-v1.1-plan.md) | **The single tracking vehicle for the next release (the v1.1 batch).** Where the fate of every leftover item after this version (the M8 internal version) is closed out is consolidated here; all other documents keep only pointers |
 
-## 构建它
+## Building it
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| [`../AGENT.md`](../AGENT.md) | **写代码之前先读。** 协作守则、分层、TDD 政策、门禁、git 规则 |
-| [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | 环境搭建、本地门禁、commit 与评审约定 |
-| [`../README.md`](../README.md) | 定位、仓库导览、快速开始 |
+| [`../AGENT.md`](../AGENT.md) | **Read this before writing code.** Collaboration rules, layering, TDD policy, gates, git rules |
+| [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Environment setup, local gates, commit and review conventions |
+| [`../README.md`](../README.md) | Positioning, repository tour, quick start |
 
-## 面向评审：产品与评审文档
+## For reviewers: product and review documents
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| [`product/one-pager.md`](product/one-pager.md) | **产品一页纸。** 价值主张、架构大图、KPI 定义、三步部署 |
-| [`product/ne-datasheet.md`](product/ne-datasheet.md) | **网元档案。** 接口清单、KPI 与告警、依赖关系、资源规格；容量数值受 O1 阻塞 |
-| [`product/compliance-matrix.md`](product/compliance-matrix.md) | 3GPP / GSMA / RFC 规范符合性矩阵（Sh 与计费标 N/A 并保留理由） |
-| [`product/responsibility-matrix.md`](product/responsibility-matrix.md) | 责任边界矩阵 RACI：AS 与 S-CSCF / HSS / 计费域 / 网管 / 安全各域 |
-| [`product/version-lifecycle.md`](product/version-lifecycle.md) | 版本生命周期与 EOL 策略（REQ-NF-16 / ADR-0027） |
-| [`product/security-privacy.md`](product/security-privacy.md) | 安全与隐私合规（PDPO）；保留期限待 O4、存储选型待 D5 |
+| [`product/one-pager.md`](product/one-pager.md) | **Product one-pager.** Value proposition, the big architecture picture, KPI definitions, three-step deployment |
+| [`product/ne-datasheet.md`](product/ne-datasheet.md) | **Network element datasheet.** Interface inventory, KPIs and alarms, dependencies, resource specifications; capacity figures are blocked by O1 |
+| [`product/compliance-matrix.md`](product/compliance-matrix.md) | 3GPP / GSMA / RFC specification conformance matrix (Sh and billing are marked N/A with the reason retained) |
+| [`product/responsibility-matrix.md`](product/responsibility-matrix.md) | RACI responsibility boundary matrix: AS versus the S-CSCF / HSS / billing domain / network management / security domains |
+| [`product/version-lifecycle.md`](product/version-lifecycle.md) | Version lifecycle and EOL policy (REQ-NF-16 / ADR-0027) |
+| [`product/security-privacy.md`](product/security-privacy.md) | Security and privacy compliance (PDPO); retention period pending O4, storage selection pending D5 |
 
-## 运维与值守
+## Operations and on-call
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| [`operations/README.md`](operations/README.md) | 运维分册总览：读者分层、归集映射、尚未交付清单 |
-| [`operations/runbook-l1.md`](operations/runbook-l1.md) | L1 运维手册：每日巡检、告警首响应、常见操作（NOC） |
-| [`operations/runbook-l2.md`](operations/runbook-l2.md) | L2 运维手册：深度排障、信令与日志取证（二线） |
-| [`operations/fault-demarcation.md`](operations/fault-demarcation.md) | 故障定界手册：AS / S-CSCF / HSS / 计费域四方定界 |
-| [`operations/rollback-playbook.md`](operations/rollback-playbook.md) | 业务摘流 / 回退 + iFC 侧配合 |
-| [`operations/backup-restore.md`](operations/backup-restore.md) | 备份恢复方案 + 演练记录模板（依赖真实集群环境） |
-| [`operations/alert-response-matrix.md`](operations/alert-response-matrix.md) | 告警-动作对照表：级别、触发条件、处理动作、升级路径 |
-| [`operations/grafana-dashboards/README.md`](operations/grafana-dashboards/README.md) | Grafana 看板模板（`overview.json` / `sip-signaling.json`）及其可用性前置条件 |
+| [`operations/README.md`](operations/README.md) | Operations volume overview: reader tiers, consolidation mapping, not-yet-delivered list |
+| [`operations/runbook-l1.md`](operations/runbook-l1.md) | L1 operations runbook: daily inspection, first response to alarms, common operations (NOC) |
+| [`operations/runbook-l2.md`](operations/runbook-l2.md) | L2 operations runbook: deep troubleshooting, signalling and log forensics (second line) |
+| [`operations/fault-demarcation.md`](operations/fault-demarcation.md) | Fault demarcation runbook: four-way demarcation across AS / S-CSCF / HSS / billing domain |
+| [`operations/rollback-playbook.md`](operations/rollback-playbook.md) | Traffic draining / rollback plus coordination on the iFC side |
+| [`operations/backup-restore.md`](operations/backup-restore.md) | Backup and restore plan plus a drill record template (depends on a real cluster environment) |
+| [`operations/alert-response-matrix.md`](operations/alert-response-matrix.md) | Alert-to-action table: severity, trigger conditions, handling actions, escalation path |
+| [`operations/grafana-dashboards/README.md`](operations/grafana-dashboards/README.md) | Grafana dashboard templates (`overview.json` / `sip-signaling.json`) and their usability prerequisites |
 
-> `docs/acceptance/*-runbook.md` 是历史原件与审计追溯源，**不删除、不移动、不改写**；`operations/` 只做索引 + 链接 + 面向值班的操作正文。
+> `docs/acceptance/*-runbook.md` are the historical originals and the audit traceability source, **never deleted, never moved, never rewritten**; `operations/` only provides the index + links + the operational body text aimed at on-call staff.
 
-> **评审 / 执行记录入口**：本轮产品化包装（`product/`、`operations/`、`delivery/` 三个目录）的**执行记录**见 [`reviews/product-packaging-execution-record-2026-10-10.md`](reviews/product-packaging-execution-record-2026-10-10.md)。⚠️ 该文件是**执行记录，不是维护者签字的 review record** —— 各分册要求的独立 review record（`AGENT.md` §3.3）仍待维护者评审；包装前的评审意见见 [`reviews/product-packaging-plan-review-2026-10-09.md`](reviews/product-packaging-plan-review-2026-10-09.md)。
+> **Review / execution record entry point**: the **execution record** for this round of product packaging (the three directories `product/`, `operations/`, `delivery/`) is in [`reviews/product-packaging-execution-record-2026-10-10.md`](reviews/product-packaging-execution-record-2026-10-10.md). ⚠️ That file is an **execution record, not a maintainer-signed review record** — the independent review record each volume requires (`AGENT.md` §3.3) is still awaiting maintainer review; the pre-packaging review comments are in [`reviews/product-packaging-plan-review-2026-10-09.md`](reviews/product-packaging-plan-review-2026-10-09.md).
 
-## 交付形态
+## Delivery form
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| [`delivery/README.md`](delivery/README.md) | 交付目录总览：三步交付流程、前置条件、与权威文档的边界 |
-| [`delivery/install-guide.md`](delivery/install-guide.md) | **安装部署指南。** 交付清单、镜像获取与同步、`helm install` 命令序列（Helm 参数以 [`../deploy/helm/README.md`](../deploy/helm/README.md) 为权威） |
-| [`delivery/airgap-package.md`](delivery/airgap-package.md) | 离线安装包（air-gapped）制作与使用：联网侧、离线侧、校验和与供应链 |
-| [`delivery/preflight.sh`](delivery/preflight.sh) | 部署前环境校验脚本：K8s / 资源 / 依赖服务 / Helm / RBAC / chart 渲染守卫 |
+| [`delivery/README.md`](delivery/README.md) | Delivery directory overview: the three-step delivery process, prerequisites, boundary against the authoritative documents |
+| [`delivery/install-guide.md`](delivery/install-guide.md) | **Installation and deployment guide.** Delivery checklist, image acquisition and mirroring, `helm install` command sequence (Helm parameters are authoritative in [`../deploy/helm/README.md`](../deploy/helm/README.md)) |
+| [`delivery/airgap-package.md`](delivery/airgap-package.md) | How to produce and use the air-gapped installation package: the networked side, the offline side, checksums and supply chain |
+| [`delivery/preflight.sh`](delivery/preflight.sh) | Pre-deployment environment validation script: K8s / resources / dependent services / Helm / RBAC / chart render guards |
 
-## 运行它
+## Running it
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| `acceptance/` | 逐条带证据的验收标准与历史 runbook 原件 —— 仍是历史证据的所在地 |
-| [`../deploy/helm/README.md`](../deploy/helm/README.md) | **Helm chart 参数与渲染行为的唯一权威**（交付形态说明） |
+| `acceptance/` | Item-by-item acceptance criteria with evidence and the original historical runbooks — still where the historical evidence lives |
+| [`../deploy/helm/README.md`](../deploy/helm/README.md) | **The single authority on Helm chart parameters and rendering behaviour** (delivery-form notes) |
 
-## 本机环境与工具
+## Local environment and tooling
 
-> **环境信息不由人工维护。** 下面的脚本负责探测与安装，登记表 [`environments.md`](environments.md)
-> 的数据行来自它们的输出。项目会部署到不同电脑，**环境差异是常态** —— 不要以任何一台机器的
-> 工具清单去推断项目能力，也不要据「某台机器缺 X」改文档口径。
+> **Environment information is not maintained by hand.** The scripts below handle probing and installation, and the data rows of the registry in
+> [`environments.md`](environments.md) come from their output. The project is deployed onto different computers, so **environmental differences are the
+> norm** — do not infer project capability from any single machine's tool inventory, and do not change the documentation's position because "some machine lacks X".
 
-| 脚本 / 文档 | 是什么 |
+| Script / document | What it is |
 |---|---|
-| [`../tools/env-probe.sh`](../tools/env-probe.sh) | **环境探测（只读）。** 探测 hostname / OS / 架构 与 docker / uv / python3.10 / helm / kubectl / kind / promtool / make / git，区分「✅ 具备 / ❌ 缺失 / ⚠ 装了但不可用」三态。`--markdown` 输出可直接粘进 [`environments.md`](environments.md) 的表格行，`--json` 供机器读。不安装任何东西、不改系统状态、不需要 root，缺工具仍 exit 0 |
-| [`../tools/bootstrap-infra.sh`](../tools/bootstrap-infra.sh) | **infra 工具安装（无 root、幂等）。** 把 helm / kubectl / kind / promtool 解压到 `tools/bin/`，版本锁定在 [`../tools/VERSIONS`](../tools/VERSIONS)；支持 `--dry-run`、`--only <tool>`、`--force`，装完自动调用 `env-probe.sh` 验证。**需要 root 的路径一律显式报错，绝不偷偷 sudo** |
-| [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) | **本机补齐四件工具的执行计划**（前置条件核查、安装清单、版本固定、可证伪的验证步骤、回退、停止线）。执行者请从该文档开始，不要从本文开始 |
+| [`../tools/env-probe.sh`](../tools/env-probe.sh) | **Environment probe (read-only).** Probes hostname / OS / architecture plus docker / uv / python3.10 / helm / kubectl / kind / promtool / make / git, distinguishing three states: "✅ present / ❌ missing / ⚠ installed but unusable". `--markdown` emits rows that can be pasted straight into the table in [`environments.md`](environments.md), `--json` is for machines. It installs nothing, changes no system state and needs no root, and still exits 0 when tools are missing |
+| [`../tools/bootstrap-infra.sh`](../tools/bootstrap-infra.sh) | **infra tooling installation (no root, idempotent).** Unpacks helm / kubectl / kind / promtool into `tools/bin/`, with versions pinned in [`../tools/VERSIONS`](../tools/VERSIONS); supports `--dry-run`, `--only <tool>`, `--force`, and automatically invokes `env-probe.sh` to verify afterwards. **Any path that needs root reports an explicit error and never sneaks in a sudo** |
+| [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) | **The execution plan for filling in the four missing tools locally** (prerequisite checks, installation inventory, pinned versions, falsifiable verification steps, rollback, stop line). Executors should start from that document, not from this one |
 
-## 参考
+## References
 
-| 文档 | 是什么 |
+| Document | What it is |
 |---|---|
-| `glossary.md` | IMS / SIP 术语表 —— **尚未创建**，随首个代码里程碑落地 |
-| `specs/` | 规范性参考（RFC 3261、RFC 4566、RFC 8688、TS 24.229）与消息样例 —— **尚未创建** |
+| `glossary.md` | IMS / SIP glossary — **not yet created**; will land with the first code milestone |
+| `specs/` | Normative references (RFC 3261, RFC 4566, RFC 8688, TS 24.229) and message samples — **not yet created** |

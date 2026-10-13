@@ -2,107 +2,107 @@
 
 Sanitized M5.1 transcripts. Raw kind runs may still land under gitignored `artifacts/m5/<date>/`.
 
-## 文件名即结论（2026-10-11 起）
+## Filenames are the verdict (since 2026-10-11)
 
-本目录内证据文件强制前缀 `PASS-` / `FAIL-` / `FAILCLOSED-`，格式为 `<结论>-<被验项>-<日期>.txt`
-（`-sample` 后缀表示该次运行的尾部摘要）。依据见
-[`../../handoff/2026-10-11-open-adjudication-register.md`](../../handoff/2026-10-11-open-adjudication-register.md) §7.4 第 1 层。
+Evidence files in this directory require the mandatory prefixes `PASS-` / `FAIL-` / `FAILCLOSED-`, with the format `<verdict>-<verified-item>-<date>.txt`
+(the `-sample` suffix denotes the tail summary of that run). The basis is
+[`../../handoff/2026-10-11-open-adjudication-register.md`](../../handoff/2026-10-11-open-adjudication-register.md) §7.4 layer 1.
 
-三个前缀不可互换，**一律以文件名为准**：
+The three prefixes are not interchangeable; **always treat the filename as authoritative**:
 
-| 前缀 | 含义 | 是不是通过证据 |
+| Prefix | Meaning | Pass evidence? |
 |---|---|---|
-| `PASS-` | 被采集命令 **exit 0** | 是 |
-| `FAIL-` | 被采集命令**跑了但非零退出** | **不是** |
-| `FAILCLOSED-` | 显式拒绝而非猜测（如 `M5_STRICT=1` 而无集群，`exit=1`） | **不是** |
+| `PASS-` | The collected command **exited 0** | Yes |
+| `FAIL-` | The collected command **ran but exited non-zero** | **No** |
+| `FAILCLOSED-` | Explicitly declined rather than guessed (e.g. `M5_STRICT=1` with no cluster, `exit=1`) | **No** |
 
-> **`FAIL-` 是 2026-10-11 新增的前缀。** 此前 `deploy/kind/m5-record-artifacts.sh` 用
-> `make X 2>&1 | strip_ansi > file` 采集，管道退出码取自 `strip_ansi`（恒为 0）而不是 `make`，
-> 于是失败的运行被写成了 `PASS-` 文件 —— 在「文件名即结论」之下，这等于凭空造出一份绿证据。
-> 该脚本现已按 `PIPESTATUS[0]` 分流：失败落 `FAIL-`、脚本最终非零退出、文件头写明真实退出码。
+> **`FAIL-` is a prefix added on 2026-10-11.** Previously `deploy/kind/m5-record-artifacts.sh` collected with
+> `make X 2>&1 | strip_ansi > file`; the pipe's exit code came from `strip_ansi` (always 0) rather than `make`,
+> so failed runs were written as `PASS-` files — under "filename is the verdict", this fabricated a green evidence out of nothing.
+> The script now splits by `PIPESTATUS[0]`: failures land in `FAIL-`, the script finally exits non-zero, and the file header states the real exit code.
 
-> **本目录内 `Fail` / `ERROR` 字样属正常语义，不得据此判定文件失败；一律以文件名前缀为准。**
+> **`Fail` / `ERROR` strings inside this directory are normal semantics and must not be used to judge a file as failed; always rely on the filename prefix.**
 
-## 索引表
+## Index table
 
-| Path | 结论 | Meaning |
+| Path | Verdict | Meaning |
 |---|---|---|
-| `2026-10-05/PASS-gate-2026-10-05.txt` | 通过 | full `make gate` (must end in pytest passed)。**含 SKIPPED 项**，见下方「三件容易被误读的事」第 3 条 |
-| `2026-10-05/PASS-gate-sample-2026-10-05.txt` | 通过 | last lines of that run（同样含 SKIPPED 项） |
-| `2026-10-05/PASS-chart-check-2026-10-05.txt` | 通过 | `make chart-check`，末行 `chart-check: OK`；含 `[INFO] Fail:` 行属预期断言，见下方第 2 条 |
-| `2026-10-05/PASS-chart-check-sample-2026-10-05.txt` | 通过 | 同上运行的内容副本 |
-| `2026-10-05/PASS-alert-check-2026-10-05.txt` | 通过 | `promtool check rules` → `SUCCESS: 5 rules found`（**仅覆盖当时的原 5 条规则**） |
-| `2026-10-05/PASS-alert-check-sample-2026-10-05.txt` | 通过 | 同上运行的内容副本 |
-| `2026-10-05/FAILCLOSED-m5-strict-context-2026-10-05.txt` | **不是通过证据** | `M5_STRICT=1` with no `kind-as-m5`（**exit=1**），fail-closed 路径记录 |
-| `2026-10-11/PASS-alert-check-full-2026-10-11.txt` | 通过 | Docker 运行 `promtool check rules` → `SUCCESS: 10 rules found`（**覆盖全部 3 组 10 条规则**：as.call-path 5 + as.runtime 3 + as.platform 2）；镜像 `prom/prometheus:v2.45.0`，host `WIN-03IB7NIEPF0` |
-| `2026-10-11/PASS-gate-2026-10-11.txt` | 通过 | 本机（`dev-win03ib7niepf0`）`make gate`（ruff format --check / ruff check / mypy / pytest unit+contract）→ `1037 passed, 10 skipped, 206 deselected`。**含 SKIPPED 项**，引用时必须一并说明 skip 构成，见下方第 3 条 |
-| `2026-10-11/PASS-gate-sample-2026-10-11.txt` | 通过 | 同上运行的尾部摘要（同样含 SKIPPED 项） |
-| `2026-10-11/PASS-chart-check-2026-10-11.txt` | 通过 | 本机 `make chart-check`，末行 `chart-check: OK`、`1 chart(s) linted, 0 chart(s) failed`；语义与 2026-10-05 行相同（`[INFO] Fail:` 属预期断言，见下方第 2 条）；helm 3.16.4（`tools/bin/`，infra bootstrap 后首次本机产出） |
-| `2026-10-11/PASS-chart-check-sample-2026-10-11.txt` | 通过 | 同上运行的内容副本 |
-| `2026-10-11/PASS-alert-check-2026-10-11.txt` | 通过 | **本地** promtool **2.55.1**（`tools/bin/`，与 2026-10-05 证据**同版本**）`check rules` → `SUCCESS: 10 rules found`（**覆盖全部 3 组 10 条规则**：as.call-path 5 + as.runtime 3 + as.platform 2）；二进制溯源为官方镜像提取（非 release tarball，安装当日 GitHub 不可达），见 [`../../../handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](../../../handoff/2026-10-11-local-infra-bootstrap-execution-record.md) |
-| `2026-10-11/PASS-alert-check-sample-2026-10-11.txt` | 通过 | 同上运行的内容副本 |
-| `2026-10-11/FAILCLOSED-m5-strict-context-2026-10-11.txt` | **不是通过证据** | `M5_STRICT=1` context 检查：本次 `kind-as-m5` context 在位、检查本身 `exit=0`，但按采集脚本设计该文件**一律**记 `FAILCLOSED`、永不作为通过证据引用（与 2026-10-05 行的 `exit=1` 失败路径不同，二者都不是通过证据） |
-| `2026-10-11/FAIL-m5-verify-strict-2026-10-11.txt` | **不是通过证据** | `M5_STRICT=1 bash deploy/kind/m5-verify.sh` **exit=1**：新建 `as-m5` 集群只有空控制面（`No resources found in as-m5 namespace.`，产品 AS pod 未部署），jsonpath 断言越界。**如实失败** —— 印证「工具与集群就位 ≠ 集群级产品验证通过」 |
-| `2026-10-11/FAIL-m5-verify-strict-sample-2026-10-11.txt` | **不是通过证据** | 同上运行的尾部摘要 |
-| `2026-10-11/PASS-gate-native-2026-10-11.txt` | 通过 | 本机（`dev-win03ib7niepf0`）**首次**真栈门禁：`make gate-native` → `1068 passed, 2 skipped, 206 deselected, 11 warnings`，exit 0。**含 2 条 SKIPPED**，均来自 `testbed/simulators/tests/test_derived_baseline.py:245` / `:279`（S1-basic-call 未构造 Route / Record-Route header，需专门的 M2 probe capture）——**没有一条来自 native 扩展缺失**（原 7 条 `native_extensions.py` skip 与 1 条 `_resip_recovery` skip 已消失）。引用时必须一并说明 skip 构成，见下方第 3 条 |
-| `2026-10-11/PASS-gate-native-sample-2026-10-11.txt` | 通过 | 同上运行的尾部摘要（同样含 SKIPPED 项） |
-| `2026-10-11/PASS-phase-a-revalidation-2026-10-11.txt` | 通过 | A3 Phase A 真栈复验：E1 两个契约文件 `-m contract` → `7 passed`；`test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200`（`integration` 标记，不在默认 gate 收集内）→ `1 passed` |
-| `2026-10-11/PASS-phase-a-revalidation-sample-2026-10-11.txt` | 通过 | 同上运行的内容副本 |
-| `2026-10-11/PASS-e2e-2026-10-11.txt` | 通过 | A4 Wave 1 落地后 `uv run pytest -m e2e -q` → `5 passed, 1292 deselected`（`testbed/e2e/test_sip_first_edition.py`；同日更早的运行为 `1276 deselected`，差额 16 来自新增证据文件使根守卫参数化用例 +16，e2e 恒为 5 条）。此前 `-m e2e` 收集为 **0 条** |
-| `2026-10-11/PASS-e2e-sample-2026-10-11.txt` | 通过 | 同上运行的内容副本 |
-| `2026-10-11/PASS-native-smoke-2026-10-11.txt` | 通过 | 四项本地真栈 smoke 逐项 `exit=0`：`m2-native-smoke`（S1 UDP）、`m2-native-smoke-tcp`（S1 TCP）、`m2-native-smoke-tcp-runtime`（1 passed）、`m2-native-smoke-tls-runtime`（3 passed，测试 CA / 自签，**不签收 REQ-S-2 / REQ-S-3**） |
-| `2026-10-11/PASS-native-smoke-sample-2026-10-11.txt` | 通过 | 同上运行的内容副本 |
-| `2026-10-12/PASS-integration-compose-2026-10-12.txt` | 通过 | 本机（`dev-win03ib7niepf0`）起 `deploy/compose` 的 **PostgreSQL 12.22**（`wal_level=replica`）后跑标准 `make test-integration-compose` → `196 passed, 5 skipped, 0 failed, 0 error`，exit 0。此前（无 PG）该层为 `2 failed / 113 errors`。5 条 SKIPPED 的构成：2 条 Redis 不可达 + 3 条 `CREATE PUBLICATION requires wal_level=logical` |
-| `2026-10-12/PASS-integration-compose-sample-2026-10-12.txt` | 通过 | 同上运行的尾部摘要 |
-| `2026-10-12/PASS-integration-compose-redis-2026-10-12.txt` | 通过 | 同上 + 本机 Redis（`as-redis-test`，6379）→ `198 passed, 3 skipped`，exit 0；Redis 相关的 2 条 skip 消失 |
-| `2026-10-12/PASS-integration-compose-redis-sample-2026-10-12.txt` | 通过 | 同上运行的尾部摘要 |
-| `2026-10-12/PASS-integration-pg-logical-2026-10-12.txt` | 通过 | 同上 + `wal_level=logical` 的 PG 12.22（自定义 `AS_PG_TEST_DSN` 指向 `:55433`）→ `200 passed, 1 skipped`，exit 0。剩余 1 条 skip 为 PG 版本门槛（`requires PostgreSQL 15 or newer`，标准 compose 为 12.22），不是缺陷。**偏差：本档偏离标准 `make test-integration-compose`（改用自定义 DSN）** |
-| `2026-10-12/PASS-integration-pg-logical-sample-2026-10-12.txt` | 通过 | 同上运行的尾部摘要 |
-| `2026-10-12/FAIL-integration-pg15-2026-10-12.txt` | **不是通过证据** | **如实失败**：PG **15.18**（自定义 DSN `:55434`）下 `-m integration` → `1 failed, 124 passed, 76 errors`，exit 1。根因：`SELECT defaclobjtype \|\| ':' \|\| ...` → `AmbiguousFunction: operator is not unique: "char" \|\| unknown`（PG 14+ 将该列类型由 `char` 改为 `"char"`，需显式类型转换）。**未改任何产品代码**；仓库标准环境（compose）为 PG 12.22，故当前不阻塞，但 PG 12 已 EOL，升级时会踩到 |
-| `2026-10-12/FAIL-integration-pg15-sample-2026-10-12.txt` | **不是通过证据** | 同上运行的尾部摘要 |
-| `2026-10-12/PASS-chart-version-sync-2026-10-12.txt` | 通过 | **A6 首次 chart 同步**（维护者 2026-10-12 指令「何时同步成什么由 agent 定」）：同步前 `--check` 如实 DRIFT（`version: 0.0.0-skeleton` / `appVersion: "0.0.0"` vs 根 `VERSION` `0.2.0`，exit 1）；动作 = 落入裁决的 `kubeVersion: ">=1.23.0-0"` + `sync-chart-version.sh --apply`；同步后 `--check` exit 0（`version: 0.2.0` / `appVersion: "0.2.0"`），`make chart-check`（helm 3.16.4，`tools/bin/helm` 经 `HELM_BIN` 解析）→ `chart-check: OK`。环境 `dev-win03ib7niepf0` |
-| `2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt` | 通过 | M8 批次3 F-15 真 AS 全栈（kind-as-m5/ns as-m5/release `as`）：两批健康自动 applied+幂等 apply、末批不健康自动 rolled_back、首批后手动 rollback，fleet 集群内真实收到 notify；含 NF-10。fleet 为协议 stub（AS 无 notify 接收端），不签 REQ |
-| `2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt` | 通过 | NF-2：删除 translation Pod 并重建窗口内 anti-fraud /health/live+/ready 42/42 为 200，Pod UID/startTime/restartCount 全程不变 |
-| `2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt` | 通过 | NF-9：ns-A 停 bundled PG+删两个 AS Deployment 期间，独立 ns-B（release `asb`）58/58 为 200，7 个 Pod 身份前后逐项不变；ns-A 经 helm upgrade 恢复（另记录 config-service 单连接不自动重连观察项） |
-| `2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt` | 通过 | NF-5：M7.1 仿真 S-SBC 上产品 AS 对 T1/T4/T5/F1/F2 在 UDP/TCP/TLS 三轮判决分布逐桶相同（15 呼：200x9/404x3/603x3，unresolved=0）；TLS 为测试 CA，非运营商 PKI |
-| `2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt` | **不是通过证据** | NF-4 滚动零丢失**未达成**：持续 UDP 话务（350 呼/轮）中 rollout restart 单副本，两轮复现 timeout_invite 3/4、bye_sip_481 6/7、timeout_bye 4/3、unresolved 各 10；根因 headless 单副本切换窗口 + DUM 对话态仅在进程内存。**2026-10-12 维护者裁决接受该损失、NF-4 已按接受口径签 pass（见下一行）；本文件仍是原始失败记录，不是通过证据** |
-| `2026-10-12/PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt` | 通过（维护者签收，接受实测呼损；非零丢失） | NF-4 裁决证据：两轮实测（350 呼/轮，受影响 13/14，unresolved 各 10）+ 完整机理分析；当前 release 接受该呼损级别，滚动零呼损列今后 release 增强 feature（本版不立项） |
-| `2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt` | 通过 | 2.5 演练：bundled PG12 真 DROP 后 pg_restore rc=0（dump 0.259s/restore 0.704s 为本机实测量级非承诺），12 项计数+三角色一致，审计 append-only 8 项守卫按拒，控制台恢复、审计续写 |
-| `2026-10-12/PASS-config-service-auth-distribution-409-fix-2026-10-12.txt` | 通过 | P0 修复：auth 模式分发端点必 409（共享连接被 auth SELECT 污染 + 冗余 idle 检查），删检查净 -10 行 + 2 个真实 PG/HTTPS/CSRF 回归测试；文件 19 passed、config-service 全量 629 passed/3 skipped |
-| `2026-10-12/PASS-nf15-multi-replica-measurement-2026-10-12.txt` | 通过 | M8 批次5 NF-15：kind-as-m5/ns nf15-perf，2 副本 20/80/320/640/1280 CPS 五档 + 4 副本 1280 点，全档零失败；记录 per-pod CPU/内存（相对 200m/256Mi requests）与建立时延 p50/p95/p99；另记录 ClusterIP UDP 短流端点钉选（conntrack 源端口保持）架构发现。accept-all/kind 象征性模型，非对外容量 |
-| `2026-10-12/PASS-o1-loopback-cps-1280-2026-10-12.txt` | 通过（**仅限内部，不得写入对外材料**） | O1 内部工程目标复测：loopback/accept-all 1280 CPS×15s，19200/19200 建立，零失败/零 unresolved，p95 12.79ms；下限基线非饱和点非承诺值 |
-| `2026-10-12/PASS-hpa-threshold-filled-2026-10-12.txt` | 通过 | values-onprem.example.yaml 追加 autoscaling（enabled/min2/max4/CPU70%/MEM70%，注释含「kind 实测、非对外承诺、上线前须目标环境复测」）；默认 values.yaml 与 hpa.yaml 守卫零改动；example 渲染 2 HPA、默认 0、两守卫实测有效、make chart-check OK |
-| `2026-10-12/FAILCLOSED-performance-gate-terminal-state-2026-10-12.txt` | **不是通过证据** | performance 层门禁终态（阻塞层 or M8 总审书面接受风险）待维护者裁决；agent 未实现也未代接受，FAILCLOSED 登记，不计入通过清单 |
-| `2026-10-12/PASS-s1-whitelist-rejection-2026-10-12.txt` | 通过 | M8 批次4 S-1 补测：新增 `platform/tests/test_req_s1_whitelist_rejection.py`（9 条 unit）驱动真实 `ResipRuntimeListener._on_invite`，钉住产品路径对白名单未命中 / 空策略 / 证书不匹配 / 端点端口 / CIDR / 明文 UDP-when-TLS-required 返回 **403**，并以 `received_at` 探针断言 `decide()` 未执行；纯进程内、无 socket 无 native 扩展，403 帧的 wire 层仍由既有 integration 覆盖。同批实测：`make gate` → `1159 passed, 227 deselected, 11 warnings`，**0 skipped**，exit 0。**不签收 REQ-S-1** |
-| `2026-10-12/FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt` | **不是通过证据** | M8 批次4 S-1 取证：**「白名单变更经审批后生效」能力不存在** —— `ConfigBundle`（`platform/src/as_platform/api/contract.py:71`、字段 :89-91）只有 version/rules/toggles；唯一可审批提案 `ManagedRuleChange`（`services/config-service/src/as_config_service/change_order.py:68`）只管规则；`platform/src` 内 `gate.install` / `install_with_overlap` **无产品调用点**；`load_transport_seam_from_env` 仅在 `sip_stack_service.py:126`/:156 构造时读一次（= 改 Helm values + 重启）。登记为 gap，提请维护者二选一裁决（纳入变更单属 v1.1 新 feature / 或修订矩阵 REQ-S-1 行该说法）。agent **未实现**该能力，本文件不得计入通过清单 |
-| `2026-10-12/PASS-s4-audit-append-only-2026-10-12.txt` | 通过 | M8 批次4 S-4 补测（审计 append-only）：(A1) 在内部环境 `dev-win03ib7niepf0` 的 compose PostgreSQL（`as-m4b8-dev-postgres-1`，DSN 口令已遮蔽为 `postgresql://postgres:***@127.0.0.1:55432/as_config`）复跑 `test_postgres_audit_store_integration.py` → `35 passed, 3 skipped`，exit 0，3 条 SKIPPED 全为 `wal_level=replica` 下的 `CREATE PUBLICATION` 门槛、**不含**任何不可篡改守卫用例；核心守卫用例单跑 PASSED。(A2) 新增 `services/config-service/tests/test_req_s4_audit_immutability.py`（7 条 unit，进 `make gate`）以 AST 读取 `ensure_schema` 字面量，钉住行级 `BEFORE UPDATE OR DELETE` / 语句级 `BEFORE TRUNCATE` 两个 trigger、guard 体 `audit rows are immutable` / `audit table is append-only` 与 `ERRCODE = '23514'`、`tgtype` 位掩码自算 27/34、`LOCK TABLE ... ACCESS EXCLUSIVE MODE`、store 无 mutation API 且公开名字全集封闭。**A2 是结构断言，不等价于数据库端实测**（数据库端实测由 A1 覆盖）。`make gate` → `1174 passed, 249 deselected`，0 skipped，exit 0。**不签收 REQ-S-4** |
-| `2026-10-12/PASS-s4-rbac-permission-matrix-2026-10-12.txt` | 通过 | M8 批次4 S-4 补测（RBAC 权限矩阵）：新增 `services/config-service/tests/test_req_s4_rbac_api_matrix_integration.py`（22 条 integration，真 PG，同一 DSN 已遮蔽）把矩阵从内核纯函数推进到 **HTTP 边界** —— 20 行参数化覆盖 read / submit / approve / rollback / manage_users × viewer / operator / approver / admin，逐格与 `access.py:60-75` 的 `ROLE_PERMISSIONS` 一致；每条 403 断言 detail 精确等于权限拒绝文案（排除 CSRF / 双人原则 / 404 冒充）。**manage_users 有 HTTP 强制点**（`api.py:746`，端点 `GET /internal/v1/auth/users` 等三处），**无虚构端点、无未覆盖权限**。另验证越权落痕：viewer 提交 → 403 且审计表 `<audit_schema>.<prefix>_audit_events(actor, action, resource, outcome)` 恰好新增一条 `denied`。双人原则另立一条（approver 自审 → 403）。边界：每条权限只取一个代表性端点，挂载同一 `require_*` 的其余端点未逐条枚举（文件内已列清单）。`make gate` exit 0。**不签收 REQ-S-4** |
-| `2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt` | 通过 | M8 批次 6 / E-6 打包复检（2026-10-13 执行，环境 `dev-win03ib7niepf0`）：`test_version_consistency` 9 passed、`test_evidence_discipline` 135 passed、`make gate` 1174 passed/249 deselected、镜像重建 exit 0（**新 digest `sha256:63ba8f4df78d...`，与批次 1 的 `sha256:8f2e1b9465d...` 不一致，已按要求记录新 digest**）、脱敏复检无密钥/证书/抓包/含口令日志、SIP 监听运行时验证 `RESIP_RUNTIME_LISTENING ... udp_port=5060`、`make chart-check` OK、AS_SIP_*/AS_TLS_*/AS_PEER_* 16 个变量逐条核对无漂移 |
+| `2026-10-05/PASS-gate-2026-10-05.txt` | Pass | full `make gate` (must end in pytest passed). **Contains SKIPPED items**; see item 3 of "Three things easily misread" below |
+| `2026-10-05/PASS-gate-sample-2026-10-05.txt` | Pass | last lines of that run (also contains SKIPPED items) |
+| `2026-10-05/PASS-chart-check-2026-10-05.txt` | Pass | `make chart-check`, last line `chart-check: OK`; contains `[INFO] Fail:` lines which are expected assertions, see item 2 below |
+| `2026-10-05/PASS-chart-check-sample-2026-10-05.txt` | Pass | content copy of the same run |
+| `2026-10-05/PASS-alert-check-2026-10-05.txt` | Pass | `promtool check rules` → `SUCCESS: 5 rules found` (**covers only the original 5 rules at that time**) |
+| `2026-10-05/PASS-alert-check-sample-2026-10-05.txt` | Pass | content copy of the same run |
+| `2026-10-05/FAILCLOSED-m5-strict-context-2026-10-05.txt` | **Not pass evidence** | `M5_STRICT=1` with no `kind-as-m5` (**exit=1**), fail-closed path record |
+| `2026-10-11/PASS-alert-check-full-2026-10-11.txt` | Pass | Docker run `promtool check rules` → `SUCCESS: 10 rules found` (**covers all 3 groups of 10 rules**: as.call-path 5 + as.runtime 3 + as.platform 2); image `prom/prometheus:v2.45.0`, host `WIN-03IB7NIEPF0` |
+| `2026-10-11/PASS-gate-2026-10-11.txt` | Pass | local host (`dev-win03ib7niepf0`) `make gate` (ruff format --check / ruff check / mypy / pytest unit+contract) → `1037 passed, 10 skipped, 206 deselected`. **Contains SKIPPED items**; when citing you must also state the skip composition, see item 3 below |
+| `2026-10-11/PASS-gate-sample-2026-10-11.txt` | Pass | tail summary of the same run (also contains SKIPPED items) |
+| `2026-10-11/PASS-chart-check-2026-10-11.txt` | Pass | local host `make chart-check`, last lines `chart-check: OK`, `1 chart(s) linted, 0 chart(s) failed`; semantics identical to the 2026-10-05 row (`[INFO] Fail:` is an expected assertion, see item 2 below); helm 3.16.4 (`tools/bin/`, first local output after infra bootstrap) |
+| `2026-10-11/PASS-chart-check-sample-2026-10-11.txt` | Pass | content copy of the same run |
+| `2026-10-11/PASS-alert-check-2026-10-11.txt` | Pass | **local** promtool **2.55.1** (`tools/bin/`, **same version** as the 2026-10-05 evidence) `check rules` → `SUCCESS: 10 rules found` (**covers all 3 groups of 10 rules**: as.call-path 5 + as.runtime 3 + as.platform 2); binary provenance is the official image extraction (not a release tarball, GitHub unreachable on install day), see [`../../../handoff/2026-10-11-local-infra-bootstrap-execution-record.md`](../../../handoff/2026-10-11-local-infra-bootstrap-execution-record.md) |
+| `2026-10-11/PASS-alert-check-sample-2026-10-11.txt` | Pass | content copy of the same run |
+| `2026-10-11/FAILCLOSED-m5-strict-context-2026-10-11.txt` | **Not pass evidence** | `M5_STRICT=1` context check: this run the `kind-as-m5` context was present, the check itself `exit=0`, but per the collection script design this file is **always** recorded as `FAILCLOSED` and never cited as pass evidence (different from the 2026-10-05 row's `exit=1` failure path; neither is pass evidence) |
+| `2026-10-11/FAIL-m5-verify-strict-2026-10-11.txt` | **Not pass evidence** | `M5_STRICT=1 bash deploy/kind/m5-verify.sh` **exit=1**: the newly built `as-m5` cluster has only an empty control plane (`No resources found in as-m5 namespace.`, the product AS pod is not deployed), jsonpath assertion out of bounds. **Failed honestly** — confirms "tools and cluster ready ≠ cluster-level product verification passed" |
+| `2026-10-11/FAIL-m5-verify-strict-sample-2026-10-11.txt` | **Not pass evidence** | tail summary of the same run |
+| `2026-10-11/PASS-gate-native-2026-10-11.txt` | Pass | local host (`dev-win03ib7niepf0`) **first** real-stack gate: `make gate-native` → `1068 passed, 2 skipped, 206 deselected, 11 warnings`, exit 0. **Contains 2 SKIPPED**, both from `testbed/simulators/tests/test_derived_baseline.py:245` / `:279` (S1-basic-call did not construct Route / Record-Route header, requires a dedicated M2 probe capture) — **none from a missing native extension** (the original 7 `native_extensions.py` skips and 1 `_resip_recovery` skip have disappeared). When citing you must also state the skip composition, see item 3 below |
+| `2026-10-11/PASS-gate-native-sample-2026-10-11.txt` | Pass | tail summary of the same run (also contains SKIPPED items) |
+| `2026-10-11/PASS-phase-a-revalidation-2026-10-11.txt` | Pass | A3 Phase A real-stack revalidation: E1 two contract files `-m contract` → `7 passed`; `test_resip_runtime_integration.py::test_accept_all_invites_harness_mode_returns_200` (`integration` marker, not collected in the default gate) → `1 passed` |
+| `2026-10-11/PASS-phase-a-revalidation-sample-2026-10-11.txt` | Pass | content copy of the same run |
+| `2026-10-11/PASS-e2e-2026-10-11.txt` | Pass | A4 after Wave 1 landed `uv run pytest -m e2e -q` → `5 passed, 1292 deselected` (`testbed/e2e/test_sip_first_edition.py`; an earlier run the same day was `1276 deselected`, the difference of 16 comes from new evidence files adding +16 parameterized root-guard cases, e2e is always 5). Previously `-m e2e` collected **0 cases** |
+| `2026-10-11/PASS-e2e-sample-2026-10-11.txt` | Pass | content copy of the same run |
+| `2026-10-11/PASS-native-smoke-2026-10-11.txt` | Pass | four local real-stack smoke checks each `exit=0`: `m2-native-smoke` (S1 UDP), `m2-native-smoke-tcp` (S1 TCP), `m2-native-smoke-tcp-runtime` (1 passed), `m2-native-smoke-tls-runtime` (3 passed, test CA / self-signed, **does not close REQ-S-2 / REQ-S-3**) |
+| `2026-10-11/PASS-native-smoke-sample-2026-10-11.txt` | Pass | content copy of the same run |
+| `2026-10-12/PASS-integration-compose-2026-10-12.txt` | Pass | local host (`dev-win03ib7niepf0`) started **PostgreSQL 12.22** (`wal_level=replica`) from `deploy/compose` then ran standard `make test-integration-compose` → `196 passed, 5 skipped, 0 failed, 0 error`, exit 0. Previously (no PG) this layer was `2 failed / 113 errors`. The 5 SKIPPED composition: 2 Redis unreachable + 3 `CREATE PUBLICATION requires wal_level=logical` |
+| `2026-10-12/PASS-integration-compose-sample-2026-10-12.txt` | Pass | tail summary of the same run |
+| `2026-10-12/PASS-integration-compose-redis-2026-10-12.txt` | Pass | same as above + local Redis (`as-redis-test`, 6379) → `198 passed, 3 skipped`, exit 0; the 2 Redis-related skips disappear |
+| `2026-10-12/PASS-integration-compose-redis-sample-2026-10-12.txt` | Pass | tail summary of the same run |
+| `2026-10-12/PASS-integration-pg-logical-2026-10-12.txt` | Pass | same as above + PG 12.22 with `wal_level=logical` (custom `AS_PG_TEST_DSN` pointing to `:55433`) → `200 passed, 1 skipped`, exit 0. The remaining 1 skip is a PG version gate (`requires PostgreSQL 15 or newer`, standard compose is 12.22), not a defect. **Deviation: this file deviates from standard `make test-integration-compose` (uses a custom DSN)** |
+| `2026-10-12/PASS-integration-pg-logical-sample-2026-10-12.txt` | Pass | tail summary of the same run |
+| `2026-10-12/FAIL-integration-pg15-2026-10-12.txt` | **Not pass evidence** | **Failed honestly**: under PG **15.18** (custom DSN `:55434`) `-m integration` → `1 failed, 124 passed, 76 errors`, exit 1. Root cause: `SELECT defaclobjtype || ':' || ...` → `AmbiguousFunction: operator is not unique: "char" || unknown` (PG 14+ changed this column type from `char` to `"char"`, requires explicit type cast). **No product code changed**; the repo standard environment (compose) is PG 12.22, so this is not currently blocking, but PG 12 is already EOL and will be hit on upgrade |
+| `2026-10-12/FAIL-integration-pg15-sample-2026-10-12.txt` | **Not pass evidence** | tail summary of the same run |
+| `2026-10-12/PASS-chart-version-sync-2026-10-12.txt` | Pass | **A6 first chart sync** (maintainer directive on 2026-10-12 "when and to what to sync is decided by the agent"): before sync `--check` honestly showed DRIFT (`version: 0.0.0-skeleton` / `appVersion: "0.0.0"` vs root `VERSION` `0.2.0`, exit 1); action = adopt adjudicated `kubeVersion: ">=1.23.0-0"` + `sync-chart-version.sh --apply`; after sync `--check` exit 0 (`version: 0.2.0` / `appVersion: "0.2.0"`), `make chart-check` (helm 3.16.4, `tools/bin/helm` resolved via `HELM_BIN`) → `chart-check: OK`. Environment `dev-win03ib7niepf0` |
+| `2026-10-12/PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt` | Pass | M8 batch 3 F-15 real AS full stack (kind-as-m5/ns as-m5/release `as`): two healthy batches auto applied + idempotent apply, the last unhealthy batch auto rolled_back, manual rollback after the first batch, fleet cluster actually received notify; includes NF-10. fleet is a protocol stub (AS has no notify receiver), does not close REQ |
+| `2026-10-12/PASS-nf2-deployment-isolation-2026-10-12.txt` | Pass | NF-2: after deleting the translation Pod and within the rebuild window, anti-fraud /health/live+/ready 42/42 were 200, Pod UID/startTime/restartCount unchanged throughout |
+| `2026-10-12/PASS-nf9-namespace-isolation-2026-10-12.txt` | Pass | NF-9: while ns-A stopped bundled PG + deleted the two AS Deployments, independent ns-B (release `asb`) 58/58 were 200, 7 Pod identities checked item-by-item unchanged before and after; ns-A restored via helm upgrade (separately recorded config-service single-connection-no-auto-reconnect observation) |
+| `2026-10-12/PASS-nf5-simulator-transport-consistency-2026-10-12.txt` | Pass | NF-5: on the M7.1 simulator S-SBC the product AS verdict distribution per-bucket was identical across UDP/TCP/TLS three rounds for T1/T4/T5/F1/F2 (15 calls: 200x9/404x3/603x3, unresolved=0); TLS is test CA, not operator PKI |
+| `2026-10-12/FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt` | **Not pass evidence** | NF-4 rolling zero-loss **not achieved**: during continuous UDP traffic (350 calls/round) a single-replica rollout restart reproduced timeout_invite 3/4, bye_sip_481 6/7, timeout_bye 4/3, unresolved 10 each; root cause headless single-replica switch window + DUM dialog state only in process memory. **2026-10-12 maintainer adjudication accepted this loss, NF-4 signed pass under the accepted interpretation (see next row); this file remains the original failure record, not pass evidence** |
+| `2026-10-12/PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt` | Pass (maintainer signed-off, accepts measured call loss; non-zero loss) | NF-4 adjudication evidence: two rounds of measurement (350 calls/round, 13/14 affected, 10 unresolved each) + complete mechanism analysis; current release accepts this call-loss level, rolling zero call-loss is a future release enhancement feature (not scoped for this version) |
+| `2026-10-12/PASS-backup-restore-drill-bundled-pg-2026-10-12.txt` | Pass | 2.5 drill: after real bundled PG12 DROP, pg_restore rc=0 (dump 0.259s/restore 0.704s are local measured magnitudes not commitments), 12 counts + three-role consistency, audit append-only 8 guards rejected as designed, console restored, audit continued writing |
+| `2026-10-12/PASS-config-service-auth-distribution-409-fix-2026-10-12.txt` | Pass | P0 fix: auth-mode distribution endpoint must return 409 (shared connection polluted by auth SELECT + redundant idle check), removing the check net -10 lines + 2 real PG/HTTPS/CSRF regression tests; file 19 passed, config-service full 629 passed/3 skipped |
+| `2026-10-12/PASS-nf15-multi-replica-measurement-2026-10-12.txt` | Pass | M8 batch 5 NF-15: kind-as-m5/ns nf15-perf, 2 replicas across five tiers 20/80/320/640/1280 CPS + 4 replicas at 1280 point, zero failures across all tiers; records per-pod CPU/memory (relative to 200m/256Mi requests) and setup latency p50/p95/p99; separately records ClusterIP UDP short-flow endpoint pinning (conntrack source-port retention) architecture finding. accept-all/kind symbolic model, not external capacity |
+| `2026-10-12/PASS-o1-loopback-cps-1280-2026-10-12.txt` | Pass (**internal only, must not be written into external materials**) | O1 internal engineering target retest: loopback/accept-all 1280 CPS×15s, 19200/19200 setups, zero failure/zero unresolved, p95 12.79ms; lower-bound baseline non-saturation point not a committed value |
+| `2026-10-12/PASS-hpa-threshold-filled-2026-10-12.txt` | Pass | values-onprem.example.yaml appended autoscaling (enabled/min2/max4/CPU70%/MEM70%, comment includes "measured on kind, not an external commitment, must re-test on target environment before go-live"); default values.yaml and hpa.yaml guards zero-changed; example renders 2 HPAs, default 0, both guards verified effective, make chart-check OK |
+| `2026-10-12/FAILCLOSED-performance-gate-terminal-state-2026-10-12.txt` | **Not pass evidence** | performance layer gate terminal state (blocking layer or M8 overall review written acceptance of risk) pending maintainer adjudication; agent neither implemented nor accepted on behalf, registered as FAILCLOSED, not counted in the pass list |
+| `2026-10-12/PASS-s1-whitelist-rejection-2026-10-12.txt` | Pass | M8 batch 4 S-1 supplement: added `platform/tests/test_req_s1_whitelist_rejection.py` (9 unit tests) driving the real `ResipRuntimeListener._on_invite`, pinning the product path for whitelist miss / empty policy / cert mismatch / endpoint port / CIDR / plaintext UDP-when-TLS-required returning **403**, and asserting with a `received_at` probe that `decide()` was not executed; pure in-process, no socket no native extension, the 403 frame's wire layer still covered by existing integration. Same-batch measured: `make gate` → `1159 passed, 227 deselected, 11 warnings`, **0 skipped**, exit 0. **Does not close REQ-S-1** |
+| `2026-10-12/FAILCLOSED-s1-whitelist-change-approval-not-wired-2026-10-12.txt` | **Not pass evidence** | M8 batch 4 S-1 forensic: **the capability "whitelist change takes effect after approval" does not exist** — `ConfigBundle` (`platform/src/as_platform/api/contract.py:71`, fields :89-91) only has version/rules/toggles; the only approvable proposal `ManagedRuleChange` (`services/config-service/src/as_config_service/change_order.py:68`) only manages rules; `platform/src` `gate.install` / `install_with_overlap` **have no product call site**; `load_transport_seam_from_env` is only read once at construction in `sip_stack_service.py:126`/:156 (= change Helm values + restart). Registered as a gap, requesting the maintainer to adjudicate one of two options (include in change order as a v1.1 new feature / or revise the matrix REQ-S-1 row wording). agent **did not implement** this capability, this file must not be counted in the pass list |
+| `2026-10-12/PASS-s4-audit-append-only-2026-10-12.txt` | Pass | M8 batch 4 S-4 supplement (audit append-only): (A1) on the internal environment `dev-win03ib7niepf0` compose PostgreSQL (`as-m4b8-dev-postgres-1`, DSN password redacted to `postgresql://postgres:***@127.0.0.1:55432/as_config`) re-ran `test_postgres_audit_store_integration.py` → `35 passed, 3 skipped`, exit 0, the 3 SKIPPED all are `CREATE PUBLICATION` gates under `wal_level=replica`, **not including** any tamper-proof guard case; the core guard case passed when run alone. (A2) added `services/config-service/tests/test_req_s4_audit_immutability.py` (7 unit tests, into `make gate`) reading `ensure_schema` literals via AST, pinning the row-level `BEFORE UPDATE OR DELETE` / statement-level `BEFORE TRUNCATE` two triggers, guard bodies `audit rows are immutable` / `audit table is append-only` and `ERRCODE = '23514'`, `tgtype` bitmask self-computed 27/34, `LOCK TABLE ... ACCESS EXCLUSIVE MODE`, store has no mutation API and the public name set is closed. **A2 is a structural assertion, not equivalent to database-side measurement** (database-side measurement covered by A1). `make gate` → `1174 passed, 249 deselected`, 0 skipped, exit 0. **Does not close REQ-S-4** |
+| `2026-10-12/PASS-s4-rbac-permission-matrix-2026-10-12.txt` | Pass | M8 batch 4 S-4 supplement (RBAC permission matrix): added `services/config-service/tests/test_req_s4_rbac_api_matrix_integration.py` (22 integration tests, real PG, same redacted DSN) pushing the matrix from kernel pure functions to the **HTTP boundary** — 20 parameterized rows covering read / submit / approve / rollback / manage_users × viewer / operator / approver / admin, each cell consistent with `access.py:60-75` `ROLE_PERMISSIONS`; each 403 assertion detail exactly equals the permission-denied copy (excluding CSRF / two-person principle / 404 impersonation). **manage_users has an HTTP enforcement point** (`api.py:746`, endpoints `GET /internal/v1/auth/users` and two others), **no fabricated endpoints, no uncovered permissions**. Additionally verified privilege-escalation trace: viewer submits → 403 and the audit table `<audit_schema>.<prefix>_audit_events(actor, action, resource, outcome)` gains exactly one `denied` row. Two-person principle separately established one (approver self-review → 403). Boundary: each permission takes only one representative endpoint, other endpoints mounting the same `require_*` are not enumerated one-by-one (the list is in the file). `make gate` exit 0. **Does not close REQ-S-4** |
+| `2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt` | Pass | M8 batch 6 / E-6 packaging recheck (executed 2026-10-13, environment `dev-win03ib7niepf0`): `test_version_consistency` 9 passed, `test_evidence_discipline` 135 passed, `make gate` 1174 passed/249 deselected, image rebuild exit 0 (**new digest `sha256:63ba8f4df78d...`, inconsistent with batch 1's `sha256:8f2e1b9465d...`, recorded new digest as required**), redaction recheck found no secrets/certs/captures/password-bearing logs, SIP listen runtime verification `RESIP_RUNTIME_LISTENING ... udp_port=5060`, `make chart-check` OK, AS_SIP_*/AS_TLS_*/AS_PEER_* 16 variables checked one-by-one with no drift |
 | `README.md` | — | this index |
 
-## 三件容易被误读的事
+## Three things easily misread
 
-1. **`FAILCLOSED-m5-strict-context-2026-10-05.txt` 是 exit=1 的失败记录，不是通过证据。**
-   它记录的是 `M5_STRICT=1` 且无 `kind-as-m5` 集群时的 **fail-closed 路径**（内容为
-   `ERROR: kind-as-m5 context missing (M5_STRICT=1)` / `exit=1`）。它的价值在于证明「无集群时显式失败」
-   这一行为存在，**不得**计入任何「已通过」清单。
+1. **`FAILCLOSED-m5-strict-context-2026-10-05.txt` is a failure record with exit=1, not pass evidence.**
+   It records the **fail-closed path** when `M5_STRICT=1` and no `kind-as-m5` cluster exists (content is
+   `ERROR: kind-as-m5 context missing (M5_STRICT=1)` / `exit=1`). Its value is to prove the behavior "fails explicitly when no cluster"
+   exists, and it **must not** be counted in any "passed" list.
 
-2. **`PASS-chart-check-2026-10-05.txt` 中的 `[INFO] Fail: tls.enabled=true requires tls.secretName`
-   是 chart-check 对 fail-closed 渲染的预期断言，属正常语义，不代表该文件失败。**
-   同理适用于同行附近的 `sip.peerAllowlist must be non-empty (ADR-0016 fail-closed)` 与
-   `[INFO] Chart.yaml: icon is recommended`；判定依据是末行 `chart-check: OK` 与
-   `1 chart(s) linted, 0 chart(s) failed`。
+2. **`PASS-chart-check-2026-10-05.txt`'s `[INFO] Fail: tls.enabled=true requires tls.secretName`
+   is the chart-check's expected assertion for a fail-closed render, normal semantics, does not mean the file failed.**
+   The same applies to the nearby `sip.peerAllowlist must be non-empty (ADR-0016 fail-closed)` and
+   `[INFO] Chart.yaml: icon is recommended`; the basis for judgment is the last line `chart-check: OK` and
+   `1 chart(s) linted, 0 chart(s) failed`.
 
-3. **`PASS-gate-2026-10-05.txt` 含 SKIPPED 项；按既有纪律「skip 不是通过证据」。**
-   该次运行为 `878 passed, 2 skipped, 145 deselected`，两条 SKIPPED 均来自
-   `testbed/simulators/tests/test_derived_baseline.py:245` 与 `:279`
-   （S1-basic-call 未构造 Route / Record-Route header，需专门的 M2 probe capture 才能断言）。
-   **引用该文件时必须一并说明 skip 构成**，不得只写「gate 通过」。
+3. **`PASS-gate-2026-10-05.txt` contains SKIPPED items; per existing discipline "skip is not pass evidence".**
+   That run was `878 passed, 2 skipped, 145 deselected`, the two SKIPPED both come from
+   `testbed/simulators/tests/test_derived_baseline.py:245` and `:279`
+   (S1-basic-call did not construct Route / Record-Route header, requires a dedicated M2 probe capture to assert).
+   **When citing this file you must also state the skip composition**, do not just write "gate passed".
 
-## 引用规范
+## Citation convention
 
-任何证据一律用三元组 `(结论, 证据文件, 日期)` 表述，例如
-`(已验证, docs/acceptance/artifacts/m5/2026-10-05/PASS-chart-check-2026-10-05.txt, 2026-10-05)`；
-环境名见 [`../../environments.md`](../../environments.md)（文档中禁止再出现匿名的「本机」）。
+All evidence is expressed as the triple `(verdict, evidence file, date)`, e.g.
+`(verified, docs/acceptance/artifacts/m5/2026-10-05/PASS-chart-check-2026-10-05.txt, 2026-10-05)`;
+environment names see [`../../environments.md`](../../environments.md) (anonymous "local host" is forbidden to appear again in documents).
 
 Do not store passwords, tokens, DSNs, or cookies.

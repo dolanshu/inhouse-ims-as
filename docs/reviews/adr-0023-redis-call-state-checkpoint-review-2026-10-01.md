@@ -12,54 +12,54 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0023 Redis 呼叫状态检查点评审记录
+# ADR-0023 Redis Call State Checkpoint Review Record
 
-- **评审对象**：[ADR-0023](../architecture/adr/0023-redis-call-state-checkpoint.md) 及其 REQ / source trace
-- **日期**：2026-10-01
-- **评审人**：GitHub Copilot（写作子代理；技术审查）
-- **结论**：**有条件技术通过；维护者正式评审与签字待定**
+- **Review target**: [ADR-0023](../architecture/adr/0023-redis-call-state-checkpoint.md) and its REQ / source trace
+- **Date**: 2026-10-01
+- **Reviewer**: GitHub Copilot (writing subagent; technical review)
+- **Conclusion**: **conditional technical pass; formal maintainer review and sign-off pending**
 
-## 结论与范围
+## Conclusion and Scope
 
-ADR-0023 准确记录了本次用户明确选择的方向：Redis 应用层必要状态 checkpoint，而不是序列化完整 `SipStack` / DUM 对象。该方向来自用户决策，不是 AI 独立选择。ADR 状态仍为 `proposed`、注册表状态为 `draft`；本记录的有条件技术通过不代表 ADR 被接受、实现已完成或 REQ-NF-1 / D10 已验收。
+ADR-0023 accurately records the direction explicitly chosen by the user this time: a Redis checkpoint of the necessary application-layer state, rather than serializing the full `SipStack` / DUM objects. That direction comes from the user's decision, not from an independent AI choice. The ADR status is still `proposed` and the registry status is `draft`; the conditional technical pass in this record does not mean the ADR was accepted, that implementation is complete, or that REQ-NF-1 / D10 was accepted.
 
-本记录只评审 ADR-0023 的技术边界与来源追溯，不修改代码、测试、PRD 或 test plan。正式维护者评审、架构接受与签字仍待完成。
+This record reviews only the technical boundaries and provenance traceability of ADR-0023; it does not modify code, tests, the PRD or the test plan. Formal maintainer review, architecture acceptance and sign-off are still pending.
 
-## REQ 与证据追溯
+## REQ and Evidence Traceability
 
-| 需求 / 边界 | 追溯结论 |
+| Requirement / boundary | Traceability conclusion |
 |---|---|
-| REQ-NF-1 | 原文“正在进行的呼叫不能断”保持硬要求。当前 [`test-plan.md`](../acceptance/test-plan.md) 的 D10 可执行基线是 ACK 完成后的 established dialog；重启后新到达的上游 BYE 必须路由到 peer，且 Redis 有完整 dialog record。D10 review 记录 fresh DUM UAS 对 BYE 返回 481，故当前基线失败，不能声称通过。 |
-| REQ-NF-2 | 每个 use case 一个独立进程/故障域保持不变；Redis checkpoint 是进程外数据方向，不合并两个 app。 |
-| REQ-NF-4 | checkpoint 方向可支持后续 ISSU 状态设计，但 ADR-0023 本身不证明滚动升级、owner takeover 或存量呼叫验收已完成。 |
-| REQ-F-1 / F-2 / F-5 / F-8 / F-9 / F-11 | 呼叫建立、B2BUA 两腿、路由信息、CANCEL/BYE、in-dialog routing 和竞态仍是产品 SIP 行为约束；本 ADR 只规定这些状态在指定恢复点的持久化方向，不改变正常呼叫语义。 |
-| REQ-NF-6 | 本 checkpoint 是 signaling/dialog/controller data；不含 RTP、媒体锚定或媒体恢复，沿用 ADR-0004 边界。 |
+| REQ-NF-1 | The original wording "in-progress calls must not be dropped" remains a hard requirement. The current executable baseline of D10 in [`test-plan.md`](../acceptance/test-plan.md) is the established dialog after ACK completion; an upstream BYE newly arriving after a restart must be routed to the peer, and Redis must hold the complete dialog record. The D10 review record shows a fresh DUM UAS returning 481 for BYE, so the current baseline fails and a pass must not be claimed. |
+| REQ-NF-2 | One separate process/failure domain per use case stays unchanged; the Redis checkpoint is an out-of-process data direction and does not merge the two apps. |
+| REQ-NF-4 | The checkpoint direction can support the later ISSU state design, but ADR-0023 itself does not prove that rolling upgrade, owner takeover or acceptance of in-flight calls is complete. |
+| REQ-F-1 / F-2 / F-5 / F-8 / F-9 / F-11 | Call establishment, the two B2BUA legs, routing information, CANCEL/BYE, in-dialog routing and races remain product SIP behaviour constraints; this ADR only specifies the direction of persisting that state at the designated recovery points, and does not change normal call semantics. |
+| REQ-NF-6 | This checkpoint is signaling/dialog/controller data; it does not include RTP, media anchoring or media recovery, and follows the ADR-0004 boundary. |
 
-需求语义以[产品 PRD](../requirements/prd.md)为准，D10 的精确验收以[acceptance test plan](../acceptance/test-plan.md)为准。
+Requirement semantics are governed by the [product PRD](../requirements/prd.md), and the precise D10 acceptance is governed by the [acceptance test plan](../acceptance/test-plan.md).
 
-逐文件核查结果：translation 的 [`README.md`](../../apps/translation/README.md) 描述未来经 StateStore 外置会话状态；但 [`decision.py`](../../apps/translation/src/as_translation/decision.py) 是纯判决函数，[unit tests](../../apps/translation/tests/test_decision.py) 验证纯函数行为，[contract replay](../../apps/translation/tests/test_contract_replay.py) 只重放判决数据，当前没有 translation-specific per-call checkpoint payload 或 StateStore 写入。anti-fraud 的 [`README.md`](../../apps/anti-fraud/README.md) 描述 rate-window / reputation 外置方向；实际 [`decision.py`](../../apps/anti-fraud/src/as_anti_fraud/decision.py) 接收只读 `Mapping[str, int]` counters 并仅读取，[unit tests](../../apps/anti-fraud/tests/test_decision.py) 断言 counters 不变，[contract replay](../../apps/anti-fraud/tests/test_contract_replay.py) 从 case data 注入 counters。counter 是独立 aggregate state，不是每通 dialog 的字段；现有 app source/tests 没有 StateStore 读写接线。
+File-by-file verification result: the translation [`README.md`](../../apps/translation/README.md) describes future externalization of session state via StateStore; but [`decision.py`](../../apps/translation/src/as_translation/decision.py) is a pure decision function, the [unit tests](../../apps/translation/tests/test_decision.py) verify pure-function behaviour, and [contract replay](../../apps/translation/tests/test_contract_replay.py) only replays decision data — there is currently no translation-specific per-call checkpoint payload or StateStore write. The anti-fraud [`README.md`](../../apps/anti-fraud/README.md) describes the rate-window / reputation externalization direction; the actual [`decision.py`](../../apps/anti-fraud/src/as_anti_fraud/decision.py) receives a read-only `Mapping[str, int]` counters object and only reads it, the [unit tests](../../apps/anti-fraud/tests/test_decision.py) assert the counters are unchanged, and [contract replay](../../apps/anti-fraud/tests/test_contract_replay.py) injects counters from case data. Counters are independent aggregate state, not fields of each dialog; existing app source/tests have no StateStore read/write wiring.
 
-共享内核 [`as_platform/__init__.py`](../../platform/src/as_platform/__init__.py) 仅描述/导出 seam；[`state/__init__.py`](../../platform/src/as_platform/state/__init__.py) 导出 protocol 与实现；[`store.py`](../../platform/src/as_platform/state/store.py)、[`redis_store.py`](../../platform/src/as_platform/state/redis_store.py)、[`in_memory.py`](../../platform/src/as_platform/state/in_memory.py) 和 [contract tests](../../platform/tests/test_state_store_contract.py) 证明当前 store 是通用键值/TTL seam，契约没有双腿原子提交、owner fencing 或 durable commit acknowledgement。
+The shared kernel [`as_platform/__init__.py`](../../platform/src/as_platform/__init__.py) only describes/exports the seam; [`state/__init__.py`](../../platform/src/as_platform/state/__init__.py) exports the protocol and implementations; [`store.py`](../../platform/src/as_platform/state/store.py), [`redis_store.py`](../../platform/src/as_platform/state/redis_store.py), [`in_memory.py`](../../platform/src/as_platform/state/in_memory.py) and the [contract tests](../../platform/tests/test_state_store_contract.py) prove that the current store is a generic key-value/TTL seam, and the contract has no two-leg atomic commit, owner fencing or durable commit acknowledgement.
 
-## 有条件项与开放风险
+## Conditional Items and Open Risks
 
-| 项目 | 评审意见 / ADR 中的处理 |
+| Item | Review opinion / handling in the ADR |
 |---|---|
-| D10 与 UAS rehydrate | 现行 baseline 仍失败：fresh DUM UAS 收到同 dialog BYE 返回 481。必须实现 recovery adapter 并验证 BYE 路由及完整 Redis record 后才能解除 D10。窄 UAC `DialogSetId` re-INVITE probe 不是完整恢复证据。 |
-| early / in-flight phase | inbound INVITE checkpoint 前、outbound INVITE pending/early/provisional、final 2xx waiting ACK、崩溃时 pending in-dialog transaction 均未纳入现行 D10 acceptance，也不获本 ADR 保证。若产品要求这些阶段，须单独扩展 requirement 与 test plan；不得静默缩窄 REQ-NF-1。 |
-| 双腿一致性与 fencing | 必须以一个逻辑 checkpoint 保存/恢复两腿，使用单调 generation/revision，并 fence 已被 takeover 的旧 owner；不得让半恢复的 pair 服务呼叫。物理 Redis 表示可后续决定。 |
-| durability 与 callback 顺序 | 依赖的 SIP side effect 必须晚于 durable acknowledgement。SIP callback 不能阻塞等待 Redis；异步写入没有符合持久性边界的 ack 时不得称为 committed，也不得执行依赖该提交的 side effect。Redis 故障模型/RPO 与错误路径仍待设计和验收。 |
-| S-CSCF header 扩展 | 只允许未来经 peer authentication 和 allowlist 校验的 selected values，放入 namespaced/versioned extension；必须限制大小、保留期与分类。不得保存任意 SIP 消息/全部 headers；重复值/顺序只按经批准的 contract 保留。不指定或虚构当前使用的 header；安全边界见 [ADR-0016](../architecture/adr/0016-in-boundary-security.md)。 |
-| ADR-0002 与需求边界 | [ADR-0002](../architecture/adr/0002-per-usecase-process-state-redis.md) 保持 accepted/unchanged；“所有 session state externalized”措辞与 default DUM UAS/transaction runtime 不能由当前外置记录恢复之间的冲突仍开放。ADR-0023 不 supersede ADR-0002，也不修改 PRD/test plan。 |
+| D10 and UAS rehydrate | The current baseline still fails: a fresh DUM UAS returns 481 for a same-dialog BYE. A recovery adapter must be implemented and BYE routing plus the complete Redis record verified before D10 can be lifted. The narrow UAC `DialogSetId` re-INVITE probe is not complete recovery evidence. |
+| early / in-flight phase | Pre-inbound-INVITE checkpoint, outbound INVITE pending/early/provisional, final 2xx waiting for ACK, and pending in-dialog transaction at crash time are all outside the current D10 acceptance and are not guaranteed by this ADR. If the product requires these phases, the requirement and test plan must be extended separately; REQ-NF-1 must not be silently narrowed. |
+| Two-leg consistency and fencing | Both legs must be saved/restored as one logical checkpoint, using a monotonic generation/revision, and the old owner that has already been taken over must be fenced off; a half-restored pair must not be allowed to serve calls. The physical Redis representation can be decided later. |
+| Durability and callback ordering | Dependent SIP side effects must occur after the durable acknowledgement. SIP callbacks must not block waiting for Redis; without an ack that respects the durability boundary, an asynchronous write must not be called committed, and side effects that depend on that commit must not be executed. The Redis failure model/RPO and error paths are still to be designed and accepted. |
+| S-CSCF header extension | Only selected values that will in future pass peer authentication and allowlist validation are permitted, placed in a namespaced/versioned extension; size, retention period and classification must be constrained. Arbitrary SIP messages/all headers must not be stored; duplicate values/ordering are retained only per the approved contract. Do not specify or invent the headers currently in use; for the security boundary see [ADR-0016](../architecture/adr/0016-in-boundary-security.md). |
+| ADR-0002 and the requirement boundary | [ADR-0002](../architecture/adr/0002-per-usecase-process-state-redis.md) stays accepted/unchanged; the conflict between the "all session state externalized" wording and the fact that the default DUM UAS/transaction runtime cannot be restored from the currently externalized records remains open. ADR-0023 does not supersede ADR-0002, nor does it modify the PRD/test plan. |
 
-详细 recovery evidence 以[现有 D10 review](d10-state-recovery-gap-review-2026-09-30.md) 和[呼叫状态恢复方案比较](../architecture/call-state-recovery-options.md)为准。这里没有运行新的 D10 SIP probe；文中报告的是仓库现存 probe 记录及当前源码核查。
+Detailed recovery evidence is governed by the [existing D10 review](d10-state-recovery-gap-review-2026-09-30.md) and the [call state recovery options comparison](../architecture/call-state-recovery-options.md). No new D10 SIP probe was run here; what is reported in this document are the probe records already present in the repository plus the current source-code inspection.
 
-## 签字
+## Sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 技术结论 | 有条件通过；仅限 ADR draft 的方向与边界完整性 |
-| ADR 状态 | `proposed`；注册表 `draft` |
-| D10 / REQ-NF-1 | 未通过 / 未解决；继续阻塞 |
-| 维护者正式评审 | 待完成 |
-| 维护者决定与签字 | 待填 |
+| Technical conclusion | Conditional pass; limited to the direction and boundary completeness of the ADR draft |
+| ADR status | `proposed`; registry `draft` |
+| D10 / REQ-NF-1 | Fail / unresolved; continues to block |
+| Maintainer formal review | Pending |
+| Maintainer decision and sign-off | To be filled in |

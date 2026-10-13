@@ -12,41 +12,41 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# `docs/plan.md` M8 行回写草案（M8 批次 6 / E-3，2026-10-12）
+# Write-back draft for the `docs/plan.md` M8 row (M8 batch 6 / E-3, 2026-10-12)
 
-## 0. 性质
+## 0. Nature
 
-本文是回写**草案**；`docs/plan.md` **一字未改**。本草案须经维护者确认后，方可由维护者或授权 agent 执行。本批次未执行任何 git 写操作。执行环境：`dev-win03ib7niepf0`。
+This document is a write-back **draft**; `docs/plan.md` is **completely unmodified**. This draft must be confirmed by maintainers before a maintainer or an authorized agent executes it. This batch performed no git write operations. Execution environment: `dev-win03ib7niepf0`.
 
-## 1. 建议一：§0「当前进行中的步骤」单元格
+## 1. Recommendation one: §0 "Current in-progress step" cell
 
-建议在该单元格末尾追加以下完整文本，不改既有内容：
+Recommendation: append the following complete text at the end of that cell, without changing existing content:
 
-> **2026-10-13 追加**：M8 内部版收尾已由批次 1–6 完成（function 完整 + 模拟器证据 + 可重复构建工件；矩阵终态 pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0，口径均为「工程证据接受」）；**M8 退出签字仍未签**，仍排在外部硬依赖（S-2 / S-3、NF-1、ADR-0008 演练、D12/O5-HA）闭环之后。内部版收尾评审见 [`../reviews/m8-internal-release-exit-review-2026-10-12.md`](../reviews/m8-internal-release-exit-review-2026-10-12.md)。
+> **Added 2026-10-13**: M8 internal-version close-out was completed by batches 1–6 (complete functionality + simulator evidence + reproducible build artifacts; matrix terminal state pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0, all under the "engineering evidence accepted" criterion); **the M8 exit sign-off is still unsigned** and still ranks after closure of external hard dependencies (S-2 / S-3, NF-1, the ADR-0008 drill, D12/O5-HA). See [`../reviews/m8-internal-release-exit-review-2026-10-12.md`](../reviews/m8-internal-release-exit-review-2026-10-12.md) for the internal-version close-out review.
 
-## 2. 建议二：§0「产品决策记录」表
+## 2. Recommendation two: §0 "Product decision record" table
 
-建议新增一行（追加，不改既有行）：
+Recommendation: add one row (appended, existing rows unchanged):
 
-| 日期 | 决策 | 方向 | 依据 |
+| Date | Decision | Direction | Basis |
 |---|---|---|---|
-| 2026-10-13 | **M8 内部版收尾完成（不是 M8 退出签字）** | 批次 1–6 全部落地（发布与打包 / SIP 对拍 / kind-sim 证据 / 签收与评审 / 性能与容量 / 文档与报告）；矩阵终态 pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0（口径 = 工程证据接受）；VERSION 维持 `0.2.0` 不 bump、CHANGELOG 在 `[0.2.0]` 节内追加 internal build 条目、镜像 tag `as-platform:0.2.0-internal-<date>`、chart 不同步；**M8 不签**。**不得据本行推出**：M8 已签收 / 已发版 / O1 对外值已填 | [`report.md`](report.md) §0.10（批次 6 / E-1）；[`../reviews/m8-exit-review-2026-10-06.md`](../reviews/m8-exit-review-2026-10-06.md) §3.2（批次 6 / E-5）；[`../reviews/m8-internal-release-exit-review-2026-10-12.md`](../reviews/m8-internal-release-exit-review-2026-10-12.md)；`m8-test-plan-matrix.md`「M8 批次4 终态化代签（2026-10-13）」节；`(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt, 2026-10-12)` |
+| 2026-10-13 | **M8 internal-version close-out complete (not the M8 exit sign-off)** | Batches 1–6 all landed (release and packaging / SIP comparison / kind-sim evidence / sign-off and review / performance and capacity / documentation and reporting); matrix terminal state pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0 (criterion = engineering evidence accepted); VERSION stays `0.2.0` with no bump, CHANGELOG gains an internal build entry inside the `[0.2.0]` section, image tag `as-platform:0.2.0-internal-<date>`, chart not synced; **M8 is not signed**. **Must not be inferred from this row**: M8 signed off / released / the O1 external value filled in | [`report.md`](report.md) §0.10 (batch 6 / E-1); [`../reviews/m8-exit-review-2026-10-06.md`](../reviews/m8-exit-review-2026-10-06.md) §3.2 (batch 6 / E-5); [`../reviews/m8-internal-release-exit-review-2026-10-12.md`](../reviews/m8-internal-release-exit-review-2026-10-12.md); the "M8 batch 4 terminalization countersignature (2026-10-13)" section of `m8-test-plan-matrix.md`; `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt, 2026-10-12)` |
 
-## 3. 建议三：§4 里程碑表 M8 行「状态」列
+## 3. Recommendation three: "Status" column of the M8 row in the §4 milestone table
 
-| 原文 | 建议值 |
+| Original | Recommended value |
 |---|---|
-| **RC 产物就绪；退出签字仍搁置（2026-10-07）**。M7.1 已工程关门。仍待 Close 前限制解除后再 revisit …。原状态：RC就绪、待维护者退出签字（2026-10-06） | **内部版收尾完成（2026-10-13）**：function 完整 + 模拟器证据 + 可重复构建工件；矩阵终态 **pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0**（签字口径一律「工程证据接受」，非 REQ 级验收）。**M8 退出签字仍未签** —— 排在外部硬依赖（S-2 / S-3、NF-1、ADR-0008 演练、D12/O5-HA）闭环之后。**原状态：RC 产物就绪；退出签字仍搁置（2026-10-07）** |
+| **RC artifacts ready; exit sign-off still on hold (2026-10-07)**. M7.1 engineering close-out done. Still to be revisited after the pre-Close restrictions are lifted … Original status: RC ready, awaiting maintainer exit sign-off (2026-10-06) | **Internal-version close-out complete (2026-10-13)**: complete functionality + simulator evidence + reproducible build artifacts; matrix terminal state **pass 27 / defer 4 / blocked 9 / n-a 9 / open 0 / fail 0** (the sign-off criterion is uniformly "engineering evidence accepted", not REQ-level acceptance). **The M8 exit sign-off is still unsigned** — it ranks after closure of external hard dependencies (S-2 / S-3, NF-1, the ADR-0008 drill, D12/O5-HA). **Original status: RC artifacts ready; exit sign-off still on hold (2026-10-07)** |
 
-依据：`(已验证, docs/acceptance/m8-test-plan-matrix.md「M8 批次4 终态化代签（2026-10-13）」节, 2026-10-13)`；`(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt, 2026-10-12)`；内部版收尾评审 [`../reviews/m8-internal-release-exit-review-2026-10-12.md`](../reviews/m8-internal-release-exit-review-2026-10-12.md)。
+Basis: `(verified, "M8 batch 4 terminalization countersignature (2026-10-13)" section of docs/acceptance/m8-test-plan-matrix.md, 2026-10-13)`; `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-e6-packaging-recheck-2026-10-12.txt, 2026-10-12)`; internal-version close-out review [`../reviews/m8-internal-release-exit-review-2026-10-12.md`](../reviews/m8-internal-release-exit-review-2026-10-12.md).
 
-## 4. 边界
+## 4. Boundaries
 
-1. 本草案不改 `docs/plan.md` 任何一行。
-2. M8 行最终表述由维护者确认。
-3. 本草案不签 M8，不签任何 REQ，也不宣称 M8 全绿。
-4. 内部版本不是发行版；未 tag，O1 对外承诺值仍不填。
-5. 本批次未执行任何 git 写操作；commit 拆分由维护者决定。
-6. 执行环境固定为 `dev-win03ib7niepf0`。
+1. This draft does not change a single line of `docs/plan.md`.
+2. The final wording of the M8 row is confirmed by maintainers.
+3. This draft does not sign M8, does not sign any REQ, and does not claim M8 is all green.
+4. The internal version is not a release; nothing was tagged, and the O1 externally committed value remains unfilled.
+5. This batch performed no git write operations; how to split the commits is maintainers' decision.
+6. The execution environment is fixed to `dev-win03ib7niepf0`.
 
-> **2026-10-13 状态**：本草案已由维护者采纳并授权执行，M8 行按**路径 C** 调整（M8 退出签字 + 书面接受外部硬依赖风险），回写已落到 `docs/plan.md`。本草案保留为档案。
+> **Status 2026-10-13**: this draft was adopted by maintainers and execution authorized; the M8 row was adjusted per **path C** (M8 exit sign-off plus written acceptance of external hard dependency risk), and the write-back has landed in `docs/plan.md`. This draft is retained as an archive.

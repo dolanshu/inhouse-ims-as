@@ -29,4 +29,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ## 不是 GitOps
 
 不能要求运营商运维人员为了改一个号段去学 Git。版本是 PostgreSQL 里、变更单状态机之后的行，不是
-commit。理由记录在 `docs/新系统整体架构.md` §5.1 和 ADR-0006。
+commit。理由记录在 `docs/system-architecture.md` §5.1 和 ADR-0006。

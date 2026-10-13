@@ -12,74 +12,74 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0010：扩缩容 —— 自定义指标 HPA + 缩容保护控制器
+# ADR-0010: Autoscaling — custom-metric HPA + downscale guard controller
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §0 账本条目 15 —— 扩缩容：自定义指标 HPA + 缩容保护控制器
-- **回应 REQ**: REQ-NF-1, REQ-NF-3, REQ-NF-4
+- **Decides**: §0 ledger entry 15 — autoscaling: custom-metric HPA + downscale guard controller
+- **Responds to REQ**: REQ-NF-1, REQ-NF-3, REQ-NF-4
 
 ---
 
-## Context（背景）
+## Context
 
-ADR-0002 确立了"一个用例一个进程 + 会话状态外置 Redis"，进程因此是无状态的 —— 这是水平扩缩容成为可能的前提：扩容不需要迁移状态，任何副本都能接任何新呼叫。
+ADR-0002 established "one process per use case + session state externalized to Redis", making processes stateless — this is the precondition for horizontal autoscaling to be possible: scaling out requires no state migration, and any replica can take any new call.
 
-但"无状态"不等于"任意时刻都能缩"。进程里没有状态，不代表进程上没有在途呼叫：一个实例只要还承载着呼叫，摘掉它就是掉这些呼叫。REQ-NF-3 把这句话写成了需求的另一半 —— "业务量减少时能**安全**缩容"；REQ-NF-1（进程重启不丢会话）与 REQ-NF-4（ISSU 不掉呼叫）要求的是同一种保护：只要还有在途呼叫，这个实例就动不得。
+But "stateless" does not equal "can scale down at any moment". No state in the process does not mean no in-flight calls on the process: as long as an instance still carries calls, removing it drops those calls. REQ-NF-3 writes this as the other half of the requirement — "capacity can be reduced **safely** when traffic decreases"; REQ-NF-1 (process restart does not lose sessions) and REQ-NF-4 (ISSU does not drop calls) require the same kind of protection: as long as there are in-flight calls, this instance must not be touched.
 
-HPA 本身回答不了这个问题。它看的是**聚合**指标（每 Pod 平均 `active_calls`），而掉呼叫是**单个实例**上的事：平均值低的时候，完全可能存在"个别实例仍有呼叫"的分布。用聚合指标直接驱动缩容，等于把"这一刻有没有实例在承载呼叫"这个逐实例的问题，交给一个只看均值的控制器去猜。架构文档 §6.3 已经把这个判断写死 —— 缩容保护控制器是必需品，不是优化项。
+HPA itself cannot answer this question. It looks at **aggregate** metrics (average `active_calls` per Pod), while dropped calls are a **single-instance** matter: when the average is low, a distribution of "some instances still have calls" can entirely exist. Driving downscaling directly with aggregate metrics is equivalent to handing the per-instance question "is any instance carrying calls at this moment" to a controller that only looks at the average to guess. Architecture doc §6.3 has already written this judgment down hard — the downscale guard controller is a necessity, not an optimization.
 
-另一方面，O1（容量目标）尚未实测，未决项有自己独立的研究里程碑 M6（`AGENT.md` §2、§2 非目标最后一条：M6 实测之前不发布任何容量数字）。这意味着**任何扩缩容阈值都不具备发布条件**：目标利用率、目标 `active_calls`、副本上下限，全都是容量结论，在 M6 之前写出来就是编数字。本 ADR 因此不给出任何一个阈值，只给出**判据的形状**与**落地位置**。
+On the other hand, O1 (capacity target) has not yet been measured, and open items have their own independent research milestone M6 (`AGENT.md` §2, the last item of the §2 non-goals: no capacity figures are published before M6 measures them). This means **no autoscaling threshold is fit for publication**: target utilization, target `active_calls`, and replica min/max are all capacity conclusions, and writing them out before M6 is fabricating figures. This ADR therefore gives no threshold at all, only the **shape of the criterion** and **where it lands**.
 
-同时 ADR-0009 确立了 ISSU 的语义是 draining —— 先摘流、等存量归零、再删除。缩容是一次计划内的实例消失，它和 ISSU 面对的是同一个约束，因此必须走同一条路径：控制器选出的实例，摘除动作只能是 draining，不能是强杀。
+At the same time, ADR-0009 established that ISSU's semantics is draining — traffic removal first, waiting for existing calls to reach zero, then deletion. Downscaling is a planned disappearance of an instance, facing the same constraint as ISSU, so it must follow the same path: the instance selected by the controller can only be drained, not force-killed.
 
-## Decision（决策）
+## Decision
 
-- **扩容沿用 HPA（自定义指标 `active_calls` / `cps`），阈值与副本上下限不在本 ADR 给出。** 它们是容量结论，由 M6 实测后填入 `deploy/helm/values.yaml`。该文件的 `autoscaling` 段已用 `required` 守卫：阈值未填则安装失败，而不是带着一个猜来的默认值跑起来。容量规划打底的 `minReplicas` 同样如此。
-- **缩容保护控制器是一个独立的判定层。** HPA 决定"要不要缩"，控制器决定"能缩哪些"：在 HPA 判定要缩容时，逐个实例检查其 `active_calls`，只允许摘除"在途呼叫数 ≤ 保护阈值"的实例。够数则放行，不够则**阻塞**并把已可用的部分实例给出（运维可以先摘这一部分，而不是干等）。
-- **控制器只产出判定，不直接调用 K8s API。** 它是一组纯函数：输入各实例负载与期望副本数，输出可摘除实例列表与理由。执行由运维层（Helm / 标准控制器）完成。判定与执行分离，判定才能在无集群环境下被测试。
-- **摘除动作必须走 draining（ADR-0009）。** 先摘流 → 等存量呼叫归零 → 再删除。已在 draining 中的实例不再被重复选为候选，避免重复下发同一次摘除。
-- **保护阈值是安全判据，不是容量数字。** 默认 0 —— 非零即保护（实例上还有一通呼叫就保护它）。该值可在 values 中调整，但调整理由必须写成"接受掉呼叫的风险"，而不是"实测容量允许"。任何把阈值写成容量结论的改动，都是对本 ADR 的违反。
-- **与亲和性双保险协同（ADR-0002）。** 实例可被摘除的前提是它的会话状态在 Redis 中，而不是在本进程内存里；也正因如此，一个零在途呼叫的实例可以被干净地摘掉，不需要迁移任何状态。
+- **Scale-out follows HPA (custom metrics `active_calls` / `cps`); thresholds and replica min/max are not given in this ADR.** They are capacity conclusions, to be filled into `deploy/helm/values.yaml` after M6 measures them. The file's `autoscaling` section is already guarded with `required`: if thresholds are not filled, installation fails, rather than running with a guessed default. The `minReplicas` that underpins capacity planning is likewise.
+- **The downscale guard controller is an independent decision layer.** HPA decides "whether to scale down", the controller decides "which ones can be scaled down": when HPA judges that downscaling is needed, check each instance's `active_calls` one by one, and only allow removing instances with "in-flight calls ≤ the guard threshold". If enough are available, let them pass; if not, **block** and give the already-available partial set of instances (operations can remove this part first, rather than waiting idly).
+- **The controller only produces verdicts; it does not call K8s APIs directly.** It is a set of pure functions: input each instance's load and the desired replica count, output the list of removable instances and reasons. Execution is done by the operations layer (Helm / standard controllers). Separating verdict from execution allows the verdict to be tested in a cluster-less environment.
+- **The removal action must use draining (ADR-0009).** Traffic removal first → wait for in-flight calls to reach zero → then delete. Instances already draining are not repeatedly selected as candidates, avoiding dispatching the same removal twice.
+- **The guard threshold is a safety criterion, not a capacity figure.** Default 0 — non-zero means protected (protect an instance that still has even one call). The value can be adjusted in values, but the justification must be written as "accepting the risk of dropping calls", not "measured capacity allows". Any change that writes the threshold as a capacity conclusion is a violation of this ADR.
+- **Coordinated as a belt-and-suspenders with affinity (ADR-0002).** The precondition for an instance to be removable is that its session state is in Redis, not in this process's memory; and precisely for this reason, an instance with zero in-flight calls can be removed cleanly, without migrating any state.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **缩容不再掉呼叫。** 掉呼叫的条件从"聚合指标低"改成"该实例上确实没有在途呼叫"，逐实例判据直接对准了要防止的损害。
-- **扩容策略与缩容安全解耦。** HPA 只管"要不要缩"（容量视角的弹性），控制器只管"能不能缩"（安全视角的门禁）；M6 之后调阈值不会牵动安全判据，反之亦然。
-- **判定可测。** 控制器是纯函数，不读时钟、不开 socket、不碰 K8s，缩容保护的行为在没有集群的门禁里就能被覆盖（`platform/tests/test_downscale_guard.py`）。
-- **缺数字也能推进。** 阈值是运维参数而非设计前提，`required` 守卫保证它在 M6 之前只是"没填"，而不是"猜错了还没人发现"。
+- **Downscaling no longer drops calls.** The condition for dropping calls changes from "aggregate metric is low" to "there are indeed no in-flight calls on that instance", and the per-instance criterion directly targets the harm to be prevented.
+- **Scale-out policy and downscale safety are decoupled.** HPA only handles "whether to scale down" (capacity-perspective elasticity), the controller only handles "whether it can scale down" (safety-perspective gating); adjusting thresholds after M6 will not disturb the safety criterion, and vice versa.
+- **The verdict is testable.** The controller is a pure function, not reading the clock, not opening sockets, not touching K8s, and downscale guard behavior can be covered in cluster-less gates (`platform/tests/test_downscale_guard.py`).
+- **Progress is possible even without figures.** Thresholds are operations parameters rather than design premises, and the `required` guard ensures that before M6 it is only "not filled", not "guessed wrong and nobody noticed".
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **缩容可能被长时间阻塞。** 只要个别实例一直有呼叫，缩容就一直不满足条件 —— 长呼叫占比高的场景下尤其明显。需要超时与强制策略兜底；超时值属运维参数，不在此定（同阈值，进 `values.yaml`）。
-- **控制器需要每实例的 `active_calls` 指标。** 这比 HPA 用的聚合指标更细，指标侧要能按 Pod 区分（`MetricsRegistry` 扩展已在架构 §6.3 提出）。聚合指标不足以支撑本判据，这是解耦的代价。
-- **M6 之前无法给出任何扩缩容阈值。** 运维在拿到 O1 结论前无法完成弹性配置，`autoscaling.enabled` 默认关闭。接受：编一个数字出来比没有数字更糟。
-- **控制器只给判定，执行仍在运维层。** 判据与执行之间的接线（谁把候选交给谁、如何标记 draining）不在本 ADR 范围内，属 M5 运维接线工作。
+- **Downscaling may be blocked for a long time.** As long as some instances always have calls, downscaling never meets the condition — especially obvious in scenarios with a high proportion of long calls. A timeout and forced policy are needed as a fallback; the timeout value is an operations parameter, not decided here (same as thresholds, goes into `values.yaml`).
+- **The controller needs per-instance `active_calls` metrics.** This is finer-grained than the aggregate metrics HPA uses; the metrics side must be able to distinguish by Pod (the `MetricsRegistry` extension has been proposed in architecture §6.3). Aggregate metrics are insufficient to support this criterion; this is the cost of decoupling.
+- **No autoscaling threshold can be given before M6.** Operations cannot complete the elasticity configuration before obtaining the O1 conclusion, and `autoscaling.enabled` is off by default. Accepted: fabricating a figure is worse than having none.
+- **The controller only gives verdicts; execution remains in the operations layer.** The wiring between criterion and execution (who hands candidates to whom, how to mark draining) is not within this ADR's scope; it belongs to M5 operations wiring work.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 直接让 HPA 缩容（原生 CPU / 内存 HPA 或自定义指标） | 聚合指标掩盖个别实例仍有呼叫：均值低不代表没有实例在承载呼叫，缩容必然掉话；CPU / 内存与真实 SIP 负载相关性差（架构 §6.3） |
-| 禁止缩容（只扩不缩） | 失去弹性。潮汐话务下常驻峰值副本数，成本由运营商承担；REQ-NF-3 要求的是"能安全缩容"，不是"不缩" |
-| 按连接数判定（SIP 信令连接数） | SIP 信令连接与在途呼叫不是一回事：连接可以是长驻空闲的，在途呼叫也可以在连接之外存在。判据必须直接对准 `active_calls` |
-| 在进程内自杀式退出（收到缩容信号即退出） | 违反 draining 语义（ADR-0009）：不等存量归零就退出，等于主动掉呼叫 |
-| 把保护做进 HPA（自定义指标里排除有呼叫的 Pod） | HPA 的聚合语义没有"逐 Pod 排除"的表达能力，且会把安全判据混进容量策略，M6 调阈值时容易连带改坏安全线 |
+| Let HPA downscale directly (native CPU / memory HPA or custom metrics) | Aggregate metrics mask that some instances still have calls: a low average does not mean no instance is carrying calls, so downscaling inevitably drops calls; CPU / memory correlates poorly with real SIP load (architecture §6.3) |
+| Forbid downscaling (scale out only) | Loses elasticity. Under tidal traffic, resident peak replica counts mean costs borne by the operator; REQ-NF-3 requires "can scale down safely", not "no downscaling" |
+| Judge by connection count (SIP signaling connection count) | SIP signaling connections and in-flight calls are not the same thing: a connection can be long-lived and idle, and in-flight calls can exist outside connections. The criterion must directly target `active_calls` |
+| In-process suicide exit (exit upon receiving a downscale signal) | Violates the draining semantics (ADR-0009): exiting before existing calls reach zero equals actively dropping calls |
+| Build the guard into HPA (exclude Pods with calls in the custom metric) | HPA's aggregate semantics has no expressive power for "per-Pod exclusion", and it would mix the safety criterion into the capacity strategy, making it easy to break the safety line when adjusting thresholds in M6 |
 
-## Evidence（证据）
+## Evidence
 
-- [ADR-0002](0002-per-usecase-process-state-redis.md)：进程无状态 + Redis 会话表，使任何实例在零在途呼叫时可被摘除；亲和性是双保险。
-- `deploy/helm/values.yaml` 的 `autoscaling` 段已落地，阈值与副本上下限全部为 `null` 并由 `hpa.yaml` 的 `required` 守卫：未填值则安装失败，不允许猜测。
-- 实现证据：`platform/src/as_platform/ops/downscale_guard.py`（纯函数判定，本次同步落地）与 `platform/tests/test_downscale_guard.py`（10 个 unit 用例：零呼叫放行、部分阻塞给部分候选、draining 不重复选、排序可复现、非法阈值不放宽、纯度）。
-- 架构文档 §6.3"动态扩缩容"：缩容保护控制器被定性为必需品，判据为 `active_calls`。
+- [ADR-0002](0002-per-usecase-process-state-redis.md): stateless processes + Redis session tables allow any instance to be removed when it has zero in-flight calls; affinity is the belt-and-suspenders.
+- The `autoscaling` section of `deploy/helm/values.yaml` has landed, with thresholds and replica min/max all `null` and guarded by `hpa.yaml`'s `required`: unfilled values cause installation to fail, and guessing is not allowed.
+- Implementation evidence: `platform/src/as_platform/ops/downscale_guard.py` (pure-function verdicts, landed in this same change) and `platform/tests/test_downscale_guard.py` (10 unit cases: pass on zero calls, partial block gives partial candidates, draining not repeatedly selected, reproducible ordering, illegal thresholds not widened, purity).
+- Architecture doc §6.3 "Dynamic autoscaling": the downscale guard controller is characterized as a necessity, with the criterion being `active_calls`.
 
-## Related（相关）
+## Related
 
-- [ADR-0002](0002-per-usecase-process-state-redis.md) 运行时模型：无状态 + 状态外置 + 亲和性双保险
-- [ADR-0007](0007-data-plane-split.md) 运行态在 Redis：实例可摘除的状态前提
-- [ADR-0009](0009-issu-draining.md) ISSU 是 draining，不是在途状态迁移 —— 本 ADR 的摘除动作依赖它的语义
-- [`../新系统整体架构.md`](../新系统整体架构.md) §6.3 动态扩缩容
-- [`../../../deploy/helm/README.md`](../../../deploy/helm/README.md) 阈值与副本上下限的落地位置
-- 未决项 O1（容量目标，M6）：在此之前本 ADR 不出版任何阈值
+- [ADR-0002](0002-per-usecase-process-state-redis.md) Runtime model: stateless + state externalization + affinity belt-and-suspenders
+- [ADR-0007](0007-data-plane-split.md) Runtime state in Redis: the state precondition for an instance to be removable
+- [ADR-0009](0009-issu-draining.md) ISSU is draining, not in-flight state migration — this ADR's removal action depends on its semantics
+- [`../system-architecture.md`](../system-architecture.md) §6.3 Dynamic autoscaling
+- [`../../../deploy/helm/README.md`](../../../deploy/helm/README.md) Where thresholds and replica min/max land
+- Open item O1 (capacity target, M6): before that, this ADR publishes no threshold

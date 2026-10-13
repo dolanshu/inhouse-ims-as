@@ -12,66 +12,66 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0016：边界内安全 —— 对端白名单、端到端 TLS、证书热轮换
+# ADR-0016: In-boundary security — peer allowlist, end-to-end TLS, certificate hot rotation
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §0 账本条目 18 —— 边界内安全：对端白名单、端到端 TLS、证书热轮换、控制台鉴权（控制台部分归 M4）
-- **回应 REQ**: REQ-S-1, REQ-S-2, REQ-S-3（REQ-S-4 控制台鉴权与审计归 M4，本 ADR 记录归属）
+- **Decides**: §0 ledger item 18 — in-boundary security: peer allowlist, end-to-end TLS, certificate hot rotation, console authentication (console part belongs to M4)
+- **Responds to REQ**: REQ-S-1, REQ-S-2, REQ-S-3 (REQ-S-4 console authentication & audit belongs to M4; this ADR records the assignment)
 
 ---
 
-## Context（背景）
+## Context
 
-我们部署在运营商网络**之外**（`AGENT.md` §1）：S-CSCF 经 S-SBC 触发我们，我们不是网元，也不在运营商的可信网络内部。这意味着"网络位置本身提供保护"这一假设不成立 —— 我们不能主张"能连到我们的都是网内设备"，因为从我们的视角看，来电方是一个位于公网或客户机房侧的对端。
+We are deployed **outside** the carrier network (`AGENT.md` §1): the S-CSCF triggers us via the S-SBC; we are not a network element and are not inside the carrier's trusted network. This means the assumption "network location itself provides protection" does not hold — we cannot claim "anything that can reach us is an in-network device," because from our perspective the caller is a peer located on the public Internet or the customer's premises side.
 
-`AGENT.md` §13 把话说得很死：「trunk 是不可信的。对端要按白名单校验，并且与 S-SBC 端到端终止 TLS —— 任何人只要能伪装成 S-SBC，就能灌入呼叫（ADR-0016）。」这条红线的含义是具体的：只要有人能伪装成 S-SBC，他就能向我们的 AS 灌入任意呼叫，进而触发任意判决逻辑、消耗容量、甚至借我们的 AS 向真实被叫发起呼叫。因此入口的校验不是加固项，而是正确性的前提。
+`AGENT.md` §13 is blunt: "The trunk is untrusted. Peers must be validated against an allowlist and terminate TLS end-to-end with the S-SBC — anyone who can impersonate the S-SBC can inject calls (ADR-0016)." The implication of this red line is concrete: as long as someone can impersonate the S-SBC, they can inject arbitrary calls into our AS, thereby triggering arbitrary decision logic, consuming capacity, or even using our AS to place calls to real callees. So ingress validation is not a hardening item but a precondition for correctness.
 
-好消息是入口只有一处。网内与网外的差异（拓扑、编址、SIP 头处理）由 S-SBC 透明桥接吸收 —— ADR-0003 已确立"单一 ISC 接入语义，S-SBC 是透明桥接而非第二种业务语义"。因为只有一种接入语义，也就只有一处需要守住：**S-SBC 方向的入口**。这把安全边界从"若干处需要分别加固"收敛成"一处可完整描述、可完整审计"。
+The good news is that there is only one ingress. The difference between in-network and out-of-network (topology, addressing, SIP header handling) is absorbed by the S-SBC transparent bridge — ADR-0003 already established "single ISC ingress semantics; the S-SBC is a transparent bridge, not a second business semantic." Because there is only one ingress semantic, there is only one place that must be held: **the S-SBC-facing ingress**. This converges the security boundary from "several places each needing separate hardening" into "one place that can be fully described and fully audited."
 
-同一节还给出了两条与实现直接相关的约束。一是证书轮换：「证书轮换是配置热更新。绝不能重启进程，也不能丢掉在途呼叫。」—— 在运营商话务下，重启进程丢在途呼叫是不可接受的，证书生命周期却远短于进程生命周期，二者必须由热更新解耦。二是载荷：「载荷日志是显式、可开关的；日志里默认关闭。」以及「每个控制台操作都要鉴权并审计。」
+The same section also gives two constraints directly relevant to implementation. First, certificate rotation: "Certificate rotation is a configuration hot update. Never restart the process, never drop in-flight calls." Under carrier traffic, a process restart dropping in-flight calls is unacceptable, yet certificate lifecycles are far shorter than process lifecycles — the two must be decoupled by hot update. Second, payloads: "Payload logging is explicit and toggleable; it is off by default in logs." And "every console operation must be authenticated and audited."
 
-## Decision（决策）
+## Decision
 
-- **与 S-SBC 方向端到端终止 TLS，优先 mTLS（双向证书校验）。** 传输终止点在 SIP adapter / transport 层；**决策模块不感知 TLS**（`AGENT.md` §5 要求决策模块是纯函数，不能有 socket）。TLS 握手与证书校验属于 transport，判决逻辑只看到已校验过的、来自可信对端的 SIP 消息。
-- **对端白名单在入口校验。** 校验依据源地址与/或证书标识（mTLS 下以证书标识为准）；校验失败即丢弃，并记录一条安全事件（而非仅记录一条普通日志）。白名单与证书同属配置，走 ADR-0006 的变更流水线 —— 它们有与规则同级的变更风险，不该有更低级的变更路径。
-- **证书热轮换。** 证书与白名单通过热加载更新：进程不重启、在途呼叫不受影响、新建连接使用新证书。实现上复用配置热更新 seam，与 ADR-0006 的灰度分发走同一路径 —— 换证书与换规则是同一类操作，不该有两套机制。
-- **载荷日志默认关闭、可开关**（`AGENT.md` §13）。开启是显式的、可审计的操作，不因排障便利而默认打开。
-- **不做合法监听（LI）、不做计费。** 前者不是本产品的职能，后者由 ADR-0017 与架构文档 §2 非目标明确排除。本 ADR 不为其预留任何采集点 —— 预留采集点等于预留了被要求启用的可能。
-- **REQ-S-4（控制台鉴权与审计）在 M4 控制面落地。** 本 ADR 只记录其归属，并把约束写死：**每个控制台操作都要鉴权并审计**。
+- **Terminate TLS end-to-end toward the S-SBC direction, preferring mTLS (mutual certificate validation).** The transport termination point is the SIP adapter / transport layer; **the decision module is unaware of TLS** (`AGENT.md` §5 requires the decision module to be a pure function with no sockets). TLS handshake and certificate validation belong to transport; the decision logic only sees SIP messages already validated as coming from a trusted peer.
+- **Validate the peer allowlist at ingress.** Validation is by source address and/or certificate identity (under mTLS, certificate identity takes precedence); on failure, drop and record a security event (not merely an ordinary log line). Allowlist and certificate are both configuration, so they follow ADR-0006's change pipeline — they carry the same change risk as rules and should not have a lower-tier change path.
+- **Certificate hot rotation.** Certificate and allowlist are updated via hot loading: the process does not restart, in-flight calls are unaffected, and new connections use the new certificate. In implementation this reuses the configuration hot-update seam and follows the same path as ADR-0006's canary distribution — swapping a certificate and swapping a rule are the same class of operation and should not have two mechanisms.
+- **Payload logging is off by default and toggleable** (`AGENT.md` §13). Enabling it is an explicit, auditable operation, never on by default for troubleshooting convenience.
+- **No lawful interception (LI) and no billing.** The former is not this product's function; the latter is explicitly excluded by ADR-0017 and architecture doc §2 non-goals. This ADR does not reserve any collection point for them — reserving a collection point equals reserving the possibility of being asked to enable it.
+- **REQ-S-4 (console authentication & audit) lands in the M4 control plane.** This ADR only records its assignment and hard-codes the constraint: **every console operation must be authenticated and audited**.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **入口只有一处，边界可证明。** 可以给客户画一张只含一个入口的边界图，也可以逐一审计"什么能进来"。这是网外部署下唯一能拿出的、可辩护的安全论证。
-- **证书轮换不影响在途呼叫。** 证书生命周期与进程生命周期解耦后，短周期证书（以及紧急吊销）不再需要与话务窗口协调。
+- **Only one ingress, provable boundary.** We can draw the customer a boundary diagram with a single ingress, and audit "what can get in" item by item. This is the only defensible security argument available under an out-of-network deployment.
+- **Certificate rotation does not affect in-flight calls.** Once certificate lifecycle is decoupled from process lifecycle, short-lived certificates (and emergency revocation) no longer need coordination with traffic windows.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **mTLS 与证书生命周期管理是新增运维负担。** 签发、分发、到期监控、吊销都要有流程与责任人，on-prem 交付下这套流程还要在客户侧跑通。接受：这是网外部署的固有成本，替代方案（依赖网络隔离）不可证明。
-- **白名单维护错误会导致合法对端被拒。** 新增 S-SBC 节点或地址变更时漏配白名单，表现为呼叫全拒 —— 故障是显式的、全量的。以灰度分发与回滚（ADR-0006）缓解：白名单变更与规则变更同级，可灰度、可回滚。
-- **TLS 终止带来握手开销。** 每次新连接有一次握手成本。接受：这是一次性成本，且连接可复用；它不在每通呼叫的关键判断路径上。
+- **mTLS and certificate lifecycle management are new operational burdens.** Issuance, distribution, expiry monitoring, and revocation all need processes and owners; under on-prem delivery this process must also run at the customer side. Accepted: this is the inherent cost of out-of-network deployment; the alternative (relying on network isolation) is not provable.
+- **A misconfigured allowlist causes legit peers to be rejected.** Omitting an allowlist entry when adding an S-SBC node or changing an address shows up as a full call rejection — the failure is explicit and total. Mitigated by canary distribution and rollback (ADR-0006): allowlist changes are the same tier as rule changes, canary-able and rollback-able.
+- **TLS termination adds handshake overhead.** Each new connection incurs one handshake cost. Accepted: this is a one-time cost and connections are reusable; it is not on the critical decision path of every call.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 依赖网络层隔离 | 我们部署在网外，隔离无法证明给客户：无法论证"只有可信设备能连到我们"，也就无法满足 REQ-S-1 的可证明性要求 |
-| 仅 IP 白名单，无 TLS | 源地址可伪造（且网外部署下地址归属也不由我们控制），不满足 §13「与 S-SBC 端到端终止 TLS」这条红线 |
-| 有 TLS 但无白名单 | 任何持有合法证书的客户端都能灌入呼叫：TLS 只证明"对方有一个我们信任链内的证书"，不证明"对方是我们期望的那个对端"。mTLS + 白名单缺一不可 |
+| Rely on network-layer isolation | We are deployed out-of-network; isolation cannot be proven to the customer: we cannot argue "only trusted devices can reach us," so we cannot satisfy REQ-S-1's provability requirement |
+| IP allowlist only, no TLS | Source addresses are spoofable (and under out-of-network deployment address ownership is not under our control), failing §13's red line "terminate TLS end-to-end with the S-SBC" |
+| TLS but no allowlist | Any client holding a valid certificate can inject calls: TLS only proves "the peer has a certificate in our trust chain," not "the peer is the one we expect." mTLS + allowlist are both required |
 
-## Evidence（证据）
+## Evidence
 
-- `AGENT.md` §13 原文：「trunk 是不可信的。对端要按白名单校验，并且与 S-SBC 端到端终止 TLS —— 任何人只要能伪装成 S-SBC，就能灌入呼叫（ADR-0016）。」
-- `AGENT.md` §13：「证书轮换是配置热更新。绝不能重启进程，也不能丢掉在途呼叫。」「载荷日志是显式、可开关的；日志里默认关闭。」「每个控制台操作都要鉴权并审计。」
-- PRD REQ-S-1、REQ-S-2、REQ-S-3、REQ-S-4。
-- [ADR-0003](0003-s-sbc-transparent-bridge.md) 确立 S-SBC 是透明桥接，故接入语义只有一种、入口只有一处。
+- `AGENT.md` §13 verbatim: "The trunk is untrusted. Peers must be validated against an allowlist and terminate TLS end-to-end with the S-SBC — anyone who can impersonate the S-SBC can inject calls (ADR-0016)."
+- `AGENT.md` §13: "Certificate rotation is a configuration hot update. Never restart the process, never drop in-flight calls." "Payload logging is explicit and toggleable; it is off by default in logs." "Every console operation must be authenticated and audited."
+- PRD REQ-S-1, REQ-S-2, REQ-S-3, REQ-S-4.
+- [ADR-0003](0003-s-sbc-transparent-bridge.md) establishes the S-SBC as a transparent bridge, so there is only one ingress semantic and only one ingress.
 
-## Related（相关）
+## Related
 
-- [ADR-0003](0003-s-sbc-transparent-bridge.md) 单一 ISC 接入语义 —— S-SBC 是透明桥接
-- [ADR-0006](0006-config-governance.md) 配置治理：白名单与证书走同一变更流水线
-- ADR-0017（skeleton，未落地） 不做 CDR、不做计费
-- `AGENT.md` §13 安全、§5 决策模块是纯函数
-- REQ-S-4（控制台鉴权与审计）—— 归 M4 控制面
+- [ADR-0003](0003-s-sbc-transparent-bridge.md) single ISC ingress semantic — S-SBC is a transparent bridge
+- [ADR-0006](0006-config-governance.md) configuration governance: allowlist and certificate follow the same change pipeline
+- ADR-0017 (skeleton, not yet implemented) no CDR, no billing
+- `AGENT.md` §13 security, §5 decision module is a pure function
+- REQ-S-4 (console authentication & audit) — belongs to M4 control plane

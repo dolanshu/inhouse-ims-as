@@ -12,29 +12,29 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# `deploy/helm/` — 生产交付形态
+# `deploy/helm/` — Production delivery form
 
-当前仓库包含 AS workload Helm chart，以及 M4b-7.2c config-service 的代码级 workload 切片（默认关闭）。**Chart 回归**：仓库根目录 `make chart-check`（或 `deploy/helm/scripts/chart-check.sh`）对 AS 默认渲染、config-service 开启、ingress 模板路径与 HPA fail-fast 做断言；门禁① fast 层已纳入。真实集群 HTTPS ingress/trusted-proxy（7.2d）仍属 M5 未验收项。
+The repository currently contains the AS workload Helm chart, plus a code-level workload slice for the M4b-7.2c config-service (disabled by default). **Chart regression**: `make chart-check` at the repository root (or `deploy/helm/scripts/chart-check.sh`) asserts the AS default render, config-service enabled, ingress template paths, and HPA fail-fast; it is already part of the gate ① fast layer. Real-cluster HTTPS ingress/trusted-proxy (7.2d) is still an un-accepted M5 item.
 
-历史计划形态：一个 chart `as/`、每个组件一个 subchart 或 values 块
-（`apps.translation`、`apps.antiFraud`、`services.configService`、`services.console`），外加一个
-values schema，把运营商级的旋钮显式化，而非 emergent：
+The historical planned form: one chart `as/`, one subchart or values block per component
+(`apps.translation`, `apps.antiFraud`, `services.configService`, `services.console`), plus one
+values schema that makes operator-grade knobs explicit rather than emergent:
 
-- `replicaCount` / `minReplicas` 每用例，来自话务模型
-- `draining.preStopSeconds`、`draining.graceWindowSeconds`、`draining.forceRelease`
-- `peers.allowlist`、`transport.tls.enabled`、`transport.tls.secretRef`
-- `state.redis.sentinel.*`、`state.postgres.*`（外部）
-- `observability.otlpEndpoint`、`observability.exportMode`（必须非阻塞；见 ADR-0005）
+- `replicaCount` / `minReplicas` per use case, derived from the traffic model
+- `draining.preStopSeconds`, `draining.graceWindowSeconds`, `draining.forceRelease`
+- `peers.allowlist`, `transport.tls.enabled`, `transport.tls.secretRef`
+- `state.redis.sentinel.*`, `state.postgres.*` (external)
+- `observability.otlpEndpoint`, `observability.exportMode` (must be non-blocking; see ADR-0005)
 
-v1 不写 Operator：Helm + 标准 Deployment / ConfigMap / Secret 足够（ADR-0013）。
+v1 does not write an Operator: Helm + standard Deployment / ConfigMap / Secret is sufficient (ADR-0013).
 
 ---
 
 ## M5 addendum — what the chart renders, and what it refuses to render
 
 Written in English: deployment artifacts follow the artifact language rule
-(`AGENT.md` §5). The section above is the historical Chinese plan text and is
-kept as-is.
+(`AGENT.md` §5). The section above is the historical plan text, translated
+into English under the same rule.
 
 ### Layout
 

@@ -12,68 +12,68 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0018：统一产品 release 版本 + 组件接口独立版本
+# ADR-0018: Unified product release version + independent component interface versions
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §11.3 —— 一个产品 release 版本，独立的组件接口版本；杜绝 VERSION 漂移
-- **回应 REQ**: REQ-NF-11
+- **Decides**: §11.3 — one product release version, independent component interface versions; eliminate VERSION drift
+- **Responds to REQ**: REQ-NF-11
 
 ---
 
-## Context（背景）
+## Context
 
-POC 阶段已经发生了 VERSION 漂移：根 `VERSION` 文件声明 `0.2.0`，但各组件自己的 `pyproject.toml` 都写着 `0.1.0`——两个数字两个家，没有任何自动化守卫阻止这个漂移。`AGENT.md` §8 明确把这件事列为 monorepo 要消灭的三大缺陷之一。
+VERSION drift already occurred in the POC phase: the root `VERSION` file declared `0.2.0`, but each component's own `pyproject.toml` said `0.1.0` — two numbers in two places, with no automated guard preventing the drift. `AGENT.md` §8 explicitly lists this as one of the three defects the monorepo must eliminate.
 
-本产品的交付形态是**一客户一系统**。交付给运营商的是一个完整系统版本，不是一堆独立组件版本的组合。运营商收到的是一个 Docker 镜像集合 + Helm chart，版本号应该是一个单一的 release 号，而不是每个组件各报一个版本号让运维去对齐。
+This product is delivered as **one system per customer**. What we deliver to the carrier is a complete system version, not a combination of independent component versions. The carrier receives a Docker image set + Helm chart; the version number should be a single release number, not one version number per component for ops to align.
 
-monorepo + uv workspace（ADR-0001）提供了统一版本治理的技术基础：所有组件在一个仓库，可以在一次本地门禁中集中校验版本一致性，不需要跨仓脚本。
+The monorepo + uv workspace (ADR-0001) provides the technical foundation for unified version governance: all components live in one repo, so version-consistency can be centrally validated in a single local gate, without cross-repo scripts.
 
-`AGENT.md` §8 已有明确规则草案：
-- `./VERSION` 是产品 release 版本的**唯一源头**；
-- `<member>/pyproject.toml` 携带该组件自己的接口版本；
-- **任何成员都不得拥有 `VERSION` 文件**；
-- `tests/test_version_consistency.py` 守卫 VERSION 是 SemVer 且 CHANGELOG 最新标题等于它。
+`AGENT.md` §8 already has a clear rule draft:
+- `./VERSION` is the **single source** of the product release version;
+- `<member>/pyproject.toml` carries that component's own interface version;
+- **no member may have a `VERSION` file**;
+- `tests/test_version_consistency.py` guards that VERSION is SemVer and that the latest CHANGELOG heading equals it.
 
-## Decision（决策）
+## Decision
 
-**根 `./VERSION` 文件** 是产品 release 版本的**唯一源头**。产品使用一个 release 版本号交付，每次发布 bump 根 VERSION 并同步更新 CHANGELOG 最新标题。
+The root `./VERSION` file is the **single source** of the product release version. The product is delivered under one release version number; each release bumps the root VERSION and synchronously updates the latest CHANGELOG heading.
 
-**每个组件**（`platform/`、`apps/*`、`services/*`）可在自己的 `pyproject.toml` 里声明**独立的接口版本**（语义化 SemVer），用于上游消费者引用。组件接口版本与产品 release 版本相互独立：接口 `0.3.1` 可以出现在产品 release `1.2.0` 中。
+Each component (`platform/`, `apps/*`, `services/*`) may declare an **independent interface version** (semantic SemVer) in its own `pyproject.toml`, for upstream consumers to reference. The component interface version and the product release version are independent: interface `0.3.1` can appear inside product release `1.2.0`.
 
-**任何组件都不得拥有独立的 `VERSION` 文件。** 根 VERSION 是唯一的 release 版本来源，组件只保留 `pyproject.toml` 中的接口版本。这两个版本的合法性和一致性由 `tests/test_version_consistency.py` 自动守卫。
+**No component may have an independent `VERSION` file.** The root VERSION is the only release-version source; components keep only the interface version in `pyproject.toml`. The validity and consistency of these two versions are auto-guarded by `tests/test_version_consistency.py`.
 
-版本治理的完整约束由 `AGENT.md` §8 定义；本 ADR 固化根 VERSION + pyproject 接口版本的二元结构，以及二者的守卫机制。
+The complete version-governance constraints are defined by `AGENT.md` §8; this ADR hardens the binary structure of root VERSION + pyproject interface version, and their guard mechanism.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **消除 VERSION 漂移。** 根 VERSION 是 release 的唯一源头，自动化测试守卫它与 CHANGELOG、各组件 `pyproject.toml` 的 SemVer 合法性。POC 中 VERSION 与 pyproject 各报各数的情况不会再次发生。
-- **交付版本号清晰可追溯。** 运营商运维收到的是一个 release 号（如 `as-product@1.0.0`），可以直接追溯到 Git tag、CHANGELOG 条目、Helm chart 版本，不需要自己对齐组件版本。
-- **组件接口版本独立声明。** 跨组件边界的 API 变更（如 `platform` 给 `apps` 的接口从 `0.1.0` bump 到 `0.2.0`）有语义化标记，消费者可以显式 pin 或兼容性处理。
+- **Eliminates VERSION drift.** The root VERSION is the only source of the release; automated tests guard its SemVer validity against CHANGELOG and each component's `pyproject.toml`. The POC situation where VERSION and pyproject each reported their own number will not recur.
+- **Clear, traceable delivery version number.** Carrier ops receives a release number (e.g., `as-product@1.0.0`) that can be traced directly to the Git tag, CHANGELOG entry, and Helm chart version, without aligning component versions themselves.
+- **Independent component interface version declaration.** An API change across a component boundary (e.g., `platform`'s interface to `apps` bumping from `0.1.0` to `0.2.0`) has a semantic marker, so consumers can explicitly pin or handle compatibility.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **版本治理稍复杂。** 同时维护根 VERSION + 各组件 pyproject 接口版本。但 `tests/test_version_consistency.py` 把手动维护负担消为零——`make gate` 每次都自动跑 SemVer 合法性校验和 CHANGELOG 标题对齐检查，违反即阻塞 PR。
-- **需要区分"release 版本"和"接口版本"两个概念。** 产品 release 号描述整个系统的交付版本，组件接口版本描述该组件对外暴露的 API 语义变更。在文档和沟通中需要明确这两个语义的区别。
+- **Slightly more complex version governance.** Maintaining both the root VERSION and each component's pyproject interface version. But `tests/test_version_consistency.py` reduces the manual maintenance burden to zero — `make gate` auto-runs SemVer validity checks and CHANGELOG heading alignment on every run, blocking the PR on violation.
+- **Need to distinguish the two concepts "release version" and "interface version".** The product release number describes the delivery version of the whole system; the component interface version describes the API semantic change that component exposes externally. Docs and communication must make this semantic distinction clear.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 每个组件独立 VERSION 文件 | 漂移问题更严重。每个组件各有一个 VERSION 文件 + pyproject.toml version，一个数字变成两个数字的漂移问题。运营商收到的是一堆版本号的组合，不可追溯、不可对齐 |
-| 只靠 pyproject.toml version | `pyproject.toml` 的 version 是 Python 包发布版本，不是产品 release 概念。两者语义不同：release 版本描述整个系统的交付快照，pyproject version 描述单个组件的接口语义。硬把 release 塞进 pyproject 会让版本语义混乱 |
+| Independent VERSION file per component | Worse drift. Each component has both a VERSION file + a pyproject.toml version, turning one number into two numbers' worth of drift. The carrier receives a combination of version numbers — untraceable, unalignable |
+| Rely only on pyproject.toml version | `pyproject.toml`'s version is the Python package publication version, not the product release concept. The two semantics differ: the release version describes a delivery snapshot of the whole system, the pyproject version describes a single component's interface semantics. Forcing the release into pyproject muddles version semantics |
 
-## Evidence（证据）
+## Evidence
 
-- `tests/test_version_consistency.py` 已实现并通过，检查根 VERSION 与各组件 pyproject.toml 版本的 SemVer 合法性，以及 CHANGELOG 最新标题与根 VERSION 的对齐。
-- `AGENT.md` §8 明确定义 VERSION 文件的唯一源头角色，以及"任何成员都不得拥有 VERSION 文件"的硬约束。
-- ADR-0011 确立的 sippy 版本锁（commit pin + vendoring）与此版本治理理念一致：外部依赖走 commit pin + 自动化守卫，内部组件走根 VERSION + pyproject 接口版本的二元结构。
+- `tests/test_version_consistency.py` is implemented and passing, checking the root VERSION and each component's pyproject.toml version for SemVer validity, and the alignment of the CHANGELOG latest heading with the root VERSION.
+- `AGENT.md` §8 clearly defines the VERSION file's single-source role, and the hard constraint "no member may have a VERSION file."
+- ADR-0011's established sippy version pin (commit pin + vendoring) is consistent with this version-governance philosophy: external dependencies go through commit pin + automated guards, internal components go through the root VERSION + pyproject interface-version binary structure.
 
-## Related（相关）
+## Related
 
-- [`../新系统整体架构.md`](../新系统整体架构.md) §11.3 开发模式 —— 版本治理节
-- [`../../AGENT.md`](../../AGENT.md) §8 版本与依赖
-- [`../../AGENT.md`](../../AGENT.md) §11 Git 规则（commit message 规范含 feat/fix 前缀，CHANGELOG 自动生成）
-- [ADR-0011](0011-sip-stack-dual-path.md) 与 ADR-0019 外部依赖 pin 理念
+- [`../system-architecture.md`](../system-architecture.md) §11.3 development mode — version governance section
+- [`../../AGENT.md`](../../AGENT.md) §8 version and dependencies
+- [`../../AGENT.md`](../../AGENT.md) §11 Git rules (commit-message convention with feat/fix prefixes, auto-generated CHANGELOG)
+- [ADR-0011](0011-sip-stack-dual-path.md) and ADR-0019 external-dependency pin philosophy

@@ -12,84 +12,84 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0014：三层 testbed；容量压测只用真实 socket；testbed 不是 v1 交付物
+# ADR-0014: Three-layer testbed; capacity load testing uses real sockets only; the testbed is not a v1 deliverable
 
 - **Status**: accepted
 - **Date**: 2026-09-30
-- **Decides**: §0 账本条目 16 —— 测试平台：testbed 三层；v1 不作交付物
-- **回应 REQ**: [REQ-NF-15](../../requirements/req-nf-15-testbed-performance.md)（2026-10-05，关闭 D8；原 REQ-NF-13 误指向见 Evidence 历史备注）
+- **Decides**: §0 ledger entry 16 — test platform: testbed three layers; v1 is not a deliverable
+- **Responds to REQ**: [REQ-NF-15](../../requirements/req-nf-15-testbed-performance.md) (2026-10-05, closes D8; the original REQ-NF-13 mis-pointing is noted in the Evidence history remark)
 
 ---
 
-## Context（背景）
+## Context
 
-交付环境里，S-CSCF、S-SBC 和 HSS 是**运营商的网元**，不属于我方交付物（`AGENT.md` §1）。本地没有它们，只能仿真。如果 iFC 触发链与 S-SBC 的透明桥接行为无法被仿真，那么集成测试无处可跑 —— 这一条不是"测试不够完善"，而是"没有被测对象"。
+In the delivery environment, the S-CSCF, S-SBC, and HSS are **the operator's network elements**, not part of our deliverables (`AGENT.md` §1). Locally we do not have them; we can only simulate. If the iFC trigger chain and the S-SBC's transparent bridging behavior cannot be simulated, integration tests have nowhere to run — this is not "insufficient testing" but "having nothing to test".
 
-容量测量则有一个更具体的历史教训。POC 的 `CapacityDriver` **直接驱动回调**，绕过 socket 与事件循环：这样测出来的是业务逻辑的执行时间，不是系统容量。架构文档 §11.4 把它列为第一关键点：容量基线不可比，就无法判断"CPS 是否撞墙"，也就无法裁决是否需要更强的栈。换句话说，**测错对象的数字比没有数字更有害** —— 它会被当成依据来用。
+Capacity measurement has a more specific historical lesson. The POC's `CapacityDriver` **directly drove callbacks**, bypassing the socket and event loop: what it measured was the business logic's execution time, not the system's capacity. Architecture doc §11.4 lists it as the first key point: if the capacity baseline is not comparable, there is no way to judge "whether CPS hits the wall", and thus no way to adjudicate whether a stronger stack is needed. In other words, **a figure measuring the wrong thing is more harmful than no figure** — it will be used as a basis.
 
-`testbed/` 的定位同时由一条硬边界确定：`AGENT.md` §4 的分层图写的是 `testbed/ ──may use──▶ platform/ 研发资产，绝不做运行时依赖`，并且「内核绝不能 import 应用、服务或 testbed」，由 `platform/tests/test_library_independence.py` 强制。testbed 可以**用**内核，内核绝不能**依赖** testbed；方向是单向的。
+The positioning of `testbed/` is simultaneously determined by a hard boundary: the layering diagram in `AGENT.md` §4 reads `testbed/ ──may use──▶ platform/ R&D asset, never a runtime dependency`, and "the kernel must never import applications, services, or testbed", enforced by `platform/tests/test_library_independence.py`. The testbed may **use** the kernel; the kernel must never **depend on** the testbed; the direction is one-way.
 
-最后一个约束来自交付范围：架构文档 §11.4 关键点 4 记「⏳ **v1 不把 testbed 当交付物**，只作研发资产；客户验收测试能力留 v1.1」。是否必须在 v1 支持客户验收测试，是**未决项 D6**（`docs/plan.md` §5.2，责任里程碑 M8），当前口径是推迟到 v1.1。
+The last constraint comes from the delivery scope: architecture doc §11.4 key point 4 records "⏳ **v1 does not treat the testbed as a deliverable**, only as an R&D asset; customer acceptance testing capability is left to v1.1". Whether customer acceptance testing must be supported in v1 is **open item D6** (`docs/plan.md` §5.2, responsibility milestone M8); the current position is to defer it to v1.1.
 
-## Decision（决策）
+## Decision
 
-- **`testbed/` 分三层，各层回答不同的问题：**
-  - **contracts** —— 声明式契约与基线（判决用例集 `decision/cases.json`、SIP 消息基线 `sip-baseline/`）。回答"判决对不对，各实现是否一致"（[ADR-0012](0012-cross-implementation-parity.md)）。
-  - **simulators** —— 仿真对等端与探针（仿真 S-SBC / IMS 网元、栈选型探针 `testbed/probe/`）。回答"AS 能不能对着一个行为像运营商对等端的东西工作"。
-  - **load** —— 真实 socket 压测。回答"容量边界到底在哪"。
-- **容量压测只用真实 socket。绝不用驱动回调来测** —— 驱动回调测的是业务逻辑，不是系统。字节必须真的上线，socket、事件循环、协议栈都必须在测量回路里。
-- **testbed 是研发资产，绝不做运行时依赖。** 内核不 import testbed；生产镜像不带 testbed。
-- **testbed 不是 v1 交付物。** 客户验收测试能力推迟到 v1.1（未决项 D6 的当前口径）。
-- **压测工具可用 SIPp（GPL）**：仅内部测试使用，**绝不随产品分发**。
+- **`testbed/` has three layers, each answering a different question:**
+  - **contracts** — declarative contracts and baselines (the decision case set `decision/cases.json`, the SIP message baseline `sip-baseline/`). Answers "are the decisions correct, and are the implementations consistent" ([ADR-0012](0012-cross-implementation-parity.md)).
+  - **simulators** — simulated peers and probes (simulated S-SBC / IMS network elements, stack-selection probes `testbed/probe/`). Answers "can AS work against something that behaves like the operator's peer".
+  - **load** — real-socket load testing. Answers "where exactly the capacity boundary lies".
+- **Capacity load testing uses real sockets only. Never measure by driving callbacks** — driving callbacks measures the business logic, not the system. Bytes must really go on the wire, and the socket, event loop, and protocol stack must all be in the measurement loop.
+- **The testbed is an R&D asset, never a runtime dependency.** The kernel does not import testbed; production images do not carry the testbed.
+- **The testbed is not a v1 deliverable.** Customer acceptance testing capability is deferred to v1.1 (open item D6's current position).
+- **The load-testing tool may use SIPp (GPL)**: for internal testing only, **never distributed with the product**.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **契约与仿真让"等价"可断言。** 契约是数据、仿真是可执行对象，"等价"从一句判断变成一条可重复的断言（[ADR-0012](0012-cross-implementation-parity.md)）。
-- **仿真网元是一等资产。** iFC 链与 S-SBC 透明桥接行为能被仿真，集成测试才有地方跑；否则 [ADR-0003](0003-s-sbc-transparent-bridge.md) 的单一 ISC 语义无法被验证，只能被相信。
-- **真实 socket 压测才有容量意义。** 测量回路包含 socket 与事件循环，测出的数字才回答得了"CPS 撞墙了没有"，才能作为 O1 与栈选型的输入。
-- **三层各司其职，层间不互相冒充。** 契约层不被用来冒充集成验证，压测层不被用来冒充功能正确 —— 前者会漏掉协议行为，后者会漏掉系统开销。
-- **方向单一（testbed → platform）保证生产镜像干净。** 运行时不可能反向依赖研发资产。
+- **Contracts and simulation make "equivalence" assertable.** Contracts are data, simulators are executable objects, and "equivalence" goes from a judgment to a repeatable assertion ([ADR-0012](0012-cross-implementation-parity.md)).
+- **Simulated network elements are first-class assets.** With the iFC chain and S-SBC transparent bridging behavior simulatable, integration tests have somewhere to run; otherwise [ADR-0003](0003-s-sbc-transparent-bridge.md)'s single-ISC semantics could not be verified, only believed.
+- **Real-socket load testing gives capacity meaning.** With the measurement loop including the socket and event loop, the measured figures can answer "has CPS hit the wall", and can serve as input to O1 and stack selection.
+- **The three layers each do their job and do not impersonate each other.** The contracts layer is not used to impersonate integration verification, and the load layer is not used to impersonate functional correctness — the former misses protocol behavior, the latter misses system overhead.
+- **One-way direction (testbed → platform) guarantees clean production images.** The runtime cannot depend in reverse on R&D assets.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **本 ADR 不给任何容量数字。** CPS、并发会话、建立时延全部要等 M6 与未决项 O1（`AGENT.md` §2：「M6 实测之前不发布任何容量数字」）。`testbed/load` 在本 ADR 接受时（2026-09-30）是 README 与包骨架状态；截至 2026-10-03，维护者已授权继续 M6 harness engineering，当前为 WIP，已有 loopback socket 测试与一次 user-local SIPp 3.6.0 UAS 互操作 smoke 证据，但仍无 reSIProcate/产品目标实测，也尚未开始真实目标栈容量测量。
-- **testbed 自身有维护成本，且它的失效方式是静默的。** 仿真器必须跟着真实网元行为演进；一旦仿真与真实网元分岔，"仿真通过"就会变成假证据 —— 它仍然绿，但它证明的东西已经不是真的。这个成本没有自动化手段可以消除，只能靠定期对照真实网元行为复习。
-- **v1 不对客户开放 testbed，意味着客户验收测试要用别的手段做。** 这是**交付边界**，必须在方案阶段说清，而不是在验收阶段发现。是否开放由 D6 裁决（M8）。
-- **部分基线尚未抓取。** S5 / S6 / S7a / S8 在 M1 被裁决为"派生基线"（从 `S1-basic-call` 派生断言，不单独抓取）；S10 / S11 仅 README，留待 M2 probe 补。这两条裁决已记在 `docs/plan.md` §3 的 M1 裁决表里，不阻塞本 ADR，但意味着当前基线覆盖是不完整的。
-- **探针当前没有产生证据。** `testbed/probe/` 的 E1 / E4 探针因本环境缺 reSIProcate 的 Python 绑定**未执行**（退出码 2，不是 skip）；E5 探针尚未编写。
+- **This ADR gives no capacity figures.** CPS, concurrent sessions, and setup latency all await M6 and open item O1 (`AGENT.md` §2: "no capacity figures are published before M6 measures them"). `testbed/load` was in a README-and-package-skeleton state when this ADR was accepted (2026-09-30); as of 2026-10-03, the maintainer has authorized continued M6 harness engineering, currently WIP, with loopback socket tests and one user-local SIPp 3.6.0 UAS interoperability smoke evidence, but still no reSIProcate/product-target measurements, and real target-stack capacity measurement has not yet begun.
+- **The testbed has its own maintenance cost, and its failure mode is silent.** Simulators must evolve with real network-element behavior; once simulation and real network elements diverge, "simulation passed" becomes false evidence — it is still green, but what it proves is no longer true. This cost has no automated means of elimination; it can only be mitigated by periodically reviewing against real network-element behavior.
+- **v1 does not open the testbed to customers, which means customer acceptance testing must use other means.** This is a **delivery boundary** and must be stated at the planning stage, not discovered at the acceptance stage. Whether to open it is decided by D6 (M8).
+- **Some baselines have not yet been captured.** S5 / S6 / S7a / S8 were decided in M1 as "derived baselines" (assertions derived from `S1-basic-call`, not captured separately); S10 / S11 are README-only, awaiting M2 probe completion. These two decisions are recorded in `docs/plan.md` §3's M1 decision table; they do not block this ADR, but mean current baseline coverage is incomplete.
+- **The probes currently produce no evidence.** The `testbed/probe/` E1 / E4 probes are **not executed** because this environment lacks reSIProcate's Python bindings (exit code 2, not skip); the E5 probe has not been written.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 沿用 POC 的驱动回调 harness 测容量 | 绕过 socket 与事件循环，测的是业务逻辑不是系统；容量基线不可比，无法判断 CPS 是否撞墙，也无法裁决栈是否够用 |
-| 只做契约层，不做仿真对等端 | S-CSCF / S-SBC 是运营商网元，本地没有；没有仿真，集成测试无处可跑 |
-| 只做仿真，不做声明式契约 | 仿真验证"能不能跑通"，不验证"各实现是否等价"；跨实现移植失去共同锚点（ADR-0012） |
-| 把 testbed 作为 v1 交付物（客户用它做验收） | 架构文档 §11.4 明确推迟到 v1.1；是否必须支持客户验收测试是未决项 D6（M8），本 ADR 不替 D6 裁决 |
-| 让生产代码复用 testbed 的仿真器 / 契约加载器 | 违反 `AGENT.md` §4：testbed 是研发资产，绝不做运行时依赖；方向只能 testbed → platform |
-| 三层 testbed + 真实 socket 压测 + 不作 v1 交付物（本决策） | 采纳 |
+| Follow the POC's driven-callback harness for capacity measurement | Bypasses the socket and event loop, measuring business logic not the system; the capacity baseline is not comparable, cannot judge whether CPS hits the wall, nor adjudicate whether the stack suffices |
+| Contracts layer only, no simulated peers | S-CSCF / S-SBC are the operator's network elements, not available locally; without simulation, integration tests have nowhere to run |
+| Simulation only, no declarative contracts | Simulation verifies "can it run through", not "are the implementations equivalent"; cross-implementation porting loses its common anchor (ADR-0012) |
+| Make the testbed a v1 deliverable (customers use it for acceptance) | Architecture doc §11.4 explicitly defers to v1.1; whether customer acceptance testing must be supported is open item D6 (M8), and this ADR does not decide D6 on its behalf |
+| Let production code reuse the testbed's simulators / contract loader | Violates `AGENT.md` §4: the testbed is an R&D asset, never a runtime dependency; the direction can only be testbed → platform |
+| Three-layer testbed + real-socket load testing + not a v1 deliverable (this decision) | Adopted |
 
-## Evidence（证据）
+## Evidence
 
-- `testbed/README.md` 三层表原文：「① 契约 / 单元 | `contracts/` + 每个包的 `tests/` | 决策是对的，且每个实现都一致」；「② 仿真集成 | `simulators/` | AS 能对着一个行为像运营商对等端的东西工作」；「③ 性能 | `load/` | 容量边界到底在哪」。同文件规则原文：**「压测必须走真实 socket。** 直接驱动回调的 harness 测的是业务逻辑，不是容量。」**「v1 不把 testbed 作为交付物交付。** 它是研发资产；客户验收测试能力留到 v1.1。」「这里可以用 SIPp。它是 GPL，仅**内部使用、绝不随产品分发**。」
-- `testbed/load/README.md` 原文：**「压测走真实 socket。** POC 的 harness 直接驱动回调，绕过了 socket 与事件循环 —— 它测的是业务逻辑，不是系统。这种 harness 出来的数字无法回答" CPS 撞墙了没有"，因此也无法决定是否需要 Go（ADR-0014）。」同文件：「按栈：CPS、并发会话、呼叫建立时延 —— 以及最先饱和的资源。这是 O1 与 ADR-0011 的输入；它不是营销数字，在 M6 之前不发布」。历史澄清：上述引文反映的是 ADR-0014 于 2026-09-30 被接受时的 README / 栈选型语境；ADR-0019 后续已选定 reSIProcate，因此当前 M6 测量用于 O1 与运维容量规划，不在无新 ADR 的前提下重开栈选型。
-- `AGENT.md` §4 分层图原文：`testbed/ ──may use──▶ platform/ 研发资产，绝不做运行时依赖`；并记「**内核绝不能 import 应用、服务或 testbed。** …… 靠 `platform/tests/test_library_independence.py` 来强制」。
-- `AGENT.md` §2 非目标原文：「**M6 实测之前不发布任何容量数字。** 在真实 socket 压测测出之前，不公布任何 CPS 或并发数字。」§6 测试策略表：「容量 | `performance` | 只用真实 socket。绝不要靠驱动回调来测 —— 那测的是业务逻辑，不是系统（ADR-0014）」。
-- 架构文档 §11.4「测试平台」关键点原文：1.「**性能测试必须从"驱动回调"升级到"真实 socket 压测"**：现有 `CapacityDriver` 直接调回调，绕过 socket 与事件循环，测的是业务逻辑而非系统容量。容量基线不可比，就无法判断"CPS 是否撞墙"、也就无法裁决 Go 是否够用。」2.「**仿真网元是一等资产**……iFC 链与 S-SBC 透明桥接行为必须能被仿真，否则集成测试无处可跑。」4.「⏳ **v1 不把 testbed 当交付物**，只作研发资产；客户验收测试能力留 v1.1。」
-- 架构文档 §0 决策账本条目 16 原文：「测试平台 | testbed 三层；v1 不作交付物」。
-- `docs/plan.md` §2.1 目录结构原文：「`testbed/` ⑥ contracts/（数据）· simulators/ · load/」。
-- `docs/plan.md` §5.2 未决项 D6 原文：「testbed 是否必须在 v1 支持客户验收测试 | M8 | 架构文档把它推迟到 v1.1」；§5.1 O1 原文：「容量目标：CPS、并发会话、建立时延预算……**仍是未决项** …… M6 的实测，在 harness 跑真实 socket 之后」；§4 M6 行：「**容量研究** | 真实 socket 压测 harness；测出 CPS、并发会话、建立时延 —— 按栈分别 | 未开始 | 产出 O1 的答案；在这跑起来之前不假设任何目标」。
-- `docs/plan.md` §3 M1 基线裁决表：S5 / S6 / S7a / S8 **接受为"派生基线"**（从 `S1-basic-call` 派生断言，"重复抓取不增加信息量，只增加维护面"）；S10 / S11 **接受为"M2 probe 补"**（与 PRD §2.4 已知缺口表一致）。派生断言已可执行化：`testbed/simulators/tests/test_derived_baseline.py`（marker `contract`）。
-- `testbed/probe/README.md` 当前状态原文：「**当前状态：两个探针都未执行。** 本环境没有 reSIProcate 的 Python 绑定（构建选项 `BUILD_PYTHON=ON` 未构建）……以退出码 2 响亮失败并打印构建指引，不会静默 skip」；E5 探针「尚未编写，列为后续项」。
-- **REQ 口径备注（历史）**：2026-09-30 接受时 `回应 REQ` 曾误写作 REQ-NF-13。PRD v0.2 中 REQ-NF-13 为 OTel（[ADR-0005](0005-observability-otel.md)）。**2026-10-05** 已新增 [REQ-NF-15](../../requirements/req-nf-15-testbed-performance.md) 并关闭 plan D8；追溯以 REQ-NF-15 为准。
+- `testbed/README.md` three-layer table verbatim: "① Contracts / unit | `contracts/` + each package's `tests/` | the decision is correct, and every implementation is consistent"; "② Simulated integration | `simulators/` | AS can work against something that behaves like the operator's peer"; "③ Performance | `load/` | where exactly the capacity boundary lies". Same file's rules verbatim: **"Load testing must go through real sockets.** A harness that drives callbacks directly measures business logic, not capacity." "v1 does not deliver the testbed as a deliverable. **It is an R&D asset; customer acceptance testing capability is left to v1.1." "SIPp may be used here. It is GPL, for **internal use only, never distributed with the product**."
+- `testbed/load/README.md` verbatim: **"Load testing goes through real sockets.** The POC's harness drives callbacks directly, bypassing the socket and event loop — it measures business logic, not the system. Figures from such a harness cannot answer "has CPS hit the wall", and therefore cannot decide whether Go is needed (ADR-0014)." Same file: "By stack: CPS, concurrent sessions, call setup latency — and the resource that saturates first. This is input to O1 and ADR-0011; it is not a marketing figure, and is not published before M6." Historical clarification: the above quotes reflect the README / stack-selection context when ADR-0014 was accepted on 2026-09-30; ADR-0019 has since selected reSIProcate, so the current M6 measurements serve O1 and operational capacity planning, and do not reopen stack selection without a new ADR.
+- `AGENT.md` §4 layering diagram verbatim: `testbed/ ──may use──▶ platform/ R&D asset, never a runtime dependency`; it also records "**The kernel must never import applications, services, or testbed.** …… enforced by `platform/tests/test_library_independence.py`".
+- `AGENT.md` §2 non-goal verbatim: "**No capacity figures are published before M6 measures them.** Before real-socket load testing measures it, no CPS or concurrency figure is published." §6 test strategy table: "Capacity | `performance` | real sockets only. Never measure by driving callbacks — that measures business logic, not the system (ADR-0014)".
+- Architecture doc §11.4 "Test platform" key points verbatim: 1. "**Performance testing must be upgraded from "driving callbacks" to "real-socket load testing"**: the existing `CapacityDriver` calls callbacks directly, bypassing the socket and event loop, measuring business logic rather than system capacity. If the capacity baseline is not comparable, there is no way to judge "whether CPS hits the wall", and thus no way to adjudicate whether Go suffices." 2. "**Simulated network elements are first-class assets**……the iFC chain and S-SBC transparent bridging behavior must be simulatable, otherwise integration tests have nowhere to run." 4. "⏳ **v1 does not treat the testbed as a deliverable**, only as an R&D asset; customer acceptance testing capability is left to v1.1."
+- Architecture doc §0 decision ledger entry 16 verbatim: "Test platform | testbed three layers; v1 is not a deliverable".
+- `docs/plan.md` §2.1 directory structure verbatim: "`testbed/` ⑥ contracts/ (data) · simulators/ · load/".
+- `docs/plan.md` §5.2 open item D6 verbatim: "must the testbed support customer acceptance testing in v1 | M8 | the architecture doc defers it to v1.1"; §5.1 O1 verbatim: "Capacity target: CPS, concurrent sessions, setup latency budget……**still an open item** …… M6's measurements, after the harness runs on real sockets"; §4 M6 row: "**Capacity research** | real-socket load-testing harness; measure CPS, concurrent sessions, setup latency — per stack | Not started | produces O1's answer; assume no target before this runs".
+- `docs/plan.md` §3 M1 baseline decision table: S5 / S6 / S7a / S8 **accepted as "derived baselines"** (assertions derived from `S1-basic-call`, "re-capturing adds no information, only maintenance surface"); S10 / S11 **accepted as "M2 probe completion"** (consistent with PRD §2.4's known-gaps table). Derived assertions are already executable: `testbed/simulators/tests/test_derived_baseline.py` (marker `contract`).
+- `testbed/probe/README.md` current status verbatim: "**Current status: neither probe has been executed.** This environment has no Python bindings for reSIProcate (build option `BUILD_PYTHON=ON` was not built)……fails loudly with exit code 2 and prints build guidance; never silently skips"; the E5 probe is "not yet written, listed as a follow-up item".
+- **REQ position remark (history)**: when accepted on 2026-09-30, `Responds to REQ` was mistakenly written as REQ-NF-13. In PRD v0.2, REQ-NF-13 is OTel ([ADR-0005](0005-observability-otel.md)). **On 2026-10-05**, [REQ-NF-15](../../requirements/req-nf-15-testbed-performance.md) was added and plan D8 closed; retroactively, REQ-NF-15 governs.
 
-## Related（相关）
+## Related
 
-- [ADR-0012](0012-cross-implementation-parity.md) 语言无关契约 + 跨实现对拍 —— 契约层（contracts）的消费者
-- [ADR-0019](0019-sip-stack-selection.md) 生产 SIP 栈选型 —— `testbed/probe/` 是它的 E1 / E4 证据来源
-- [ADR-0003](0003-s-sbc-transparent-bridge.md) 单一 ISC 接入语义 —— 仿真层要仿真的行为
-- [ADR-0015](0015-engineering-discipline.md) 研发模式 —— `contract` / `integration` / `performance` 三个 marker 的归属层
-- [`../新系统整体架构.md`](../新系统整体架构.md) §11.4 测试平台、§12.1 未决项 O1、§12.2 风险 R9
-- 未决项 O1（容量目标 / M6）与 D6（testbed 是否支持客户验收测试 / M8）—— 均**未裁决**
+- [ADR-0012](0012-cross-implementation-parity.md) Language-agnostic contract + cross-implementation parity — the consumer of the contracts layer
+- [ADR-0019](0019-sip-stack-selection.md) Production SIP stack selection — `testbed/probe/` is its E1 / E4 evidence source
+- [ADR-0003](0003-s-sbc-transparent-bridge.md) Single ISC access semantics — the behavior the simulation layer must simulate
+- [ADR-0015](0015-engineering-discipline.md) Engineering discipline — the attribution layers of the three markers `contract` / `integration` / `performance`
+- [`../system-architecture.md`](../system-architecture.md) §11.4 test platform, §12.1 open item O1, §12.2 risk R9
+- Open items O1 (capacity target / M6) and D6 (whether the testbed supports customer acceptance testing / M8) — both **undecided**

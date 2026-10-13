@@ -14,45 +14,45 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 # M4b-1 Console UI Engineering Preview Review
 
-> 评审对象：D4 与 M4b 范围；[`services/console/README.md`](../../services/console/README.md)、[`index.html`](../../services/console/web/index.html)、[`console.css`](../../services/console/web/console.css)、[`console.js`](../../services/console/web/console.js)；[`plan.md`](../plan.md) 的 M4b / D4 状态；[`test-plan.md`](../acceptance/test-plan.md) §1.4 REQ-F-12/13/14/15、§3 REQ-S-4
-> 评审日期：2026-10-01
-> 评审方式：每个 M4b-1 工作步骤后的独立只读评审；本记录按工作步骤汇总发现与修复
-> 评审结论：**通过，仅限 M4b-1 工程预览切片；不是 M4b 验收或 M4 完成**
+> Review object: D4 and M4b scope; [`services/console/README.md`](../../services/console/README.md), [`index.html`](../../services/console/web/index.html), [`console.css`](../../services/console/web/console.css), [`console.js`](../../services/console/web/console.js); the M4b / D4 status in [`plan.md`](../plan.md); §1.4 REQ-F-12/13/14/15 and §3 REQ-S-4 of [`test-plan.md`](../acceptance/test-plan.md)
+> Review date: 2026-10-01
+> Review method: independent read-only review after each M4b-1 work step; this record aggregates findings and fixes by work step
+> Review verdict: **pass, limited to the M4b-1 engineering preview slice; this is not M4b acceptance and not M4 completion**
 
-## 范围与判定边界
+## Scope and decision boundaries
 
-D4 选择纯 HTML/CSS/JavaScript，不引入 bundler、build tool 或前端 runtime 依赖。预览包含 Rules、Change orders、Call traces、Operations 四个 view；只使用本地 fixture 与当前页面内存，显著标注 `PREVIEW · LOCAL DATA · NOT CONNECTED`。本评审只确认 M4b-1 静态工程预览切片及其交互证据，不把它视为正式控制台验收。整体 M4 保持开放。
+D4 chose plain HTML/CSS/JavaScript, introducing no bundler, build tool, or front-end runtime dependency. The preview contains four views: Rules, Change orders, Call traces, and Operations; it uses only local fixtures and current-page memory, and is prominently marked `PREVIEW · LOCAL DATA · NOT CONNECTED`. This review confirms only the M4b-1 static engineering preview slice and its interaction evidence; it does not treat it as formal console acceptance. Overall M4 remains open.
 
-## 独立评审发现与修复
+## Independent review findings and fixes
 
-| 顺序 | 发现 | 修复 |
+| Order | Finding | Fix |
 |---|---|---|
-| 1 | 批准文案容易被理解为已影响生产路由。 | 明确批准只影响本地预览；页面说明没有 routing backend。 |
-| 2 | 仅空白的 match 值可能通过校验。 | 拒绝空白值并显示 `Enter a match value.`；无效输入不增加变更单队列。 |
-| 3 | 移动端 Rules 隐藏了 Match criteria。 | 保留 Match criteria；只隐藏 version/updated。 |
-| 4 | 仅空白的规则名称或 target detail 未拦截。 | 分别拒绝并显示 `Enter a rule name.`、`Enter target detail.`。 |
-| 5 | 键盘操作后焦点可能丢失。 | 选择轨迹、筛选结果、批准或拒绝后恢复焦点到相应 Call-ID、搜索框或当前页标题。 |
-| 6 | trace fixture 不完整，且两腿 Call-ID 显示容易混淆。 | 补齐 14 条按时间排序的双腿消息；每行显示其所属腿的 Call-ID，任一腿 Call-ID 均可检索同一轨迹。 |
-| 7 | 100 Trying 的 fixture 方向错误。 | 修正 100 Trying 所属方向。 |
-| 8 | README 只说明直接打开 `web/index.html`，未记录 VS Code sandbox 拒绝 `file://` 时使用的 loopback 预览方式。 | 保留可信浏览器直接打开选项，并补充从仓库根目录启动 `python3 -m http.server 8765 --bind 127.0.0.1 --directory services/console/web`、再访问 `http://127.0.0.1:8765/` 的本地预览说明；不增加 build/dependency 或 backend。 |
+| 1 | The approval wording could easily be read as already affecting production routing. | Explicitly state that approval only affects the local preview; the page notes that there is no routing backend. |
+| 2 | A match value that is only whitespace could pass validation. | Reject whitespace values and show `Enter a match value.`; invalid input does not add to the change-order queue. |
+| 3 | Rules on mobile hid Match criteria. | Keep Match criteria; hide only version/updated. |
+| 4 | Rule names or target detail that are only whitespace were not blocked. | Reject them separately and show `Enter a rule name.` and `Enter target detail.` respectively. |
+| 5 | Focus could be lost after keyboard interaction. | After selecting a trace, filtering results, and approving or rejecting, restore focus to the corresponding Call-ID, the search box, or the current page title. |
+| 6 | The trace fixture was incomplete, and the Call-IDs of the two legs were displayed confusingly. | Completed 14 time-ordered two-leg messages; each row shows the Call-ID of the leg it belongs to, and either leg's Call-ID retrieves the same trace. |
+| 7 | The direction of the 100 Trying fixture was wrong. | Corrected the direction that 100 Trying belongs to. |
+| 8 | The README only described opening `web/index.html` directly, and did not record the loopback preview method used when the VS Code sandbox rejects `file://`. | Kept the trusted-browser direct-open option and added local preview instructions: start `python3 -m http.server 8765 --bind 127.0.0.1 --directory services/console/web` from the repository root, then visit `http://127.0.0.1:8765/`; no build/dependency or backend was added. |
 
-最后一轮完整 trace fixture 评审无发现；修复后的 focus-only 复核也无发现。
+The final full trace-fixture review round produced no findings; the post-fix focus-only re-check also produced no findings.
 
-## 浏览器验证
+## Browser verification
 
-- 浏览器 sandbox 拒绝不可信 `file://`，因此经 `http://127.0.0.1:8765/` loopback 打开页面。这是浏览器环境限制，不是应用错误。
-- Rules 的创建、编辑、启用/禁用、删除只排入本地 change orders。空白名称、match、target 与无效 regex 分别得到 `Enter a rule name.`、`Enter a match value.`、`Enter target detail.`、`Enter a valid regular expression.`；无效输入不增加队列，合法 regex 会排队。
-- 空拒绝理由会阻止拒绝操作；填写理由后变更单显示 `Rejected` 并展示理由。批准措辞说明只影响本地 preview，不连接 routing backend。
-- 14 条 trace fixture 包含两条独立腿的 Call-ID、两腿 INVITE 与 100/180/200 响应、两腿 ACK、入站与出站 BYE、下游与上游 200。任一腿 Call-ID 可检索同一 trace；每条消息显示自己的 leg Call-ID。
-- 390px viewport 下四个 view root 与 body 均为 375px。Rules 保留 Match criteria，仅隐藏 version/updated；Change orders 仅隐藏 requested-by/submitted metadata；Call-trace details 的七个字段均保留在内部表格滚动区，root 无 overflow。1440px viewport 下 root 宽度均不超过 1440px，Call traces 为 1425px。
-- Enter 选择 trace 后焦点回到所选 Call-ID；筛选掉当前 trace 后焦点留在搜索框；从 Rules 批准或从 Change orders 拒绝后焦点回到当前页标题。拒绝理由验证正常。
+- The browser sandbox rejects untrusted `file://`, so the page was opened over loopback via `http://127.0.0.1:8765/`. This is a browser environment limitation, not an application error.
+- Creating, editing, enabling/disabling, and deleting Rules in Rules only enqueue local change orders. A blank name, match, target, and an invalid regex produce `Enter a rule name.`, `Enter a match value.`, `Enter target detail.`, and `Enter a valid regular expression.` respectively; invalid input does not grow the queue, while a valid regex is queued.
+- An empty rejection reason blocks the rejection action; once a reason is filled in, the change order shows `Rejected` and displays the reason. The approval wording states that it only affects the local preview and does not connect to a routing backend.
+- The 14 trace fixtures contain the Call-IDs of two independent legs, two-leg INVITE and 100/180/200 responses, two-leg ACK, inbound and outbound BYE, and downstream and upstream 200. Either leg's Call-ID can retrieve the same trace; each message displays its own leg Call-ID.
+- At a 390px viewport all four view roots and the body are 375px. Rules keeps Match criteria and hides only version/updated; Change orders hides only requested-by/submitted metadata; all seven Call-trace details fields remain in the inner table scroll area with no overflow at root level. At a 1440px viewport all root widths are at most 1440px, and Call traces is 1425px.
+- After pressing Enter to select a trace, focus returns to the selected Call-ID; after filtering out the current trace, focus stays in the search box; after approving from Rules or rejecting from Change orders, focus returns to the current page title. Rejection reason validation works correctly.
 
-## 本地验证与限制
+## Local verification and limitations
 
-- `node --check services/console/web/console.js`：通过（主 agent 执行）。
-- 最新本地 `make gate`：ruff format 190 files formatted；Ruff 全通过；mypy 36 source files clean；pytest **417 passed, 2 known skips, 15 deselected**。
-- 当前无 backend/API、auth/session、persistent audit、database、live telemetry、production routing、persisted trace store 或 workflow connection。预览只包含本地内存状态，不满足 REQ-F-12/13/14/15 与 REQ-S-4 的正式工作流验收。
+- `node --check services/console/web/console.js`: passed (executed by the main agent).
+- Latest local `make gate`: ruff format 190 files formatted; Ruff fully passing; mypy 36 source files clean; pytest **417 passed, 2 known skips, 15 deselected**.
+- There is currently no backend/API, authentication/session, persistent audit, database, live telemetry, production routing, persisted trace store, or workflow connection. The preview contains only local in-memory state and does not satisfy formal workflow acceptance for REQ-F-12/13/14/15 and REQ-S-4.
 
-## 评审结论
+## Review conclusion
 
-**Pass for M4b-1 slice only / not M4 completion.** M4b 的实现、集成与验收仍开放；M4 整体未完成。维护者签字：**Approved**（2026-10-04；chat 授权 AI 代签）。
+**Pass for the M4b-1 slice only / not M4 completion.** M4b implementation, integration, and acceptance remain open; M4 as a whole is incomplete. Maintainer signature: **Approved** (2026-10-04; chat-authorized AI countersignature).

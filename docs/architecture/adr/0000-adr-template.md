@@ -12,45 +12,47 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0000 — <标题>
+# ADR-0000 — <title>
 
 - **Status**: proposed · accepted · superseded by ADR-00NN
 - **Date**: YYYY-MM-DD
-- **Decides**: §0 账本条目 NN —— <一句话决策>
-- **回应 REQ**: REQ-G-2（本模板本身是治理工具）
+- **Decides**: §0 ledger entry NN — <one-line decision>
+- **Responds to REQ**: REQ-G-2 (this template is itself a governance tool)
 
-## Context（背景）
+## Context
 
-有哪些力量在起作用。来自交付环境的约束、来自运营商网络的约束、来自技术栈的约束、来自团队的约束。
-只列事实 —— 此刻不要论证，也不要把结论偷塞进来。
+What forces are in play: constraints from the delivery environment, from the
+operator network, from the technology stack, and from the team. List only facts
+— do not argue here, and do not smuggle the conclusion in.
 
-引用观察到的行为，而非记忆中的行为。如果某个事实来自跑代码，要说明，并说明如何复现。
+Cite observed behavior, not remembered behavior. If a fact comes from running
+code, say so and explain how to reproduce it.
 
-## Decision（决策）
+## Decision
 
-<用主动语态写的决策，以及它适用的范围。>
+<The decision written in active voice, and the scope it applies to.>
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
 -
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- <本决策明知故犯接受的每个缺口。空列表意味着分析还没做完。>
+- <Each gap knowingly accepted by this decision. An empty list means the analysis is not finished.>
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
 |  |  |
 
-## Evidence（证据）
+## Evidence
 
-- <支持该决策的命令 / 测试 / 测量>
+- <Commands / tests / measurements supporting the decision>
 
-## Related（相关）
+## Related
 
-- [`../新系统整体架构.md`](../新系统整体架构.md) §
-- POC ADR-00NN（仅作背景 —— 此处无约束力）
+- [`../system-architecture.md`](../system-architecture.md) §
+- POC ADR-00NN (background only — not binding here)

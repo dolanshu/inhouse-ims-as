@@ -12,71 +12,69 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 贡献指南（Contributing）
+# Contributing
 
-## 开始之前
+## Before you start
 
-按此顺序阅读：
+Read in this order:
 
-1. [`AGENT.md`](AGENT.md) —— 规则。对人和 agent 同样有约束力。
-2. [`docs/README.md`](docs/README.md) —— 文档在哪里。
-3. [`docs/plan.md`](docs/plan.md) —— 当前在跑哪个里程碑、哪些还开放。
+1. [`AGENT.md`](AGENT.md) — the rules. Binding on both humans and agents.
+2. [`docs/README.md`](docs/README.md) — where the documentation lives.
+3. [`docs/plan.md`](docs/plan.md) — which milestone is running, and which are still open.
 
-## 环境
+## Environment
 
 ```bash
-uv sync            # 解析并锁定整个 workspace
-make gate          # 提交前门禁，顺序见下方门禁表 ① 层
+uv sync            # resolve and lock the whole workspace
+make gate          # pre-commit gate, order per the gate table below, layer ①
 ```
 
-- Python **3.10**，由 `.python-version` 锁定：这是 sippy 已验证过的版本。要改之前先看 `docs/plan.md` D1。
-- `uv` 管一切。workspace 内不要用 pip。
-- `uv.lock` 提交进仓库。如果 `uv sync` 重写了它，连带着引起改动的那个 commit 一起提交。
+- Python **3.10**, pinned by `.python-version`: this is the version sippy was validated against. Before changing it, read `docs/plan.md` D1.
+- `uv` manages everything. Do not use pip inside the workspace.
+- Commit `uv.lock` to the repository. If `uv sync` rewrites it, commit it together with the change that caused it.
 
-## 门禁（The gate）
+## The gate
 
-`make gate` 四步固定（AGENT.md §9）：`ruff format --check` → `ruff check` → `mypy` → pytest（unit/contract 层）。AST 扫描**不在** `make gate` 内；`make gate-strict` = gate 四步 + AST 扫描（`scripts/check_adr_annotations.py`，REQ-G-3，ADR-0015）。
+`make gate` has four fixed steps (AGENT.md §9): `ruff format --check` → `ruff check` → `mypy` → pytest (unit/contract layers). AST scanning is **not** inside `make gate`; `make gate-strict` = the four gate steps + AST scanning (`scripts/check_adr_annotations.py`, REQ-G-3, ADR-0015).
 
-| 层 | 命令 | 是否阻塞 |
+| Layer | Command | Blocking |
 |---|---|---|
-| ① fast | `make test-unit` + `chart-check` + `gate-strict` 扫描 | 阻塞 |
-| ② integration | `make test-integration` | 阻塞 |
-| ③ e2e | `make test-e2e` | 非阻塞（0 用例；首个 e2e 用例的里程碑必须改为阻塞，ADR-0015） |
-| ④ performance | `make test-perf` | 运行即阻塞（M6 起已有用例） |
+| ① fast | `make test-unit` + `chart-check` + `gate-strict` scan | Blocking |
+| ② integration | `make test-integration` | Blocking |
+| ③ e2e | `make test-e2e` | Non-blocking (0 cases; the milestone that introduces the first e2e case must make it blocking, ADR-0015) |
+| ④ performance | `make test-perf` | Blocking once run (cases exist since M6) |
 
-本地门禁不绿，什么都不能提交。
-绝不要把本地重跑的结果当作门禁已通过的对外证据。
+Nothing may be committed while the local gate is red. Never present a local re-run as external proof that the gate has passed.
 
-## 新增一个 workspace 成员
+## Adding a workspace member
 
-1. 创建 `<dir>/pyproject.toml`，含 `[project]`、`[build-system]` 和
-   `[tool.hatch.build.targets.wheel] packages = ["src/<package>"]`。
-2. 创建 `src/<package>/__init__.py`，写明模块职责。
-3. 把该目录加入根 `pyproject.toml` 的 `[tool.uv.workspace].members`。
-4. 把它的 `src/` 加入 `[tool.ruff].src`。
-5. 把它的 `src/` 加入 `[tool.mypy].files` 和 `mypy_path`。
-6. 如果它不是内核，把它的 import 根加入 `platform/tests/test_library_independence.py` 的
-   `FORBIDDEN_ROOTS`。
+1. Create `<dir>/pyproject.toml` with `[project]`, `[build-system]`, and
+   `[tool.hatch.build.targets.wheel] packages = ["src/<package>"]`.
+2. Create `src/<package>/__init__.py` stating the module's responsibility.
+3. Add the directory to the root `pyproject.toml`'s `[tool.uv.workspace].members`.
+4. Add its `src/` to `[tool.ruff].src`.
+5. Add its `src/` to `[tool.mypy].files` and `mypy_path`.
+6. If it is not the core, add its import root to `FORBIDDEN_ROOTS` in
+   `platform/tests/test_library_independence.py`.
 
-第 3–6 步由 `tests/` 里的守卫断言；你没法悄悄漏掉。
+Steps 3–6 are asserted by guards in `tests/`; you cannot quietly skip them.
 
-**不要**给成员加 `[tool.pytest]`、`[tool.ruff]` 或 `[tool.mypy]` 表。工具配置只有一个家：workspace 根。
+**Do not** add `[tool.pytest]`, `[tool.ruff]`, or `[tool.mypy]` tables to a member. Tool configuration has a single home: the workspace root.
 
-## 提交（Commits）
+## Commits
 
-- Conventional Commits，英文，一次 commit 一个逻辑改动：
-  `feat` · `fix` · `docs` · `refactor` · `test` · `chore` · `build`。
-- 不跳过 hook。如果 hook 挡住了 commit，去修原因。
-- 绝不提交密钥、证书或真实流量抓包。
-- Agent 不 push、不创建分支、不创建 tag。
+- Conventional Commits, in English, one logical change per commit:
+  `feat` · `fix` · `docs` · `refactor` · `test` · `chore` · `build`.
+- Do not skip hooks. If a hook blocks a commit, fix the cause.
+- Never commit keys, certificates, or real traffic captures.
+- Agents do not push, create branches, or create tags.
 
-## 评审（Reviews）
+## Reviews
 
-- 采纳了 POC 代码的 PR，要在 [`docs/migration/triage.md`](docs/migration/triage.md) 中引用对应的甄别行。
-- 带有非显而易见设计决策的 PR，要带着它的 ADR 一起过来。
-- 含 AI 生成工作的 PR 要标注出来。
+- PRs that adopted POC code must reference the corresponding triage line in [`docs/migration/triage.md`](docs/migration/triage.md).
+- PRs carrying non-obvious design decisions must bring their ADR along.
+- PRs containing AI-generated work must be labeled as such.
 
-## 跨平台注意
+## Cross-platform note
 
-根 `pyproject.toml` 里的 `mypy_path` 用的是 POSIX 的 `:` 分隔符。在 Windows 上改用环境变量
-`MYPYPATH`；本构建以 Linux 为目标。
+The `mypy_path` in the root `pyproject.toml` uses the POSIX `:` separator. On Windows, use the `MYPYPATH` environment variable instead; this build targets Linux.

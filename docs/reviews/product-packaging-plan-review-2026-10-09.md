@@ -12,169 +12,169 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# `docs/product-packaging-plan.md` 评审记录
+# Review Record for `docs/product-packaging-plan.md`
 
-> 评审对象：`/home/shudong/project/3rdparty-as/docs/product-packaging-plan.md`
-> 评审日期：2026-10-09
-> 评审人：AI agent（主 agent 派发 Explore subagent 完成文档审阅，本 writing subagent 落盘）
-> 评审范围：产品包装计划全文（§0 现状盘点、§1 四批交付物、§2 文档结构、§3 执行顺序、§4 已确认决策）
-> 评审结论：该计划需大幅修订后才能作为内部上线评审基线
+> Review target: `/home/shudong/project/3rdparty-as/docs/product-packaging-plan.md`
+> Review date: 2026-10-09
+> Reviewer: AI agent (the primary agent dispatched an Explore subagent to complete the document review; this writing subagent wrote it to disk)
+> Review scope: the full text of the product packaging plan (§0 current-state inventory, §1 four batches of deliverables, §2 document structure, §3 execution order, §4 confirmed decisions)
+> Review conclusion: the plan requires substantial revision before it can serve as the baseline for the internal go-live review
 
-## 当前状态（Current Status）
+## Current Status
 
-- **维护者已于 2026-10-09 对全部 24 项 gap（8 P0 / 10 P1 / 6 P2）完成裁决；`docs/product-packaging-plan.md` 已按裁决完成修订（2026-10-09）。**
-- 裁决结果：**22 项"接受"，2 项"部分接受"**（G-P0-6、G-P2-6）。
-- **独立复核已完成**：独立复核 agent 已对照 `docs/product-packaging-plan.md` 修订版全文逐项验证，24 项 gap 的修改方案均已正确落地，Adjudication 表回写与裁决一致。
-- **24 项 gap 已全部验证关闭（8 P0 + 10 P1 + 6 P2），P0 全部关闭**，该计划可作为内部上线评审基线。
-- 当前里程碑：M7.1 工程已关门（2026-10-07），M8 发布候选产物就绪但退出签字仍搁置（`docs/plan.md` §0）。
-- 遗留动作已全部关闭（2026-10-09）：
-  - **G-P0-6 目标场景、G-P2-6 产品命名与 repo 改名**：已在 `docs/plan.md` §0 新增"产品决策记录"小节，包含 2 条决策行（目标场景、产品文档暂用名），来源为维护者 2026-10-09 确认；git repo 名改为 `inhouse-ims-as`（仅 git 仓库名与 remote URL），chart name、镜像名、OTel 服务名保持 `3rdparty-as` 不变，联动面极小，无需新增 ADR。
-  - **G-P1-9（§3.5 版本生命周期 / EOL）**：已新增 REQ-NF-16（`docs/requirements/prd.md` L459-470）与 ADR-0027（`docs/architecture/adr/0027-version-lifecycle-and-eol.md`），并在 ADR 注册表注册。
-  - **B 类交付物**（NE Datasheet 容量数值、PDPO 保留期限、性能基准报告、真实集群演练）仍被 M8 退出签字搁置与 O1/O4/D5 未决阻塞。
+- **The maintainer completed adjudication of all 24 gaps (8 P0 / 10 P1 / 6 P2) on 2026-10-09; `docs/product-packaging-plan.md` has been revised per the adjudications (2026-10-09).**
+- Adjudication result: **22 "accepted", 2 "partially accepted"** (G-P0-6, G-P2-6).
+- **The independent re-check is complete**: the independent re-check agent verified item by item against the full text of the revised `docs/product-packaging-plan.md`, the fix plans of all 24 gaps have all landed correctly, and the Adjudication table written back is consistent with the adjudications.
+- **All 24 gaps have been verified as closed (8 P0 + 10 P1 + 6 P2), all P0 closed**; the plan can serve as the baseline for the internal go-live review.
+- Current milestone: the M7.1 engineering gate was closed (2026-10-07), the M8 release candidate artifacts are ready but the exit sign-off is still shelved (`docs/plan.md` §0).
+- All leftover actions have been closed (2026-10-09):
+  - **G-P0-6 target scenario, G-P2-6 product naming and repo rename**: a new "product decision record" subsection has been added to §0 of `docs/plan.md`, containing 2 decision rows (target scenario, provisional documentation name for the product), sourced from the maintainer's 2026-10-09 confirmation; the git repo name has been changed to `inhouse-ims-as` (only the git repo name and remote URL), while the chart name, image name and OTel service name remain `3rdparty-as`; the linkage surface is extremely small and no new ADR is needed.
+  - **G-P1-9 (§3.5 version lifecycle / EOL)**: REQ-NF-16 (`docs/requirements/prd.md` L459-470) and ADR-0027 (`docs/architecture/adr/0027-version-lifecycle-and-eol.md`) have been added and registered in the ADR registry.
+  - The **class-B deliverables** (NE Datasheet capacity values, PDPO retention period, performance benchmark report, real-cluster drill) are still shelved by the M8 exit sign-off and blocked by the unadjudicated O1/O4/D5.
 
 ---
 
-## 评审对象与范围
+## Review Target and Scope
 
-| 项 | 内容 |
+| Item | Content |
 |---|---|
-| 对象文件 | `docs/product-packaging-plan.md` |
-| 基线文档 | `AGENT.md`、`docs/plan.md`、`docs/acceptance/test-plan.md`、`docs/acceptance/report.md`、ADR 注册表及 ADR-0013/0014/0017/0018/0019 等 |
-| 评审范围 | 全文 §0–§4，重点核对与当前里程碑、未决项、非目标及 ADR 的一致性 |
+| Target file | `docs/product-packaging-plan.md` |
+| Baseline documents | `AGENT.md`, `docs/plan.md`, `docs/acceptance/test-plan.md`, `docs/acceptance/report.md`, the ADR registry and ADR-0013/0014/0017/0018/0019 etc. |
+| Review scope | The full text §0–§4, focusing on consistency with the current milestone, the undecided items, the non-goals and the ADRs |
 
 ---
 
 ## Executive summary
 
-`docs/product-packaging-plan.md` 试图把工程里程碑的已有产出和缺口整理成面向内部上线评审的产品化包装路线图，但当前版本与项目实际状态存在多处重大偏差：
+`docs/product-packaging-plan.md` attempts to organize the existing outputs and gaps of the engineering milestones into a productization packaging roadmap oriented at the internal go-live review, but the current version deviates significantly from the actual project status:
 
-1. **过度宣称已完成项**：Console、容量 harness、分层测试体系、Health/Draining 等被标为"已有"，但对应的 REQ 验收、真实集群验证或 e2e 覆盖尚未通过。
-2. **违反硬规则**：在 §0.1 #9、§1.3、§1.4 #4.1 等处把 dev-host harness 或未决 O1 写成可对外发布的容量/性能数字，违反 `AGENT.md` §2「M6 实测之前不发布任何容量数字」。
-3. **超出项目范围**：§2.1/§2.2 出现 Diameter Sh 接口面板与告警，与 `AGENT.md` §2「不做 Diameter Sh」及 ADR-0017 冲突。
-4. **技术事实错误**：§2.4「iFC 灰度 + 一键回退」把 iFC 触发责任错误地放到 AS 侧；iFC 实际在 S-CSCF/HSS，AS 只实现 ISC 触发后的业务逻辑。
-5. **决策依据不足**：§4 中多项"已确认决策"仅停留在讨论记录层面，未在 `docs/plan.md`、ADR 或 review record 中形成正式决策落点。
-6. **排期不现实**：§3 给出 3–4 周总排期，未考虑 M8 签字搁置、O1/O4/D5 等未决项及 12 项 blocked / 24 项 open 的验收矩阵。
+1. **Over-claiming completed items**: Console, the capacity harness, the layered test system, Health/Draining etc. are marked as "existing", but the corresponding REQ acceptance, real-cluster validation or e2e coverage has not passed.
+2. **Violating hard rules**: at §0.1 #9, §1.3, §1.4 #4.1 etc., the dev-host harness or the undecided O1 is written as a capacity/performance figure that may be published externally, violating `AGENT.md` §2 "no capacity figures may be published before the M6 measurement".
+3. **Beyond the project scope**: §2.1/§2.2 contain a Diameter Sh interface panel and alert, conflicting with `AGENT.md` §2 "no Diameter Sh" and ADR-0017.
+4. **Technical factual error**: §2.4 "iFC canary + one-click rollback" wrongly places the iFC trigger responsibility on the AS side; iFC actually resides in S-CSCF/HSS, and the AS only implements the business logic after the ISC trigger.
+5. **Insufficient decision basis**: many "confirmed decisions" in §4 remain only at the level of discussion records and have not formed a formal decision landing point in `docs/plan.md`, an ADR or a review record.
+6. **Unrealistic schedule**: §3 gives a total schedule of 3–4 weeks, without considering the shelved M8 sign-off, the undecided items O1/O4/D5 and the acceptance matrix with 12 blocked / 24 open.
 
-综上，本计划需重大修订后方可作为内部上线评审基线。
+In summary, this plan requires substantial revision before it can serve as the baseline for the internal go-live review.
 
 ---
 
-## 1. §0.1 已有资产逐项评估
+## 1. Item-by-Item Assessment of the Existing Assets in §0.1
 
-| # | 资产 | 计划声称 | 准确性 | 证据与说明 |
+| # | Asset | What the Plan Claims | Accuracy | Evidence and Notes |
 |---|---|---|---|---|
-| 1 | 产品版本号 | ✅ 已有 | 准确 | `VERSION` 文件 + `tests/test_version_consistency.py` 守卫；ADR-0018 accepted。 |
-| 2 | Helm Chart | ✅ 已有 | 基本准确 | `deploy/helm/` 存在，`make chart-check` 通过；但 config-service 7.2d、真实集群 HTTPS 仍未验收（`docs/plan.md` §5.4）。 |
-| 3 | Prometheus 指标 + 告警骨架 | ✅ 已有 | 基本准确 | `deploy/alerts/as-alerts.yaml` 存在；但告警-动作对照表、OTLP exporter 接线、容量类告警仍 defer（`report.md` §0.4）。 |
-| 4 | Health / Readiness / Draining | ✅ 已有 | 部分准确 | 机制与单测已交付（`platform/tests/test_health_server.py`、ADR-0009）；但真实集群 ISSU/缩容不掉呼叫尚未完整验收，M5 工程关门≠REQ 验收。 |
-| 5 | 分层测试体系 | ✅ 已有 | 不准确 | `e2e` marker 为 0（`test-plan.md` L19）；performance 层仅 accept-all harness，非业务判决路径。 |
-| 6 | 架构文档 + ADR 体系 | ✅ 已有 | 准确 | `docs/architecture/adr/README.md` 注册 26 篇 ADR；部分仍为 draft（ADR-0023/0025）。 |
-| 7 | 控制台（Console） | ✅ 已有 | 不准确 | M4b 仅完成工程切片（被叫+前缀、审批流、fleet distribution start）；REQ-S-4、F-13、F-15 真 AS、7.2d ingress 等仍 open（`plan.md` §4.3、§5.4）。 |
-| 8 | 部分 Runbook | ✅ 已有（分散） | 部分准确 | Runbook 实际集中在 `docs/acceptance/`（`m5-downscale-runbook.md`、`m5-state-stores-runbook.md`、`m4b-8-runbook.md` 等），并非"散落在各里程碑交付物中"那般零散。 |
-| 9 | 容量实测 harness | ✅ 已有 | 不准确 | M6 仅完成 dev-host O1 正式批次（`m6-o1-measurement-report-2026-10-05.md`），明确标注"非对外 O1/SLA"；`AGENT.md` §2 禁止在 M6 实测前发布容量数字。 |
-| 10 | 可插拔业务引擎架构 | ✅ 已有 | 准确 | `apps/translation/` 与 `apps/anti-fraud/` 独立进程，符合 ADR-0002。 |
+| 1 | Product version number | ✅ Existing | Accurate | The `VERSION` file + the `tests/test_version_consistency.py` guard; ADR-0018 accepted. |
+| 2 | Helm Chart | ✅ Existing | Basically accurate | `deploy/helm/` exists and `make chart-check` passes; but config-service 7.2d and real-cluster HTTPS are still not accepted (`docs/plan.md` §5.4). |
+| 3 | Prometheus metrics + alert skeleton | ✅ Existing | Basically accurate | `deploy/alerts/as-alerts.yaml` exists; but the alert-to-action cross-reference table, the OTLP exporter wiring and the capacity-class alerts are still deferred (`report.md` §0.4). |
+| 4 | Health / Readiness / Draining | ✅ Existing | Partly accurate | The mechanism and the unit tests have been delivered (`platform/tests/test_health_server.py`, ADR-0009); but real-cluster ISSU / downscale-without-call-drop has not been fully accepted; the M5 engineering gate closing ≠ REQ acceptance. |
+| 5 | Layered test system | ✅ Existing | Inaccurate | The `e2e` marker is 0 (`test-plan.md` L19); the performance layer is only an accept-all harness, not a business adjudication path. |
+| 6 | Architecture docs + ADR system | ✅ Existing | Accurate | `docs/architecture/adr/README.md` registers 26 ADRs; some are still drafts (ADR-0023/0025). |
+| 7 | Console | ✅ Existing | Inaccurate | M4b only completed an engineering slice (callee + prefix, approval flow, fleet distribution start); REQ-S-4, F-13, F-15 real AS, 7.2d ingress etc. are still open (`plan.md` §4.3, §5.4). |
+| 8 | Some Runbooks | ✅ Existing (scattered) | Partly accurate | The runbooks are actually concentrated in `docs/acceptance/` (`m5-downscale-runbook.md`, `m5-state-stores-runbook.md`, `m4b-8-runbook.md` etc.), and are not as scattered as "scattered across each milestone's deliverables" suggests. |
+| 9 | Capacity measurement harness | ✅ Existing | Inaccurate | M6 only completed the dev-host O1 official batch (`m6-o1-measurement-report-2026-10-05.md`), explicitly marked "not an external O1/SLA"; `AGENT.md` §2 prohibits publishing capacity figures before the M6 measurement. |
+| 10 | Pluggable business engine architecture | ✅ Existing | Accurate | `apps/translation/` and `apps/anti-fraud/` are independent processes, conforming to ADR-0002. |
 
 ---
 
-## 2. §0.2 主要缺口逐项评估
+## 2. Item-by-Item Assessment of the Main Gaps in §0.2
 
-| # | 缺口项 | 计划状态 | 评估 | 关键问题 |
+| # | Gap Item | Plan Status | Assessment | Key Issue |
 |---|---|---|---|---|
-| 1 | 3GPP 规范符合性矩阵 | ❌ 缺失 | 合理 | 无争议，但需标注 Sh/CDR 为 N/A（范围外）。 |
-| 2 | 网元档案（NE Datasheet） | ❌ 缺失 | 需修订 | 未注明容量数字受 O1 阻塞；在 O1 裁决前不能写 CAPS/BHCA/并发数值。 |
-| 3 | 故障定界手册 | ❌ 缺失 | 合理 | 无争议。 |
-| 4 | 一页纸产品定位 + 架构大图 | ❌ 缺失 | 合理 | 无争议。 |
-| 5 | Grafana 看板模板 | ❌ 缺失 | 基本合理 | 但看板内容不得包含 Diameter Sh 面板。 |
-| 6 | Preflight 环境校验脚本 | ❌ 缺失 | 合理 | 无争议。 |
-| 7 | 离线安装包 | ❌ 缺失 | 需修订 | 范围应限定为 image sync + helm package 脚本，而非通用 offline installer；ADR-0013 明确 Helm 是唯一生产形态。 |
-| 8 | 责任边界矩阵（RACI） | ❌ 缺失 | 合理 | 无争议。 |
-| 9 | SLA / 版本生命周期 / EOL 策略 | ❌ 缺失 | 需修订 | ADR-0018 仅覆盖 release/组件版本号语义，生命周期/EOL 是新的决策，需新增 requirement + ADR。 |
-| 10 | 安全合规证据（PDPO 等） | ❌ 缺失 | 需修订 | 未提及 O4（呼叫轨迹保留期）和 D5（轨迹存储选型）仍未决，不能硬编保留天数。 |
-| 11 | 多业务承载平台能力开放 / 插件化机制文档 | ❌ 缺失 | 合理 | 建议标记为 v1.1 或按需，避免当前里程碑扩项。 |
+| 1 | 3GPP conformance matrix | ❌ Missing | Reasonable | No dispute, but Sh/CDR must be marked N/A (out of scope). |
+| 2 | Network element datasheet (NE Datasheet) | ❌ Missing | Needs revision | It does not note that capacity figures are blocked by O1; CAPS/BHCA/concurrency values must not be written before O1 is adjudicated. |
+| 3 | Fault demarcation handbook | ❌ Missing | Reasonable | No dispute. |
+| 4 | One-pager product positioning + large architecture diagram | ❌ Missing | Reasonable | No dispute. |
+| 5 | Grafana dashboard templates | ❌ Missing | Basically reasonable | But the dashboard content must not include a Diameter Sh panel. |
+| 6 | Preflight environment validation script | ❌ Missing | Reasonable | No dispute. |
+| 7 | Offline installation package | ❌ Missing | Needs revision | The scope should be limited to image sync + helm package scripts, rather than a general offline installer; ADR-0017 explicitly states that Helm is the only production form. |
+| 8 | Responsibility boundary matrix (RACI) | ❌ Missing | Reasonable | No dispute. |
+| 9 | SLA / version lifecycle / EOL policy | ❌ Missing | Needs revision | ADR-0018 only covers the semantics of release/component version numbers; lifecycle/EOL is a new decision and requires a new requirement + ADR. |
+| 10 | Security compliance evidence (PDPO etc.) | ❌ Missing | Needs revision | It does not mention that O4 (call trace retention period) and D5 (trace storage selection) are still undecided, so retention days must not be made up. |
+| 11 | Multi-service platform capability-opening / plugin mechanism document | ❌ Missing | Reasonable | It is suggested to mark it as v1.1 or on demand, to avoid scope expansion in the current milestone. |
 
 ---
 
-## 3. 批次评审（§1）
+## 3. Batch Review (§1)
 
-### 第一批：评审入场券
+### Batch 1: Review entry tickets
 
-- **1.1 产品一页纸 + 命名**：目标场景"内部上线评审"仅停留在讨论层面，未在 `docs/plan.md` 或 ADR 中落点为正式决策（见 G-P0-6）。
-- **1.2 3GPP 规范符合性矩阵**：标注 Sh/CDR 为 N/A 正确，但需同时明确 E1/E4/E5 仍未验收（`plan.md` §5.1 O2/O3）。
-- **1.3 网元档案（NE Datasheet）**：撰写容量模型前必须等待 O1 裁决；当前写 CAPS/BHCA/并发会话违反 `AGENT.md` §2（见 G-P0-3）。
-- **1.4 故障定界手册**：合理，但需与 RACI、抓包责任方、S-CSCF/HSS 侧日志对齐。
-- **1.5 README 重写**：合理，但需先明确产品名与目标场景决策。
+- **1.1 Product one-pager + naming**: the target scenario "internal go-live review" remains only at the discussion level and has not been landed as a formal decision in `docs/plan.md` or an ADR (see G-P0-6).
+- **1.2 3GPP conformance matrix**: marking Sh/CDR as N/A is correct, but it must simultaneously make clear that E1/E4/E5 are still not accepted (`plan.md` §5.1 O2/O3).
+- **1.3 Network element datasheet (NE Datasheet)**: the O1 adjudication must be awaited before writing the capacity model; currently writing CAPS/BHCA/concurrent sessions violates `AGENT.md` §2 (see G-P0-3).
+- **1.4 Fault demarcation handbook**: reasonable, but it must be aligned with the RACI, the packet-capture responsible party and the S-CSCF/HSS side logs.
+- **1.5 README rewrite**: reasonable, but the product name and target scenario decisions must be clarified first.
 
-### 第二批：可运维性
+### Batch 2: Operability
 
-- **2.1 Grafana 看板模板**：包含 "Diameter Sh 接口" 面板超出范围（见 G-P0-4）。
-- **2.2 告警规则补强**："Sh 超时"告警同样超出范围；需移除或改为明确 N/A。
-- **2.3 L1/L2 Runbook**：合理；但应归集现有 `docs/acceptance/*-runbook.md` 而非从零新建。
-- **2.4 iFC 灰度 + 一键回退**：iFC 触发属于 S-CSCF/HSS，AS 仅实现 ISC 业务逻辑；此项描述误导（见 G-P0-5、G-P1-10）。
-- **2.5 备份恢复方案**：合理；但依赖真实集群演练，当前 M8 7.2d 仍 blocked。
+- **2.1 Grafana dashboard templates**: including the "Diameter Sh interface" panel is out of scope (see G-P0-4).
+- **2.2 Alert rule reinforcement**: the "Sh timeout" alert is likewise out of scope; it must be removed or changed to an explicit N/A.
+- **2.3 L1/L2 Runbook**: reasonable; but it should collate the existing `docs/acceptance/*-runbook.md` rather than create new ones from scratch.
+- **2.4 iFC canary + one-click rollback**: the iFC trigger belongs to S-CSCF/HSS, and the AS only implements the ISC business logic; this description is misleading (see G-P0-5, G-P1-10).
+- **2.5 Backup-restore approach**: reasonable; but it depends on a real-cluster drill, and M8 7.2d is still blocked.
 
-### 第三批：交付形态与合规
+### Batch 3: Delivery form and compliance
 
-- **3.1 Preflight 脚本**：合理。
-- **3.2 离线安装包**：范围应收窄为 image sync + helm package 脚本，符合 ADR-0013 单形态约束（见 G-P1-7）。
-- **3.3 RACI**：合理。
-- **3.4 PDPO 合规**：不能硬编码保留天数；必须声明 O4 未决、D5 未决（见 G-P1-8）。
-- **3.5 版本生命周期/EOL**：ADR-0018 只解决版本号，EOL/支持周期需新增 ADR/requirement（见 G-P1-9）。
+- **3.1 Preflight script**: reasonable.
+- **3.2 Offline installation package**: the scope should be narrowed to image sync + helm package scripts, conforming to the single-form constraint of ADR-0013 (see G-P1-7).
+- **3.3 RACI**: reasonable.
+- **3.4 PDPO compliance**: hardcoding retention days is not allowed; it must state that O4 is undecided and D5 is undecided (see G-P1-8).
+- **3.5 Version lifecycle / EOL**: ADR-0018 only solves the version number; EOL / support period requires a new ADR / requirement (see G-P1-9).
 
-### 第四批：锦上添花
+### Batch 4: Icing on the cake
 
-- **4.1 性能基准报告（正式版）**：在 O1 未裁决前安排正式性能报告违反 `AGENT.md` §2（见 G-P0-8）。
-- **4.2 7×24 长稳测试报告**：建议按需/v1.1，当前里程碑不宜默认纳入。
-- **4.3 API 版本兼容策略**：可并入版本生命周期文档，但需明确其依赖 ADR-0018 之上新决策。
-- **4.4 白皮书**：合理，优先级最低。
-- **4.5 能力开放机制文档**：合理，建议 v1.1 或按需。
+- **4.1 Performance benchmark report (official version)**: scheduling an official performance report before O1 is adjudicated violates `AGENT.md` §2 (see G-P0-8).
+- **4.2 7×24 long-run stability test report**: it is suggested to make it on demand / v1.1; it should not be included by default in the current milestone.
+- **4.3 API version compatibility policy**: it may be merged into the version lifecycle document, but it must be made clear that it depends on a new decision on top of ADR-0018.
+- **4.4 Whitepaper**: reasonable, lowest priority.
+- **4.5 Capability-opening mechanism document**: reasonable, suggested for v1.1 or on demand.
 
 ---
 
-## 4. 文档结构评审（§2）
+## 4. Document Structure Review (§2)
 
-| 建议目录 | 评估 | 说明 |
+| Proposed Directory | Assessment | Notes |
 |---|---|---|
-| `docs/product/` | 接受 | 与 `docs/README.md` L26 的 `operations/` 规划不冲突；新增目录合理。 |
-| `docs/operations/` | 接受 | `docs/README.md` L26 已规划；但目前目录不存在（G-P2-1）。 |
-| `docs/delivery/` | 基本接受 | 与 `deploy/helm/README.md` 边界需明确（G-P2-4）。 |
-| `operations/grafana-dashboards/sh-interface.json` | 需修改 | 文件名与"不做 Sh"范围冲突（G-P2-3）。 |
-| `delivery/install-guide.md` | 需修改 | 与 `deploy/helm/README.md` 内容重叠，应明确前者面向交付清单、后者面向 Helm 参数（G-P2-4）。 |
+| `docs/product/` | Accept | It does not conflict with the `operations/` planning at L26 of `docs/README.md`; a new directory is reasonable. |
+| `docs/operations/` | Accept | Already planned at L26 of `docs/README.md`; but the directory does not exist yet (G-P2-1). |
+| `docs/delivery/` | Basically accept | The boundary with `deploy/helm/README.md` needs clarification (G-P2-4). |
+| `operations/grafana-dashboards/sh-interface.json` | Needs modification | The file name conflicts with the "no Sh" scope (G-P2-3). |
+| `delivery/install-guide.md` | Needs modification | It overlaps in content with `deploy/helm/README.md`; it must be made clear that the former targets the delivery manifest while the latter targets Helm parameters (G-P2-4). |
 
 ---
 
-## 5. 执行顺序与排期评审（§3）
+## 5. Execution Order and Schedule Review (§3)
 
-- 总排期 **3–4 周** 不现实：M8 签字仍搁置（`plan.md` §0），O1/O4/D5 等未决项未裁决，12 项 blocked / 24 项 open 的验收矩阵未收敛（`report.md` §0.5）。
-- 第 4 步"运维能力补全"中的 iFC 灰度/回退依赖 S-CSCF 侧配置与真实集群演练，不能按固定天数完成（见 G-P1-10）。
-- 第 7 步"安全合规"需 O4/D5 先裁决，否则无法写出可落地的 PDPO 说明（见 G-P1-8）。
+- The total schedule of **3–4 weeks** is unrealistic: the M8 sign-off is still shelved (`plan.md` §0), the undecided items O1/O4/D5 are not adjudicated, and the acceptance matrix with 12 blocked / 24 open has not converged (`report.md` §0.5).
+- The iFC canary/rollback in step 4 "operations capability completion" depends on S-CSCF side configuration and a real-cluster drill, and cannot be completed in a fixed number of days (see G-P1-10).
+- Step 7 "security compliance" requires O4/D5 to be adjudicated first, otherwise no actionable PDPO statement can be written (see G-P1-8).
 
-建议：先关闭 M8 退出签字与 O1/O4/D5 裁决，再制定可落地的包装排期。
+Suggestion: first close the M8 exit sign-off and the O1/O4/D5 adjudications, then formulate an actionable packaging schedule.
 
 ---
 
-## 6. 已确认决策一致性评审（§4）
+## 6. Consistency Review of Confirmed Decisions (§4)
 
-| 决策 | 计划声称 | 实际状态 | 评估 |
+| Decision | What the Plan Claims | Actual State | Assessment |
 |---|---|---|---|
-| 4.1 目标场景：内部上线评审 | 已确认 | 仅停留在讨论层面；`docs/plan.md` 无对应决策行，无 ADR，无 review record。 | 待裁决（G-P0-6） |
-| 4.2 业务定位：多业务承载平台 | 已确认 | `apps/` 架构支持；讨论中反复提及。 | 可接受，但建议补一条 ADR/计划决策行。 |
-| 4.3 命名：In-house IMS Application Server | 已确认 | 仅停留在命名讨论层面；`docs/plan.md`、ADR 无正式落点。 | 待裁决（G-P2-6） |
-| 4.4 推进节奏：顺序全量推进 | 已确认 | M8 仍搁置，无上游授权推进包装里程碑；O1/O4/D5 未决。 | 需修改（G-P0-7） |
+| 4.1 Target scenario: internal go-live review | Confirmed | Only at the discussion level; `docs/plan.md` has no corresponding decision row, no ADR, no review record. | Pending adjudication (G-P0-6) |
+| 4.2 Business positioning: multi-service platform | Confirmed | The `apps/` architecture supports it; it is repeatedly mentioned in the discussion. | Acceptable, but it is suggested to add an ADR / plan decision row. |
+| 4.3 Naming: In-house IMS Application Server | Confirmed | Only at the naming discussion level; `docs/plan.md` and the ADR have no formal landing point. | Pending adjudication (G-P2-6) |
+| 4.4 Pace of progress: full sequential rollout | Confirmed | M8 is still shelved and there is no upstream authorization to advance the packaging milestone; O1/O4/D5 are undecided. | Needs modification (G-P0-7) |
 
 ---
 
-## 7. 遗漏关键项
+## 7. Missing Key Items
 
-本计划未充分反映下列对内部上线评审至关重要的项目：
+This plan does not sufficiently reflect the following items critical to the internal go-live review:
 
-1. **M8 状态**：RC 产物就绪但退出签字搁置（`plan.md` §0、`report.md` §0）。
-2. **E1/E4/E5 未验收**：reSIProcate 生产路径行为、TLS 热轮换、状态外置仍为 open（`plan.md` §5.1 O2/O3、ADR-0019 §7/§10）。
-3. **TLS/REQ-S-2/S-3 未验收**：运营商 PKI、证书轮换无 lab 证据（`report.md` §0.6 D-1）。
-4. **e2e=0**：`test-plan.md` L19 明确 e2e 标记数为 0，完整呼叫 + 控制台未落地。
-5. **O1 容量目标未裁决**：`AGENT.md` §2 与 `plan.md` §5.1 O1 均禁止发布容量数字。
-6. **O4 呼叫轨迹保留期 / D5 存储选型未决**：影响 PDPO、安全合规、备份恢复方案。
-7. **REQ-S-4 / M4b 整体验收未通过**：控制台安全审计仍为工程切片，非 REQ 验收（`plan.md` §4.3、§5.4）。
-8. **testbed 不作 v1 交付物**：ADR-0014 明确 v1 不把 testbed 当交付物；包装计划应避免把仿真器 IOT 报告当作产品证据。
+1. **M8 status**: RC artifacts ready but the exit sign-off is shelved (`plan.md` §0, `report.md` §0).
+2. **E1/E4/E5 not accepted**: reSIProcate production path behavior, TLS hot rotation and state externalization are still open (`plan.md` §5.1 O2/O3, ADR-0019 §7/§10).
+3. **TLS/REQ-S-2/S-3 not accepted**: there is no lab evidence for carrier PKI or certificate rotation (`report.md` §0.6 D-1).
+4. **e2e=0**: L19 of `test-plan.md` states explicitly that the e2e marker count is 0; the complete call + console has not landed.
+5. **O1 capacity target unadjudicated**: both `AGENT.md` §2 and `plan.md` §5.1 O1 prohibit publishing capacity figures.
+6. **O4 call trace retention period / D5 storage selection undecided**: this affects PDPO, security compliance and the backup-restore approach.
+7. **REQ-S-4 / the overall M4b acceptance has not passed**: console security audit is still an engineering slice, not a REQ acceptance (`plan.md` §4.3, §5.4).
+8. **testbed is not a v1 deliverable**: ADR-0014 explicitly states that v1 does not treat the testbed as a deliverable; the packaging plan should avoid treating the simulator IOT report as product evidence.
 
 ---
 
@@ -182,228 +182,230 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ### P0 gaps
 
-#### G-P0-1 — Console 被过度宣称
+#### G-P0-1 — Console is over-claimed
 
-- **位置**：`docs/product-packaging-plan.md` §0.1 #7
-- **问题**：Console 被标为"已有"，但 M4b 仅为工程切片；REQ-S-4、M4b-8、F-13、F-15 真 AS、主叫/正则 v1.1、7.2d ingress 均未通过验收。
-- **证据**：`docs/plan.md` §4.3 明确 M4 工程关门不含 `test-plan` 全 REQ 绿、F-13、F-15 真 AS、主叫/正则 v1.1、7.2d ingress；§5.4 补测清单仍 open。
-- **建议**：将 #7 改为"部分已有（工程切片）"，并在说明中列出尚未验收的子项。
+- **Location**: §0.1 #7 of `docs/product-packaging-plan.md`
+- **Problem**: the Console is marked as "existing", but M4b is only an engineering slice; REQ-S-4, M4b-8, F-13, F-15 real AS, caller-ID/regex v1.1 and 7.2d ingress have all not passed acceptance.
+- **Evidence**: §4.3 of `docs/plan.md` explicitly states that the M4 engineering gate closing does not include `test-plan` all-REQ green, F-13, F-15 real AS, caller-ID/regex v1.1, 7.2d ingress; the §5.4 supplementary test list is still open.
+- **Suggestion**: change #7 to "partially existing (engineering slice)", and list the not-yet-accepted sub-items in the notes.
 
-#### G-P0-2 — 容量 harness 被误述为"容量实测"
+#### G-P0-2 — The capacity harness is misdescribed as "capacity measurement"
 
-- **位置**：`docs/product-packaging-plan.md` §0.1 #9
-- **问题**：把 M6 dev-host harness 报告称为"容量实测"，违反 `AGENT.md` §2「M6 实测之前不发布任何容量数字」。
-- **证据**：`AGENT.md` §2；`docs/plan.md` §5.1 O1 仍 open；`m6-o1-measurement-report-2026-10-05.md` 明确标注"非对外 O1/SLA"。
-- **建议**：改为"M6 容量 harness（dev-host 内部测量，非对外发布）"。
+- **Location**: §0.1 #9 of `docs/product-packaging-plan.md`
+- **Problem**: calling the M6 dev-host harness report "capacity measurement" violates `AGENT.md` §2 "no capacity figures may be published before the M6 measurement".
+- **Evidence**: `AGENT.md` §2; `docs/plan.md` §5.1 O1 is still open; `m6-o1-measurement-report-2026-10-05.md` is explicitly marked "not an external O1/SLA".
+- **Suggestion**: change it to "M6 capacity harness (dev-host internal measurement, not for external publication)".
 
-#### G-P0-3 — NE Datasheet 计划提前写容量数字
+#### G-P0-3 — The NE Datasheet plan writes capacity figures ahead of time
 
-- **位置**：`docs/product-packaging-plan.md` §1.3
-- **问题**：NE Datasheet 准备写入 CAPS/BHCA/并发会话等数字，但 O1 仍未裁决。
-- **证据**：`AGENT.md` §2；`docs/plan.md` §5.1 O1（容量目标：CPS、并发会话、建立时延预算，维护者目标裁决仍 open）。
-- **建议**：Datasheet 中容量章节写为"受 O1 阻塞，待 M6 实测与维护者裁决后填入"，不得出现具体数字。
+- **Location**: §1.3 of `docs/product-packaging-plan.md`
+- **Problem**: the NE Datasheet is prepared to include figures such as CAPS/BHCA/concurrent sessions, but O1 is still unadjudicated.
+- **Evidence**: `AGENT.md` §2; `docs/plan.md` §5.1 O1 (capacity targets: CPS, concurrent sessions and call-setup latency budget; the maintainer target adjudication is still open).
+- **Suggestion**: the capacity chapter of the datasheet should be written as "blocked by O1, to be filled in after the M6 measurement and the maintainer's adjudication", with no concrete figures.
 
-#### G-P0-4 — Grafana 面板含 Diameter Sh 接口
+#### G-P0-4 — The Grafana panel includes the Diameter Sh interface
 
-- **位置**：`docs/product-packaging-plan.md` §2.1 / §2.2
-- **问题**：Grafana 看板与告警规则包含 "Diameter Sh interface / Sh timeout"，超出项目范围。
-- **证据**：`AGENT.md` §2 明确"不做 Diameter Sh"；`ADR-0017` 明确不做 CDR/billing。
-- **建议**：移除 Sh 面板与告警；合规矩阵中 Sh 标 N/A。
+- **Location**: §2.1 / §2.2 of `docs/product-packaging-plan.md`
+- **Problem**: the Grafana dashboard and alert rules include "Diameter Sh interface / Sh timeout", which is beyond the project scope.
+- **Evidence**: `AGENT.md` §2 explicitly states "no Diameter Sh"; `ADR-0017` explicitly states no CDR/billing.
+- **Suggestion**: remove the Sh panel and alert; mark Sh as N/A in the compliance matrix.
 
-#### G-P0-5 — "iFC 灰度 + 一键回退"范围错误
+#### G-P0-5 — The scope of "iFC canary + one-click rollback" is wrong
 
-- **位置**：`docs/product-packaging-plan.md` §2.4
-- **问题**：iFC 触发逻辑属于 S-CSCF/HSS，AS 只实现 ISC 触发后的业务逻辑；计划把 iFC 灰度/回退写成 AS 侧交付物，误导评审。
-- **证据**：iFC 支持按用户群/号段/百分比灰度触发（S-CSCF 侧，讨论记录）；架构文档 §1.1 单一 ISC 语义。
-- **建议**：改为"ISC 触发后的业务灰度/摘流方案 + 与 S-CSCF 侧 iFC 灰度的配合接口"，明确 AS 侧边界。
+- **Location**: §2.4 of `docs/product-packaging-plan.md`
+- **Problem**: the iFC trigger logic belongs to S-CSCF/HSS and the AS only implements the business logic after the ISC trigger; the plan writes the iFC canary/rollback as an AS-side deliverable, which misleads the review.
+- **Evidence**: iFC supports canary triggering by user group / number range / percentage (S-CSCF side, discussion record); the single ISC semantics of §1.1 of the architecture document.
+- **Suggestion**: change it to "business canary / traffic-diversion approach after the ISC trigger + the coordination interface with the S-CSCF side's iFC canary", clarifying the AS-side boundary.
 
-#### G-P0-6 — "目标场景：内部上线评审"决策依据不足
+#### G-P0-6 — Insufficient decision basis for "target scenario: internal go-live review"
 
-- **位置**：`docs/product-packaging-plan.md` §4.1
-- **问题**：该决策被标为"已确认"，但在 `docs/plan.md` 中无对应决策行，无 ADR，无 review record。
-- **证据**：讨论记录中有相关讨论；`docs/plan.md` 无此决策落点。
-- **建议**：维护者裁决：要么在 `docs/plan.md` §1/§4 补正式决策行 + review record，要么本项标为讨论意见而非已确认决策。
+- **Location**: §4.1 of `docs/product-packaging-plan.md`
+- **Problem**: this decision is marked "confirmed", but there is no corresponding decision row in `docs/plan.md`, no ADR and no review record.
+- **Evidence**: there is relevant discussion in the discussion record; `docs/plan.md` has no decision landing point for it.
+- **Suggestion**: the maintainer adjudicates: either add a formal decision row + review record to §1/§4 of `docs/plan.md`, or mark this item as a discussion opinion rather than a confirmed decision.
 
-#### G-P0-7 — "顺序全量推进"与 M8 搁置冲突
+#### G-P0-7 — "Full sequential rollout" conflicts with the shelved M8
 
-- **位置**：`docs/product-packaging-plan.md` §4.4
-- **问题**：声称推进节奏"已确认"，但 M8 退出签字仍搁置，且 O1/O4/D5 未决，缺乏上游授权。
-- **证据**：`docs/plan.md` §0 "M8 仍搁置"；§5 O1/O4/D5 均为 open。
-- **建议**：改为"待 M8 签字与 O1/O4/D5 裁决后重新确认推进节奏"，或拆分为"第一批优先、其余按需"。
+- **Location**: §4.4 of `docs/product-packaging-plan.md`
+- **Problem**: it claims the pace of progress is "confirmed", but the M8 exit sign-off is still shelved, and O1/O4/D5 are undecided, so there is a lack of upstream authorization.
+- **Evidence**: §0 of `docs/plan.md` "M8 is still shelved"; O1/O4/D5 in §5 are all open.
+- **Suggestion**: change it to "the pace of progress is to be reconfirmed after the M8 sign-off and the O1/O4/D5 adjudications", or split it into "batch 1 first, the rest on demand".
 
-#### G-P0-8 — 第四批性能基准报告仍违反容量数字禁令
+#### G-P0-8 — The batch 4 performance benchmark report still violates the capacity-figure prohibition
 
-- **位置**：`docs/product-packaging-plan.md` §1.4 #4.1
-- **问题**：第四批仍计划"基于 D10 / M6 容量 harness 整理正式报告"，在 O1 未裁决前发布性能基准报告违反硬规则。
-- **证据**：`AGENT.md` §2；`docs/plan.md` §5.1 O1；`ADR-0014` 明确 M6 前不发布容量数字。
-- **建议**：改为"O1 裁决后，基于 M6 实测整理内部评审版性能报告"；当前阶段仅保留测试方法学说明，不出现吞吐/并发/时延数值。
+- **Location**: §1.4 #4.1 of `docs/product-packaging-plan.md`
+- **Problem**: batch 4 still plans to "produce an official report based on D10 / the M6 capacity harness"; publishing a performance benchmark report before O1 is adjudicated violates a hard rule.
+- **Evidence**: `AGENT.md` §2; `docs/plan.md` §5.1 O1; `ADR-0014` explicitly states that no capacity figures are published before M6.
+- **Suggestion**: change it to "after the O1 adjudication, produce an internal-review-version performance report based on the M6 measurement"; at the current stage keep only the test methodology description, with no throughput/concurrency/latency values.
 
 ### P1 gaps
 
-#### G-P1-1 — Health/Draining 仅机制验证，缺真实集群证据
+#### G-P1-1 — Health/Draining has only mechanism verification, lacking real-cluster evidence
 
-- **位置**：`docs/product-packaging-plan.md` §0.1 #4
-- **问题**：ISSU/Draining 仅在 kind 上用模拟 `active_calls` 验证机制；真实集群滚动升级/缩容不掉呼叫未完整验收。
-- **证据**：`docs/acceptance/report.md` M5 容器镜像段；`m5-downscale-runbook.md` §4 明确使用 `AS_M5_SIMULATED_ACTIVE_CALLS`；M5 工程关门≠REQ 验收。
-- **建议**：说明中增加"机制已交付，真实 SIP 负载下的不掉呼叫待 M7/M8 验收"。
+- **Location**: §0.1 #4 of `docs/product-packaging-plan.md`
+- **Problem**: ISSU/Draining was only verified on kind with a simulated `active_calls`; real-cluster rolling upgrade / downscale without dropping calls has not been fully accepted.
+- **Evidence**: the M5 container image section of `docs/acceptance/report.md`; §4 of `m5-downscale-runbook.md` explicitly uses `AS_M5_SIMULATED_ACTIVE_CALLS`; the M5 engineering gate closing ≠ REQ acceptance.
+- **Suggestion**: add "the mechanism has been delivered; call-drop-free behaviour under real SIP load is pending acceptance in M7/M8" to the notes.
 
-#### G-P1-2 — 分层测试体系被过度宣称
+#### G-P1-2 — The layered test system is over-claimed
 
-- **位置**：`docs/product-packaging-plan.md` §0.1 #5
-- **问题**：e2e=0，performance 仅 accept-all harness，不是完整分层测试体系。
-- **证据**：`docs/acceptance/test-plan.md` L19-20；`test-plan.md` 自动化分层表。
-- **建议**：改为"三层 testbed 骨架已建立；e2e 尚未落地，performance 仅 accept-all harness（非业务路径）"。
+- **Location**: §0.1 #5 of `docs/product-packaging-plan.md`
+- **Problem**: e2e=0 and performance is only an accept-all harness; this is not a complete layered test system.
+- **Evidence**: L19-20 of `docs/acceptance/test-plan.md`; the automation layering table of `test-plan.md`.
+- **Suggestion**: change it to "the three-layer testbed skeleton has been established; e2e has not landed, and performance is only an accept-all harness (not a business path)".
 
-#### G-P1-3 — NE Datasheet 缺口未注 O1 阻塞
+#### G-P1-3 — The NE Datasheet gap does not note the O1 block
 
-- **位置**：`docs/product-packaging-plan.md` §0.2 #2
-- **问题**：缺口表未说明容量数字因 O1 未决而暂时无法撰写。
-- **证据**：`docs/plan.md` §5.1 O1；`AGENT.md` §2。
-- **建议**：在 #2 影响范围中增加"容量章节受 O1 阻塞"。
+- **Location**: §0.2 #2 of `docs/product-packaging-plan.md`
+- **Problem**: the gap table does not state that capacity figures cannot be written for now because O1 is undecided.
+- **Evidence**: `docs/plan.md` §5.1 O1; `AGENT.md` §2.
+- **Suggestion**: add "the capacity chapter is blocked by O1" to the impact scope of #2.
 
-#### G-P1-4 — SLA/EOL 缺口未区分 ADR-0018 范围
+#### G-P1-4 — The SLA/EOL gap does not distinguish the scope of ADR-0018
 
-- **位置**：`docs/product-packaging-plan.md` §0.2 #9
-- **问题**：缺口表未说明 ADR-0018 只覆盖版本号语义，生命周期/EOL 是新的决策。
-- **证据**：`ADR-0018` Decision/Consequences 明确只解决 release/组件版本号，未涉及支持周期/EOL。
-- **建议**：#9 说明中增加"需新增 requirement + ADR，超出 ADR-0018 范围"。
+- **Location**: §0.2 #9 of `docs/product-packaging-plan.md`
+- **Problem**: the gap table does not state that ADR-0018 only covers version-number semantics, and that lifecycle/EOL is a new decision.
+- **Evidence**: the Decision/Consequences of `ADR-0018` explicitly only resolves release/component version numbers and does not touch the support period/EOL.
+- **Suggestion**: add "a new requirement + ADR is required, beyond the scope of ADR-0018" to the notes of #9.
 
-#### G-P1-5 — 安全/隐私缺口遗漏 O4/D5
+#### G-P1-5 — The security/privacy gap omits O4/D5
 
-- **位置**：`docs/product-packaging-plan.md` §0.2 #10
-- **问题**：未提及呼叫轨迹保留期 O4 和存储选型 D5 仍未决，无法落地 PDPO 说明。
-- **证据**：`docs/plan.md` §5.1 O4、§5.2 D5；`ADR-0017` Decision ④。
-- **建议**：#10 状态改为"受 O4/D5 阻塞"，并列为与 PDPO 同等关键的前置项。
+- **Location**: §0.2 #10 of `docs/product-packaging-plan.md`
+- **Problem**: it does not mention that the call trace retention period O4 and the storage selection D5 are still undecided, making an actionable PDPO statement impossible.
+- **Evidence**: `docs/plan.md` §5.1 O4, §5.2 D5; `ADR-0017` Decision ④.
+- **Suggestion**: change the status of #10 to "blocked by O4/D5", and list it as a prerequisite as critical as PDPO itself.
 
-#### G-P1-6 — 3GPP 矩阵未注 E1/E4/E5 与 sippy 参考
+#### G-P1-6 — The 3GPP matrix does not note E1/E4/E5 and the sippy reference
 
-- **位置**：`docs/product-packaging-plan.md` §1.2
-- **问题**：规范矩阵未说明生产栈 E1/E4/E5 仍 open，且 sippy 仅 testbed 基线参考。
-- **证据**：`ADR-0019` §7/§10；`docs/plan.md` §5.1 O2/O3。
-- **建议**：矩阵中增加"E1/E4/E5 待 M8 验收"备注，并在范围说明中明确 sippy 仅 testbed 基线。
+- **Location**: §1.2 of `docs/product-packaging-plan.md`
+- **Problem**: the conformance matrix does not state that production-stack E1/E4/E5 are still open, and that sippy is only a testbed baseline reference.
+- **Evidence**: §7/§10 of `ADR-0019`; `docs/plan.md` §5.1 O2/O3.
+- **Suggestion**: add an "E1/E4/E5 pending acceptance in M8" note to the matrix, and make clear in the scope description that sippy is only a testbed baseline.
 
-#### G-P1-7 — Air-gapped 包范围过宽
+#### G-P1-7 — The air-gapped package scope is too broad
 
-- **位置**：`docs/product-packaging-plan.md` §3.2
-- **问题**："离线安装包"描述偏向通用 offline installer，可能偏离 Helm-only 生产形态。
-- **证据**：`ADR-0013`；`AGENT.md` §2 单租户 on-prem。
-- **建议**：明确为"镜像同步脚本 + `helm package` + 依赖镜像清单 + 离线加载脚本"，不产生第二套安装形态。
+- **Location**: §3.2 of `docs/product-packaging-plan.md`
+- **Problem**: the "offline installation package" description leans towards a general offline installer, which may deviate from the Helm-only production form.
+- **Evidence**: `ADR-0013`; `AGENT.md` §2 single-tenant on-prem.
+- **Suggestion**: make it explicit as "image sync script + `helm package` + dependent image manifest + offline load script", producing no second installation form.
 
-#### G-P1-8 — PDPO 未声明 O4 未决
+#### G-P1-8 — PDPO does not state that O4 is undecided
 
-- **位置**：`docs/product-packaging-plan.md` §3.4
-- **问题**：PDPO 合规准备写入"保留期限"，但 O4 未裁决，不能硬编码天数。
-- **证据**：`docs/plan.md` §5.1 O4；`ADR-0017` Decision ④。
-- **建议**：改为"保留期限由 O4 裁决后填入；当前仅描述留存范围、删除机制、数据留港原则"。
+- **Location**: §3.4 of `docs/product-packaging-plan.md`
+- **Problem**: the PDPO compliance is prepared to include a "retention period", but O4 is unadjudicated and days must not be hardcoded.
+- **Evidence**: `docs/plan.md` §5.1 O4; `ADR-0017` Decision ④.
+- **Suggestion**: change it to "the retention period is filled in after the O4 adjudication; currently only the retention scope, deletion mechanism and data-residency principle are described".
 
-#### G-P1-9 — 版本生命周期/EOL 未说明需新 ADR
+#### G-P1-9 — Version lifecycle / EOL does not state that a new ADR is required
 
-- **位置**：`docs/product-packaging-plan.md` §3.5
-- **问题**：未说明该交付物需新增 requirement + ADR，依赖文档链不完整。
-- **证据**：`AGENT.md` §3.1 文档链要求。
-- **建议**：增加"需先补 REQ-NF-XX 与 ADR，再走 HLD/LLD/验收"的说明。
+- **Location**: §3.5 of `docs/product-packaging-plan.md`
+- **Problem**: it does not state that this deliverable requires a new requirement + ADR, leaving the document chain incomplete.
+- **Evidence**: the document chain requirement of `AGENT.md` §3.1.
+- **Suggestion**: add the note "REQ-NF-XX and an ADR must be added first, then HLD/LLD/acceptance".
 
-#### G-P1-10 — iFC 灰度/备份恢复未 acknowledge S-CSCF 依赖
+#### G-P1-10 — iFC canary / backup-restore do not acknowledge the S-CSCF dependency
 
-- **位置**：`docs/product-packaging-plan.md` §2.4 / §2.5
-- **问题**：iFC 灰度与备份恢复演练依赖 S-CSCF 侧配置和真实集群环境，计划未充分说明。
-- **证据**：讨论记录（iFC 灰度依赖 S-CSCF 侧）；M8 7.2d BLOCKED（`plan.md` §5.4）。
-- **建议**：在相关交付物中增加"依赖 S-CSCF 侧配合与 M8 真实集群环境"的风险说明。
+- **Location**: §2.4 / §2.5 of `docs/product-packaging-plan.md`
+- **Problem**: iFC canary and the backup-restore drill depend on S-CSCF side configuration and a real-cluster environment; the plan does not explain this sufficiently.
+- **Evidence**: the discussion record (iFC canary depends on the S-CSCF side); M8 7.2d BLOCKED (`plan.md` §5.4).
+- **Suggestion**: add a risk note about "depending on S-CSCF side coordination and the M8 real-cluster environment" to the relevant deliverables.
 
 ### P2 gaps
 
-#### G-P2-1 — `docs/operations/` 尚未创建
+#### G-P2-1 — `docs/operations/` has not been created yet
 
-- **位置**：`docs/product-packaging-plan.md` §2
-- **问题**：计划新增 `docs/operations/`，但该目录目前不存在。
-- **证据**：`docs/README.md` L26 已规划 `operations/`，但实际目录未创建。
-- **建议**：接受为已知缺口；创建目录时把现有 runbook 迁/链接进去。
+- **Location**: §2 of `docs/product-packaging-plan.md`
+- **Problem**: the plan adds `docs/operations/`, but that directory does not exist yet.
+- **Evidence**: L26 of `docs/README.md` already plans `operations/`, but the actual directory has not been created.
+- **Suggestion**: accept it as a known gap; when creating the directory, migrate/link the existing runbooks into it.
 
-#### G-P2-2 — Runbook 实际位置描述不准
+#### G-P2-2 — The description of the actual runbook location is inaccurate
 
-- **位置**：`docs/product-packaging-plan.md` §0.1 #8
-- **问题**："部分 Runbook 散落在各里程碑交付物中"与事实不符；runbook 已集中在 `docs/acceptance/`。
-- **证据**：`docs/acceptance/m5-downscale-runbook.md`、`m5-state-stores-runbook.md`、`m4b-8-runbook.md`、`m8-native-consistency-runbook.md` 等。
-- **建议**：改为"Runbook 已集中在 `docs/acceptance/`，计划迁/链接到 `docs/operations/`"。
+- **Location**: §0.1 #8 of `docs/product-packaging-plan.md`
+- **Problem**: "some runbooks are scattered across each milestone's deliverables" does not match reality; the runbooks are already concentrated in `docs/acceptance/`.
+- **Evidence**: `docs/acceptance/m5-downscale-runbook.md`, `m5-state-stores-runbook.md`, `m4b-8-runbook.md`, `m8-native-consistency-runbook.md` etc.
+- **Suggestion**: change it to "the runbooks are already concentrated in `docs/acceptance/`; the plan migrates/links them to `docs/operations/`".
 
-#### G-P2-3 — `sh-interface.json` 文件名冲突
+#### G-P2-3 — The file name `sh-interface.json` conflicts
 
-- **位置**：`docs/product-packaging-plan.md` §2
-- **问题**：`operations/grafana-dashboards/sh-interface.json` 与"不做 Diameter Sh"范围冲突。
-- **证据**：`AGENT.md` §2。
-- **建议**：删除该文件项或改为明确标注 N/A 的占位说明。
+- **Location**: §2 of `docs/product-packaging-plan.md`
+- **Problem**: `operations/grafana-dashboards/sh-interface.json` conflicts with the "no Diameter Sh" scope.
+- **Evidence**: `AGENT.md` §2.
+- **Suggestion**: delete that file entry or change it to a placeholder note explicitly marked N/A.
 
-#### G-P2-4 — `delivery/install-guide.md` 与 Helm README 边界不清
+#### G-P2-4 — The boundary between `delivery/install-guide.md` and the Helm README is unclear
 
-- **位置**：`docs/product-packaging-plan.md` §2
-- **问题**：`delivery/install-guide.md` 与现有 `deploy/helm/README.md` 内容重叠，职责边界未说明。
-- **证据**：`deploy/helm/README.md` 已含详细安装、values 说明、渲染守卫。
-- **建议**：`delivery/install-guide.md` 聚焦"交付清单 + 镜像同步 + helm install 命令清单"，`deploy/helm/README.md` 聚焦 Helm chart 参数与行为；两文档互相链接，避免重复。
+- **Location**: §2 of `docs/product-packaging-plan.md`
+- **Problem**: `delivery/install-guide.md` overlaps in content with the existing `deploy/helm/README.md`, and the responsibility boundary is not explained.
+- **Evidence**: `deploy/helm/README.md` already contains detailed installation, values descriptions and rendering guards.
+- **Suggestion**: `delivery/install-guide.md` should focus on "delivery manifest + image sync + the helm install command list", while `deploy/helm/README.md` should focus on the Helm chart parameters and behaviour; the two documents should link to each other to avoid duplication.
 
-#### G-P2-5 — 3–4 周排期忽略 M8 搁置与未决项
+#### G-P2-5 — The 3–4 week schedule ignores the shelved M8 and the undecided items
 
-- **位置**：`docs/product-packaging-plan.md` §3
-- **问题**：排期未考虑 M8 签字搁置、O1/O4/D5 未决、12 blocked / 24 open 验收项。
-- **证据**：`docs/plan.md` §0、§5；`report.md` §0.5、§0.8。
-- **建议**：改为"先关闭 M8 与 O1/O4/D5，再制定可执行排期"，或给出带阻塞条件的多情景估算。
+- **Location**: §3 of `docs/product-packaging-plan.md`
+- **Problem**: the schedule does not consider the shelved M8 sign-off, the undecided O1/O4/D5, or the 12 blocked / 24 open acceptance items.
+- **Evidence**: `docs/plan.md` §0, §5; `report.md` §0.5, §0.8.
+- **Suggestion**: change it to "first close M8 and O1/O4/D5, then formulate an executable schedule", or give a multi-scenario estimate with blocking conditions.
 
-#### G-P2-6 — 产品名"已确认"依据不足
+#### G-P2-6 — Insufficient basis for the product name being "confirmed"
 
-- **位置**：`docs/product-packaging-plan.md` §4.3
-- **问题**：产品名被标为"已确认"，但仅见于命名讨论，无 ADR/plan 决策行。
-- **证据**：命名讨论记录；`docs/plan.md` 无该决策行。
-- **建议**：维护者裁决：要么补正式决策落点，要么标为"建议名称"而非已确认。
+- **Location**: §4.3 of `docs/product-packaging-plan.md`
+- **Problem**: the product name is marked "confirmed", but it appears only in the naming discussion, with no ADR / plan decision row.
+- **Evidence**: the naming discussion record; `docs/plan.md` has no such decision row.
+- **Suggestion**: the maintainer adjudicates: either add a formal decision landing point, or mark it as "suggested name" rather than confirmed.
 
 ---
 
 ## Adjudication
 
-| ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
+The quoted literals below are the exact original wording of `docs/product-packaging-plan.md` and are kept verbatim.
+
+| ID | Source | Issue Summary | Adjudication | Fix Plan | Status | Verification Method | Notes |
 |---|---|---|---|---|---|---|---|
-| G-P0-1 | §0.1 #7 | Console 被标为"已有"，但 M4b 仅为工程切片，REQ-S-4/M4b/REQ 多项未验收 | 接受 | 将 #7 改为"部分已有（工程切片）"，列出未验收子项 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L21） | |
-| G-P0-2 | §0.1 #9 | M6 dev-host harness 被描述为"容量实测"，违反 M6 前不发布容量数字规则 | 接受 | 改为"M6 容量 harness（dev-host 内部测量，非对外发布）" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L23） | |
-| G-P0-3 | §1.3 | NE Datasheet 计划写入 CAPS/BHCA/并发数字，但 O1 未裁决 | 接受 | 容量章节写为"受 O1 阻塞，待实测后填入" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L69） | 容量数值待 O1 裁决（B 类交付物） |
-| G-P0-4 | §2.1/§2.2 | Grafana/告警含 Diameter Sh 面板与 Sh 超时告警，超出范围 | 接受 | 移除 Sh 面板与告警；合规矩阵 Sh 标 N/A | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L79-L80） | |
-| G-P0-5 | §2.4 | "iFC 灰度 + 一键回退"误把 S-CSCF/HSS 侧 iFC 责任放到 AS | 接受 | 改为"ISC 触发后业务灰度/摘流 + 与 S-CSCF 侧配合" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L82） | |
-| G-P0-6 | §4.1 | "目标场景：内部上线评审"标为已确认，但无 plan/ADR/review record 落点 | **部分接受** | 维护者 2026-10-09 确认方向 A（内部上线评审），但该方向目前仅来自讨论记录；计划文档 §4.1 已降格表述为"当前默认方向（讨论确认，待补 plan/ADR 正式决策落点）"，不再写成已确认决策 | 已关闭 | 文档更新 + plan 决策行（docs/plan.md L21-28） | 正式决策落点已补：docs/plan.md §0 "产品决策记录"小节 |
-| G-P0-7 | §4.4 | "顺序全量推进"标为已确认，但 M8 签字搁置、O1/O4/D5 未决 | 接受 | 改为"待 M8 签字与 O1/O4/D5 裁决后确认推进节奏" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L220-L223） | 推进节奏已改为 A/B 两类，B 类待前置项闭合 |
-| G-P0-8 | §1.4 #4.1 | 第四批正式性能基准报告仍违反容量数字禁令 | 接受 | 改为"O1 裁决后整理内部评审版报告"；当前不写数值 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L103） | 性能报告待 O1 裁决（B 类交付物） |
-| G-P1-1 | §0.1 #4 | Health/Draining 仅机制+模拟验证，缺真实集群 ISSU/缩容证据 | 接受 | 增加"真实 SIP 负载下不掉呼叫待 M7/M8 验收"说明 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L18） | |
-| G-P1-2 | §0.1 #5 | 分层测试体系过度宣称：e2e=0、performance 仅 accept-all harness | 接受 | 改为"骨架已建立；e2e 未落地，performance 非业务路径" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L19） | |
-| G-P1-3 | §0.2 #2 | NE Datasheet 缺口未注 O1 阻塞 | 接受 | #2 影响范围增加"容量章节受 O1 阻塞" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L31） | 容量数值待 O1 裁决 |
-| G-P1-4 | §0.2 #9 | SLA/EOL 缺口未区分 ADR-0018 只覆盖版本号 | 接受 | #9 说明增加"需新增 requirement + ADR" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L38） | 与 G-P1-9 同源，需新增 requirement + ADR |
-| G-P1-5 | §0.2 #10 | 安全/隐私缺口遗漏 O4/D5 | 接受 | #10 状态改为"受 O4/D5 阻塞" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L39） | 待 O4/D5 裁决 |
-| G-P1-6 | §1.2 | 3GPP 矩阵未注 E1/E4/E5 仍 open、sippy 仅 testbed 基线 | 接受 | 矩阵增加 E1/E4/E5 待验收备注，并说明 sippy 参考地位 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L68） | |
-| G-P1-7 | §3.2 | Air-gapped 包范围过宽，可能偏离 Helm-only | 接受 | 明确为"镜像同步 + helm package + 离线加载脚本" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L92） | |
-| G-P1-8 | §3.4 | PDPO 合规未声明 O4 未决、不能硬编码保留天数 | 接受 | 保留期限写为"由 O4 裁决后填入" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L94） | 待 O4/D5 裁决 |
-| G-P1-9 | §3.5 | 版本生命周期/EOL 未说明需新 ADR/requirement | 接受 | 增加"需先补 REQ + ADR"说明 | 已关闭 | 文档更新 + REQ-NF-16（prd.md L459-470）+ ADR-0027 | 已新增 REQ-NF-16 与 ADR-0027，ADR 注册表已更新 |
-| G-P1-10 | §2.4/§2.5 | iFC 灰度/备份恢复未 acknowledge S-CSCF 与真实集群依赖 | 接受 | 增加依赖与风险说明 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L82-L83） | 真实集群演练待 M8 7.2d 解锁，2.4 另需 S-CSCF/HSS 侧配合 |
-| G-P2-1 | §2 | `docs/operations/` 尚未创建 | 接受 | 创建目录并迁移/链接现有 runbook | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L124） | §2 已注明目录尚未创建，随创建时迁移/链接现有 runbook |
-| G-P2-2 | §0.1 #8 | Runbook 实际集中在 `docs/acceptance/`，描述不准 | 接受 | 改为"Runbook 已集中，计划迁到 operations/" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L22） | |
-| G-P2-3 | §2 | `sh-interface.json` 文件名与不做 Sh 范围冲突 | 接受 | 删除或改为 N/A 占位说明 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L125-L127） | 目录树已删除该文件项，仅保留 overview/sip-signaling 看板 |
-| G-P2-4 | §2 | `delivery/install-guide.md` 与 `deploy/helm/README.md` 边界不清 | 接受 | 明确两文档职责并互相链接 | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L136-L143） | |
-| G-P2-5 | §3 | 3–4 周排期忽略 M8 搁置与 O1/O4/D5 | 接受 | 改为"先关闭 M8 与 O1/O4/D5，再定排期" | 已验证 | 文档更新 + 维护者验证（product-packaging-plan.md 2026-10-09 修订版 L148-L189） | 已改为带阻塞条件的 A/B 两类与多情景排期，不预设总工期 |
-| G-P2-6 | §4.3 | 产品名"已确认"仅 discussion 证据 | **部分接受** | 维护者 2026-10-09 确认文档采用暂用名 In-house IMS Application Server、git repo 名改为 inhouse-ims-as（chart/镜像/服务名保持 3rdparty-as 不变）；计划文档 §4.3 已改为"文档暂用名 / 建议名称（待补正式决策落点）"，不再表述为已正式批准产品名 | 已关闭 | 文档更新 + plan 决策行（docs/plan.md L21-28） | 正式命名决策落点已补：docs/plan.md §0 "产品决策记录"小节 |
+| G-P0-1 | §0.1 #7 | The Console is marked as "已有", but M4b is only an engineering slice and multiple REQ items such as REQ-S-4/M4b/REQ are not accepted | Accepted | Change #7 to "部分已有（工程切片）" and list the unaccepted sub-items | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L21) | |
+| G-P0-2 | §0.1 #9 | The M6 dev-host harness is described as "容量实测", violating the rule that no capacity figures be published before M6 | Accepted | Change it to "M6 容量 harness（dev-host 内部测量，非对外发布）" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L23) | |
+| G-P0-3 | §1.3 | The NE Datasheet plans to write CAPS/BHCA/concurrency figures, but O1 is unadjudicated | Accepted | Write the capacity chapter as "受 O1 阻塞，待实测后填入" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L69) | Capacity values pending O1 adjudication (class-B deliverable) |
+| G-P0-4 | §2.1/§2.2 | The Grafana/alerts contain a Diameter Sh panel and an Sh timeout alert, out of scope | Accepted | Remove the Sh panel and alert; mark Sh as N/A in the compliance matrix | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L79-L80) | |
+| G-P0-5 | §2.4 | "iFC 灰度 + 一键回退" wrongly puts the S-CSCF/HSS-side iFC responsibility on the AS | Accepted | Change it to "ISC 触发后业务灰度/摘流 + 与 S-CSCF 侧配合" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L82) | |
+| G-P0-6 | §4.1 | "目标场景：内部上线评审" is marked confirmed, but has no plan/ADR/review record landing point | **Partially accepted** | The maintainer confirmed direction A (internal go-live review) on 2026-10-09, but that direction currently comes only from the discussion record; §4.1 of the plan document has been downgraded in wording to "当前默认方向（讨论确认，待补 plan/ADR 正式决策落点）" and is no longer written as a confirmed decision | Closed | Document update + plan decision row (docs/plan.md L21-28) | The formal decision landing point has been added: the §0 "product decision record" subsection of docs/plan.md |
+| G-P0-7 | §4.4 | "顺序全量推进" is marked confirmed, but the M8 sign-off is shelved and O1/O4/D5 are undecided | Accepted | Change it to "待 M8 签字与 O1/O4/D5 裁决后确认推进节奏" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L220-L223) | The pace of progress has been changed into categories A and B; category B awaits the closure of the prerequisites |
+| G-P0-8 | §1.4 #4.1 | The batch 4 official performance benchmark report still violates the capacity-figure prohibition | Accepted | Change it to "O1 裁决后整理内部评审版报告"; no figures at the current stage | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L103) | The performance report awaits the O1 adjudication (class-B deliverable) |
+| G-P1-1 | §0.1 #4 | Health/Draining has only mechanism + simulation verification and lacks real-cluster ISSU/downscale evidence | Accepted | Add the note "真实 SIP 负载下不掉呼叫待 M7/M8 验收" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L18) | |
+| G-P1-2 | §0.1 #5 | The layered test system is over-claimed: e2e=0, performance only an accept-all harness | Accepted | Change it to "骨架已建立；e2e 未落地，performance 非业务路径" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L19) | |
+| G-P1-3 | §0.2 #2 | The NE Datasheet gap does not note the O1 block | Accepted | Add "容量章节受 O1 阻塞" to the impact scope of #2 | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L31) | Capacity values pending O1 adjudication |
+| G-P1-4 | §0.2 #9 | The SLA/EOL gap does not distinguish that ADR-0018 only covers version numbers | Accepted | Add "需新增 requirement + ADR" to the notes of #9 | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L38) | Same origin as G-P1-9, a new requirement + ADR is required |
+| G-P1-5 | §0.2 #10 | The security/privacy gap omits O4/D5 | Accepted | Change the status of #10 to "受 O4/D5 阻塞" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L39) | Pending O4/D5 adjudication |
+| G-P1-6 | §1.2 | The 3GPP matrix does not note that E1/E4/E5 are still open and that sippy is only a testbed baseline | Accepted | Add an E1/E4/E5 pending-acceptance note to the matrix and explain the status of the sippy reference | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L68) | |
+| G-P1-7 | §3.2 | The air-gapped package scope is too broad and may deviate from Helm-only | Accepted | Make it explicit as "镜像同步 + helm package + 离线加载脚本" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L92) | |
+| G-P1-8 | §3.4 | The PDPO compliance does not state that O4 is undecided and retention days must not be hardcoded | Accepted | Write the retention period as "由 O4 裁决后填入" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L94) | Pending O4/D5 adjudication |
+| G-P1-9 | §3.5 | Version lifecycle / EOL does not state that a new ADR/requirement is required | Accepted | Add the note "需先补 REQ + ADR" | Closed | Document update + REQ-NF-16 (prd.md L459-470) + ADR-0027 | REQ-NF-16 and ADR-0027 have been added, and the ADR registry has been updated |
+| G-P1-10 | §2.4/§2.5 | iFC canary / backup-restore do not acknowledge the S-CSCF and real-cluster dependencies | Accepted | Add the dependency and risk notes | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L82-L83) | The real-cluster drill awaits the M8 7.2d unlock, and 2.4 additionally requires S-CSCF/HSS side coordination |
+| G-P2-1 | §2 | `docs/operations/` has not been created yet | Accepted | Create the directory and migrate/link the existing runbooks | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L124) | §2 now notes that the directory has not been created and that existing runbooks are migrated/linked when it is |
+| G-P2-2 | §0.1 #8 | The runbooks are actually concentrated in `docs/acceptance/`; the description is inaccurate | Accepted | Change it to "Runbook 已集中，计划迁到 operations/" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L22) | |
+| G-P2-3 | §2 | The file name `sh-interface.json` conflicts with the no-Sh scope | Accepted | Delete it or change it to an N/A placeholder note | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L125-L127) | The file entry has been deleted from the directory tree, keeping only the overview/sip-signaling dashboards |
+| G-P2-4 | §2 | The boundary between `delivery/install-guide.md` and `deploy/helm/README.md` is unclear | Accepted | Clarify the responsibilities of the two documents and link them to each other | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L136-L143) | |
+| G-P2-5 | §3 | The 3–4 week schedule ignores the shelved M8 and O1/O4/D5 | Accepted | Change it to "先关闭 M8 与 O1/O4/D5，再定排期" | Verified | Document update + maintainer verification (product-packaging-plan.md 2026-10-09 revised version L148-L189) | It has been changed to categories A and B with blocking conditions and a multi-scenario schedule, without presupposing a total duration |
+| G-P2-6 | §4.3 | The product name being "confirmed" rests only on discussion evidence | **Partially accepted** | The maintainer confirmed on 2026-10-09 that the documentation uses the provisional name In-house IMS Application Server and that the git repo name is changed to inhouse-ims-as (the chart/image/service names remain 3rdparty-as); §4.3 of the plan document has been changed to "文档暂用名 / 建议名称（待补正式决策落点）" and no longer states that the product name has been formally approved | Closed | Document update + plan decision row (docs/plan.md L21-28) | The formal naming decision landing point has been added: the §0 "product decision record" subsection of docs/plan.md |
 
 ---
 
-## AI 复核结论（Verification）
+## AI Re-check Conclusion (Verification)
 
-- 本 review record 已对照 `docs/product-packaging-plan.md` 全文、`AGENT.md`、`docs/plan.md`、`docs/acceptance/test-plan.md`、`docs/acceptance/report.md` 及 ADR-0013/0014/0017/0018/0019 进行复核。
-- 所有 P0/P1/P2 gap 均已给出证据来源、修改方案与 adjudication 表初始状态。
-- 维护者已于 2026-10-09 完成全部 24 项裁决（22 项接受、G-P0-6 与 G-P2-6 部分接受），`docs/product-packaging-plan.md` 已按裁决修订。
-- **独立复核 agent 已对照 `docs/product-packaging-plan.md` 修订版全文逐项验证，24 项 gap 的修改方案均已正确落地。**
-- **§0.3 前置依赖完整覆盖 review record §7 全部遗漏关键项。**
-- **Adjudication 表回写与裁决一致。**
-- **24 项 gap 已全部关闭（8 P0 + 10 P1 + 6 P2），P0 全部关闭，该计划可作为内部上线评审基线。**
-- **遗留动作已全部关闭**：G-P0-6/G-P2-6 已在 docs/plan.md 补正式决策行；G-P1-9 已新增 REQ-NF-16 + ADR-0027。
+- This review record has been re-checked against the full text of `docs/product-packaging-plan.md`, `AGENT.md`, `docs/plan.md`, `docs/acceptance/test-plan.md`, `docs/acceptance/report.md` and ADR-0013/0014/0017/0018/0019.
+- All P0/P1/P2 gaps have been given an evidence source, a fix plan and an initial adjudication-table status.
+- The maintainer completed all 24 adjudications on 2026-10-09 (22 accepted, G-P0-6 and G-P2-6 partially accepted), and `docs/product-packaging-plan.md` has been revised per the adjudications.
+- **The independent re-check agent has verified item by item against the full text of the revised `docs/product-packaging-plan.md`, and the fix plans of all 24 gaps have landed correctly.**
+- **§0.3's prerequisites fully cover all missing key items of review record §7.**
+- **The Adjudication table written back is consistent with the adjudications.**
+- **All 24 gaps have been closed (8 P0 + 10 P1 + 6 P2), all P0 closed, and the plan can serve as the baseline for the internal go-live review.**
+- **All leftover actions have been closed**: G-P0-6/G-P2-6 have added formal decision rows to docs/plan.md; G-P1-9 has added REQ-NF-16 + ADR-0027.
 
 ---
 
-## 签字
+## Signature
 
-- **评审人**：AI agent（Explore + writing subagent）
-- **评审日期**：2026-10-09
-- **维护者裁决日期**：2026-10-09
-- **独立复核日期**：2026-10-09
-- **复核结论**：24 项 gap 全部关闭（8 P0 + 10 P1 + 6 P2），P0 全部关闭，计划可作为内部上线评审基线。遗留动作已全部关闭（2026-10-09）。
+- **Reviewer**: AI agent (Explore + writing subagent)
+- **Review date**: 2026-10-09
+- **Maintainer adjudication date**: 2026-10-09
+- **Independent re-check date**: 2026-10-09
+- **Re-check conclusion**: all 24 gaps are closed (8 P0 + 10 P1 + 6 P2), all P0 closed, and the plan can serve as the baseline for the internal go-live review. All leftover actions have been closed (2026-10-09).

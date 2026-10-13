@@ -12,326 +12,326 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 范围修订与内部版本收尾计划（2026-10-12）
+# M8 Scope Revision and Internal-Version Wrap-up Plan (2026-10-12)
 
-> **状态：本文是计划，不是执行记录。**
+> **Status: this document is a plan, not an execution record.**
 >
-> - **不签收**：本文不签收任何 REQ、不签收任何里程碑、不改签收矩阵任何一行的 `status`、不改 `report.md` 任何计数。文中所有「完成」「终态」字样均指**本计划范围内的工程目标**，非验收结论。
-> - **待评审**：本文落盘后**待维护者评审**；评审通过**不等于**执行授权 —— 各批次的启动仍需维护者逐项批准（见 §6）。
-> - **触发前提（维护者 2026-10-12 指示）**：必须依赖运营商 / 客户环境的项**移到下一个 release**；**本版前提 = function 必须完成，证据可以使用模拟器**。
-> - **上游指针**：[`2026-10-06-m8-release-candidate-plan.md`](2026-10-06-m8-release-candidate-plan.md)（RC 计划，阶段 A–E 总计划）、[`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md)（N2/N3/N4）、[`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)（restriction 依据）、[`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md)（签收矩阵）、[`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md)（未完成项盘点）。
-> - **编号口径声明**：本文沿用仓库既有编号，**不发明新编号**。仓库中存在形似易混的两套编号，本文一律按下列既有用法书写，读法以此表为准：
-
-| 本文写法 | 含义 | 出处 |
-|---|---|---|
-| `A-1`~`A-7`（带连字符） | RC 计划**阶段 A** 任务（A-1 F9 native 门禁 … A-7 native 一致性 runbook） | RC 计划 §4 阶段 A |
-| `A2`~`A6`（不带连字符） | 2026-10-10 盘点 **Lane A** 条目（A2 真栈构建常态化 … A6 版本口径） | [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §4 |
-| `B-1`~`B-7`（带连字符） | RC 计划**阶段 B** 任务 | RC 计划 §4 阶段 B |
-| `B1`~`B6`（不带连字符） | 2026-10-10 盘点的**维护者裁决项**（B1 O1 容量目标 … B6 包装文档评审） | 同上 §0-A.2 / §4 Lane B |
-| `D-1`~`D-3`（带连字符） | RC 计划**阶段 D** 环境证据项（D-1 运营商 PKI / D-2 客户 K8s / D-3 D6 testbed） | RC 计划 §4 阶段 D；[`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) |
-| `D1`~`D12`（不带连字符） | `plan.md` §5.2 未决项（D1 Python 3.10 EOL … D12 集群内 PG/Redis HA） | [`../plan.md`](../plan.md) §5.2 |
-| `E-1`~`E-6`（带连字符） | RC 计划**阶段 E**（报告、版本、签字）任务 | RC 计划 §4 阶段 E |
-| `S5`~`S11`（`S7a`/`S8`） | A3 Phase D 真栈对拍场景 | [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D |
-| `S-1`~`S-4`（带连字符） | 矩阵安全行 `REQ-S-1`~`REQ-S-4` 的简写 | [`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md) §3 |
-| `F-4`/`NF-2`/`5.4-F-13` 等 | 矩阵行 ID 简写（省略 `REQ-` 前缀，补测行保留 `5.4-` 前缀） | 同上 |
-
-六个工作批次一律用**描述性名称**（「发布与打包」「SIP 对拍」「kind/sim 证据」「签收与评审」「性能与容量」「文档与报告」），**不另造批次编号**。
+> - **Signs off nothing**: this document signs off no REQ, signs off no milestone, changes no `status` of any row in the sign-off matrix, and changes no count in `report.md`. Every "complete" / "final state" wording here refers to an **engineering target within this plan's scope**, not to an acceptance conclusion.
+> - **Pending review**: after this document is written it is **pending maintainer review**; passing review **does not equal** execution authorization — the start of each batch still requires item-by-item approval from the maintainer (see §6).
+> - **Triggering premise (maintainer instruction 2026-10-12)**: items that must depend on the carrier / customer environment are **moved to the next release**; **the premise of this version = functionality must be complete, evidence may use simulators**.
+> - **Upstream pointers**: [`2026-10-06-m8-release-candidate-plan.md`](2026-10-06-m8-release-candidate-plan.md) (RC plan, the master plan of stages A–E), [`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md) (N2/N3/N4), [`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) (the restriction basis), [`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md) (the sign-off matrix), [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) (the inventory of unfinished items).
+> - **Numbering basis statement**: this document reuses the repository's existing numbering and **invents no new numbering**. The repository contains two similarly shaped and easily confused sets of numbering; this document always writes them per the existing usage below, and this table is authoritative for reading:
+>
+> | As written here | Meaning | Source |
+> |---|---|---|
+> | `A-1`~`A-7` (with hyphen) | RC plan **Stage A** tasks (A-1 F9 native gate … A-7 native consistency runbook) | RC plan §4 Stage A |
+> | `A2`~`A6` (without hyphen) | 2026-10-10 inventory **Lane A** items (A2 real-stack build normalization … A6 version basis) | [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §4 |
+> | `B-1`~`B-7` (with hyphen) | RC plan **Stage B** tasks | RC plan §4 Stage B |
+> | `B1`~`B6` (without hyphen) | The 2026-10-10 inventory's **maintainer adjudication items** (B1 O1 capacity target … B6 packaging document review) | same §0-A.2 / §4 Lane B |
+> | `D-1`~`D-3` (with hyphen) | RC plan **Stage D** environment evidence items (D-1 carrier PKI / D-2 customer K8s / D-3 D6 testbed) | RC plan §4 Stage D; [`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) |
+> | `D1`~`D12` (without hyphen) | Undecided items in §5.2 of `plan.md` (D1 Python 3.10 EOL … D12 in-cluster PG/Redis HA) | [`../plan.md`](../plan.md) §5.2 |
+> | `E-1`~`E-6` (with hyphen) | RC plan **Stage E** (report, version, signature) tasks | RC plan §4 Stage E |
+> | `S5`~`S11` (`S7a`/`S8`) | A3 Phase D real-stack differential-check scenarios | [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D |
+> | `S-1`~`S-4` (with hyphen) | Abbreviations for the matrix security rows `REQ-S-1`~`REQ-S-4` | [`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md) §3 |
+> | `F-4`/`NF-2`/`5.4-F-13` and the like | Abbreviations for matrix row IDs (the `REQ-` prefix is omitted; backfill rows keep the `5.4-` prefix) | same |
+>
+> The six work batches all use **descriptive names** ("Release and Packaging", "SIP Differential Testing", "kind/sim Evidence", "Sign-off and Review", "Performance and Capacity", "Documentation and Reports"), with **no separately invented batch numbering**.
 
 ---
 
-## 0. 事实基线（2026-10-12，照录现状，本文不改写任何正本）
+## 0. Factual Baseline (2026-10-12, the current state transcribed; this document rewrites no canonical document)
 
-> 本节是后续各节的事实底座。所有条目均引自仓内既有文档；本文**只照录，不改写、不签收**。
+> This section is the factual foundation for the sections that follow. All entries are quoted from existing in-repo documents; this document **only transcribes, it does not rewrite and does not sign off**.
 
-### 0.1 签收矩阵现状
+### 0.1 Current State of the Sign-off Matrix
 
-以 [`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md) 2026-10-12 N2 / N3 代签节登记的计数为准：**pass 16 / open 17 / blocked 10 / n-a 6 / fail 0**。
+The counts registered in the N2 / N3 counter-signature section of [`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md) on 2026-10-12 are authoritative: **pass 16 / open 17 / blocked 10 / n-a 6 / fail 0**.
 
-| 桶 | 行（矩阵行 ID） |
+| Bucket | Rows (matrix row IDs) |
 |---|---|
-| open 17 | F-4、F-5、F-8、F-9、F-10、F-11、F-16、NF-2、NF-5、NF-9、NF-10、NF-13、NF-14、NF-15、S-1、S-4、D12/O5-HA |
-| blocked 10 | F-13、5.4-F-13、F-15、5.4-F-15真AS、NF-1、NF-4、NF-7、S-2、S-3、ADR-0008-演练 |
+| open 17 | F-4, F-5, F-8, F-9, F-10, F-11, F-16, NF-2, NF-5, NF-9, NF-10, NF-13, NF-14, NF-15, S-1, S-4, D12/O5-HA |
+| blocked 10 | F-13, 5.4-F-13, F-15, 5.4-F-15真AS, NF-1, NF-4, NF-7, S-2, S-3, ADR-0008-演练 |
 
-N3 已代签的 7 行（F-1/F-2/F-3/F-6/F-7/F-12/F-14）签字口径一律是「**工程证据接受**」，不是 REQ 级验收；M5 REQ 级仍是不通过、M8 仍是「RC 就绪、待退出签字」。
+The 7 rows counter-signed under N3 (F-1/F-2/F-3/F-6/F-7/F-12/F-14) all use the signature basis "**engineering evidence accepted**", not REQ-level acceptance; M5 still fails at the REQ level and M8 is still "RC-ready, pending exit sign-off".
 
-### 0.2 外部硬依赖（restriction）
+### 0.2 External Hard Dependencies (restriction)
 
-依据 [`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)：自 **2026-10-07** 起，Close 之前不做真实运营商 S-SBC / 客户 K8s 测试，下列项保持 `blocked` 或 `open`，**不能签 pass**：
+Per [`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md): since **2026-10-07**, no real carrier S-SBC / customer K8s testing is done before Close; the following items stay `blocked` or `open` and **cannot be signed pass**:
 
-| 外部硬依赖 | 牵动的矩阵行 | 缺什么 |
+| External hard dependency | Matrix rows it affects | What is missing |
 |---|---|---|
-| D-1（运营商 PKI + 外网 S-SBC） | S-2、S-3 | 运营商 PKI lab 与外网 S-SBC 对端 |
-| D-2（客户 K8s） | NF-1（live kill/restart/BYE） | 客户 K8s 集群 |
-| ADR-0008 跨站点切换演练 | ADR-0008-演练 | 两个客户 / 生产站点（实验室单集群不算） |
-| D12 / O5 生产 Redis 与 PostgreSQL HA | D12/O5-HA | 客户生产拓扑上的 Sentinel / 流复制 / PITR（kind bundled state 不是本条） |
+| D-1 (carrier PKI + external-network S-SBC) | S-2, S-3 | A carrier PKI lab and an external-network S-SBC peer |
+| D-2 (customer K8s) | NF-1 (live kill/restart/BYE) | A customer K8s cluster |
+| ADR-0008 cross-site switchover drill | ADR-0008-演练 | Two customer / production sites (a single lab cluster does not count) |
+| D12 / O5 production Redis and PostgreSQL HA | D12/O5-HA | Sentinel / streaming replication / PITR on the customer production topology (kind bundled state does not satisfy this item) |
 
-### 0.3 不要求客户集群的行
+### 0.3 Rows That Do Not Require a Customer Cluster
 
-同上文件「同样的 restriction」一节：**REQ-NF-2、REQ-NF-4、REQ-NF-9** 要的是**自有 kind / 实验室集群**，不要求客户集群；**REQ-NF-5** 的仿真 S-SBC 已在 M7.1 做成**透明桥**（无 Kamailio，不是运营商 S-SBC）。这四行是「证据可以用模拟器」这一前提的主要对象。
+In the "the same restriction" section of the same document: **REQ-NF-2, REQ-NF-4, REQ-NF-9** ask for **our own kind / lab cluster** and do not require a customer cluster; the simulated S-SBC of **REQ-NF-5** was already built in M7.1 as a **transparent bridge** (no Kamailio, not a carrier S-SBC). These four rows are the main targets of the premise "evidence may use simulators".
 
-### 0.4 发布镜像现状
+### 0.4 Current State of the Release Image
 
-`deploy/docker/Dockerfile` 仍是 **M5 进程壳、不带 SIP 监听**（`ENTRYPOINT ["python", "-m", "as_platform"]`；`EXPOSE 5060/udp 5061/tcp` 只是端口声明）。多处文档明写该缺口「**重开 M8 之前补上**」（[`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md) 文首、[`../plan.md`](../plan.md) §0、[`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md) 发布镜像行）。
+`deploy/docker/Dockerfile` is still the **M5 process shell with no SIP listening** (`ENTRYPOINT ["python", "-m", "as_platform"]`; `EXPOSE 5060/udp 5061/tcp` is only a port declaration). Several documents explicitly state that this gap must be **filled before reopening M8** (the header of [`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md), §0 of [`../plan.md`](../plan.md), the release image row of [`pre-m8-demo-review-plan.md`](pre-m8-demo-review-plan.md)).
 
-### 0.5 A3 Phase D 排期（已定稿，2026-10-12）
+### 0.5 A3 Phase D Scheduling (finalized, 2026-10-12)
 
-[`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D：**P1 S5 两腿归一化对拍 → P2 S7a SDP corpus → P3 S6 规则优先级 → P4 S10 非 2xx → P5 S9 in-dialog → P6 S11 CANCEL 竞态**（S11 因确定性证明成本最高、flaky 风险最大排最后，与上游理由一致）；**S8 登记为阻塞项** —— 基线缺 Route / Record-Route 头，**M2 probe 补采前不排**，REQ-F-5 按 N4 停止线不签 pass。**排期已定稿，但用例实现一批未落，分批启动需维护者授权。**
+[`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D: **P1 S5 two-leg normalized differential check → P2 S7a SDP corpus → P3 S6 rule priority → P4 S10 non-2xx → P5 S9 in-dialog → P6 S11 CANCEL race** (S11 is placed last because deterministic proof is the most expensive and the flaky risk is the greatest, consistent with the upstream rationale); **S8 is registered as a blocker** — the baseline lacks Route / Record-Route headers, so it is **not scheduled until the M2 probe capture is added**, and REQ-F-5 is not signed pass per the N4 stop line. **The scheduling is finalized, but the batch of test case implementations has not landed; starting them in batches requires maintainer authorization.**
 
-### 0.6 性能与容量
+### 0.6 Performance and Capacity
 
-- **NF-15 的 HPA 阈值仍阻塞**：缺带 **per-pod CPU / 内存利用率**的测量批次；2026-10-12 饱和点探测（20 → 1280 CPS 全成功、未测到饱和点）**未记录资源数据**，不构成该批次（依据 [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md) §4）。
-- **O1**：内部工程目标（**loopback 模型 CPS 1280 无失败**）已定，**仅限内部**；**对外承诺值仍不填**（G5 / B1；`ne-datasheet.md` §3 填值准入条件三条均未满足）。HPA 阈值、容量类告警、Datasheet 容量取值、4.1 正式报告四项下游维持阻塞。
+- **The HPA thresholds of NF-15 are still blocked**: a measurement batch with **per-pod CPU / memory utilization** is missing; the 2026-10-12 saturation probe (20 → 1280 CPS all successful, saturation point not reached) **recorded no resource data** and therefore does not constitute that batch (basis: §4 of [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md)).
+- **O1**: the internal engineering target (**CPS 1280 with no failures under the loopback model**) has been fixed and is **internal only**; **the external committed value is still not filled in** (G5 / B1; the three fill-in admission conditions in §3 of `ne-datasheet.md` are all unmet). The four downstream items — HPA thresholds, capacity-class alerts, Datasheet capacity values, and the 4.1 formal report — stay blocked.
 
-### 0.7 F-13 / NF-7（呼叫轨迹）
+### 0.7 F-13 / NF-7 (call traces)
 
-无 trace store / API；**O4**（默认 10 天、部署可配）与 **D5**（in-cluster PostgreSQL）**已裁但实现未落**（2026-10-10 G6 裁决 + [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) 已整体后置）。F-16 的轨迹联动部分依赖 F-13。**2026-10-12 裁定：重大漏项，delay 到 v1.1 作为 feature（requirement → ADR → design → review），本版不实现；F-16 只签非轨迹部分。**
+There is no trace store / API; **O4** (10 days by default, configurable per deployment) and **D5** (in-cluster PostgreSQL) have been **adjudicated but not implemented** (the 2026-10-10 G6 adjudication plus [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) deferred them wholesale). The trace linkage part of F-16 depends on F-13. **Adjudicated on 2026-10-12: a major omission, deferred to v1.1 as a feature (requirement → ADR → design → review), not implemented in this version; F-16 is signed only for the non-trace part.**
 
-### 0.8 文档计数与已后置项
+### 0.8 Document Counts and Already-Deferred Items
 
-- `../acceptance/report.md` §0.5 计数**仍为 open 24 / blocked 12**（pass 9 / n-a 4），**未同步** N2/N3 后的矩阵（pass 16 / open 17 / blocked 10 / n-a 6）。
-- **X1** 抓取接线已后置（待运营商 monitoring-integration 标准输入，G3 维持待决，不改 chart）；**B2 / B3** 已整体后置到下一个 release；**Lane D 四项**已分别裁为 v1.1 / 按需（4.2 长稳报告 v1.1、4.3 API 版本兼容 v1.1、4.4 白皮书按需、4.5 能力开放机制按需）。
+- The §0.5 counts in `../acceptance/report.md` **are still open 24 / blocked 12** (pass 9 / n-a 4) and are **not synchronized** with the matrix after N2/N3 (pass 16 / open 17 / blocked 10 / n-a 6).
+- **X1** capture wiring is already deferred (awaiting the carrier's monitoring-integration standard input; G3 stays undecided, the chart is not changed); **B2 / B3** are deferred wholesale to the next release; the **four Lane D items** have each been adjudicated to v1.1 / on demand (4.2 long-run report v1.1, 4.3 API version compatibility v1.1, 4.4 white paper on demand, 4.5 capability-opening mechanism on demand).
 
-> **去向指针（2026-10-13 追加；上方第 2 条原文一律保留不改）**：本条所列已后置项的去向统一收口于
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) —— **X1 抓取接线**见 **§2** 第 7 行（在七项外部硬依赖表内）；
-> **B2** 见 **§4-1**、**B3** 见 **§4-2**，两者的四项启动条件原样保留为 **§4.3**（未确认不得启动），B3 的 RPO / RTO 取值见 **§7-4**；
-> **Lane D 4.2 / 4.3** 见 **§3-7**（4.4 / 4.5 已裁为「按需」，不在 v1.1 立项列内）。
-> 后续状态盘点、汇报、handoff、新 session 开场涉及本条所列遗留项一律**只引该指针**，不逐项展开、不再列入「待维护者动作」。
+> **Destination pointer (appended 2026-10-13; the original text of item 2 above is retained unchanged)**: the destinations of the deferred items listed in this item are consolidated under
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) — **X1 capture wiring** see **§2** row 7 (inside the seven external hard dependencies table);
+> **B2** see **§4-1** and **B3** see **§4-2**, with both of their four startup conditions retained as is in **§4.3** (must not start without confirmation), and B3's RPO / RTO values see **§7-4**;
+> **Lane D 4.2 / 4.3** see **§3-7** (4.4 / 4.5 have been adjudicated as "on demand" and are not in the v1.1 initiation column).
+> Subsequent status reviews, reports, handoffs, and new session openings that touch the leftover items in this item always **cite only that pointer**, do not itemize, and no longer list them as "actions for the maintainer".
 
-### 0.9 四层证据机制与版本称呼
+### 0.9 Four-Layer Evidence Mechanism and Version Naming
 
-- **四层证据机制**（2026-10-11 裁决）：① 文件名即结论（`docs/acceptance/artifacts/**` 强制 `PASS-` / `FAILCLOSED-` 前缀）；② 环境必须有名字（[`../environments.md`](../environments.md) 登记，禁匿名「本机」）；③ 状态三元组 `(结论, 证据文件, 日期)`；④ 守卫测试 `tests/test_evidence_discipline.py`。已登记环境 `dev-win03ib7niepf0`（host `WIN-03IB7NIEPF0`）。
-- **版本称呼**：[`../plan.md`](../plan.md) §0 明写**没有 v1 / v1.1 定义**；产品版本号**只看根 `VERSION`**（当前 `0.2.0`）。其他文档里的「v1 / v1.1」不是发行版本定义。
+- **Four-layer evidence mechanism** (adjudicated 2026-10-11): ① the filename is the conclusion (`docs/acceptance/artifacts/**` mandates the `PASS-` / `FAILCLOSED-` prefix); ② the environment must have a name (registered in [`../environments.md`](../environments.md); the anonymous "this machine" is forbidden); ③ the status triple `(conclusion, evidence file, date)`; ④ the guard test `tests/test_evidence_discipline.py`. The registered environment is `dev-win03ib7niepf0` (host `WIN-03IB7NIEPF0`).
+- **Version naming**: §0 of [`../plan.md`](../plan.md) explicitly states there is **no v1 / v1.1 definition**; the product version number is determined **solely by the root `VERSION`** (currently `0.2.0`). The "v1 / v1.1" in other documents is not a release version definition.
 
 ---
 
-## 1. 范围重划
+## 1. Redrawing the Scope
 
-### 1.1 表 A「移出到下一个 release」
+### 1.1 Table A "Moved Out to the Next Release"
 
-| 行 / 项 | 卡点 | 重启所需 |
+| Row / item | Blocker | What is needed to restart |
 |---|---|---|
-| S-2 / S-3 | 外部硬依赖 D-1：无运营商 PKI lab、无外网 S-SBC 对端（2026-10-07 起 Close 前 restriction） | 运营商 PKI lab + 外网 S-SBC 联调窗口 |
-| NF-1（live kill / restart / BYE） | 外部硬依赖 D-2：无客户 K8s 集群 | 客户 K8s 集群 |
-| ADR-0008-演练 | 外部硬依赖：跨站点切换需两个客户 / 生产站点，实验室单集群不算 | 双站点（客户 / 生产）环境 |
-| D12/O5-HA（生产 Redis / PG HA） | 外部硬依赖：需客户生产拓扑上的 Sentinel / 流复制 / PITR；kind bundled state 不是本条 | 客户生产拓扑 |
-| 包装 2.4 摘流 / iFC 配合 | 需 S-CSCF / HSS 侧配合窗口 + 真实集群 | 真实集群 + 网内配合窗口 |
-| 包装 2.5 备份恢复（客户真实集群版） | 客户真实集群演练未做；kind bundled state 不是生产备份恢复 | 客户真实集群 |
-| X1 抓取接线 | 待运营商 monitoring-integration 标准输入（G3 / A5 维持待决，当前不改 chart） | 运营商 monitoring-integration 标准 |
+| S-2 / S-3 | External hard dependency D-1: no carrier PKI lab, no external-network S-SBC peer (restriction before Close since 2026-10-07) | A carrier PKI lab + an external-network S-SBC joint-debug window |
+| NF-1 (live kill / restart / BYE) | External hard dependency D-2: no customer K8s cluster | A customer K8s cluster |
+| ADR-0008-演练 | External hard dependency: cross-site switchover needs two customer / production sites; a single lab cluster does not count | A dual-site (customer / production) environment |
+| D12/O5-HA (production Redis / PG HA) | External hard dependency: needs Sentinel / streaming replication / PITR on the customer production topology; kind bundled state does not satisfy this item | The customer production topology |
+| Packaging 2.4 traffic diversion / iFC cooperation | Needs an S-CSCF / HSS-side cooperation window + a real cluster | A real cluster + an in-network cooperation window |
+| Packaging 2.5 backup and restore (customer real-cluster version) | The customer real-cluster drill has not been done; kind bundled state is not production backup and restore | A customer real cluster |
+| X1 capture wiring | Awaiting the carrier's monitoring-integration standard input (G3 / A5 stay undecided, the chart is not changed for now) | The carrier's monitoring-integration standard |
 
-**「后置 ≠ 取消」。** 重启条件沿用 [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) §0 口径：**维护者另行裁决 + 外部资源到位**，**不得因本机工作顺带推进**。矩阵中这些行**保持原状态词**（`blocked` / `open`），本文不改写、不提前转终态。
+**"Deferred ≠ cancelled."** The restart conditions follow the basis in §0 of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md): **separate maintainer adjudication + the external resources being in place**; **it must not be pushed forward incidentally as part of local work**. These rows **keep their original status word** in the matrix (`blocked` / `open`); this document does not rewrite them and does not transition them to a final state early.
 
-> **去向指针（2026-10-13 追加；上方表 A 与本段口径原文一律保留不改）**：表 A 的七行连同本段重启条件口径，
-> 统一收口于 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§2**（外部硬依赖类）—— 第 1–4 行对应
-> D-1 / S-2 / S-3、D-2 / NF-1 live、ADR-0008 演练、D12 / O5，第 5–6 行对应包装 2.4 / 2.5，第 7 行对应 X1 抓取接线；
-> 该节措辞沿用本表与本段原文。另：**O1 对外承诺值**见同文档 **§4-6**，v1.1 立项 feature 见 **§3**。
-> 后续状态盘点、汇报、handoff 涉及表 A 遗留项一律**只引该指针**，**本清单不再逐项复述**。
+> **Destination pointer (appended 2026-10-13; the original text of Table A and of the basis paragraph above is retained unchanged)**: the seven rows of Table A together with the restart-condition basis in that paragraph are
+> consolidated under [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§2** (the external hard dependency class) — rows 1–4 correspond to
+> D-1 / S-2 / S-3, D-2 / NF-1 live, the ADR-0008 drill, and D12 / O5; rows 5–6 correspond to packaging 2.4 / 2.5, and row 7 corresponds to X1 capture wiring;
+> that section's wording follows this table and the paragraph above. Also: the **O1 external committed value** see **§4-6** of the same document, and the v1.1 feature initiations see **§3**.
+> Subsequent status reviews, reports, and handoffs that touch the leftover items of Table A always **cite only that pointer**; **this list no longer restates them one by one**.
 
-### 1.2 表 B「本版必须完成」
+### 1.2 Table B "Must Be Completed in This Version"
 
-| 类别 | 内容 | 对应矩阵行 / 依据 |
+| Category | Content | Corresponding matrix rows / basis |
 |---|---|---|
-| v1 范围内 **function 工程完成** | SIP 对拍批次（A3 Phase D：S5 / S7a / S6 / S9 / S10 / S11 + S8 前置补采） | F-4、F-5、F-8、F-9、F-10、F-11、F-16（见 §2 批次「SIP 对拍」） |
-| 模拟器 / kind 可取的证据行 | kind / M7.1 sim 可取的集群级与话务级证据 | NF-2、NF-4、NF-5、NF-9、NF-10、NF-13、NF-14、NF-15；F-15 与 5.4-F-15真AS（kind + sim 全栈） |
-| 发布动作（RC 计划阶段 E） | report.md、VERSION / CHANGELOG、plan.md 回写、内部版退出评审文档、里程碑签字表、打包复检 | E-1~E-6（见 §2 批次「文档与报告」） |
+| **Functional engineering completion** within v1 scope | The SIP differential testing batch (A3 Phase D: S5 / S7a / S6 / S9 / S10 / S11 + the S8 prerequisite capture) | F-4, F-5, F-8, F-9, F-10, F-11, F-16 (see the "SIP Differential Testing" batch in §2) |
+| Evidence rows obtainable via simulators / kind | Cluster-level and call-level evidence obtainable with kind / M7.1 sim | NF-2, NF-4, NF-5, NF-9, NF-10, NF-13, NF-14, NF-15; F-15 and 5.4-F-15真AS (kind + sim full stack) |
+| Release actions (RC plan Stage E) | report.md, VERSION / CHANGELOG, plan.md write-back, the internal-version exit review document, the milestone signature sheet, the packaging re-check | E-1~E-6 (see the "Documentation and Reports" batch in §2) |
 
-**F-13 / NF-7 已裁定（2026-10-12，维护者）：判重大漏项，delay 到 v1.1 作为 feature，本版不实现**（详见 §6 第 1 项裁决结果）。
+**F-13 / NF-7 have been adjudicated (2026-10-12, maintainer): judged a major omission, deferred to v1.1 as a feature, not implemented in this version** (see the adjudication result of item 1 in §6).
 
-### 1.3 本版的定位（一句话）
+### 1.3 The Positioning of This Version (one sentence)
 
-**本版 = 内部版本：function 完整 + 模拟器证据 + 可重复构建的发布工件。本版不是 M8 退出签字** —— M8 退出签字仍排在外部硬依赖（表 A）之后，`plan.md` §4 M8 行的最终表述由维护者确认。
+**This version = internal version: functionally complete + simulator evidence + reproducibly buildable release artifacts. This version is not the M8 exit sign-off** — the M8 exit sign-off is still scheduled after the external hard dependencies (Table A), and the final wording of the M8 row in §4 of `plan.md` is confirmed by the maintainer.
 
 ---
 
-## 2. 本版工作分解（六个批次，标注依赖顺序）
+## 2. Work Breakdown of This Version (six batches, with dependency order noted)
 
-**依赖顺序**：
+**Dependency order**:
 
 ```text
 批次 1「发布与打包」（最先，无依赖）
-   ↓
+  ↓
 批次 2「SIP 对拍」（S8 前置补采 → P1 S5 → P2 S7a → P3 S6 → P4 S10 → P5 S9 → P6 S11）
-   ↓
+  ↓
 批次 3「kind/sim 证据」（与批次 2 可部分并行；F-15 真 AS 依赖批次 1 的镜像）
-   ↓
+  ↓
 批次 4「签收与评审」（依赖批次 2/3/5 产出证据）
-   ↓
+  ↓
 批次 5「性能与容量（kind）」（可与批次 3 并行；向批次 4 供 NF-15 证据）
-   ↓
+  ↓
 批次 6「文档与报告」（最后，依赖前五个批次）
 ```
 
-**授权（2026-10-12，维护者）**：§2 **六个批次全部一次性全量授权**（批次 2 / 3 见 §6 第 5 项；批次 1 / 4 / 6 为本次一并授权；批次 5 by §6 第 4 项）。agent 按上述依赖顺序自行推进；每批 / 每项落地另留 review record；矩阵行保持原状态词；不签任何 REQ；不执行任何 git 写操作。
+**Authorization (2026-10-12, maintainer)**: the **six batches in §2 are all authorized in one go** (batches 2 / 3 see item 5 in §6; batches 1 / 4 / 6 are authorized together this time; batch 5 by item 4 in §6). The agent proceeds by the dependency order above; each batch / each item leaves a separate review record; matrix rows keep their original status word; no REQ is signed; no git write operation is executed.
 
-### 2.1 批次「发布与打包」（最先，无依赖）
+### 2.1 Batch "Release and Packaging" (first, no dependency)
 
-| 项 | 内容 | 依据 |
+| Item | Content | Basis |
 |---|---|---|
-| Dockerfile 带 SIP 监听 | 发布镜像当前是 M5 进程壳、不带 SIP 监听（§0.4），本批次补上 | [`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md) 文首「重开之前，发布镜像再带上 SIP 监听」 |
-| 镜像可重复构建 + digest 记录 | 复现构建并记录 image digest | RC 计划 E-6 |
-| helm values-onprem / compose 一致性 | 交付三态（chart onprem values / compose / 镜像）版本与配置一致 | RC 计划 E-6、B-5 |
-| 脱敏复检 | 工件内无密钥、无 pcap、无含口令日志 | [`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) §0 脱敏红线；RC 计划 E-6 |
-| README / runbook 与 `AS_SIP_*` / `AS_TLS_*` 实现一致 | 交付文档与代码实际环境变量逐条对齐 | RC 计划 E-6 |
+| Dockerfile with SIP listening | The release image is currently the M5 process shell with no SIP listening (§0.4); this batch fills that in | The header of [`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md) "before reopening, put SIP listening into the release image again" |
+| Reproducible image build + digest record | Reproduce the build and record the image digest | RC plan E-6 |
+| Consistency of helm values-onprem / compose | The version and configuration of the three delivery states (chart onprem values / compose / image) are consistent | RC plan E-6, B-5 |
+| Sanitization re-check | No secrets, no pcap, no password-bearing logs inside the artifacts | §0 sanitization red line of [`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md); RC plan E-6 |
+| README / runbook consistent with the `AS_SIP_*` / `AS_TLS_*` implementation | The delivery documentation is aligned item by item with the actual environment variables in the code | RC plan E-6 |
 
-**边界**：镜像 push / tag 仅维护者执行（RC 计划 E-6）；本批次不 bump 根 `VERSION`（取值待 §6 第 2 项裁决）。
+**Boundaries**: image push / tag is executed only by the maintainer (RC plan E-6); this batch does not bump the root `VERSION` (the value awaits the adjudication of item 2 in §6).
 
-### 2.2 批次「SIP 对拍」（A3 Phase D 落地）
+### 2.2 Batch "SIP Differential Testing" (A3 Phase D landing)
 
-**前置**：**S8** —— M2 probe 补采 Route / Record-Route 基线（基线缺这两个头，2 条既有 skip 的根因）；**补采前不排 S8 实现**，REQ-F-5 在补采前按 N4 停止线不签 pass。
+**Prerequisite**: **S8** — use the M2 probe to capture the Route / Record-Route baseline (the baseline lacks these two headers, the root cause of the 2 existing skips); **S8 implementation is not scheduled before the capture is added**, and REQ-F-5 is not signed pass before the capture per the N4 stop line.
 
-**执行顺序**（排期已定稿于 [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D，本批次按此落地）：
+**Execution order** (scheduling finalized in [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D; this batch lands per that order):
 
-| 顺序 | 场景 | 推进的矩阵行 | 前置 / 备注 |
+| Order | Scenario | Matrix row advanced | Prerequisite / note |
 |---|---|---|---|
-| 0 | S8 基线补采（M2 probe Route / Record-Route） | **F-5**（补采是签收 F-5 的前置） | 不补采则不排 S8；补采完成后建议插在 P3 之后 |
-| 1 | P1 S5 两腿归一化序列对拍 | F-2 **已于 2026-10-12 N3 代签 pass**，此处为 coverage 扩展（不改行状态） | 无（复用 `testbed/e2e/` 框架） |
-| 2 | P2 S7a SDP 透传 corpus 扩充（兼 F-4 更广 corpus） | **F-4** | 补带 media 描述 / 多 m-line 的 SDP 变体 |
-| 3 | P3 S6 多规则优先级 + 无匹配组合 | F-3 **已于 2026-10-12 N3 代签 pass**，此处为 coverage 扩展（不改行状态） | 与 S2（404 已绿）共用仿真链 |
-| 4 | P4 S10 非 2xx（486 / 480 / 408）透传 | **F-10** | 依赖先扩 testbed 对端 UAS（当前只返 200） |
-| 5 | P5 S9 in-dialog 路由 | **F-9** | 依赖 M7.3 context restoration 工程切片（已在位） |
-| 6 | P6 S11 CANCEL 与最终响应竞态 | **F-11** | 竞态两分支确定性证明成本最高、flaky 风险最大；允许以 gap 登记收尾 |
+| 0 | S8 baseline capture (M2 probe Route / Record-Route) | **F-5** (the capture is a prerequisite for signing F-5) | S8 is not scheduled without the capture; after the capture completes it is suggested to insert it after P3 |
+| 1 | P1 S5 two-leg normalized sequence differential check | F-2 **was already counter-signed pass under N3 on 2026-10-12**; here it is a coverage extension (row status unchanged) | None (reuses the `testbed/e2e/` framework) |
+| 2 | P2 S7a SDP pass-through corpus expansion (and a broader F-4 corpus) | **F-4** | Add SDP variants with media descriptions / multiple m-lines |
+| 3 | P3 S6 multi-rule priority + no-match combination | F-3 **was already counter-signed pass under N3 on 2026-10-12**; here it is a coverage extension (row status unchanged) | Shares the simulation chain with S2 (404 already green) |
+| 4 | P4 S10 non-2xx (486 / 480 / 408) pass-through | **F-10** | Depends on first extending the testbed peer UAS (it currently only returns 200) |
+| 5 | P5 S9 in-dialog routing | **F-9** | Depends on the M7.3 context restoration engineering slice (already in place) |
+| 6 | P6 S11 CANCEL and final response race | **F-11** | Deterministic proof of both race branches is the most expensive and the flaky risk is the greatest; closing out with a gap registration is permitted |
 
-其余关联：**F-8**（CANCEL 三分支）随 S4 cancel harness 与 S11 的对拍推进；**F-16**（翻译决策链）的**轨迹联动部分依赖 F-13** —— F-13 已裁定 delay v1.1，故 F-16 **只签非轨迹部分并写明理由**。
+Other related items: **F-8** (the three CANCEL branches) advances together with the S4 cancel harness and the S11 differential check; the **trace linkage part of F-16** (the translation decision chain) **depends on F-13** — since F-13 has been adjudicated as deferred to v1.1, F-16 **is signed only for the non-trace part and the reason is stated**.
 
-**授权前提（2026-10-12 更新）**：A3 Phase D 的**实现分批启动已由维护者一次性全量授权**（批次 2 含 S8 基线补采与 P1–P6 全部，P4 含扩 testbed UAS 非 2xx 分支）；agent 按 §4-D 顺序自行分批推进，**每批落地另留 review record**；**本计划不代签、不预设任何一行转 pass**。
+**Authorization premise (updated 2026-10-12)**: starting the **implementations of A3 Phase D in batches has been authorized by the maintainer in one go** (batch 2 includes the S8 baseline capture and all of P1–P6; P4 includes extending the testbed UAS with non-2xx branches); the agent advances in batches per the §4-D order and **leaves a separate review record for each batch landed**; **this plan does not counter-sign and does not presuppose that any row turns pass**.
 
-### 2.3 批次「kind/sim 证据」
+### 2.3 Batch "kind/sim Evidence"
 
-自有 kind / 实验室集群即可、不要求客户集群的行（§0.3）+ 模拟器可取的证据：
+Rows satisfied by our own kind / lab cluster without requiring a customer cluster (§0.3) + evidence obtainable with simulators:
 
-| 行 | 证据内容 | 环境 |
+| Row | Evidence content | Environment |
 |---|---|---|
-| NF-2 | kill translation 不影响 anti-fraud（双 Deployment 隔离 live 验证） | kind |
-| NF-4 | M7.1 sim 话务 + kind 滚动零丢失（带真实 SIP 话务的滚动验证，补当前 blocked 行的缺口） | sim + kind |
-| NF-9 | 命名空间故障隔离（Redis 挂 / AS 崩不影响另一 namespace） | kind |
-| NF-5 | 换仿真器一致性（以 M7.1 透明桥为对照） | sim |
-| F-15 / 5.4-F-15真AS | 真 AS 全栈分发 / 健康 / 自动 + 手动回滚 | kind + sim |
-| NF-10 | live 灰度分发 / 回滚（随 F-15 真 AS 一并取证） | 同 F-15 真 AS |
-| 2.5 备份恢复（工程演练） | kind bundled PG 备份 / 恢复 / 重建演练 + runbook 走查 + 实测耗时记录（RTO 量级，非承诺） | kind |
+| NF-2 | Killing translation does not affect anti-fraud (dual-Deployment isolation verified live) | kind |
+| NF-4 | M7.1 sim call traffic + kind rolling update with zero loss (rolling verification with real SIP traffic, filling the gap of the currently blocked row) | sim + kind |
+| NF-9 | Namespace fault isolation (Redis crash / AS crash does not affect the other namespace) | kind |
+| NF-5 | Simulated-simulator swap consistency (using the M7.1 transparent bridge as the control) | sim |
+| F-15 / 5.4-F-15真AS | Real AS full-stack distribution / health / automatic + manual rollback | kind + sim |
+| NF-10 | Live canary distribution / rollback (evidenced together with F-15 real AS) | Same as F-15 real AS |
+| 2.5 backup and restore (engineering drill) | kind bundled PG backup / restore / rebuild drill + runbook walkthrough + measured elapsed time record (RTO magnitude, not a commitment) | kind |
 
-**边界**：以上均为**工程 / 集成层证据**，不升级为运营商或客户验收（见 §3）；NF-13 / NF-14 的 live 采集与真实触发涉及 X1（抓取接线，已后置），其终态在「签收与评审」批次按理由处理。（NF-15 不在上表内并非遗漏：归 §2.5「性能与容量」批次；NF-13 / NF-14 去向见本段前句。）
+**Boundaries**: all of the above is **engineering / integration-layer evidence** and is not upgraded to carrier or customer acceptance (see §3); the live capture and real triggering of NF-13 / NF-14 involve X1 (capture wiring, already deferred), and their final state is handled by rationale in the "Sign-off and Review" batch. (NF-15's absence from this table is not an omission: it belongs to the §2.5 "Performance and Capacity" batch; the destination of NF-13 / NF-14 is in the preceding sentence of this paragraph.)
 
-**授权（2026-10-12）**：本批次（含 2.5 kind 演练）已由维护者一次性全量授权；每批落地另留 review record。
+**Authorization (2026-10-12)**: this batch (including the 2.5 kind drill) has been authorized by the maintainer in one go; each batch landed leaves a separate review record.
 
-### 2.4 批次「签收与评审」
+### 2.4 Batch "Sign-off and Review"
 
-| 行 / 项 | 内容 |
+| Row / item | Content |
 |---|---|
-| S-1（白名单） | 评审现有工程证据 + 缺项补测；白名单变更走审批（与 F-14 联动） |
-| S-4（RBAC + 审计不可篡改） | 评审 + 缺项补测；**durable audit 已有工程切片**（M4b-6b durable audit API / store：`PostgresAuditStore` + owner trigger 阻止 mutation / truncate），本批次补其正式全绿所缺部分（`plan.md` §5.4：REQ-S-4 正式全绿归 M8 或维护者单独签收） |
-| 矩阵 17 open 行逐行终态化 | 每行给出 **pass / n-a / defer** 之一，**必带理由**；pass 须有本版新证据（三元组留档）；依赖 X1 或外部环境的行（如 NF-13 / NF-14 的 live 采集与真实触发）按理由转 defer 或提请维护者评审 |
+| S-1 (whitelist) | Review the existing engineering evidence + backfill missing measurements; whitelist changes go through approval (linked with F-14) |
+| S-4 (RBAC + tamper-proof audit) | Review + backfill missing measurements; **durable audit already has an engineering slice** (M4b-6b durable audit API / store: `PostgresAuditStore` + owner trigger blocking mutation / truncate), and this batch fills in what is missing for a formal all-green (`plan.md` §5.4: formal all-green for REQ-S-4 belongs to M8 or to a separate maintainer sign-off) |
+| Row-by-row finalization of the matrix's 17 open rows | Each row gets one of **pass / n-a / defer**, and **must carry a rationale**; pass requires new evidence from this version (triple archived); rows depending on X1 or external environments (such as the live capture and real triggering of NF-13 / NF-14) transition to defer by rationale or are submitted to the maintainer for review |
 
-**边界**：签收动作仍须维护者授权 / 评审；本文只列计划，不代签；「工程证据接受」≠ REQ 级验收通过 ≠ 里程碑签收（N3 口径延续）。
+**Boundaries**: the sign-off action still requires maintainer authorization / review; this document only lists the plan and does not counter-sign; "engineering evidence accepted" ≠ REQ-level acceptance passed ≠ milestone sign-off (the N3 basis continues).
 
-### 2.5 批次「性能与容量（kind）」
+### 2.5 Batch "Performance and Capacity (kind)"
 
-| 项 | 内容 | 边界 |
+| Item | Content | Boundary |
 |---|---|---|
-| NF-15 多副本测量批次 | kind 上多副本测量，**记录 per-pod CPU / 内存利用率** | 这是 HPA 阈值填写的前提；2026-10-12 饱和点探测未记录资源数据，不能复用为该批次 |
-| HPA 阈值填写 | kind 实测数据产出后填 `values-onprem.example.yaml`；默认 `values.yaml` 保持 null | 已裁定（§6 第 4 项，2026-10-12）；示例内注明「kind 实测、非对外承诺、上线前须目标环境复测」；`hpa.yaml` 守卫不变 |
-| performance 层门禁（RC 计划 A-6） | 终态二选一：实现为阻塞层，或 M8 总审书面接受风险 | 不自作实现、不自行接受风险 |
-| O1 | 内部工程目标（loopback CPS 1280 无失败）已定，仅限内部 | **对外承诺值仍不填**（G5 / B1；Datasheet 填值准入条件三条未满足） |
-| 容量类告警 | 仍不新增 | G5 裁决句继续有效；`ne-datasheet.md` 容量取值、4.1 正式报告维持阻塞 |
+| NF-15 multi-replica measurement batch | Multi-replica measurement on kind, **recording per-pod CPU / memory utilization** | This is the prerequisite for filling in the HPA thresholds; the 2026-10-12 saturation probe recorded no resource data and cannot be reused as that batch |
+| Filling in the HPA thresholds | After the kind measurement data is produced, fill `values-onprem.example.yaml`; the default `values.yaml` stays null | Already adjudicated (§6 item 4, 2026-10-12); the example states "measured on kind, not an external commitment, must be re-measured in the target environment before go-live"; the `hpa.yaml` guard is unchanged |
+| Performance-layer gate (RC plan A-6) | Final state is one of two: implemented as a blocking layer, or written risk acceptance at the M8 final review | Do not implement on your own initiative, do not accept the risk on your own |
+| O1 | The internal engineering target (loopback CPS 1280 with no failures) is fixed, internal only | **The external committed value is still not filled in** (G5 / B1; the three Datasheet fill-in admission conditions are unmet) |
+| Capacity-class alerts | Still not added | The G5 adjudication sentence remains in effect; the `ne-datasheet.md` capacity values and the 4.1 formal report stay blocked |
 
-**边界**：本批次不发布任何对外容量数字（AGENT.md §2）；内部工程目标值不得写入任何对外材料。
+**Boundaries**: this batch publishes no external capacity figure whatsoever (AGENT.md §2); internal engineering target values must not be written into any external material.
 
-### 2.6 批次「文档与报告」（RC 计划阶段 E）
+### 2.6 Batch "Documentation and Reports" (RC plan Stage E)
 
-| ID | 任务 | 内容 |
+| ID | Task | Content |
 |---|---|---|
-| E-1 | `report.md` 升为 M8 RC 报告 | 并把 §0.5 计数同步为矩阵现行值 **pass 16 / open 17 / blocked 10 / n-a 6 / fail 0**（现为 open 24 / blocked 12，见 §0.8） |
-| E-2 | VERSION / CHANGELOG | **已裁定：不 bump**（§6 第 2 项，2026-10-12）—— VERSION 维持 `0.2.0`，CHANGELOG 在 0.2.0 节内追加 internal build 条目；`plan.md` §0「版本称呼」行继续有效 |
-| E-3 | `plan.md` §0 / §4 M8 行回写 | 按本版实际收尾状态回写；M8 行的最终表述由维护者确认 |
-| E-4 | 内部版退出评审文档（`docs/reviews/`） | **明确不是 M8 退出签字** |
-| E-5 | 里程碑签字表 | M1 / M2 / M6 / M7 的「工程完成」已由维护者 2026-10-12 授权代签（N2 第 9 项）；**M8 不签** |
-| E-6 | 打包复检 | `test_version_consistency`；镜像与 Helm 可重复构建；复检无密钥 / 无真实抓包；README 与 runbook 与 `AS_SIP_*` / `AS_TLS_*` 实现一致 |
+| E-1 | Promote `report.md` to the M8 RC report | And synchronize the §0.5 counts with the matrix's current values **pass 16 / open 17 / blocked 10 / n-a 6 / fail 0** (currently open 24 / blocked 12, see §0.8) |
+| E-2 | VERSION / CHANGELOG | **Already adjudicated: no bump** (§6 item 2, 2026-10-12) — VERSION stays `0.2.0`, and CHANGELOG appends an internal build entry inside the 0.2.0 section; the "version naming" row in §0 of `plan.md` remains in effect |
+| E-3 | Write back the `plan.md` §0 / §4 M8 row | Write back per the actual wrap-up state of this version; the final wording of the M8 row is confirmed by the maintainer |
+| E-4 | Internal-version exit review document (`docs/reviews/`) | **State explicitly that it is not the M8 exit sign-off** |
+| E-5 | Milestone signature sheet | The "engineering completion" of M1 / M2 / M6 / M7 has already been counter-signed under maintainer authorization on 2026-10-12 (N2 item 9); **M8 is not signed** |
+| E-6 | Packaging re-check | `test_version_consistency`; the image and Helm are reproducibly buildable; the re-check finds no secrets / no real packet captures; the README and runbook are consistent with the `AS_SIP_*` / `AS_TLS_*` implementation |
 
 ---
 
-## 3. 证据环境口径（模拟器证据分级）
+## 3. Evidence Environment Basis (grading of simulator evidence)
 
-**可用环境**（均须按四层机制留档）：
+**Available environments** (all must be archived per the four-layer mechanism):
 
-| 环境 | 用途 | 登记 / 依据 |
+| Environment | Purpose | Registration / basis |
 |---|---|---|
-| 自有 kind（`as-m5` / `as-m71`） | 集群级证据（NF-2 / NF-4 / NF-9、F-15 真 AS、NF-10、NF-15 多副本） | [`../environments.md`](../environments.md)（kind 0.24.0 / kubectl 1.31.4 已登记） |
-| M7.1 仿真 S-SBC（测试 CA，UDP / TCP / TLS，call load） | 话务对拍（NF-4）、换仿真器一致性（NF-5） | [`../acceptance/m71-sim-platform-evidence.md`](../acceptance/m71-sim-platform-evidence.md) |
-| `deploy/compose` | PostgreSQL / Redis 依赖（integration 层） | [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md) §2 |
-| `dev-win03ib7niepf0`（host `WIN-03IB7NIEPF0`） | 门禁 / 构建 / 饱和点探测 | [`../environments.md`](../environments.md) |
+| Our own kind (`as-m5` / `as-m71`) | Cluster-level evidence (NF-2 / NF-4 / NF-9, F-15 real AS, NF-10, NF-15 multi-replica) | [`../environments.md`](../environments.md) (kind 0.24.0 / kubectl 1.31.4 already registered) |
+| M7.1 simulated S-SBC (test CA, UDP / TCP / TLS, call load) | Call traffic differential check (NF-4), simulated-simulator swap consistency (NF-5) | [`../acceptance/m71-sim-platform-evidence.md`](../acceptance/m71-sim-platform-evidence.md) |
+| `deploy/compose` | PostgreSQL / Redis dependencies (integration layer) | §2 of [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md) |
+| `dev-win03ib7niepf0` (host `WIN-03IB7NIEPF0`) | Gate / build / saturation probe | [`../environments.md`](../environments.md) |
 
-**明确「不算」**（模拟器证据的降级口径）：
+**Explicitly "does not count"** (the downgrade basis for simulator evidence):
 
-| 有的 | 不等于 | 后果 |
+| What we have | Does not equal | Consequence |
 |---|---|---|
-| 测试 CA 上的 TLS 呼叫 | 运营商 PKI 签发链 | S-2 / S-3 仍归表 A |
-| kind bundled state | 生产 Redis / PG HA | D12/O5-HA 仍归表 A |
-| M7.1 sim 透明桥 | 运营商 S-SBC | 不解除 D-1 restriction |
-| accept-all harness | 业务判决路径 | O1 对外承诺值仍不填（上述三样 + 真实集群多副本测量均缺） |
+| TLS calls on the test CA | The carrier PKI issuance chain | S-2 / S-3 still belong to Table A |
+| kind bundled state | Production Redis / PG HA | D12/O5-HA still belongs to Table A |
+| The M7.1 sim transparent bridge | A carrier S-SBC | The D-1 restriction is not lifted |
+| The accept-all harness | The business decision path | The O1 external committed value is still not filled in (all three of the above plus real-cluster multi-replica measurement are missing) |
 
-**落盘纪律**：所有证据按四层机制（§0.9）落盘 —— `PASS-` / `FAILCLOSED-` 文件名前缀、`environments.md` 登记环境名、状态三元组 `(结论, 证据文件, 日期)`、守卫测试 `tests/test_evidence_discipline.py`。**不以工具就位充抵证据，不以 skip / 未跑当绿。**
-
----
-
-## 4. 本版完成定义（内部发布关门条件）
-
-全部满足方可称「内部版本收尾完成」：
-
-1. **批次完成度**：§2 六个批次的出口判据全部满足，或经维护者书面调整后等价满足。
-2. **矩阵终态**：17 个 open 行中，外部硬依赖 restriction 行 D12/O5-HA 按 §1.1 表 A 保持 open 并指向表 A（不要求转终态），其余 16 行全部转终态（pass / n-a / defer，必带理由），不得留下未解释 open；10 个 blocked 行中，本版可取证的行（NF-4、F-15、5.4-F-15真AS）有终态；F-13 / 5.4-F-13 / NF-7 已裁定 delay v1.1 作为 feature，转终态 n-a（详见 §6 第 1 项），restriction 行（S-2 / S-3 / NF-1 / ADR-0008-演练 / D12/O5-HA）保持原状态词并指向表 A。
-3. **RC 报告与版本一致**：`report.md` §0.5 计数与矩阵现行值一致；`VERSION` / `CHANGELOG` 与交付工件一致（版本号口径：不 bump，见 §6 第 2 项）。
-4. **不宣称清单**：**不宣称 M8 全绿、不宣称 M8 退出签字**；除已代签「工程证据接受」的行外，不宣称任何 REQ 级验收通过。
-5. **tag 仅维护者**：本计划不执行任何 git 写操作；commit 拆分、tag、push 均由维护者决定与执行（AGENT.md §10.4）。
+**Write-down discipline**: all evidence is written per the four-layer mechanism (§0.9) — the `PASS-` / `FAILCLOSED-` filename prefix, the environment name registered in `environments.md`, the status triple `(conclusion, evidence file, date)`, and the guard test `tests/test_evidence_discipline.py`. **Tool availability is never substituted for evidence, and a skip / not-run is never treated as green.**
 
 ---
 
-## 5. 移交下一 release 清单（重开 M8 时的输入）
+## 4. Definition of Done for This Version (internal release gate-closure conditions)
 
-| 行 / 项 | 卡点 | 重启所需 |
+Only if all of the following hold may it be called "internal version wrap-up complete":
+
+1. **Batch completeness**: the exit criteria of the six batches in §2 are all satisfied, or equivalently satisfied after written adjustment by the maintainer.
+2. **Matrix final state**: of the 17 open rows, the external-hard-dependency restriction row D12/O5-HA stays open per Table A in §1.1 and points to Table A (it is not required to reach a final state), and the other 16 rows all reach a final state (pass / n-a / defer, with a mandatory rationale); no unexplained open may be left. Of the 10 blocked rows, the rows for which this version can produce evidence (NF-4, F-15, 5.4-F-15真AS) have a final state; F-13 / 5.4-F-13 / NF-7 have been adjudicated as deferred to v1.1 as a feature and reach the final state n-a (see §6 item 1); the restriction rows (S-2 / S-3 / NF-1 / ADR-0008-演练 / D12/O5-HA) keep their original status word and point to Table A.
+3. **RC report and version consistency**: the §0.5 counts in `report.md` match the matrix's current values; `VERSION` / `CHANGELOG` match the delivery artifacts (version number basis: no bump, see §6 item 2).
+4. **List of non-claims**: **no claim that M8 is fully green, no claim that there is an M8 exit sign-off**; apart from the rows already counter-signed as "engineering evidence accepted", no claim is made that any REQ-level acceptance has passed.
+5. **Tags only by the maintainer**: this plan executes no git write operation; the commit split, tags, and push are decided and executed by the maintainer (AGENT.md §10.4).
+
+---
+
+## 5. Handover List for the Next Release (inputs when M8 is reopened)
+
+| Row / item | Blocker | What is needed to restart |
 |---|---|---|
-| S-2 / S-3 | D-1：无运营商 PKI lab、无外网 S-SBC 对端 | 运营商 PKI lab + 外网 S-SBC 联调窗口 |
-| NF-1（live kill / restart / BYE） | D-2：无客户 K8s 集群 | 客户 K8s 集群 |
-| ADR-0008-演练 | 需两个客户 / 生产站点 | 双站点环境 |
-| D12/O5-HA | 需客户生产拓扑上的 Sentinel / 流复制 / PITR | 客户生产拓扑 |
-| 包装 2.4 摘流 / iFC 配合 | 需 S-CSCF / HSS 侧配合 + 真实集群 | 真实集群 + 网内配合窗口 |
-| 包装 2.5 备份恢复（客户真实集群版） | 客户真实集群演练未做（kind 工程演练版已在本版做，见 §6 第 3 项） | 客户真实集群 |
-| X1 抓取接线 | 待运营商 monitoring-integration 标准输入 | 运营商 monitoring-integration 标准 |
-| O1 对外承诺值 | 缺业务判决路径实测 / 饱和点观测 / 目标环境多副本（`ne-datasheet.md` §3 填值准入条件三条均未满足） | 真实集群多副本 + S-SBC 路径测量 |
-| F-13 / 5.4-F-13 / NF-7（呼叫轨迹，重大漏项） | 已裁定 delay v1.1 作为 feature；无 trace store / API；O4 与 D5 已裁但实现未落 | v1.1 启动时走新 feature 流程（requirement → ADR → design → review） |
+| S-2 / S-3 | D-1: no carrier PKI lab, no external-network S-SBC peer | A carrier PKI lab + an external-network S-SBC joint-debug window |
+| NF-1 (live kill / restart / BYE) | D-2: no customer K8s cluster | A customer K8s cluster |
+| ADR-0008-演练 | Needs two customer / production sites | A dual-site environment |
+| D12/O5-HA | Needs Sentinel / streaming replication / PITR on the customer production topology | The customer production topology |
+| Packaging 2.4 traffic diversion / iFC cooperation | Needs S-CSCF / HSS-side cooperation + a real cluster | A real cluster + an in-network cooperation window |
+| Packaging 2.5 backup and restore (customer real-cluster version) | The customer real-cluster drill has not been done (the kind engineering drill version was done in this version, see §6 item 3) | A customer real cluster |
+| X1 capture wiring | Awaiting the carrier's monitoring-integration standard input | The carrier's monitoring-integration standard |
+| O1 external committed value | Missing measurement of the business decision path / saturation point observation / target-environment multi-replica (the three fill-in admission conditions in §3 of `ne-datasheet.md` are all unmet) | Real-cluster multi-replica + S-SBC path measurement |
+| F-13 / 5.4-F-13 / NF-7 (call traces, a major omission) | Already adjudicated as deferred to v1.1 as a feature; no trace store / API; O4 and D5 adjudicated but not implemented | Go through the new feature process at v1.1 start (requirement → ADR → design → review) |
 
-**重启条件同 §1 表 A 口径**：维护者另行裁决 + 外部资源到位；后置 ≠ 取消；不得因本机工作顺带推进。B2 / B3（requirement + ADR 起草）与 Lane D 四项已分别后置，载体为 [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) 与 [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md) Lane D，本清单不重复展开。
+**The restart conditions follow the Table A basis in §1**: separate maintainer adjudication + the external resources being in place; deferred ≠ cancelled; it must not be pushed forward incidentally as part of local work. B2 / B3 (requirement + ADR drafting) and the four Lane D items have each been deferred, carried by [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) and by Lane D of [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md); this list does not expand them again.
 
-> **去向指针（2026-10-13 追加；上方移交清单与本段原文一律保留不改）**：本清单已并入
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) —— 七项外部硬依赖见 **§2**；
-> F-13 / 5.4-F-13 / NF-7 呼叫轨迹与其余 v1.1 立项 feature 见 **§3**；**O1 对外承诺值**见 **§4-6**；
-> B2 / B3 见 **§4-1 / §4-2**（含 §4.3 四项启动条件）。
-> 后续任何状态盘点、汇报、handoff，以及重开 M8 时整理「下一 release 输入」，一律**只引该指针**，**本清单不再逐项复述**。
+> **Destination pointer (appended 2026-10-13; the original text of the handover list and of that paragraph above is retained unchanged)**: this list has been merged into
+> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) — the seven external hard dependencies see **§2**;
+> the F-13 / 5.4-F-13 / NF-7 call traces and the other v1.1 feature initiations see **§3**; the **O1 external committed value** see **§4-6**;
+> B2 / B3 see **§4-1 / §4-2** (including the four startup conditions in §4.3).
+> Any subsequent status review, report, handoff, and the organizing of "next release inputs" when M8 is reopened always **cite only that pointer**; **this list no longer restates them one by one**.
 
 ---
 
-## 6. 待维护者裁决项（开工前）
+## 6. Items Pending Maintainer Adjudication (before starting work)
 
-| # | 裁决项 | 影响 |
+| # | Item to be adjudicated | Impact |
 |---|---|---|
-| 1 | **F-13 / NF-7 trace store** | **已裁定（2026-10-12，维护者）：判重大漏项，delay 到 v1.1，作为 feature 走新流程；本版不实现。** F-16 轨迹联动部分只签非轨迹部分 |
-| 2 | **内部版本号与 CHANGELOG 条目口径** | **已裁定（2026-10-12，维护者）：不 bump** —— VERSION 维持 `0.2.0`；CHANGELOG 在 0.2.0 节内追加 internal build 条目（注明 internal、非发行版）；镜像 tag 用 `as-platform:0.2.0-internal-<date>` 区分；chart 不再同步；`plan.md` §0「版本称呼」行继续有效 |
-| 3 | **2.5 备份恢复** | **已裁定（2026-10-12，维护者）：kind 完整工程演练纳入本版** —— kind bundled PG 上做备份/恢复/重建演练 + runbook 走查 + 实测耗时记录，落 `PASS-` / `FAILCLOSED-` 证据；明写不等于客户真实集群版（客户版在下一 release，见 §5），不验证 PITR / 对象存储 / 跨站 |
-| 4 | **NF-15 HPA 阈值** | **已裁定（2026-10-12，维护者）：填 `values-onprem.example.yaml`，默认 `values.yaml` 保持 null** —— kind 多副本 + per-pod 资源利用率批次产出数据后，把 `autoscaling` 阈值写进 onprem 示例并注明「kind 实测、非对外承诺、上线前须目标环境复测」；fail-closed null 与 `hpa.yaml` 守卫不动；ne-datasheet / 容量告警 / 4.1 正式报告仍阻塞（G5 四项下游） |
-| 5 | **批次 2 / 3 的启动授权** | **已授权（2026-10-12，维护者）：一次性全量授权批次 2 与批次 3** —— 批次 2 含 S8 基线补采与 P1–P6 全部（P4 含扩 testbed UAS 非 2xx 分支）；批次 3 含 2.5 kind 演练；agent 按 §4-D 顺序自行分批推进，每批落地另留 review record；矩阵行保持原状态词，不签任何 REQ |
-| 6 | **批次 1 / 4 / 6（及隐含批次 5）的启动授权** | **已授权（2026-10-12，维护者）：一并全量授权** —— 至此 §2 六个批次全部授权；按依赖顺序推进，每批 / 每项留 review record；矩阵行保持原状态词，不签任何 REQ，不执行 git 写操作 |
+| 1 | **F-13 / NF-7 trace store** | **Adjudicated (2026-10-12, maintainer): judged a major omission, deferred to v1.1, going through the new process as a feature; not implemented in this version.** The trace linkage part of F-16 is signed only for the non-trace part |
+| 2 | **The basis for the internal version number and the CHANGELOG entry** | **Adjudicated (2026-10-12, maintainer): no bump** — VERSION stays `0.2.0`; CHANGELOG appends an internal build entry inside the 0.2.0 section (marked internal, not a release); the image tag uses `as-platform:0.2.0-internal-<date>` for distinction; the chart is no longer synchronized; the "version naming" row in §0 of `plan.md` remains in effect |
+| 3 | **2.5 backup and restore** | **Adjudicated (2026-10-12, maintainer): the complete kind engineering drill is included in this version** — a backup/restore/rebuild drill on kind bundled PG + a runbook walkthrough + a measured elapsed time record, landing `PASS-` / `FAILCLOSED-` evidence; it is stated explicitly that this does not equal the customer real-cluster version (the customer version is in the next release, see §5), and PITR / object storage / cross-site are not verified |
+| 4 | **NF-15 HPA thresholds** | **Adjudicated (2026-10-12, maintainer): fill `values-onprem.example.yaml`, the default `values.yaml` stays null** — after the kind multi-replica + per-pod resource utilization batch produces data, write the `autoscaling` thresholds into the onprem example and note "measured on kind, not an external commitment, must be re-measured in the target environment before go-live"; the fail-closed null and the `hpa.yaml` guard stay as they are; ne-datasheet / capacity alerts / the 4.1 formal report stay blocked (the four G5 downstream items) |
+| 5 | **Authorization to start batches 2 / 3** | **Authorized (2026-10-12, maintainer): batches 2 and 3 are authorized in one go** — batch 2 includes the S8 baseline capture and all of P1–P6 (P4 includes extending the testbed UAS with non-2xx branches); batch 3 includes the 2.5 kind drill; the agent advances in batches per the §4-D order and leaves a review record for each batch landed; matrix rows keep their original status word, and no REQ is signed |
+| 6 | **Authorization to start batches 1 / 4 / 6 (and implicitly batch 5)** | **Authorized (2026-10-12, maintainer): authorized in one go** — thus all six batches in §2 are authorized; advance per the dependency order and leave a review record for each batch / item; matrix rows keep their original status word, no REQ is signed, and no git write operation is executed |
 
 ---
 
-## 7. 边界（不得据本计划推出过度结论）
+## 7. Boundaries (no excessive conclusions may be drawn from this plan)
 
-1. **本文不签收任何 REQ / 里程碑，不改矩阵任何行 `status`，不改 `report.md` 任何计数**；所有「完成 / 终态」字样均指本计划范围内的工程目标。
-2. **「移出下一 release」≠ 取消、≠ 解决**；后置项在矩阵中**保持原状态词**（`blocked` / `open`）—— 六字纪律：后置 ≠ 取消。
-3. **模拟器证据是工程 / 集成层证据，不升级为运营商或客户验收**；测试 CA ≠ 运营商 PKI、kind bundled state ≠ 生产 HA、sim 透明桥 ≠ 运营商 S-SBC、accept-all harness ≠ 业务判决路径。
-4. **本版关门 ≠ M8 退出签字**；`plan.md` §4 M8 行的最终表述由维护者确认，M8 总审确认栏在外部硬依赖闭环前保持空白。
-5. **本文未执行任何 git 写操作**（无 `add` / `commit` / `tag` / `push` / 建分支 / 改 remote）；commit 拆分由维护者决定。
-6. 本文若被后续证据或维护者裁决推翻，**须追加行说明**（日期 + 被推翻条目 + 依据），不得静默替换。
+1. **This document signs off no REQ / milestone, changes no row `status` in the matrix, and changes no count in `report.md`**; every "complete / final state" wording refers to an engineering target within this plan's scope.
+2. **"Moved out to the next release" ≠ cancelled, ≠ resolved**; deferred items **keep their original status word** in the matrix (`blocked` / `open`) — the six-word discipline: deferred ≠ cancelled.
+3. **Simulator evidence is engineering / integration-layer evidence and is not upgraded to carrier or customer acceptance**; test CA ≠ carrier PKI, kind bundled state ≠ production HA, sim transparent bridge ≠ carrier S-SBC, accept-all harness ≠ business decision path.
+4. **Closing out this version ≠ the M8 exit sign-off**; the final wording of the M8 row in §4 of `plan.md` is confirmed by the maintainer, and the M8 final review confirmation block stays blank until the external hard dependencies are closed.
+5. **This document has executed no git write operation** (no `add` / `commit` / `tag` / `push` / branch creation / remote change); the commit split is decided by the maintainer.
+6. If this document is overturned by later evidence or by maintainer adjudication, **an appended line must state so** (date + the overturned item + the basis); it must not be silently replaced.
 
 ---
 
-**落盘日期：2026-10-12。状态：计划，待维护者评审。**
+**Write date: 2026-10-12. Status: plan, pending maintainer review.**
 
-（上游：[`2026-10-06-m8-release-candidate-plan.md`](2026-10-06-m8-release-candidate-plan.md)、[`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md)、[`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)、[`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md)、[`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md)。
-本文件不签收任何 REQ、不签收任何里程碑、不改矩阵任何行状态、不构成任何对外承诺。）
+(Upstream: [`2026-10-06-m8-release-candidate-plan.md`](2026-10-06-m8-release-candidate-plan.md), [`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md), [`../acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md), [`../acceptance/m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md), [`2026-10-10-unfinished-assessment-and-next-plan.md`](2026-10-10-unfinished-assessment-and-next-plan.md).
+This document signs off no REQ, signs off no milestone, changes no matrix row status, and constitutes no external commitment.)

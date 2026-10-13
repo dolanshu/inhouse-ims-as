@@ -12,48 +12,48 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M1 退出评审记录（Milestone Exit Review）
+# M1 exit review record (Milestone Exit Review)
 
-> 评审对象：M1 —— 甄别与行为基线。范围含 `docs/plan.md` §4.1 门禁裁决、`docs/acceptance/report.md`、`docs/migration/triage.md`、`testbed/contracts/sip-baseline/`
-> 评审日期：2026-09-28
-> 评审人：AI agent（核对门禁与 DoD 取证）
-> 评审结论：**有条件通过** —— 条件为 HLD/LLD 补建，已列入 M2 前置，不回退 M1 结论
+> Review target: M1 — screening and behavioural baseline. Scope covers `docs/plan.md` §4.1 gate adjudication, `docs/acceptance/report.md`, `docs/migration/triage.md`, `testbed/contracts/sip-baseline/`
+> Review date: 2026-09-28
+> Reviewer: AI agent (cross-checking gate and DoD evidence)
+> Review conclusion: **conditional pass** — the condition is retroactive creation of HLD/LLD, which is listed as an M2 prerequisite; the M1 conclusion is not rolled back
 
-## 评审方法
+## Review method
 
-| 维度 | 方法 |
+| Dimension | Method |
 |---|---|
-| 门禁达成 | 逐项核对 `plan.md` §4 M1 门禁原文，并回查仓库产物 |
-| DoD 取证 | 按 `AGENT.md` §14 十条逐项取证，代码相关条目要求实跑证据 |
-| 基线完整性 | 逐个统计 `testbed/contracts/sip-baseline/` 各目录下 `.txt` 消息文件数 |
-| 文档链 | requirement → ADR → HLD/LLD → 契约 → 验收 → review record 六环是否贯通 |
+| Gate achievement | Item-by-item check of the original text of the M1 gate in `plan.md` §4, with a re-check of repository artifacts |
+| DoD evidence | Evidence gathered item by item for the ten clauses of `AGENT.md` §14; code-related clauses require real execution evidence |
+| Baseline completeness | Counting the `.txt` message files in each directory under `testbed/contracts/sip-baseline/` one by one |
+| Documentation chain | Whether the six links requirement → ADR → HLD/LLD → contract → acceptance → review record are connected end to end |
 
-## 发现与裁决
+## Findings and adjudication
 
-| # | 发现 | 证据 | 裁决 | 状态 |
+| # | Finding | Evidence | Adjudication | Status |
 |---|---|---|---|---|
-| F1 | S5 / S6 / S7a / S8 基线目录只有 README，零消息文件 | 目录实测；对应 REQ-F-2 / F-3 / F-4 / F-5（P0） | 接受为**派生基线**：`test-plan.md` 中这四条验收本就写为"完成 REQ-F-1 的基本呼叫后提取 X"，可从 `S1-basic-call` 派生，重复抓取只增加维护面 | 已裁决（写入 `plan.md` §4.1） |
-| F2 | S10 / S11 基线未抓 | 目录实测；POC ReturnUas 只回 200 OK，无 busy 分支与竞态构造 | 接受为 **M2 probe 补**，与 `prd.md` §2.4 已知缺口表一致 | 已裁决 |
-| F3 | `plan.md` 状态滞后（§0 写 M1 进行中、§4 写 M1 未开始），但实际产出已入库 | 提交 `b27bb3d` / `92c244c` / `e30c426` / `2341166` / `c9d4899` | 接受：更新为 M1 已完成、当前步骤 M2，并新增 §4.1 记录门禁裁决 | 已修改 |
-| F4 | 无 M1 验收报告 | `docs/acceptance/` 原只有 README 与 test-plan | 接受：新建 `docs/acceptance/report.md`，含实跑门禁证据与 DoD 逐项 | 已修改 |
-| F5 | 无 M1 退出评审记录 | `docs/reviews/` 原有记录均针对 ADR 或 PRD | 接受：本文件 | 已修改 |
-| F6 | CHANGELOG 无 M1 条目；`VERSION` 仍 0.1.0 | `CHANGELOG.md`、`VERSION` | 接受：CHANGELOG 补 M1 条目；`VERSION` **维持 0.1.0** —— M1 无产品代码交付，交付内容未变，按 ADR-0018 不 bump | 已修改 |
-| F7 | HLD / LLD 尚未创建 | `docs/architecture/` 下无 `hld.md`、`lld.md` | 接受为**条件**：不回退 M1 结论，但列为 M2 首个动作（AGENT.md §3.1 要求 HLD/LLD 是进入 Code 的前置） | 待 M2 |
-| F8 | 计数错误：S4 消息条数记为 9，实为 12 | `S4-caller-cancel/` 实测 12 个 txt，README 写"消息序列（12 条）" | 接受：已修正 `plan.md` §4.1 与 `report.md` | 已修改 |
-| F9 | PRD 评审中 RFC 3261 依据一度仅到"目录确认"级别 | `docs/reviews/prd-v0.1-review.md` | 接受：已用 `curl` 抓全文切片补验，§9 / §9.1 / §9.2 / §15 / §15.1.2 / §16.4 全部升为 L1 逐字核对，遗留清零 | 已修改 |
+| F1 | The S5 / S6 / S7a / S8 baseline directories contain only a README and zero message files | Measured from the directories; corresponds to REQ-F-2 / F-3 / F-4 / F-5 (P0) | Accepted as a **derived baseline**: these four acceptance items in `test-plan.md` were already written as "extract X after completing the basic call of REQ-F-1", so they can be derived from `S1-basic-call`; re-capturing only increases the maintenance surface | Adjudicated (written into `plan.md` §4.1) |
+| F2 | The S10 / S11 baselines were not captured | Measured from the directories; POC ReturnUas only returns 200 OK, with no busy branch or race construction | Accepted as an **M2 probe backfill**, consistent with the known-gap table in `prd.md` §2.4 | Adjudicated |
+| F3 | `plan.md` status lags behind (the §0 says M1 in progress, the §4 says M1 not started), yet the actual output is already in the repository | Commits `b27bb3d` / `92c244c` / `e30c426` / `2341166` / `c9d4899` | Accepted: updated to M1 completed, current step M2, and a new §4.1 recording the gate adjudication | Modified |
+| F4 | No M1 acceptance report | `docs/acceptance/` originally had only a README and the test-plan | Accepted: newly created `docs/acceptance/report.md`, containing real-execution gate evidence and item-by-item DoD | Modified |
+| F5 | No M1 exit review record | Existing records in `docs/reviews/` all concern an ADR or the PRD | Accepted: this file | Modified |
+| F6 | No M1 entry in CHANGELOG; `VERSION` still 0.1.0 | `CHANGELOG.md`, `VERSION` | Accepted: add an M1 entry to CHANGELOG; `VERSION` **stays at 0.1.0** — M1 delivers no product code and the delivered content is unchanged, so per ADR-0018 there is no bump | Modified |
+| F7 | HLD / LLD have not yet been created | There is no `hld.md` or `lld.md` under `docs/architecture/` | Accepted as a **condition**: the M1 conclusion is not rolled back, but it is made the first action of M2 (AGENT.md §3.1 requires HLD/LLD as a prerequisite for entering Code) | Pending M2 |
+| F8 | Counting error: the number of S4 messages was recorded as 9, but is actually 12 | `S4-caller-cancel/` measures 12 txt files, while the README states "message sequence (12 entries)" | Accepted: `plan.md` §4.1 and `report.md` have been corrected | Modified |
+| F9 | During the PRD review the RFC 3261 basis was at the "table of contents confirmed" level only | `docs/reviews/prd-v0.1-review.md` | Accepted: full-text slices were fetched with `curl` for supplementary verification, and §9 / §9.1 / §9.2 / §15 / §15.1.2 / §16.4 were all raised to L1 verbatim checking, clearing all remaining items | Modified |
 
-## Adjudication 汇总
+## Adjudication summary
 
-| 类别 | 条数 | 处置 |
+| Category | Count | Disposition |
 |---|---|---|
-| 已裁决并落地 | 8（F1-F6、F8、F9） | 修改已入 `plan.md` / `report.md` / `CHANGELOG.md` / `prd-v0.1-review.md` |
-| 条件项（移交 M2） | 1（F7 HLD/LLD） | 列为 M2 首个动作，不阻塞 M1 结论 |
+| Adjudicated and landed | 8 (F1-F6, F8, F9) | Modifications have been made in `plan.md` / `report.md` / `CHANGELOG.md` / `prd-v0.1-review.md` |
+| Conditional items (handed over to M2) | 1 (F7 HLD/LLD) | Made the first action of M2; does not block the M1 conclusion |
 
-## 确认签字
+## Confirmation and sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 有条件通过（条件：M2 补建 HLD/LLD） |
-| M1 门禁 | 达成 |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | 待填 |
+| Review conclusion | conditional pass (condition: retroactively create HLD/LLD in M2) |
+| M1 gate | achieved |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer sign-off | to be filled in |

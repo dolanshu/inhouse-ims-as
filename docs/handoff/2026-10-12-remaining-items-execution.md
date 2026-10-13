@@ -12,54 +12,47 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 执行记录：收尾项四件 + 后置标记两件（2026-10-12 晚些时候）
+# Execution Record: Four Wrap-up Items + Two Deferred Items (later on 2026-10-12)
 
-> **状态：已执行，待维护者评审；不签收任何 REQ / 里程碑。**
+> **Status: executed, pending maintainer review; no REQ / milestone is signed off.**
 >
-> **指令来源（维护者 2026-10-12，照录语义）**：
-> ① A6 首次 chart 同步的时机与取值「就差你说何时同步成什么」—— 由 agent 自行判断；
-> ② A3 Phase D 排期（S5–S11 定优先级）—— 自行判断；
-> ③ Lane D 四项三选一 —— 自行判断；
-> ④ B2 / B3 requirement 起草 + B3 的 RPO / RTO 取值 —— **这一项不做，留到下一个 release，标记好，以后不要再提**；
-> ⑤ B1 容量目标值 + B5 的 N3 —— 自行判断完成；
-> ⑥ **所有需要运营商接口才能继续的全部留到下一个 release，做好标记，不要再提**；
-> ⑦ **其余的全部完成；所有工作不需要授权，你自己做判断，执行，不用问。**
+> **Instruction source (maintainer 2026-10-12, semantics transcribed)**: ① The timing and value of A6's first chart sync "all that is missing is you saying when to sync and to what" — the agent judges this itself; ② A3 Phase D scheduling (setting the priority of S5–S11) — judge it yourself; ③ Lane D's four items, choose one of three — judge it yourself; ④ B2 / B3 requirement drafting + B3's RPO / RTO values — **do not do this one, defer it to the next release, mark it properly, and do not raise it again**; ⑤ B1 capacity target value + B5's N3 — judge and complete it yourself; ⑥ **Everything that needs a carrier interface to continue is deferred to the next release, mark it properly, and do not raise it again**; ⑦ **Complete everything else; all work needs no authorization — you make your own judgments, execute, and do not ask.**
 >
-> 本文一律**追加**到既有文档、新建本记录，**不改写任何既有原文**。
-> **未执行任何 git 写操作**（未 `commit` / `add` / `push` / `tag` / 建分支 / 改 remote）。
+> This document **only appends** to existing documents and newly creates this record; it **does not rewrite any existing original text**.
+> **No git write operation was performed** (no `commit` / `add` / `push` / `tag` / branch creation / remote change).
 >
-> **执行环境**：已登记环境 **`dev-win03ib7niepf0`**（host `WIN-03IB7NIEPF0`）。执行日期：2026-10-12。
+> **Execution environment**: the registered environment **`dev-win03ib7niepf0`** (host `WIN-03IB7NIEPF0`). Execution date: 2026-10-12.
 
 ---
 
-## 0. 结论速览
+## 0. Conclusion Quick View
 
-| 项 | 结果 | 三元组 / 落点 |
+| Item | Result | Triple / Location |
 |---|---|---|
-| **A6 首次 chart 同步** | ✅ **已执行**：`version: 0.2.0` / `appVersion: "0.2.0"`（根 `VERSION` 为唯一源）+ `kubeVersion: ">=1.23.0-0"`；`--check` exit 0；`make chart-check` `chart-check: OK` | `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)` |
-| **A3 Phase D 排期** | ✅ **已定稿**：S5–S11 优先级 P1→P6 + S8 阻塞登记 | `handoff/2026-10-09-sip-native-testing-plan.md` §4-D |
-| **Lane D 四项三选一** | ✅ **已裁定**：4.2 → v1.1；4.3 → v1.1；4.4 → 按需；4.5 → 按需 | `product-packaging-plan.md` §5 + 评估文档 Lane D |
-| **B1 容量目标值** | ✅ **内部工程目标值已落**（loopback ≥ CPS 1280 无失败）；**对外承诺值不填**（准入条件三条未满足）；四项下游逐项精确阻塞 | `plan.md` §5.1 追加段 |
-| **B5 的 N3** | ✅ **已执行**：7 行签「工程证据接受」；矩阵 pass 9→16 / open 24→17；`report.md` 一字未改 | `m8-test-plan-matrix.md`「M8 N3 执行结果」节 |
-| **A5 / X1 抓取接线** | ⏭ **后置到下一个 release**（需运营商 monitoring-integration 标准输入）；已标记，不再单列 | register §3 X1 追加 |
-| **B2 / B3 + RPO / RTO 取值** | ⏭ **后置到下一个 release**；已标记，不再单列 | `2026-10-12-b2-b3-deferred-items.md` §5 |
+| **A6 first chart sync** | ✅ **Executed**: `version: 0.2.0` / `appVersion: "0.2.0"` (the root `VERSION` is the single source) + `kubeVersion: ">=1.23.0-0"`; `--check` exit 0; `make chart-check` `chart-check: OK` | `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)` |
+| **A3 Phase D scheduling** | ✅ **Finalized**: S5–S11 priorities P1→P6 + S8 blocker registration | `handoff/2026-10-09-sip-native-testing-plan.md` §4-D |
+| **Lane D four items, choose one of three** | ✅ **Adjudicated**: 4.2 → v1.1; 4.3 → v1.1; 4.4 → on demand; 4.5 → on demand | `product-packaging-plan.md` §5 + the Lane D section of the assessment document |
+| **B1 capacity target value** | ✅ **The internal engineering target value has landed** (loopback ≥ CPS 1280 with no failures); **no external committed value is filled in** (the three admission conditions are unmet); the four downstream items are each blocked for a precise reason | appended paragraph in `plan.md` §5.1 |
+| **B5's N3** | ✅ **Executed**: 7 rows signed "engineering evidence accepted"; matrix pass 9→16 / open 24→17; `report.md` unchanged by a single word | the "M8 N3 execution results" section of `m8-test-plan-matrix.md` |
+| **A5 / X1 capture wiring** | ⏭ **Deferred to the next release** (requires the carrier's monitoring-integration standard input); marked, no longer itemized separately | append to register §3 X1 |
+| **B2 / B3 + RPO / RTO values** | ⏭ **Deferred to the next release**; marked, no longer itemized separately | `2026-10-12-b2-b3-deferred-items.md` §5 |
 
 ---
 
-## 1. A6 · 首次 chart 同步（时机与取值由 agent 定）
+## 1. A6 · First chart sync (timing and value decided by the agent)
 
-### 1.1 裁决与自行判断的内容
+### 1.1 The adjudication and what was judged independently
 
-| 问题 | 裁决（既有） | 本次自行判断 |
+| Question | Adjudication (existing) | Judged independently this round |
 |---|---|---|
-| 由谁改 | (a) 写进 release 流程 / 脚本自动同步（`scripts/sync-chart-version.sh`） | —— 已具备 |
-| `kubeVersion` 取值 | `>=1.23.0-0`（由 chart API 反推） | —— 已具备 |
-| **首次同步时机** | 待定 | **2026-10-12 当日立即执行**（维护者指令「就差你说何时」） |
-| **首次同步取值** | 待定 | **根 `VERSION` 当前值 `0.2.0`**（唯一源；chart 随之，不单独造数） |
+| Who changes it | (a) written into the release process / the script syncs it automatically (`scripts/sync-chart-version.sh`) | —— already available |
+| `kubeVersion` value | `>=1.23.0-0` (reverse-derived from the chart API) | —— already available |
+| **Timing of the first sync** | Undecided | **Executed immediately on 2026-10-12** (maintainer instruction "all that is missing is you saying when") |
+| **Value of the first sync** | Undecided | **The current value of the root `VERSION`, `0.2.0`** (single source; the chart follows it, no separate number is invented) |
 
-**为什么是这个值**：G4 已裁「根 `VERSION` 为唯一源」；`0.2.0` 是当前 `VERSION` 实值，同步动作就是把 chart 拉到与唯一源一致，不引入新数字。**未 bump `VERSION`**（AGENT.md §8；且无发版动作）。
+**Why this value**: G4 already ruled that "the root `VERSION` is the single source"; `0.2.0` is the actual current value of `VERSION`, and the sync action merely pulls the chart into agreement with the single source without introducing a new number. **`VERSION` was not bumped** (AGENT.md §8; and there is no release action).
 
-### 1.2 执行与实测
+### 1.2 Execution and Measurement
 
 ```bash
 # BEFORE（如实记录漂移）
@@ -82,147 +75,147 @@ bash scripts/sync-chart-version.sh --check
 HELM_BIN=$PWD/tools/bin/helm make chart-check
 → helm lint deploy/helm → 1 chart(s) linted, 0 chart(s) failed
 → 全部渲染守卫（default 7 kinds / H-3 / H-4 / config-service / ingress /
-   autoscaling fail-closed / stateStores / onprem）→ chart-check: OK（exit 0）
+  autoscaling fail-closed / stateStores / onprem）→ chart-check: OK（exit 0）
 ```
 
-**`Chart.yaml` 当前状态**：`apiVersion: v2` / `name: 3rdparty-as` / `version: 0.2.0` / `appVersion: "0.2.0"` / `kubeVersion: ">=1.23.0-0"`（附反推注释）。
+**Current state of `Chart.yaml`**: `apiVersion: v2` / `name: 3rdparty-as` / `version: 0.2.0` / `appVersion: "0.2.0"` / `kubeVersion: ">=1.23.0-0"` (with the reverse-derivation comment attached).
 
-### 1.3 连带动作与边界
+### 1.3 Collateral Actions and Boundaries
 
-- `CHANGELOG.md`：按评估文档 §7.2（对外可见变更须回写、不 bump 版本）在 `[0.2.0]` 的「新增」段追加一条。
-- 证据文件 `PASS-chart-version-sync-2026-10-12.txt` 已建，并登记进 `docs/acceptance/artifacts/m5/README.md` 索引表。
-- **边界**：① G4「当前不修改 `VERSION` 与 `Chart.yaml`」仅由维护者 2026-10-12 指令为**本次同步动作**解除，不构成后续 bump / 改 `VERSION` 的授权；② **不得据本同步推出「已发版」** —— 未 tag、M8 退出签字仍后置；③ chart 的**抓取接线**未动（X1，见 §6）；④ 本同步不改 chart 的 fail-closed 容量键设计（`autoscaling.*` 等仍 null）。
+- `CHANGELOG.md`: per §7.2 of the assessment document (externally visible changes must be written back, without bumping the version), one entry was appended to the "Added" section of `[0.2.0]`.
+- The evidence file `PASS-chart-version-sync-2026-10-12.txt` was created and registered in the `docs/acceptance/artifacts/m5/README.md` index table.
+- **Boundaries**: ① G4's "do not modify `VERSION` and `Chart.yaml` for now" is lifted by the maintainer's 2026-10-12 instruction **only for this sync action**; it does not constitute authorization for later bumps / changes to `VERSION`; ② **"A release has been made" must not be inferred from this sync** — no tag exists and the M8 exit sign-off is still deferred; ③ the chart's **capture wiring** was not touched (X1, see §6); ④ this sync does not change the chart's fail-closed capacity key design (`autoscaling.*` etc. stay null).
 
 ---
 
-## 2. A3 · Phase D 排期定稿（S5–S11 优先级）
+## 2. A3 · Phase D scheduling finalized (S5–S11 priorities)
 
-**落点**：[`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D（新增节；§4 原文保留）。
+**Location**: [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D (new section; §4 original text retained).
 
-| 优先级 | 场景 | REQ | 一句话理由 |
+| Priority | Scenario | REQ | One-line rationale |
 |---|---|---|---|
-| **P1** | S5 两腿归一化序列对拍 | F-2 | Wave 2 bridge 采集框架已在位，扩「两腿各自 INVITE→200→ACK→BYE→200」成本最低、收益最直接 |
-| **P2** | S7a SDP 透传 corpus 扩充 | F-4 | byte-identity 断言已在 e2e，补多 media 变体即扩大 D11 覆盖 |
-| **P3** | S6 多规则优先级 + 无匹配组合 | F-3 | 出腿用户号断言已在 e2e，与 S2（404 已绿）共用仿真链 |
-| **P4** | S10 非 2xx 透传（486/480/408） | F-10 | 需先扩 testbed 对端 UAS（当前只返 200），依赖新仿真能力故后排 |
-| **P5** | S9 in-dialog 路由 | F-9 | 依赖 M7.3 工程切片；in-dialog 状态机驱动复杂度高 |
-| **P6** | S11 CANCEL 与最终响应竞态 | F-11 | 竞态两分支确定性证明成本最高、flaky 风险最大；允许以 gap 登记收尾 |
-| **阻塞** | S8 Route/Record-Route | F-5 | 基线本身缺 Route / Record-Route 头（2 条既有 skip 的根因）；M2 probe 补采前不排，REQ-F-5 按 N4 停止线不签 pass |
+| **P1** | S5 two-leg normalized sequence differential check | F-2 | The Wave 2 bridge capture framework is already in place; extending it to "each leg's INVITE→200→ACK→BYE→200" has the lowest cost and the most direct benefit |
+| **P2** | S7a SDP pass-through corpus expansion | F-4 | The byte-identity assertion already exists in e2e; adding more media variants immediately widens D11 coverage |
+| **P3** | S6 multi-rule priority + no-match combination | F-3 | The outbound-leg user-number assertion already exists in e2e and shares the simulation chain with S2 (404 already green) |
+| **P4** | S10 non-2xx pass-through (486/480/408) | F-10 | The testbed peer UAS must be extended first (it currently only returns 200), so it is scheduled later because it depends on new simulation capability |
+| **P5** | S9 in-dialog routing | F-9 | Depends on the M7.3 engineering slice; the in-dialog state machine has high driving complexity |
+| **P6** | S11 CANCEL and final response race | F-11 | Deterministic proof of both race branches is the most expensive and carries the greatest flaky risk; closing out with a gap registration is permitted |
+| **Blocked** | S8 Route/Record-Route | F-5 | The baseline itself lacks Route / Record-Route headers (the root cause of the 2 existing skips); not scheduled until the M2 probe capture is added, and REQ-F-5 is not signed as pass per the N4 stop line |
 
-**边界**：① 排期**不实现任何用例**；实现分批启动需授权；② S1 的 14 条逐条 header 对拍不在本表（wave2 register 跟踪）；③ 不签收任何 REQ。已同步 `test-plan.md` REQ-F-1 边界段（追加指针）与 native plan 的 Sign-off 框 3（满足）。
+**Boundaries**: ① The scheduling **implements no test case**; starting implementation requires authorization; ② S1's 14 item-by-item header differential checks are not in this table (tracked by the wave2 register); ③ No REQ is signed off. `test-plan.md`'s REQ-F-1 boundary section (append pointer) and the native plan's Sign-off box 3 (satisfied) have been synchronized.
 
 ---
 
-## 3. B1 · O1 容量目标值（自行判断的落法）
+## 3. B1 · O1 capacity target value (how the agent judged it to land)
 
-**落点**：[`plan.md`](../plan.md) §5.1「O1 取值落定（2026-10-12 晚些时候追加）」段。
+**Location**: the "O1 value settled (appended later on 2026-10-12)" paragraph in [`plan.md`](../plan.md) §5.1.
 
-| 层 | 落定结果 | 依据与边界 |
+| Layer | Settled result | Basis and boundary |
 |---|---|---|
-| **内部工程目标值** | **loopback 模型下 ≥ CPS 1280 无失败**（峰值并发 19200、`unresolved_sessions` 30、零 error）—— 由「已验证下限基线」**升格为内部工程目标（回归保持线）** | 2026-10-12 饱和点探测实测（20→1280 CPS 全成功、未测到饱和点），见 [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md) §4。**仅限内部**：驱动回归量级与工程设计；**不得写入任何对外材料、不得作为 SLA** |
-| **对外承诺值** | **不填**（状态：待目标环境测量批次） | ne-datasheet §3「填值的准入条件」三条均未满足：① 缺业务判决路径（accept-all harness 旁路 `decide()`）实测；② 缺饱和点观测；③ 缺真实集群多副本 / S-SBC 路径 |
+| **Internal engineering target value** | **≥ CPS 1280 with no failures under the loopback model** (peak concurrency 19200, `unresolved_sessions` 30, zero errors) — promoted from a "verified lower-bound baseline" to an **internal engineering target (regression holding line)** | Measured in the 2026-10-12 saturation probe (20→1280 CPS all successful, saturation point not reached), see §4 of [`2026-10-12-o1-and-native-reproducibility.md`](2026-10-12-o1-and-native-reproducibility.md). **Internal only**: it drives the regression magnitude and engineering design; **it must not be written into any external material and must not be used as an SLA** |
+| **External committed value** | **Not filled in** (status: awaiting the target-environment measurement batch) | The three "conditions for filling in a value" in ne-datasheet §3 are all unmet: ① there is no measurement of the business decision path (the accept-all harness bypasses `decide()`); ② there is no saturation point observation; ③ there is no real-cluster multi-replica / S-SBC path |
 
-**四项下游维持阻塞（逐项精确理由，不是遗漏）**：
+**The four downstream items stay blocked (precise reason per item, not an omission)**:
 
-| 下游 | 精确阻塞理由 |
+| Downstream | Precise blocking reason |
 |---|---|
-| HPA 阈值（M5） | 缺「带 per-pod 资源利用率（CPU / memory at load）的测量批次」—— 2026-10-12 探测未记录资源数据；`hpa.yaml` 守卫「Fill them from the M6 measurement, not from intuition」继续有效；chart `autoscaling.*` 保持 null（fail-closed 设计不变） |
-| 容量类告警 | 缺可对外的容量锚；`as-alerts.yaml` 文件头「Capacity alerts are added after M6, from the measurement」口径不变；不新增 `as.capacity` 组 |
-| `ne-datasheet.md` 容量取值 | 准入条件三条未满足；该文档属 B6 lane，本轮不 edit（stale 面见 §5） |
-| 4.1 性能基准正式报告 | 无业务判决路径实测即无正式报告；维持只交方法学章节 |
+| HPA thresholds (M5) | Missing "a measurement batch with per-pod resource utilization (CPU / memory at load)" — the 2026-10-12 probe recorded no resource data; the `hpa.yaml` guard "Fill them from the M6 measurement, not from intuition" remains in effect; the chart's `autoscaling.*` stays null (the fail-closed design is unchanged) |
+| Capacity-class alerts | No externally committable capacity anchor; the `as-alerts.yaml` file header basis "Capacity alerts are added after M6, from the measurement" is unchanged; no new `as.capacity` group |
+| Capacity values in `ne-datasheet.md` | The three admission conditions are unmet; this document belongs to the B6 lane and is not edited this round (see §5 for the stale surface) |
+| The 4.1 performance baseline formal report | Without a measurement of the business decision path there is no formal report; it continues to deliver only the methodology chapter |
 
-**为什么对外承诺值不填**：唯一实测是 loopback + accept-all UAS + `hold=0` + 单进程，`2026-10-12-o1-and-native-reproducibility.md` §4 结论 3 明写「不能支撑任何对外容量值」。凭该证据填对外数字会直接违反 `AGENT.md` §2 与 ne-datasheet 的填值准入条件 —— **这是证据纪律，不是未完成**。
-
----
-
-## 4. B5 · M8 N3 执行（7 行「工程证据接受」代签）
-
-**落点**：`m8-test-plan-matrix.md`「M8 N3 执行结果」节 + [`2026-10-12-m8-n2-countersign-record.md`](2026-10-12-m8-n2-countersign-record.md) §6。
-
-- **候选行**即 N3 原文点名的 7 行：**F-1 / F-2 / F-3 / F-6 / F-7 / F-12 / F-14**；逐行核对 2026-10-12 现行证据（e2e Wave 1+2、E1 契约、`make gate-native`、M4 工程关门）后代签 open → pass，签字备注一律「工程证据接受」+「agent 代签（维护者 2026-10-12 授权）」。
-- **计数**：矩阵 pass 9→16、open 24→17（剩余 17 行与 N4 停止线清单逐行一致）；blocked 10 / n-a 6 / fail 0 不变。
-- **N4 停止线未被越过**：`report.md` §0.5 的 open 24 / blocked 12 **一字未改**；M5 REQ 级仍不通过；M8 仍「RC 就绪、待退出签字」；`test-plan.md` 所有 `- [ ]` 一项未打勾；不宣称 test-plan 整句全绿。
-- F-12 / F-14 签收范围**仅限被叫 + 前缀**（主叫 / 正则仍 n-a，v1.1）。
+**Why no external committed value is filled in**: the only measurement is loopback + accept-all UAS + `hold=0` + a single process, and conclusion 3 in §4 of `2026-10-12-o1-and-native-reproducibility.md` explicitly states that it "cannot support any external capacity value". Filling in an external number on the basis of that evidence would directly violate `AGENT.md` §2 and the fill-in admission conditions of ne-datasheet — **this is evidence discipline, not incompleteness**.
 
 ---
 
-## 5. 下游 stale 登记（本轮不 edit，登记待跟进）
+## 4. B5 · M8 N3 execution (counter-signing 7 rows as "engineering evidence accepted")
 
-本次同步后，以下文档中「chart 与 `VERSION` 不同步 / `0.0.0-skeleton`」的表述在**事实层面已过期**（历史记录按保史约定保留，不逐处回改；其状态回写以本文与 §1.3 的落点为准）：
+**Location**: the "M8 N3 execution results" section of `m8-test-plan-matrix.md` + §6 of [`2026-10-12-m8-n2-countersign-record.md`](2026-10-12-m8-n2-countersign-record.md).
 
-| 文档 | 过期表述（例） | 归属 |
+- The **candidate rows** are the 7 rows named in the N3 original: **F-1 / F-2 / F-3 / F-6 / F-7 / F-12 / F-14**; after checking each row against the current 2026-10-12 evidence (e2e Wave 1+2, the E1 contract, `make gate-native`, the M4 engineering gate closure), open → pass was counter-signed, and every signature note reads "engineering evidence accepted" + "counter-signed by agent (maintainer authorization 2026-10-12)".
+- **Counts**: matrix pass 9→16, open 24→17 (the remaining 17 rows match the N4 stop-line list row by row); blocked 10 / n-a 6 / fail 0 unchanged.
+- **The N4 stop line was not crossed**: the open 24 / blocked 12 in §0.5 of `report.md` are **unchanged by a single word**; M5 still fails at the REQ level; M8 is still "RC-ready, pending exit sign-off"; not a single `- [ ]` in `test-plan.md` was ticked; no claim is made that the whole test-plan sentence is fully green.
+- The sign-off scope of F-12 / F-14 is **limited to called party + prefix** (caller / regex is still n-a, v1.1).
+
+---
+
+## 5. Downstream Stale Registration (not edited this round, registered for follow-up)
+
+After this synchronization, the statements "the chart is out of sync with `VERSION` / `0.0.0-skeleton`" in the following documents are **obsolete at the factual level** (historical records are retained per the record-preservation convention and are not edited back item by item; the write-back of their status is governed by this document and the location in §1.3):
+
+| Document | Obsolete statement (example) | Ownership |
 |---|---|---|
-| `docs/delivery/airgap-package.md`、`docs/delivery/install-guide.md` | `Chart.yaml` `0.0.0-skeleton` 与 `VERSION` `0.2.0` 不同步 | B6 lane（16 份包装文档） |
-| `docs/operations/rollback-playbook.md` | 同上（L3 命名） | B6 lane |
-| `docs/product/ne-datasheet.md`、`docs/product/version-lifecycle.md` | 同上；datasheet 另有「O1 未裁决」表述（现应读作「内部工程目标值已落、对外承诺值未裁」） | B6 lane |
-| `docs/reviews/product-packaging-execution-record-2026-10-10.md`、`docs/reviews/unfinished-assessment-2026-10-10-review*.md` | 登记日事实快照 | 历史审计链，不回改 |
+| `docs/delivery/airgap-package.md`, `docs/delivery/install-guide.md` | `Chart.yaml` `0.0.0-skeleton` is out of sync with `VERSION` `0.2.0` | B6 lane (16 packaging documents) |
+| `docs/operations/rollback-playbook.md` | Same (L3 naming) | B6 lane |
+| `docs/product/ne-datasheet.md`, `docs/product/version-lifecycle.md` | Same; the datasheet additionally has an "O1 undecided" statement (which should now read as "the internal engineering target value has landed, the external committed value is undecided") | B6 lane |
+| `docs/reviews/product-packaging-execution-record-2026-10-10.md`, `docs/reviews/unfinished-assessment-2026-10-10-review*.md` | Factual snapshot at the registration date | Historical audit chain; not edited back |
 
-**处置建议（待维护者决定，不在本轮范围）**：由 B6 负责方在下一次文档同步批次中按「原文保留 + 追加注记」方式处理；`product-packaging-plan.md` §5 已追加事实层面关闭的说明（见该文件 2026-10-12 晚些时候追加块）。
+**Recommended handling (for the maintainer to decide; out of scope this round)**: the B6 owner handles it in the next documentation synchronization batch using the "keep the original text + append a note" approach; §5 of `product-packaging-plan.md` already has an explanation of the factual-level closure appended (see that file's later-on-2026-10-12 appended block).
 
-> **去向指针（2026-10-13 追加；上方处置建议原文一律保留不改）**：本节登记的五份下游文档
-> （`docs/delivery/airgap-package.md`、`docs/delivery/install-guide.md`、`docs/operations/rollback-playbook.md`、
-> `docs/product/ne-datasheet.md`、`docs/product/version-lifecycle.md`）中的 `0.0.0-skeleton` 与「O1 未裁决」两类 stale 表述，
-> 连同本节的处置建议（原文保留 + 追加注记、是否同步待维护者决定），统一收口于
-> [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§5-1**。
-> 后续状态盘点、汇报、handoff、新 session 开场涉及本项一律**只引该指针**，不逐项展开、不再列入「待维护者动作」。
+> **Destination pointer (appended 2026-10-13; the original text of the recommendation above is retained unchanged)**: the two classes of stale statements in the five downstream documents registered in this section
+> (`docs/delivery/airgap-package.md`, `docs/delivery/install-guide.md`, `docs/operations/rollback-playbook.md`,
+> `docs/product/ne-datasheet.md`, `docs/product/version-lifecycle.md`) — `0.0.0-skeleton` and "O1 undecided" —
+> together with this section's recommended handling (keep the original text + append a note; whether to synchronize is for the maintainer to decide), are
+> all consolidated under [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§5-1**.
+> Subsequent status reviews, reports, handoffs, and new session openings that touch this item always **cite only that pointer**, do not itemize, and no longer list it as an "action for the maintainer".
 
 ---
 
-## 6. 后置到下一个 release 的两件（已标记，不再单列）
+## 6. The Two Items Deferred to the Next Release (marked, no longer itemized separately)
 
-| 项 | 标记落点 | 口径 |
+| Item | Where the marker landed | Basis |
 |---|---|---|
-| **A5 / X1 抓取接线**（annotation vs ServiceMonitor/PodMonitor） | [`2026-10-11-open-adjudication-register.md`](2026-10-11-open-adjudication-register.md) §3 X1「裁决落盘（2026-10-12 追加）」+ §5 汇总表状态列 + 评估文档 §4 A5 状态行 + `plan.md` §0 决策行 | 需运营商 monitoring-integration 标准输入；输入到位前不选边、不改 chart。**后续状态盘点、汇报、handoff、session 开场一律只引指针，不逐项展开、不单独提醒、不再列入「待维护者动作」**（与评估文档 §12 同口径） |
-| **B2 / B3**（requirement / ADR 起草 + **B3 的 RPO / RTO 取值**） | [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) §5 + 评估文档 §4 B2/B3 状态行 + `plan.md` §0 决策行 | 本轮不启动；§4 四项启动条件原样保留（RPO / RTO 须维护者取值，不代裁）；下一个 release 排期时明确重启时机 |
+| **A5 / X1 capture wiring** (annotation vs ServiceMonitor/PodMonitor) | [`2026-10-11-open-adjudication-register.md`](2026-10-11-open-adjudication-register.md) §3 X1 "adjudication written to disk (appended 2026-10-12)" + the status column of the §5 summary table + the A5 status row in §4 of the assessment document + the `plan.md` §0 decision row | Requires the carrier's monitoring-integration standard input; no side is chosen and the chart is not changed before the input arrives. **Subsequent status reviews, reports, handoffs, and session openings always cite only the pointer, do not itemize, do not remind separately, and no longer list it as an "action for the maintainer"** (same basis as §12 of the assessment document) |
+| **B2 / B3** (requirement / ADR drafting + **B3's RPO / RTO values**) | [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) §5 + the B2/B3 status rows in §4 of the assessment document + the `plan.md` §0 decision row | Not started this round; the four startup conditions in §4 are retained as is (RPO / RTO require maintainer values and are not adjudicated on their behalf); when scheduling the next release, make the restart timing explicit |
 
-> **去向指针（2026-10-13 追加；上方表格与「不再单列」原文一律保留不改）**：本表两件的去向为 ——
-> **A5 / X1 抓取接线** → [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§2** 第 7 行（外部硬依赖类，
-> 重启 = 维护者裁决 + 运营商 monitoring-integration 标准到位）；
-> **B2 / B3** → 同文档 **§4-1 / §4-2**，其四项启动条件原样保留为同文档 **§4.3**（未确认不得启动），
-> **RPO / RTO 取值**仍须维护者取值、见 **§7-4**。
-> 后续状态盘点、汇报、handoff、新 session 开场涉及本表遗留项一律**只引该指针**，**本表不再单列**、不逐项复述。
-
----
-
-## 7. 本轮落盘清单
-
-| 文件 | 性质 |
-|---|---|
-| `deploy/helm/Chart.yaml` | **修改**：`kubeVersion: ">=1.23.0-0"`（含反推注释）+ 首次同步 `version` / `appVersion` → `0.2.0` |
-| `CHANGELOG.md` | 追加：`[0.2.0]` 新增一条（未 bump 版本） |
-| `docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt` | **新建**（证据） |
-| `docs/acceptance/artifacts/m5/README.md` | 追加：证据索引行 |
-| `docs/handoff/2026-10-12-remaining-items-execution.md` | **新建**（本文） |
-| `docs/handoff/2026-10-09-sip-native-testing-plan.md` | 追加：§4-D 排期定稿 + Sign-off 框 3 满足 |
-| `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` | 追加：A3 / A5 / A6 / B1 / B2+B3 / B5 / Lane D 七处状态行 |
-| `docs/plan.md` | 追加：§0 决策记录表 6 行；§5.1「O1 取值落定」段 |
-| `docs/acceptance/test-plan.md` | 追加：REQ-F-1 真栈边界段排期与覆盖状态更新 |
-| `docs/acceptance/m8-test-plan-matrix.md` | 追加：「M8 N3 执行结果」节 |
-| `docs/handoff/2026-10-12-m8-n2-countersign-record.md` | 追加：§6 N3 执行结果 |
-| `docs/handoff/2026-10-11-open-adjudication-register.md` | 追加：§3 X1 裁决落盘；§5 汇总表 X1 状态列更新 |
-| `docs/handoff/2026-10-12-b2-b3-deferred-items.md` | 追加：§5 后置到下一个 release |
-| `docs/handoff/2026-10-12-a6-b-packaging-execution.md` | 追加：§11.1 剩余事项处置表 |
-| `docs/product-packaging-plan.md` | 追加：§5 批次表 4.2–4.5 归属列 + 2026-10-12 晚些时候追加块 |
+> **Destination pointer (appended 2026-10-13; the original text of the table and of "no longer itemized separately" above is retained unchanged)**: the destinations of the two items in this table are —
+> **A5 / X1 capture wiring** → [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) **§2** row 7 (external hard dependency class;
+> restart = maintainer adjudication + the carrier's monitoring-integration standard being in place);
+> **B2 / B3** → **§4-1 / §4-2** of the same document, with its four startup conditions retained as is in **§4.3** of the same document (must not start without confirmation),
+> and the **RPO / RTO values** still requiring maintainer values, see **§7-4**.
+> Subsequent status reviews, reports, handoffs, and new session openings that touch the leftover items in this table always **cite only that pointer**; **this table no longer itemizes them** and does not restate them one by one.
 
 ---
 
-## 8. 最终门禁与证据
+## 7. List of Files Written in This Round
 
-| 检查 | 结果 |
+| File | Nature |
 |---|---|
-| `scripts/sync-chart-version.sh --check` | exit 0（`OK: Chart.yaml version/appVersion both = '0.2.0'`） |
-| `HELM_BIN=$PWD/tools/bin/helm make chart-check` | `chart-check: OK`，exit 0（helm 3.16.4；1 chart linted / 0 failed；全部渲染守卫通过） |
-| `make gate`（ruff format --check / ruff check / mypy / `-m "unit or contract"`） | exit 0，**1102 passed / 2 skipped / 214 deselected**；2 条 SKIPPED 均为 `test_derived_baseline.py:245` / `:279` 的既有 Route / Record-Route 基线缺口，无一条来自 native 缺失 |
-| `uv run pytest tests/ -q`（根守卫） | **133 passed** |
+| `deploy/helm/Chart.yaml` | **Modified**: `kubeVersion: ">=1.23.0-0"` (with reverse-derivation comment) + first sync of `version` / `appVersion` → `0.2.0` |
+| `CHANGELOG.md` | Appended: one entry under `[0.2.0]` "Added" (no version bump) |
+| `docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt` | **Newly created** (evidence) |
+| `docs/acceptance/artifacts/m5/README.md` | Appended: evidence index row |
+| `docs/handoff/2026-10-12-remaining-items-execution.md` | **Newly created** (this document) |
+| `docs/handoff/2026-10-09-sip-native-testing-plan.md` | Appended: §4-D scheduling finalization + Sign-off box 3 satisfied |
+| `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` | Appended: seven status rows for A3 / A5 / A6 / B1 / B2+B3 / B5 / Lane D |
+| `docs/plan.md` | Appended: 6 rows in the §0 decision record table; the "O1 value settled" paragraph in §5.1 |
+| `docs/acceptance/test-plan.md` | Appended: REQ-F-1 real-stack boundary section scheduling and coverage status update |
+| `docs/acceptance/m8-test-plan-matrix.md` | Appended: the "M8 N3 execution results" section |
+| `docs/handoff/2026-10-12-m8-n2-countersign-record.md` | Appended: §6 N3 execution results |
+| `docs/handoff/2026-10-11-open-adjudication-register.md` | Appended: §3 X1 adjudication written to disk; X1 status column updated in the §5 summary table |
+| `docs/handoff/2026-10-12-b2-b3-deferred-items.md` | Appended: §5 deferred to the next release |
+| `docs/handoff/2026-10-12-a6-b-packaging-execution.md` | Appended: §11.1 remaining items handling table |
+| `docs/product-packaging-plan.md` | Appended: 4.2–4.5 ownership column in the §5 batch table + the later-on-2026-10-12 appended block |
+
+---
+
+## 8. Final Gate and Evidence
+
+| Check | Result |
+|---|---|
+| `scripts/sync-chart-version.sh --check` | exit 0 (`OK: Chart.yaml version/appVersion both = '0.2.0'`) |
+| `HELM_BIN=$PWD/tools/bin/helm make chart-check` | `chart-check: OK`, exit 0 (helm 3.16.4; 1 chart linted / 0 failed; all render guards passed) |
+| `make gate` (ruff format --check / ruff check / mypy / `-m "unit or contract"`) | exit 0, **1102 passed / 2 skipped / 214 deselected**; both SKIPPED cases are the existing Route / Record-Route baseline gaps at `test_derived_baseline.py:245` / `:279`; not one comes from native being missing |
+| `uv run pytest tests/ -q` (root guard) | **133 passed** |
 | `uv run pytest tests/test_version_consistency.py -q` | **9 passed** |
 
-三元组：
+Triples:
 
-- `(已验证, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)`
+- `(verified, docs/acceptance/artifacts/m5/2026-10-12/PASS-chart-version-sync-2026-10-12.txt, 2026-10-12)`
 
-**未执行**：`make gate-native`（本轮未改任何 native / 产品代码；同日早些时候已由上一轮跑过 exit 0）、任何 `git` 写操作、任何 `docker` / 集群动作。
-**不签收任何 REQ / 里程碑**；`report.md` §0.5 计数未改；外部 IOT 与真实环境采证 hold 与 M8 退出签字后置继续有效。
+**Not executed**: `make gate-native` (no native / product code was changed this round; the previous round already ran it successfully earlier the same day with exit 0), any `git` write operation, any `docker` / cluster action.
+**No REQ / milestone is signed off**; the §0.5 counts of `report.md` are unchanged; deferring external IOT and real-environment evidence gathering, together with the deferred M8 exit sign-off, remains in effect.
 
 ---
 
-**落盘日期：2026-10-12。状态：已执行，待维护者评审。**
+**Write date: 2026-10-12. Status: executed, pending maintainer review.**

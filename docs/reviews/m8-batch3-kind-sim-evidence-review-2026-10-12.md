@@ -12,121 +12,121 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 批次 3「kind/sim 证据」评审记录（2026-10-12）
+# M8 batch 3 "kind/sim evidence" review record (2026-10-12)
 
-> **落盘日期：2026-10-12。** 本文件是
+> **Recorded on: 2026-10-12.** This file is the review vehicle for the 7 evidence items of
 > [`../handoff/2026-10-12-m8-batch3-prompt.md`](../handoff/2026-10-12-m8-batch3-prompt.md)
-> 7 项取证（F-15、NF-2、NF-9、NF-10、NF-4、NF-5、2.5 备份恢复）的评审载体。
-> **agent 依据实测证据提出裁决建议，不代替维护者最终判断；本文件不签收任何 REQ、不改变
-> `docs/acceptance/m8-test-plan-matrix.md` 状态、不改变 report.md 计数。**
-> 环境一律为 `dev-win03ib7niepf0`。
+> (F-15, NF-2, NF-9, NF-10, NF-4, NF-5, 2.5 backup/restore).
+> **The agent proposes verdicts based on measured evidence and does not replace the maintainer's final judgement; this file signs off no REQ, does not change
+> `docs/acceptance/m8-test-plan-matrix.md` status, and does not change report.md counts.**
+> The environment is always `dev-win03ib7niepf0`.
 
-## 当前状态（Current Status）
+## Current Status
 
-- **取证完成度：7/7 项全部执行完毕**（2026-10-12）。F-15/NF-10、NF-2、NF-9、NF-5、2.5 备份恢复为 **PASS（5 份证据）**；NF-4 为 **FAILCLOSED（1 份，不是通过证据）**；取证中发现并修复 **1 个 P0 产品缺陷**（1 份 PASS 证据 + 代码改动）。
-- **P0 缺陷（auth 模式分发生命周期必 409）：已修复、已验证关闭**（真集群行为 + 629 passed）。
-- **NF-4：维护者 2026-10-12 已裁决并签收 pass**（口径=滚动行为已实测验证 + 在途呼损范围被当前 release 接受；**非零丢失已达成**）；严格滚动零呼损登记为今后 release 的增强 feature（本版不立项）。证据 PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt；矩阵 REQ-NF-4 已更新 pass（16→17）、blocked 7→6。
-- **门禁：`make gate` 全绿**（2026-10-12 本机）：ruff format 546 files already formatted；ruff check All checks passed；mypy Success: no issues found in 90 source files；pytest `-m "unit or contract"` **1140 passed, 227 deselected, 11 warnings**。证据纪律测试 117 passed。
-- **config-service 全量（含 integration，compose PG12.22）：629 passed, 3 skipped**（skip 为 wal_level=replica / PG 版本环境限制）。
-- **未签收任何 REQ；矩阵、report.md 未改；无任何 git 写操作。**
-- **遗留待维护者事项**：config-service 单连接不自动重连是否立项（B3-04）、工作树处置（提交切分由维护者决定）。
+- **Evidence completion: all 7/7 items executed** (2026-10-12). F-15/NF-10, NF-2, NF-9, NF-5, 2.5 backup/restore are **PASS (5 evidence files)**; NF-4 is **FAILCLOSED (1 file, not passing evidence)**; during evidence collection **1 P0 product defect** was found and fixed (1 PASS evidence file + code change).
+- **P0 defect (auth-mode distribution lifecycle always 409): fixed, verified closed** (real cluster behaviour + 629 passed).
+- **NF-4: the maintainer adjudicated on 2026-10-12 and signed off pass** (framing = rolling behaviour verified by measurement + in-flight call-loss scope accepted by the current release; **zero loss has NOT been achieved**); strict zero-loss rolling upgrade is registered as an enhancement feature for a future release (not raised as an item in this version). Evidence PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt; matrix REQ-NF-4 has been updated to pass (16→17), blocked 7→6.
+- **Gate: `make gate` fully green** (on this machine, 2026-10-12): ruff format 546 files already formatted; ruff check All checks passed; mypy Success: no issues found in 90 source files; pytest `-m "unit or contract"` **1140 passed, 227 deselected, 11 warnings**. Evidence discipline test 117 passed.
+- **config-service full suite (including integration, compose PG12.22): 629 passed, 3 skipped** (skips are due to wal_level=replica / PG version environment limits).
+- **No REQ signed off; matrix and report.md unchanged; no git write operations whatsoever.**
+- **Leftover items pending the maintainer**: whether to raise an item for config-service's single connection not auto-reconnecting (B3-04), and working-tree disposition (commit splitting is the maintainer's decision).
 
-## 1. 评审范围与方法
+## 1. Review scope and method
 
-| 项 | 矩阵行 | 拓扑 | 证据文件 |
+| Item | Matrix row | Topology | Evidence file |
 |---|---|---|---|
-| F-15 真 AS 全栈（分发/健康/自动回滚/手动回滚） | REQ-F-15 / 5.4-F-15 | kind-as-m5 / ns as-m5 / release `as`（bundled PG12.22 + Redis7） | PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt |
-| NF-10 灰度分发/回滚 | REQ-NF-10 | 随 F-15 | 同上 |
-| NF-2 双 Deployment 隔离 | REQ-NF-2 | kind-as-m5 / ns as-m5 | PASS-nf2-deployment-isolation-2026-10-12.txt |
-| NF-9 命名空间隔离 | REQ-NF-9 | kind-as-m5：ns as-m5（release `as`）+ ns as-m5b（release `asb`） | PASS-nf9-namespace-isolation-2026-10-12.txt |
-| NF-4 滚动升级零丢失 | REQ-NF-4 | kind-as-m71 / ns as-sut（产品 AS 单副本、headless） | FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt（**不是通过证据**） |
-| NF-5 仿真器中立（UDP/TCP/TLS） | REQ-NF-5 | kind-as-m71：ims-sim + as-sut | PASS-nf5-simulator-transport-consistency-2026-10-12.txt |
-| 2.5 备份恢复演练 | 产品化计划 §2.5 / backup-restore.md §2/§4/§5 | kind-as-m5 bundled PG | PASS-backup-restore-drill-bundled-pg-2026-10-12.txt |
-| P0 缺陷修复（取证中发现） | — | as-m5 实测 + compose PG 集成测试 | PASS-config-service-auth-distribution-409-fix-2026-10-12.txt |
+| F-15 true AS full stack (distribution/health/auto-rollback/manual rollback) | REQ-F-15 / 5.4-F-15 | kind-as-m5 / ns as-m5 / release `as` (bundled PG12.22 + Redis7) | PASS-f15-distribution-lifecycle-rollback-2026-10-12.txt |
+| NF-10 canary distribution/rollback | REQ-NF-10 | Together with F-15 | Same as above |
+| NF-2 dual-Deployment isolation | REQ-NF-2 | kind-as-m5 / ns as-m5 | PASS-nf2-deployment-isolation-2026-10-12.txt |
+| NF-9 namespace isolation | REQ-NF-9 | kind-as-m5: ns as-m5 (release `as`) + ns as-m5b (release `asb`) | PASS-nf9-namespace-isolation-2026-10-12.txt |
+| NF-4 rolling upgrade zero loss | REQ-NF-4 | kind-as-m71 / ns as-sut (product AS single replica, headless) | FAILCLOSED-nf4-rolling-restart-inflight-loss-2026-10-12.txt (**not passing evidence**) |
+| NF-5 simulator neutrality (UDP/TCP/TLS) | REQ-NF-5 | kind-as-m71: ims-sim + as-sut | PASS-nf5-simulator-transport-consistency-2026-10-12.txt |
+| 2.5 backup/restore drill | productization plan §2.5 / backup-restore.md §2/§4/§5 | kind-as-m5 bundled PG | PASS-backup-restore-drill-bundled-pg-2026-10-12.txt |
+| P0 defect fix (found during evidence collection) | — | as-m5 measured + compose PG integration tests | PASS-config-service-auth-distribution-409-fix-2026-10-12.txt |
 
-方法：全部为真实 kind 集群 + 真实 helm release + 真实 SIP（M7.1 仿真 S-SBC，native reSIProcate 运行时）取证；每项保留命令输出原文入证据文件；失败项如实落 FAILCLOSED，不强行通过。
+Method: everything was evidenced on real kind clusters + real helm releases + real SIP (M7.1 simulated S-SBC, native reSIProcate runtime); for each item the raw command output is kept verbatim in the evidence file; failed items are faithfully recorded as FAILCLOSED and are not forced to pass.
 
-## 2. 各项评审结论
+## 2. Per-item review conclusions
 
-### 2.1 F-15 + NF-10：PASS（控制面行为已验证）
+### 2.1 F-15 + NF-10: PASS (control-plane behaviour verified)
 
-- CO-1 两批健康：distribution 201 start（仅首批通知）→ 首批健康 in_progress → 末批健康 completed 且变更单自动 applied（order_rev=5）；显式 apply 以 r1-1 幂等重放 200。
-- CO-2 末批置 unhealthy：自动 rolled_back（rolled_back_to=1, reason="health check failed"），变更单 rolled_back，状态持久化。
-- CO-3 首批后手动 rollback：rolled_back（rolled_back_to=2, reason="batch3 manual evidence drill"）。
-- fleet-a 集群内真实收到全部 notify（change_id/version/bundle_version 与 API 一致）；fleet-b 仅 selftest —— 「只通知首批」为设计行为（test_fleet_api 钉死）。
-- **边界**：产品 AS 无 notify/bundle 接收端（lld 事实），fleet-a/fleet-b 是协议 stub；证据证明 config-service 控制面，不证明 AS 消费 bundle；bundled 单副本不覆盖生产 HA。
+- CO-1 both batches healthy: distribution 201 start (first batch notified only) → first batch health in_progress → last batch health completed and the change order auto-applied (order_rev=5); the explicit apply idempotently replayed r1-1 with 200.
+- CO-2 last batch set unhealthy: auto rolled_back (rolled_back_to=1, reason="health check failed"), the change order rolled_back, state persisted.
+- CO-3 manual rollback after the first batch: rolled_back (rolled_back_to=2, reason="batch3 manual evidence drill").
+- fleet-a actually received all notifications inside the cluster (change_id/version/bundle_version consistent with the API); fleet-b only got selftest — "notify the first batch only" is designed behaviour (pinned by test_fleet_api).
+- **Boundary**: the product AS has no notify/bundle receiving end (lld fact), fleet-a/fleet-b are protocol stubs; the evidence proves the config-service control plane, not that the AS consumes bundles; the bundled single replica does not cover production HA.
 
-### 2.2 NF-2：PASS
+### 2.2 NF-2: PASS
 
-删除 translation Pod 并由 Deployment 重建的全窗口，anti-fraud 的 /health/live + /health/ready 42/42 为 200，anti-fraud Pod 名字/UID/startTime/restartCount 全程不变，translation 取得新 UID。
+Across the whole window of deleting the translation Pod and having it recreated by the Deployment, anti-fraud's /health/live + /health/ready returned 42/42 as 200; the anti-fraud Pod's name/UID/startTime/restartCount stayed unchanged throughout, and translation obtained a new UID.
 
-### 2.3 NF-9：PASS（附 1 个观察项）
+### 2.3 NF-9: PASS (with 1 observation)
 
-ns-A 停 PostgreSQL 进程 + 删除 translation/anti-fraud 两个 Deployment 期间，独立 ns-B 全栈 58/58 探测 200，ns-B 7 个 Pod 身份（UID/startTime/restartCount）演练前后逐项不变；ns-A 经 helm upgrade 完整恢复。
-观察项：PG 恢复后 config-service 单条共享连接不自动重连（登录 500），重启 Deployment 后恢复（实测 5.25s）。本批不改，列 Adjudication B3-04。
+While the PostgreSQL process in ns-A was stopped and the translation/anti-fraud Deployments were deleted, the independent ns-B full stack probed 58/58 as 200, and the identities of ns-B's 7 Pods (UID/startTime/restartCount) were unchanged item by item before and after the drill; ns-A was fully recovered via helm upgrade.
+Observation: after PG recovery the config-service's single shared connection does not reconnect automatically (login 500), recovering after restarting the Deployment (measured 5.25s). Not changed in this batch; listed as Adjudication B3-04.
 
-### 2.4 NF-4：实测在途呼损 → 2026-10-12 维护者裁决接受、签收 pass（零呼损滚动列今后 release feature）
+### 2.4 NF-4: in-flight call loss measured → maintainer adjudicated 2026-10-12 to accept it and signed off pass (zero-loss rolling upgrade listed as a future release feature)
 
-- 拓扑：产品 AS 单副本（values-product-as.yaml `replicaCount: null` → 默认 1；注释说明第二进程会绑定同一组 SIP 端口），headless Service，RollingUpdate 25%/25%，preStop sleep 5 + terminationGracePeriodSeconds=300。
-- 话务：UDP，全成功场景 T1/T5/F1，5cps×70s=350 呼/轮，第 12s rollout restart。
-- 第 1 轮（20:47:37）：347/350 建立；timeout_invite 3、bye_sip_481 6、timeout_bye 4；unresolved 10。
-- 第 2 轮（20:51:15，独立复现）：346/350；timeout_invite 4、bye_sip_481 7、timeout_bye 3；unresolved 10。
-- 根因：① headless 单副本切换窗口存在 INVITE 无应答路径（UDP，对端按 Pod IP 寻址）；② 对话状态只在旧进程内存（reSIProcate DUM 无 serialize/deserialize API），切换后 BYE 到新进程 → 481/超时。与已登记 native gap（M2 拟以 S-SBC 透明桥 + StateStore 弥补）同源。preStop/grace 不等于在途对话迁移。
-- **处理**：本批不改产品代码、不改 chart 默认值；FAILCLOSED 登记；矩阵维持 blocked；是否立项待维护者裁决（B3-02）。
+- Topology: product AS single replica (values-product-as.yaml `replicaCount: null` → default 1; the comment explains that a second process would bind the same set of SIP ports), headless Service, RollingUpdate 25%/25%, preStop sleep 5 + terminationGracePeriodSeconds=300.
+- Traffic: UDP, all-success scenario T1/T5/F1, 5cps×70s=350 calls per round, rollout restart at the 12s mark.
+- Round 1 (20:47:37): 347/350 established; timeout_invite 3, bye_sip_481 6, timeout_bye 4; unresolved 10.
+- Round 2 (20:51:15, independently reproduced): 346/350; timeout_invite 4, bye_sip_481 7, timeout_bye 3; unresolved 10.
+- Root cause: ① the single-replica headless switchover window has a path with no INVITE answer (UDP, the peer addresses by Pod IP); ② dialog state exists only in the old process's memory (reSIProcate DUM has no serialize/deserialize API), so after the switchover the BYE goes to the new process → 481/timeout. Same origin as the registered native gap (M2 intends to remedy it with an S-SBC transparent bridge + StateStore). preStop/grace does not equal in-flight dialog migration.
+- **Handling**: this batch does not change product code and does not change chart defaults; FAILCLOSED registration; the matrix stays blocked; whether to raise an item awaits maintainer adjudication (B3-02).
 
-**维护者裁决（2026-10-12）**：当前 release 接受该呼损级别，NF-4 mark pass，呼损在今后 release 通过 feature enhancement。验收口径为「实测行为已验证 + 损失范围接受」，不是零丢失已达成。
+**Maintainer adjudication (2026-10-12)**: the current release accepts this level of call loss, NF-4 is marked pass, and the call loss will be addressed in a future release via feature enhancement. The acceptance framing is "measured behaviour verified + loss scope accepted", not that zero loss has been achieved.
 
-**切换时序（k8s 事件实测为 surge 顺序）**：t≈0 新 Pod 创建、旧 Pod 仍在端点；t≈1-3s 新 Pod readiness 通过前 headless DNS 同时返回旧+新 A 记录，S-SBC 逐消息 getaddrinfo 无缓存，INVITE 被分到旧/新 Pod；t≈3s 旧 Pod Terminating——端点摘除与 preStop sleep 5 并行无先后保证，且 sleep 不透明、进程不置 not-ready/不 drain；t≈3-8s 旧进程持有在途对话但已不在 DNS；t≈8s+ SIGTERM 退出。
+**Switchover timing (k8s events measured to follow surge order)**: t≈0 the new Pod is created while the old Pod is still in the endpoints; t≈1-3s before the new Pod passes readiness, headless DNS returns both old and new A records simultaneously, and the S-SBC does a per-message getaddrinfo with no caching, so INVITEs land on either the old or the new Pod; t≈3s the old Pod goes Terminating — endpoint removal and preStop sleep 5 run in parallel with no ordering guarantee, and the sleep is opaque while the process is not marked not-ready and does not drain; t≈3-8s the old process still holds in-flight dialogs but is no longer in DNS; t≈8s+ SIGTERM exit.
 
-**两类损失机理**：① timeout_invite（3/4）= UDP 切换窗口 INVITE 到已摘端点的旧 IP，无 ICMP 反馈、6s 无终态；新 Pod 对 INVITE 来者不拒，故无 5xx，全为静默超时。② 在途对话 unresolved（每轮恰好 10）= 对话态只在旧进程 DUM 内存，BYE 按 headless 名路由到新进程得 481，或命中已退出的旧 IP 超时；很多 BYE 失败时旧进程仍活在 preStop 内，但已移出 DNS 且对话不粘实例。
+**Two loss mechanisms**: ① timeout_invite (3/4) = during the UDP switchover window the INVITE goes to the old IP whose endpoint has already been removed, with no ICMP feedback and no terminal state within 6s; the new Pod does not reject any INVITE, so there are no 5xx and everything is a silent timeout. ② in-flight dialogs unresolved (exactly 10 per round) = dialog state lives only in the old process's DUM memory, and the BYE is routed by headless name to the new process and gets 481, or hits the exited old IP and times out; many times when the BYE fails the old process is still alive inside preStop, but it has been removed from DNS and dialogs are not sticky to the instance.
 
-**结构性佐证**：5cps×hold 2s ≈ 稳态 10 并发，两轮 unresolved 各 10 = 切换时刻一窗在途对话整体受损，非随机丢包。
+**Structural corroboration**: 5cps×hold 2s ≈ steady-state 10 concurrent, and the 10 unresolved in each of the two rounds = the whole window of in-flight dialogs at the switchover moment was damaged, not random packet loss.
 
-**今后 release 增强 feature 的候选方向（本版不立项、不预选）**：A 进程级 drain（preStop 触发 not-ready/拒新单 + sleep≥最长呼叫时长）；B S-SBC 透明桥 + StateStore 对话态外部化（M2 既定路线，覆盖长呼叫）；C Contact/Record-Route 实例粘性；D 维护窗口/先静默话务的运维口径。完整分析见 PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt。
+**Candidate directions for a future release enhancement feature (not raised as an item in this version, no preselection)**: A process-level drain (preStop triggers not-ready/reject new requests + sleep ≥ the longest call duration); B S-SBC transparent bridge + StateStore externalization of dialog state (the route already established in M2, covering long calls); C Contact/Record-Route instance stickiness; D maintenance window / draining traffic first as an operational practice. See PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt for the full analysis.
 
-### 2.5 NF-5：PASS（附 PKI 边界）
+### 2.5 NF-5: PASS (with a PKI boundary)
 
-UDP/TCP/TLS 各 15 呼（T1/T4/T5/F1/F2），三轮判决分布逐桶相同：200×9 / 404×3 / 603×3，unresolved=0，无传输级错误。TLS 使用测试 CA（非运营商 PKI），不签收 REQ-S-2/S-3；呼数/时延是本轮运行值，非容量承诺。
+15 calls each over UDP/TCP/TLS (T1/T4/T5/F1/F2), with the three-round decision distribution identical bucket by bucket: 200×9 / 404×3 / 603×3, unresolved=0, no transport-level errors. TLS uses a test CA (not carrier PKI), so REQ-S-2/S-3 are not signed off; the call counts/latencies are values from this run, not a capacity commitment.
 
-### 2.6 2.5 备份恢复：PASS（耗时为量级，非承诺）
+### 2.6 2.5 backup/restore: PASS (durations are orders of magnitude, not commitments)
 
-真 DROP（terminate+DROP，PG12 不支持 WITH FORCE）后 pg_restore rc=0、stderr 0 字节；12 项计数 + 三角色前后一致，两 schema 恢复；审计 append-only 8 项守卫按拒（UPDATE/DELETE/TRUNCATE/change_orders_events/大写 outcome CHECK/id 列/插入后篡改回滚）；控制台登录 200、managed-rules 200 rows=2、审计续写。实测：dump 0.259s、cp 0.143s、drop+create 1.123s、restore 0.704s、config-service 重启 5.252s —— **仅描述本次 lab 小数据集，不预设 RPO/RTO**；客户演练仍以 backup-restore.md §5 模板为准。
+After a real DROP (terminate+DROP, since PG12 does not support WITH FORCE), pg_restore rc=0 with 0 bytes on stderr; the 12 counts plus the three roles were consistent before and after, and both schemas were restored; the 8 audit append-only guards rejected as designed (UPDATE/DELETE/TRUNCATE/change_orders_events/uppercase outcome CHECK/id column/post-insert tampering rollback); console login 200, managed-rules 200 rows=2, audit continued appending. Measured: dump 0.259s, cp 0.143s, drop+create 1.123s, restore 0.704s, config-service restart 5.252s — **this only describes this lab's small dataset and does not presuppose RPO/RTO**; customer drills still follow the backup-restore.md §5 template.
 
-### 2.7 P0 缺陷：auth 模式分发生命周期必 409（已修复关闭）
+### 2.7 P0 defect: auth-mode distribution lifecycle always 409 (fixed and closed)
 
-- 症状：真集群 HTTPS 登录 + CSRF 后 distribution start 稳定 409 "distribution connection is not idle"，reports/apply/rollback 同受影响；无 auth 路径不触发，故此前测试未暴露。
-- 根因：单条共享 psycopg 连接被 auth 路由依赖（resolve_session/verify_csrf）的 SELECT 置入 INTRANS，内部 require_idle_distribution_connection 必失败；入口中间件 serialize_api_request 已有 IDLE 检查 + 出口 rollback，内部检查重复且层级错误。
-- 修复：删该函数与 4 处调用（净 -10 行）；新增 2 个真实 PG + HTTPS 登录 + CSRF 端到端回归（start→reports→自动 applied→幂等 apply；手动 rollback）。
-- 验证：目标文件 19 passed（含 2 新增）；config-service 全量 629 passed/3 skipped；修复后真集群 F-15 全链路 200/201。
+- Symptom: on a real cluster, HTTPS login + CSRF followed by distribution start consistently returned 409 "distribution connection is not idle", and reports/apply/rollback were affected the same way; the path without auth does not trigger it, so earlier tests did not expose it.
+- Root cause: the single shared psycopg connection is put into INTRANS by the SELECTs that the auth routes depend on (resolve_session/verify_csrf), so the internal require_idle_distribution_connection always fails; the entry middleware serialize_api_request already has an IDLE check + outbound rollback, making the internal check redundant and wrongly layered.
+- Fix: deleted that function and its 4 call sites (net -10 lines); added 2 new real-PG + HTTPS-login + CSRF end-to-end regressions (start→reports→auto applied→idempotent apply; manual rollback).
+- Verification: target file 19 passed (including the 2 new ones); config-service full suite 629 passed/3 skipped; after the fix the real-cluster F-15 full chain is 200/201.
 
-### 2.8 取证工程侧处置（非产品功能）
+### 2.8 Evidence-gathering engineering handling (not product functionality)
 
-- 产品镜像基底 bullseye→bookworm（native 扩展 2026-10-12 重编译后链接 libssl.so.3，bullseye 无此库）：仅改 testbed/sim-platform/Dockerfile.product。
-- kind load 多架构 manifest list 失败：postgres:12.22 / redis:7-alpine / calico v3.28.2 三镜像以 `docker build --platform linux/amd64` 转存单架构后加载；calico 另 set image 到 `-kind` tag。属现场运维手段，无仓库文件改动。
-- 批次 2 提交（090312c）带入 3 个 ruff 不合规（test_s1_replay_contract.py 格式、UP041、F541），本批为门禁全绿做纯格式/等价修复（Python 3.10 起 socket.timeout 即 TimeoutError 别名）。
+- Product image base bullseye→bookworm (after the native extensions were recompiled on 2026-10-12 they link libssl.so.3, which bullseye does not have): only `testbed/sim-platform/Dockerfile.product` was changed.
+- kind load of multi-architecture manifest lists failed: the three images postgres:12.22 / redis:7-alpine / calico v3.28.2 were transferred as single-architecture via `docker build --platform linux/amd64` and then loaded; calico additionally had its image set to the `-kind` tag. This is an on-site operational means, with no repository file changes.
+- The batch 2 commit (090312c) brought in 3 ruff non-compliance issues (test_s1_replay_contract.py formatting, UP041, F541); this batch made pure formatting/equivalence fixes to get the gate fully green (from Python 3.10 onwards socket.timeout is an alias of TimeoutError).
 
-## 3. 边界总述（本批不做/不证明）
+## 3. Summary of boundaries (not done / not proven by this batch)
 
-1. 不签收任何 REQ；矩阵 F-15/5.4-F-15/NF-2/NF-4/NF-5/NF-9/NF-10 状态词维持原样（NF-4 仍 blocked）。
-2. fleet stub 不是 AS bundle 接收端；kind 单节点不证明节点级容错；bundled 单副本不证明生产 HA（D12/O5）。
-3. NF-5 的 TLS 为测试 CA；所有呼数/时延/备份耗时均非容量、SLA、RPO/RTO 承诺。
-4. NF-4 损失不通过调参/换说法消化；FAILCLOSED 与根因如实入档。
-5. 不含任何凭据/token/抓包；dump 文件留在临时目录不入库。
+1. No REQ is signed off; the status words of matrix rows F-15/5.4-F-15/NF-2/NF-4/NF-5/NF-9/NF-10 stay as-is (NF-4 is still blocked).
+2. The fleet stub is not the AS bundle receiving end; a single-node kind does not prove node-level fault tolerance; the bundled single replica does not prove production HA (D12/O5).
+3. NF-5's TLS uses a test CA; all call counts/latencies/backup durations are not capacity, SLA, RPO/RTO commitments.
+4. NF-4's loss is not absorbed by tuning parameters or changing wording; the FAILCLOSED and root cause are archived faithfully.
+5. Contains no credentials/tokens/packet captures; dump files stay in a temporary directory and are not committed.
 
 ## Adjudication
 
-| ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
+| ID | Source | Issue summary | Verdict | Fix plan | Status | Verification method | Notes |
 |---|---|---|---|---|---|---|---|
-| B3-01 | F-15 取证 | auth 开启时分发 start/reports/apply/rollback 必 409（共享连接被 auth SELECT 置入 INTRANS + 冗余 idle 检查）—— P0 产品缺陷 | 接受 | 删 require_idle_distribution_connection 及 4 处调用（净 -10 行），新增 2 个真实 PG/HTTPS/CSRF 端到端回归测试 | 已验证 | 目标文件 19 passed；config-service 629 passed/3 skipped；修复后真集群 F-15 全链路 200/201 | 修复证据 PASS-config-service-auth-distribution-409-fix-2026-10-12.txt；待维护者确认 |
-| B3-02 | NF-4 两轮话务 | 单副本 headless 拓扑下 rollout restart 在途损失：timeout_invite 3/4、bye_sip_481 6/7、timeout_bye 4/3、unresolved 10/10（受影响 3.7%/4.0%） | 接受 | 维护者 2026-10-12 裁决：当前 release 接受该呼损级别，REQ-NF-4 按「实测行为已验证+损失范围接受」签 pass（非零丢失已达成）；严格零呼损滚动列今后 release 增强 feature，本版不立项，启动走 requirement→ADR→design→review（候选方向 A 进程级 drain / B 透明桥+StateStore / C 实例粘性 / D 维护窗口） | 已关闭 | 维护者 2026-10-12 确认；PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt；矩阵 REQ-NF-4 行转 pass（pass 16→17、blocked 7→6） | 原始失败记录 FAILCLOSED-nf4-...txt 保留（不是通过证据）；仅 UDP 实测，不外推 TCP/TLS |
-| B3-03 | F-15 notify 记录 | fleet-b 仅收到 selftest，被疑漏发 | 驳回（作为缺陷） | 无代码修改；证据文件如实标注「只通知首批」为设计行为、fleet 为协议 stub | 已关闭 | test_fleet_api 既有测试 + F-15 notify 原文 | 设计语义，非回归 |
-| B3-04 | NF-9 / 备份演练 | PG 重启后 config-service 单条共享连接不自动重连（未重启前登录 500，重启 Deployment 后 200，实测 5.25s） | 部分接受 | 本批仅登记不改；建议后续评估连接重连/连接池 | 待修改 | 两次演练实测 500→重启后 200；PASS-nf9 / PASS-backup-restore | 运维观察项，是否立项待维护者 |
-| B3-05 | NF-5 环境 | TLS 证书为测试 CA（自签） | 接受（作为边界） | 不签收 REQ-S-2/S-3，证据边界节标注「非运营商 PKI」 | 已关闭 | PASS-nf5 证据边界节 + UI pki_notice | — |
-| B3-06 | as-sut 部署 | 产品镜像 bullseye 无法加载 native 扩展（libssl.so.3 缺失，CrashLoop） | 接受 | testbed/sim-platform/Dockerfile.product 基底升 bookworm（注释写明 OpenSSL 3 事实） | 已验证 | translation Pod 三端口 RESIP_RUNTIME_LISTENING + NF-5 三传输全 200 | 仅 testbed 产品镜像，发布镜像另行处置 |
-| B3-07 | 镜像加载 | kind load 多架构 manifest list 报 content digest not found / ImagePullBackOff | 接受（运维手段） | postgres:12.22、redis:7-alpine、calico v3.28.2 转单架构（--platform linux/amd64）后加载；calico set image 到 -kind tag | 已验证 | 三个 kind 集群相关工作负载 Running/Completed | 无仓库文件改动；过程见 handoff |
-| B3-08 | make gate | 批次 2 提交（090312c）带入 ruff 不合规：test_s1_replay_contract.py 格式、test_req_f6_f7 的 UP041、test_req_f11 的 F541 | 接受 | ruff format 单文件 + 两处等价小修（socket.timeout→TimeoutError；去无占位 f 前缀） | 已验证 | make gate 全绿（1140 passed） | Python 3.10 起二者同一对象；纯格式/等价 |
-| B3-09 | 2.5 演练 | 备份/恢复实测秒级耗时是否可作 RTO/RTO 依据 | 驳回（作为承诺） | 证据仅写「本次实测量级，非承诺」；客户值仍由 backup-restore.md §5 演练方填写 | 已关闭 | PASS-backup-restore 证据边界节 | 不对外引用为 SLA |
-| B3-10 | 备份演练首次 restore | PG12 不支持 DROP DATABASE WITH(FORCE)，首次 DROP 失败致 restore 落回旧库 | 接受（流程修正） | 改 pg_terminate_backend + 普通 DROP，先验证 tables_fresh_db=0 再 restore | 已验证 | 二次演练 restore rc=0、stderr 0 字节、计数一致 | runbook 命令本身不涉及该语法 |
-| B3-11 | 收尾现场 | fleet-a/fleet-b 协议 stub 与 as-m5b 第二全栈是否清理 | 接受（保留） | 默认保留在 kind-as-m5，handoff 说明用途与清理方式 | 已关闭 | 本记录 + handoff 现场节 | 不落仓库（/tmp 驱动 + 集群内 YAML） |
-| B3-12 | 工作树核对 | .dockerignore 为批次 1 遗留改动、docs/handoff/2026-10-12-m8-batch5-prompt.md 与 docs/intro.md 为非本批文件 | 驳回（并入本批提交） | 本批不动、不提交，交维护者处置 | 已关闭 | git status 已在 handoff 列示 | 提交切分由维护者决定 |
-| B3-13 | 审计续写核对 | 失败/回滚的演练 INSERT 消耗序列值（id 空洞 94/95/96） | 驳回（作为问题） | 无修改；属 PostgreSQL 序列正常行为 | 已关闭 | PASS-backup-restore 证据注明 | — |
+| B3-01 | F-15 evidence | With auth enabled, distribution start/reports/apply/rollback always return 409 (the shared connection is put into INTRANS by auth SELECTs + a redundant idle check) — P0 product defect | Accept | Deleted require_idle_distribution_connection and its 4 call sites (net -10 lines), added 2 real-PG/HTTPS/CSRF end-to-end regression tests | Verified | Target file 19 passed; config-service 629 passed/3 skipped; after the fix the real-cluster F-15 full chain is 200/201 | Fix evidence PASS-config-service-auth-distribution-409-fix-2026-10-12.txt; pending maintainer confirmation |
+| B3-02 | NF-4 two rounds of traffic | In-flight loss on rollout restart under a single-replica headless topology: timeout_invite 3/4, bye_sip_481 6/7, timeout_bye 4/3, unresolved 10/10 (3.7%/4.0% affected) | Accept | Maintainer adjudication 2026-10-12: the current release accepts this level of call loss, REQ-NF-4 signed pass under "measured behaviour verified + loss scope accepted" (zero loss has NOT been achieved); strict zero-loss rolling upgrade is listed as a future release enhancement feature, not raised as an item in this version, and starting it goes through requirement→ADR→design→review (candidate directions A process-level drain / B transparent bridge+StateStore / C instance stickiness / D maintenance window) | Closed | Maintainer confirmation 2026-10-12; PASS-nf4-rolling-upgrade-accepted-loss-2026-10-12.txt; matrix REQ-NF-4 row moves to pass (pass 16→17, blocked 7→6) | The original failure record FAILCLOSED-nf4-...txt is retained (not passing evidence); UDP measurements only, no extrapolation to TCP/TLS |
+| B3-03 | F-15 notify record | fleet-b only received selftest, suspected missed notifications | Rejected (as a defect) | No code change; the evidence file faithfully annotates "notify the first batch only" as designed behaviour and fleet as a protocol stub | Closed | Existing test_fleet_api + raw F-15 notify | Design semantics, not a regression |
+| B3-04 | NF-9 / backup drill | After PG restart the config-service's single shared connection does not reconnect automatically (login 500 before restart, 200 after restarting the Deployment, measured 5.25s) | Partially accepted | Registration only in this batch, no change; recommend evaluating connection reconnection / connection pooling later | Pending modification | Two drills measured 500→200 after restart; PASS-nf9 / PASS-backup-restore | Operational observation item; whether to raise it awaits the maintainer |
+| B3-05 | NF-5 environment | The TLS certificate is from a test CA (self-signed) | Accept (as a boundary) | REQ-S-2/S-3 are not signed off; the evidence boundary section is annotated "not carrier PKI" | Closed | PASS-nf5 evidence boundary section + UI pki_notice | — |
+| B3-06 | as-sut deployment | The product image on bullseye cannot load the native extensions (libssl.so.3 missing, CrashLoop) | Accept | testbed/sim-platform/Dockerfile.product base raised to bookworm (the comment records the OpenSSL 3 fact) | Verified | translation Pod listening on three ports RESIP_RUNTIME_LISTENING + NF-5 all 200 across three transports | Testbed product image only; the release image is handled separately |
+| B3-07 | Image loading | kind load of multi-architecture manifest lists reports content digest not found / ImagePullBackOff | Accept (operational means) | postgres:12.22, redis:7-alpine, calico v3.28.2 converted to single architecture (--platform linux/amd64) and then loaded; calico image set to the -kind tag | Verified | The workloads related to the three kind clusters are Running/Completed | No repository file changes; the process is described in the handoff |
+| B3-08 | make gate | The batch 2 commit (090312c) brought in ruff non-compliance: test_s1_replay_contract.py formatting, UP041 in test_req_f6_f7, F541 in test_req_f11 | Accept | ruff format on the single file + two equivalence fixes (socket.timeout→TimeoutError; remove the placeholder-less f prefix) | Verified | make gate fully green (1140 passed) | From Python 3.10 onwards the two are the same object; pure formatting/equivalence |
+| B3-09 | 2.5 drill | Whether the second-level measured durations of backup/restore can serve as RTO/RTO basis | Rejected (as a commitment) | The evidence only states "order of magnitude measured this time, not a commitment"; customer values are still filled in by the drill party per backup-restore.md §5 | Closed | PASS-backup-restore evidence boundary section | Not to be cited externally as an SLA |
+| B3-10 | First restore of the backup drill | PG12 does not support DROP DATABASE WITH(FORCE); the first DROP failed and the restore fell back to the old database | Accept (process correction) | Switched to pg_terminate_backend + a normal DROP, first verifying tables_fresh_db=0 and then restoring | Verified | Second drill: restore rc=0, 0 bytes on stderr, counts consistent | The runbook commands themselves do not use that syntax |
+| B3-11 | Close-out site | Whether the fleet-a/fleet-b protocol stubs and the second full stack as-m5b should be cleaned up | Accept (retained) | Kept in kind-as-m5 by default; the handoff explains their purpose and how to clean them up | Closed | This record + the site section of the handoff | Not placed in the repository (/tmp-driven + in-cluster YAML) |
+| B3-12 | Working-tree check | .dockerignore is a leftover change from batch 1; docs/handoff/2026-10-12-m8-batch5-prompt.md and docs/intro.md are not files of this batch | Rejected (merged into this batch's commit) | This batch neither changes nor commits them; handed to the maintainer for disposition | Closed | git status already listed in the handoff | Commit splitting is the maintainer's decision |
+| B3-13 | Audit append verification | The failed/rolled-back drill INSERTs consumed sequence values (id holes 94/95/96) | Rejected (as an issue) | No change; this is normal PostgreSQL sequence behaviour | Closed | Noted in the PASS-backup-restore evidence | — |

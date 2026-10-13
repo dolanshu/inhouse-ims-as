@@ -14,8 +14,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 # M2 milestone engineering complete adjudication (2026-10-05)
 
-> **Subject:** M2 **工程完成** — kernel seams, product `_resip_runtime` binding, D3 client wiring  
-> **Not:** M2 maintainer milestone sign-off or REQ-S full acceptance (**M8 验收**)
+> **Subject:** M2 **engineering complete** — kernel seams, product `_resip_runtime` binding, D3 client wiring  
+> **Not:** M2 maintainer milestone sign-off or REQ-S full acceptance (**M8 acceptance**)
 
 ## Verdict
 

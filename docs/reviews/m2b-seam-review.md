@@ -12,49 +12,49 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M2b 边界 seam 评审记录
+# M2b Boundary Seam Review Record
 
-> 评审对象：`platform/src/as_platform/sip/`（`__init__.py`、`transport.py`、`adapter.py`）与 `platform/tests/test_transport_seam.py`、`test_sip_adapter_seam.py`
-> 评审日期：2026-09-28
-> 评审人：AI agent（实跑门禁 + 对照 ADR-0016、ADR-0019、AGENT.md §13）
-> 评审结论：**通过** —— 边界 seam 落地，不含栈实现；2 项为过门禁的自改已确认合理
+> Review object: `platform/src/as_platform/sip/` (`__init__.py`, `transport.py`, `adapter.py`) and `platform/tests/test_transport_seam.py`, `test_sip_adapter_seam.py`
+> Review date: 2026-09-28
+> Reviewer: AI agent (actually ran the gate + cross-checked ADR-0016, ADR-0019, AGENT.md §13)
+> Review verdict: **pass** — the boundary seam is landed, with no stack implementation; the 2 self-edits made to pass the gate are confirmed reasonable
 
-## 门禁证据
+## Gate evidence
 
-| 项 | 结果 |
+| Item | Result |
 |---|---|
 | `uv run ruff format --check .` | 105 files already formatted |
 | `uv run ruff check .` | All checks passed! |
 | `uv run mypy` | Success: no issues found in 23 source files |
 | `uv run pytest -m "unit or contract" -q` | 145 passed, 2 skipped |
-| 结构守卫 | 随内核源文件增加自动多出 3 个参数化用例，全通过 |
+| Structure guards | 3 additional parameterized cases appeared automatically as kernel source files grew, all passing |
 
-## 评审发现
+## Review findings
 
-| # | 发现 | 裁决 |
+| # | Finding | Adjudication |
 |---|---|---|
-| S1 | 对端白名单 `authorize_peer` 为纯函数；策略两集合皆空时返回 `False`（fail-closed），与 `gating` 的默认关一致 | 接受：fail-closed 是边界安全的正确默认（ADR-0016、AGENT.md §13） |
-| S2 | 证书维度独立于地址维度，任一命中即放行 | 接受：mTLS 场景下证书是更强的身份证据 |
-| S3 | TLS 配置热轮换实现为**不可变重载**（`reload` 返回新 `TransportSeam`，`config_version` 自增），并有测试断言"旧 seam 仍按旧策略判定" | 接受：正是对"热轮换不重启进程、不丢在途呼叫"的可测表达（AGENT.md §13） |
-| S4 | `SipAdapter` 只声明 Protocol（`parse` / `respond` / `forward`），不含任何实现与栈依赖 | 接受：M2b 前半的正当范围；绑定 reSIProcate 属后半，且不污染内核（ADR-0019） |
-| S5 | `decision_to_status_code`：`DECLINE → 603`（RFC 3261 §21.6.2）、`NOT_FOUND → 404`（§21.4.5）、`FORWARD/TRANSLATE → 0`（继续转发） | 接受：章节号采用 PRD 评审已订正的结论，未沿用错误的 §21.6.5 / §21.4.4 |
-| S6 | `to_decision_request` 的 `received_at` 由调用方注入，模块不读时钟 | 接受：保持 `decide()` 纯函数链（AGENT.md §5） |
-| S7 | 两处为过门禁的自改：`reload` 返回注解去掉引号（UP037，语义等价）、`authorize_peer` 改布尔直返（SIM103，保留 `# See ADR-0016` 注释） | 接受：均为等价改写，未用 `# type: ignore` 或 `# noqa` 掩盖 |
-| S8 | 全仓无 `# type: ignore`、无 `# noqa` | 接受 |
+| S1 | The peer allowlist `authorize_peer` is a pure function; when both policy sets are empty it returns `False` (fail-closed), consistent with the `gating` default-off | Accepted: fail-closed is the correct default for boundary safety (ADR-0016, AGENT.md §13) |
+| S2 | The certificate dimension is independent of the address dimension; a hit on either one allows the request | Accepted: in mTLS scenarios the certificate is stronger identity evidence |
+| S3 | TLS configuration hot rotation is implemented as an **immutable reload** (`reload` returns a new `TransportSeam`, and `config_version` increments), with a test asserting that "the old seam still adjudicates by the old policy" | Accepted: this is exactly the testable expression of "hot rotation without restarting the process and without losing in-flight calls" (AGENT.md §13) |
+| S4 | `SipAdapter` only declares a Protocol (`parse` / `respond` / `forward`), with no implementation and no stack dependency | Accepted: legitimate scope for the first half of M2b; binding reSIProcate belongs to the second half and does not pollute the kernel (ADR-0019) |
+| S5 | `decision_to_status_code`: `DECLINE → 603` (RFC 3261 §21.6.2), `NOT_FOUND → 404` (§21.4.5), `FORWARD/TRANSLATE → 0` (keep forwarding) | Accepted: the section numbers adopt the conclusions already corrected during PRD review, not the incorrect §21.6.5 / §21.4.4 |
+| S6 | The `received_at` of `to_decision_request` is injected by the caller; the module does not read the clock | Accepted: keeps the `decide()` pure-function chain intact (AGENT.md §5) |
+| S7 | Two self-edits made to pass the gate: the `reload` return annotation dropped its quotes (UP037, semantically equivalent), and `authorize_peer` changed to a direct boolean return (SIM103, keeping the `# See ADR-0016` comment) | Accepted: both are equivalent rewrites, and neither masks anything with `# type: ignore` or `# noqa` |
+| S8 | The whole repository has no `# type: ignore` and no `# noqa` | Accepted |
 
-## 缺口（不阻塞）
+## Gaps (non-blocking)
 
-| # | 缺口 | 去向 |
+| # | Gap | Destination |
 |---|---|---|
-| S9 | `SipAdapter` 无实现，尚无真 socket 的 integration 用例 | M2b 后半（栈绑定）后补 |
-| S10 | 证书热轮换的真实加载（读证书文件、握手）未实现，本 seam 只覆盖策略与版本语义 | M2b 后半 |
-| S11 | `integration` / `e2e` 层仍零用例，层②③ 仍非阻塞 | 首个该层用例引入的里程碑必须改为阻塞（AGENT.md §9、plan.md §2.4） |
+| S9 | `SipAdapter` has no implementation, and there are not yet integration use cases over real sockets | To be added after the second half of M2b (stack binding) |
+| S10 | Real loading for certificate hot rotation (reading certificate files, handshake) is not implemented; this seam covers only policy and version semantics | Second half of M2b |
+| S11 | The `integration` / `e2e` layers still have zero use cases, and layers ②③ remain non-blocking | The milestone that introduces the first use case in that layer must switch it to blocking (AGENT.md §9, plan.md §2.4) |
 
-## 确认签字
+## Confirmation sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 通过 |
-| 门禁 | 全绿（145 passed / 2 skipped） |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | 待填 |
+| Review verdict | Pass |
+| Gate | Fully green (145 passed / 2 skipped) |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer signature | To be filled in |

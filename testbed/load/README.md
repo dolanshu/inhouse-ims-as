@@ -36,7 +36,7 @@ SIPp（GPL）这里可用：仅内部测试使用，绝不随产品分发。
 
 - 只接受真实 socket 测量链路：负载发生器 -> 网络 socket -> 被测 SIP 栈/事件循环 -> 响应 socket。
 - 任何绕过 socket 的驱动回调方案都不计入 M6 证据。
-- M6 输出目标仅限 [`docs/plan.md`](../../docs/plan.md) 已批准范围：按栈给出 CPS、并发会话、建立时延，并回收[容量量级估算](../../docs/architecture/容量量级估算.md) §6 的 C1-C7 缺口。
+- M6 输出目标仅限 [`docs/plan.md`](../../docs/plan.md) 已批准范围：按栈给出 CPS、并发会话、建立时延，并回收[capacity-estimate](../../docs/architecture/capacity-estimate.md) §6 的 C1-C7 缺口。
 - 在真实 socket 实测证据形成前，不在仓库中发布容量结论或阈值。
 
 ### 追溯与需求状态（D8 已关闭）
@@ -70,7 +70,7 @@ SIPp（GPL）这里可用：仅内部测试使用，绝不随产品分发。
 - 测量配置：负载模型、并发档位、CPS 档位、呼叫时长、持续时间、端口与地址。
 - 真实性证明：socket 监听/连接证据（例如 `ss` 输出）、关键命令行、原始日志路径。
 - 结果原始数据：成功/失败呼叫计数、时延样本（至少可重算 p50/p95/p99）、错误码分布。
-- C6 峰值分布（见[容量量级估算](../../docs/architecture/容量量级估算.md) §6）：记录带时间戳的尝试呼叫数与成功建立呼叫数；提供 1 秒和 100 秒窗口下可复算的 CPS 分布与峰值，并记录窗口聚合、时间边界及 CPS 计算方法。滑动峰值仅在 coverage 至少覆盖一个完整窗口宽度时报告；不足完整宽度时显式标记 unavailable。该序列是观测窗口速率（observed window rates）。
+- C6 峰值分布（见[capacity-estimate](../../docs/architecture/capacity-estimate.md) §6）：记录带时间戳的尝试呼叫数与成功建立呼叫数；提供 1 秒和 100 秒窗口下可复算的 CPS 分布与峰值，并记录窗口聚合、时间边界及 CPS 计算方法。滑动峰值仅在 coverage 至少覆盖一个完整窗口宽度时报告；不足完整宽度时显式标记 unavailable。该序列是观测窗口速率（observed window rates）。
 - summary 顶层 `rates_cps`：按已配置注入时长计算的平均值（configured-duration averages），例如 `transmitted_invites_per_configured_injection_second`。这些聚合值可包含 worker drain 期间才完成统计的会话，不等同于 C6 的时间窗速率序列。
 - 饱和点观察：先触顶资源及对应观测（CPU、内存、FD、网络、队列丢弃等）。
 - 复现信息：完整命令、时间戳、执行人、仓库 commit。

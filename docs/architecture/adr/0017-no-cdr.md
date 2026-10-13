@@ -12,73 +12,73 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0017：不做 CDR —— 由呼叫轨迹替代
+# ADR-0017: No CDR — replaced by call trail
 
 - **Status**: accepted
 - **Date**: 2026-09-30
-- **Decides**: §0 账本条目 4 —— 用户与场景：不做 CDR，由按 Call-ID 的呼叫轨迹替代
-- **回应 REQ**: REQ-NF-7, REQ-NF-13
+- **Decides**: §0 ledger item 4 — users and scenarios: no CDR, replaced by a Call-ID-based call trail
+- **Responds to REQ**: REQ-NF-7, REQ-NF-13
 
 ---
 
-## Context（背景）
+## Context
 
-`AGENT.md` §2 把"不做 CDR"列为非目标：**「不做 CDR。不采集、不投递、不归档、不批价。用按 Call-ID 的呼叫轨迹替代它，用于投诉追溯与反诈举证（ADR-0017）。」** 四个动词（采集、投递、归档、批价）覆盖了话单的完整生命周期，而"用呼叫轨迹替代它"同时排除了一个误解：不做 CDR 不等于不留存证据。
+`AGENT.md` §2 lists "no CDR" as a non-goal: **"No CDR. No collection, no delivery, no archival, no rating. Replace it with a Call-ID-based call trail, for complaint tracing and anti-fraud evidence (ADR-0017)."** The four verbs (collection, delivery, archival, rating) cover the full lifecycle of a call detail record, while "replace it with a call trail" simultaneously rules out a misunderstanding: no CDR does not mean no evidence retained.
 
-CDR 不是一个功能点，而是一整套体系。一通呼叫要变成一张可用话单，需要经过采集（从网元取事件）、投递（可靠送达计费域，不许丢不许重）、归档（按保留期存放，可回查）、批价（按资费算钱）、网间结算（与其他运营商对账分摊）。这五个环节里，后两个已经超出"记录发生了什么"的范围，直接进入钱。运营商网内这套体系是既有的、经过审计与对账验证的能力；一个网外第三方 AS 重建它，问题不在于工作量，而在于两点：**越界**（计费域不是我们的职能，ADR-0016 已把"不做计费"写进安全边界：不为其预留任何采集点），以及**对账风险**（同源的两套话单必然要回答"以谁为准"，多一个事实源就多一类对不上账的争议，而这类争议的代价远高于它带来的便利）。架构文档 §7 把这条写成了明确的删除：「**明确不做**：CDR 采集、CDR 投递通道、CDR 归档存储 —— 网外不计费」；模块清单里"消息模块"（原为 CDR 投递）直接标记为删除。
+A CDR is not a single feature but an entire system. For one call to become a usable record, it must go through collection (pulling events from network elements), delivery (reliably reaching the billing domain — no loss, no duplication), archival (stored by retention period, queryable), rating (computing money by tariff), and inter-carrier settlement (reconciling and apportioning with other carriers). Of these five stages, the last two already go beyond "recording what happened" and straight into money. The carrier in-network system is an existing, audit- and reconciliation-validated capability; for an out-of-network third-party AS to rebuild it, the problem is not the workload but two points: **overstepping** (the billing domain is not our function — ADR-0016 already wrote "no billing" into the security boundary: do not reserve any collection point for it), and **reconciliation risk** (two records from the same source inevitably must answer "which one is authoritative," and every extra fact source adds a class of unreconcilable disputes whose cost far exceeds the convenience it brings). Architecture doc §7 writes this as an explicit deletion: "**Explicitly not done**: CDR collection, CDR delivery channel, CDR archival storage — no billing out-of-network"; the module list's "messaging module" (originally CDR delivery) is marked for deletion directly.
 
-但被这条非目标挡住的，只有 CDR 这一种形式，不是它承载的那个需求。投诉追溯与反诈举证确实需要回答"这一通呼叫发生了什么"：用户投诉号段被拒（PRD US-3 的场景：配置人员在控制台输入 Call-ID，看到 INVITE → 603 Decline 及生效的阻止策略），反诈处置需要说明"为什么这通呼叫被判为诈骗"。这类需求的查询方是运维、客服与合规人员，查询键是 Call-ID，查询结果是"这通呼叫的每一条 SIP 消息"。它必须被满足 —— 只是不该用一张话单的形式被满足。
+But what this non-goal blocks is only the CDR form, not the need it carries. Complaint tracing and anti-fraud evidence genuinely need to answer "what happened on this call": a user complains that a number range was rejected (PRD US-3 scenario: an operator enters a Call-ID in the console and sees INVITE → 603 Decline and the effective blocking policy); anti-fraud handling needs to explain "why this call was judged fraudulent." The queryers for this need are ops, customer service, and compliance staff; the query key is Call-ID and the query result is "every SIP message of this call." It must be satisfied — just not in the form of a call detail record.
 
-这里还有一个容易被混为一谈的地方，ADR-0005 已经把它拆开：**呼叫轨迹与 trace 不是一回事**。trace 是**排障遥测**，回答"这一通呼叫在哪些腿、哪些网元上耗了多久、在哪一步失败"，查询方是研发与 SRE，保留期短、采样可调。呼叫轨迹是**业务查询通道**，查询方是运维与客服，保留期与查询形态由业务与合规定义。二者既不能互相替代，也不该共用同一套存储与查询入口：让 trace 后端承担投诉取证，会迫使排障遥测承担业务级的保留与合规要求；反过来让呼叫轨迹依赖 trace 后端，会让举证所需的完整性与保留期受制于采样率。
+There is also an easily-confused distinction that ADR-0005 has already separated: **a call trail and a trace are not the same thing.** A trace is **troubleshooting telemetry** — answering "on which legs, which network elements did this call spend how long, where did it fail," queried by R&D and SRE, with a short retention and tunable sampling. A call trail is a **business query channel**, queried by ops and customer service, with retention and query shape defined by business and compliance. The two must not substitute for each other, nor share the same storage and query entry: making the trace backend bear complaint forensics would force troubleshooting telemetry to carry business-level retention and compliance requirements; conversely making the call trail depend on the trace backend would subject the integrity and retention the evidence needs to the sampling rate.
 
-## Decision（决策）
+## Decision
 
-- **① 不采集 CDR、不投递、不归档、不批价。** 这四个动作一个都不做，也不为其预留采集点（ADR-0016 的原则：预留采集点等于预留了被要求启用的可能）。网外不计费，没有例外通道。
-- **② 以按 Call-ID 的呼叫轨迹替代。** 每一条 SIP 消息 —— 入/出方向、时间戳、方法、响应码 —— 都可通过控制台查询，用于投诉追溯与反诈举证。查询键是 Call-ID（`REQ-F-13` 轨迹查询）。这是**逐消息的记录**，不是聚合指标，也不是采样后的样本：举证要求的是"这一通呼叫完整发生了什么"。
-- **③ 呼叫轨迹不是话单 —— 这条区别必须在文档与代码中显式声明。** 轨迹没有投递通道、不批价、不做网间结算。声明的目的是防止它被下游当成计费数据源：一旦有人开始用它对账，它就事实上变成了第二套 CDR，而它没有、也不打算具备话单的投递与结算语义。架构文档 §7 表格在"呼叫轨迹"一行已经标注「运维/举证数据，**非话单**」，本 ADR 要求这一标注在代码与接口层面同样成立。
-- **④ 轨迹保留期是未决项 O4，未定之前不得写死默认值。** 保留期由**客户合规要求**决定（`docs/plan.md` §5.1 O4：呼叫轨迹保留期 / M4 / 客户合规要求）。PRD REQ-NF-7 写明「轨迹保留期待定 —— 由客户合规要求决定，M4 设计阶段冻结。清理任务已 formalize 为功能，但默认值未定。」**机制（清理任务存在、可配）先落地，数值不落地** —— 写一个默认值出来，等于替客户回答了一个合规问题。
-- **⑤ 轨迹与遥测 trace 分离（ADR-0005）。** 轨迹是业务查询通道，trace 是排障遥测，二者不共用存储、不共用采样策略。二者用同一 Call-ID / TraceID 关联，以便排障时能互相跳转，但查询入口与保留策略各自独立 —— 轨迹查询能力不得依赖客户是否部署了 trace 后端。
+- **① Do not collect CDR, do not deliver, do not archive, do not rate.** None of these four actions are performed, and no collection point is reserved for them (ADR-0016's principle: reserving a collection point equals reserving the possibility of being asked to enable it). No billing out-of-network, no exception channel.
+- **② Replace it with a Call-ID-based call trail.** Every SIP message — inbound/outbound direction, timestamp, method, response code — is queryable via the console, for complaint tracing and anti-fraud evidence. The query key is Call-ID (`REQ-F-13` trail query). This is a **per-message record**, not an aggregate metric and not a sampled sample: the evidence requires "what exactly happened on this call."
+- **③ A call trail is not a call detail record — this distinction must be declared explicitly in docs and code.** A trail has no delivery channel, does no rating, and does no inter-carrier settlement. The declaration's purpose is to prevent it from being treated as a billing data source downstream: once someone starts reconciling against it, it in fact becomes a second CDR, and it has not and does not intend to carry the delivery and settlement semantics of a record. Architecture doc §7's table already marks the "call trail" row "ops/evidence data, **not a record**"; this ADR requires that this marking hold at the code and interface level too.
+- **④ Trail retention period is open item O4; until decided, no default value may be hard-coded.** The retention period is determined by **customer compliance requirements** (`docs/plan.md` §5.1 O4: call-trail retention period / M4 / customer compliance requirement). PRD REQ-NF-7 states "trail retention period pending — determined by customer compliance requirements, frozen at the M4 design stage. The cleanup task is already formalized as a feature, but the default value is undecided." **The mechanism (cleanup task exists, configurable) lands first; the value does not** — writing a default value would be answering a compliance question on the customer's behalf.
+- **⑤ Trail and telemetry trace are separated (ADR-0005).** The trail is a business query channel, the trace is troubleshooting telemetry; the two do not share storage or sampling strategy. They are correlated by the same Call-ID / TraceID so troubleshooting can jump between them, but the query entry and retention policy are independent — the trail query capability must not depend on whether the customer has deployed a trace backend.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **交付边界清晰，不侵入运营商计费域。** 不采集、不投递、不批价，也就不存在"话单以谁为准"的争议。计费仍是网内既有能力的职责。
-- **投诉追溯与反诈举证的需求仍被满足。** 按 Call-ID 的逐消息轨迹回答的正是这两个场景要问的问题（US-3：投诉号段被拒 → 看到 INVITE → 603 Decline 与生效策略）。被排除的是话单形式，不是证据本身。
-- **不需要为 CDR 建消息投递链路。** 架构文档模块清单中"消息模块"（CDR 投递）直接删除；少了投递可靠性、去重、对账这一整类工程问题。
-- **轨迹与 trace 分离使双方的保留策略各自独立。** 排障遥测可以短保留、可采样；举证数据按合规要求保留。互不牵制。
+- **Clear delivery boundary, no intrusion into the carrier billing domain.** No collection, no delivery, no rating means no "which record is authoritative" dispute. Billing remains the in-network existing capability's responsibility.
+- **The complaint-tracing and anti-fraud-evidence needs are still met.** The per-message Call-ID trail answers exactly the questions those two scenarios ask (US-3: complain number range rejected → see INVITE → 603 Decline and effective policy). What is excluded is the record form, not the evidence itself.
+- **No need to build a message-delivery pipeline for CDR.** The architecture doc module list's "messaging module" (CDR delivery) is deleted directly; an entire class of engineering problems — delivery reliability, deduplication, reconciliation — disappears.
+- **Separating trail and trace makes each side's retention policy independent.** Troubleshooting telemetry can have short retention and sampling; evidence data is retained per compliance. They do not constrain each other.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **无法提供计费 / 对账数据 —— 有意不为。** 任何"顺便出个话单"的诉求都要回到本 ADR 与 §2 非目标重新裁决，而不是在实现里加一条导出。这一条是能力缺口，不是待办：它兑现的正是"不越界"这一判断。
-- **保留期未定带来存储与合规的不确定性（未决项 O4）。** 保留期直接决定存储容量与清理任务的行为，在客户合规要求明确之前，容量规划与清理策略都无法定稿。接受：机制先落地、数值待定，比写一个可能违反客户合规要求的默认值更安全。O4 归属 M4。
-- **轨迹存储选型未决（未决项 D5）。** `docs/plan.md` §5.2 D5：呼叫轨迹存储用 PostgreSQL，还是独立的短保留存储 —— 归属 M4，与 O4 相关。在保留期（O4）定下来之前，存储选型缺乏关键输入，本 ADR 不裁决选型。
-- **轨迹是逐消息全量记录，量级与话务成正比。** 不像 trace 可以用采样稀释，举证要求完整性，因此轨迹数据没有采样这一减量手段。存储与清理的压力必须由保留期（O4）与选型（D5）共同承担，二者未决期间该压力不可量化。
+- **Cannot provide billing / reconciliation data — intentionally not done.** Any "while we're at it, emit a record" request must return to this ADR and §2 non-goals for re-adjudication, not add an export in the implementation. This is a capability gap, not a to-do: it is exactly the fulfillment of the "no overstepping" judgment.
+- **Undecided retention brings storage and compliance uncertainty (open item O4).** Retention directly determines storage capacity and cleanup-task behavior; until customer compliance requirements are clear, capacity planning and cleanup strategy cannot be finalized. Accepted: mechanism first, value pending, is safer than writing a default that may violate customer compliance requirements. O4 belongs to M4.
+- **Trail storage selection undecided (open item D5).** `docs/plan.md` §5.2 D5: whether call-trail storage uses PostgreSQL or a separate short-retention store — belongs to M4, related to O4. Before the retention period (O4) is set, storage selection lacks a key input, so this ADR does not adjudicate the selection.
+- **The trail is a per-message full record, scaling with traffic.** Unlike a trace, which can be diluted by sampling, the evidence requires completeness, so trail data has no sampling as a reduction lever. The pressure on storage and cleanup must be jointly borne by the retention period (O4) and the selection (D5); while both are undecided this pressure is unquantifiable.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 做完整 CDR（采集 + 投递 + 归档 + 批价） | 越界：计费域不是网外第三方 AS 的职能（ADR-0016 不做计费）；重复建设运营商网内既有能力；且引入第二套话单事实源 = 对账风险 |
-| 只写日志，不建查询通道 | 投诉追溯需要**按 Call-ID 的结构化查询**：运维与客服要输入一个 Call-ID 就看到这通呼叫的完整消息序列，而不是在日志里按时间grep。日志也没有自己的保留与合规语义 |
-| 把 trace 当轨迹用 | 采样与短保留期不满足举证要求：举证要"完整发生了什么"，采样会缺消息，短保留会过期。ADR-0005 已区分二者，且轨迹查询不能依赖客户是否部署 trace 后端 |
-| 用 CDR 格式记录但不投递（"只是留个话单样子的文件"） | 形式即承诺：一旦产出物长得像话单，下游就会按话单用它（对账、结算），而它不具备投递与结算语义。这正是 Decision ③ 要求显式声明"非话单"的原因 |
+| Full CDR (collection + delivery + archival + rating) | Overstepping: the billing domain is not an out-of-network third-party AS's function (ADR-0016 no billing); rebuilding an existing carrier in-network capability; and introducing a second record fact source = reconciliation risk |
+| Just write logs, no query channel | Complaint tracing needs a **structured Call-ID query**: ops and customer service want to enter a Call-ID and see the full message sequence of that call, not grep logs by time. Logs also lack their own retention and compliance semantics |
+| Use trace as the trail | Sampling and short retention fail the evidence requirement: evidence needs "what exactly happened," sampling drops messages, short retention expires them. ADR-0005 already distinguishes the two, and trail query cannot depend on whether the customer deployed a trace backend |
+| Record in CDR format but don't deliver ("just keep a record-shaped file") | Form is a promise: once the artifact looks like a record, downstream will use it as a record (reconciliation, settlement), yet it lacks delivery and settlement semantics. This is exactly why Decision ③ requires explicitly declaring "not a record" |
 
-## Evidence（证据）
+## Evidence
 
-- `AGENT.md` §2 非目标原文：「不做 CDR。不采集、不投递、不归档、不批价。用按 Call-ID 的呼叫轨迹替代它，用于投诉追溯与反诈举证（ADR-0017）。」
-- PRD REQ-NF-7（不做 CDR —— 用呼叫轨迹替代）原文：「不采集计费话单、不投递 CDR、不做 CDR 归档和批价。用按 Call-ID 的**呼叫轨迹**替代 CDR —— 每一条 SIP 消息（入/出/时间戳/方法/响应码）都可通过控制台查询，用于投诉追溯和反诈举证。呼叫轨迹不是话单：它没有投递通道、不批价、不做网间结算。轨迹保留期待定 —— 由客户合规要求决定，M4 设计阶段冻结。清理任务已 formalize 为功能，但默认值未定。」
-- PRD REQ-NF-13（OTel 三信号导出）原文：「导出 OpenTelemetry 三信号：metrics（active_calls、cps、规则匹配率、4xx/5xx 率）、traces（每通呼叫的完整 span 链）、logs（结构化 JSON 日志）。指标可被 Prometheus/Grafana 消费。」—— 三信号是排障遥测，与轨迹分属两条通道（ADR-0005）。
-- PRD §1 非目标压缩版：「不做 CDR（计费话单）」；同节记「以下非目标已 formalize 为 REQ-NF-*/REQ-S-*：不做媒体（REQ-NF-6）、不做 CDR（REQ-NF-7）……」。US-3 场景：「配置人员在控制台输入 Call-ID，看到：INVITE → 603 Decline，对应配置的阻止策略生效」，对应 REQ-F-13（轨迹查询）与 REQ-NF-7。
-- 未决项 O4（呼叫轨迹保留期 / M4 / 客户合规要求）与 D5（呼叫轨迹存储：PostgreSQL 还是独立的短保留存储 / M4 / 与 O4 相关）—— 见 `docs/plan.md` §5.1 与 §5.2。
-- 架构文档 §2 表格：「呼叫轨迹记录 ① + ⑤ CDR 的替代：按 Call-ID 可查询，用于投诉追溯与反诈举证（非话单、不出投递通道、不批价）」；§7 存储表：「呼叫轨迹 / 按 Call-ID 的逐消息记录 / 短期持久化（保留期可配）/ 运维/举证数据，**非话单**」，并附「**明确不做**：CDR 采集、CDR 投递通道、CDR 归档存储 —— 网外不计费」。
-- ADR-0005 §Context 已区分轨迹与 trace：「呼叫轨迹是按 Call-ID 查到的 SIP 消息序列，用于投诉追溯与工单取证，它是**业务查询通道**（REQ-NF-7 用它替代 CDR，见 ADR-0017）…… trace 是**排障遥测** …… 二者既不能互相替代，也不该共用同一套存储与查询入口」。
-- 实现证据（轨迹存储与 `/api/v1/traces` 查询通道）待 M4 控制面设计阶段落地，随 O4 / D5 一并裁决。
+- `AGENT.md` §2 non-goals verbatim: "No CDR. No collection, no delivery, no archival, no rating. Replace it with a Call-ID-based call trail, for complaint tracing and anti-fraud evidence (ADR-0017)."
+- PRD REQ-NF-7 (no CDR — replace with call trail) verbatim: "Do not collect billing records, do not deliver CDR, do not archive or rate CDR. Replace CDR with a **call trail** by Call-ID — every SIP message (in/out/timestamp/method/response code) is queryable via the console, for complaint tracing and anti-fraud evidence. A call trail is not a record: it has no delivery channel, does no rating, does no inter-carrier settlement. Trail retention period pending — determined by customer compliance requirements, frozen at the M4 design stage. The cleanup task is already formalized as a feature, but the default value is undecided."
+- PRD REQ-NF-13 (OTel three-signal export) verbatim: "Export OpenTelemetry three signals: metrics (active_calls, cps, rule match rate, 4xx/5xx rate), traces (the complete span chain per call), logs (structured JSON logs). Metrics are consumable by Prometheus/Grafana." — the three signals are troubleshooting telemetry, on a separate channel from the trail (ADR-0005).
+- PRD §1 non-goals condensed: "No CDR (billing record)"; same section notes "the following non-goals are formalized as REQ-NF-*/REQ-S-*: no media (REQ-NF-6), no CDR (REQ-NF-7)…". US-3 scenario: "an operator enters a Call-ID in the console and sees: INVITE → 603 Decline, with the corresponding configured blocking policy taking effect," corresponding to REQ-F-13 (trail query) and REQ-NF-7.
+- Open items O4 (call-trail retention period / M4 / customer compliance requirement) and D5 (call-trail storage: PostgreSQL or a separate short-retention store / M4 / related to O4) — see `docs/plan.md` §5.1 and §5.2.
+- Architecture doc §2 table: "call-trail record ① + ⑤ CDR replacement: queryable by Call-ID, for complaint tracing and anti-fraud evidence (not a record, no delivery channel, no rating)"; §7 storage table: "call trail / per-message record by Call-ID / short-term persistence (configurable retention) / ops-evidence data, **not a record**," with "**Explicitly not done**: CDR collection, CDR delivery channel, CDR archival storage — no billing out-of-network."
+- ADR-0005 §Context already distinguishes trail from trace: "A call trail is the SIP message sequence queried by Call-ID, for complaint tracing and ticket forensics; it is a **business query channel** (REQ-NF-7 uses it to replace CDR, see ADR-0017)… a trace is **troubleshooting telemetry**… the two must not substitute for each other, nor share the same storage and query entry."
+- Implementation evidence (trail storage and the `/api/v1/traces` query channel) lands at the M4 control-plane design stage, adjudicated together with O4 / D5.
 
-## Related（相关）
+## Related
 
-- [ADR-0005](0005-observability-otel.md) 遥测三信号：轨迹是业务查询通道，trace 是排障遥测，二者分离
-- [ADR-0016](0016-in-boundary-security.md) 边界内安全：不做计费，不为其预留采集点
-- PRD REQ-NF-7（不做 CDR —— 用呼叫轨迹替代）、REQ-F-13（轨迹查询）
-- 未决项 O4（呼叫轨迹保留期，M4）、D5（呼叫轨迹存储选型，M4）—— 见 [`../../plan.md`](../../plan.md) §5
-- [`../新系统整体架构.md`](../新系统整体架构.md) §2 模块划分与 §7 数据面：呼叫轨迹非话单
+- [ADR-0005](0005-observability-otel.md) three telemetry signals: trail is the business query channel, trace is troubleshooting telemetry, the two are separated
+- [ADR-0016](0016-in-boundary-security.md) in-boundary security: no billing, no collection point reserved for it
+- PRD REQ-NF-7 (no CDR — replace with call trail), REQ-F-13 (trail query)
+- Open items O4 (call-trail retention period, M4), D5 (call-trail storage selection, M4) — see [`../../plan.md`](../../plan.md) §5
+- [`../system-architecture.md`](../system-architecture.md) §2 module division and §7 data plane: call trail is not a record

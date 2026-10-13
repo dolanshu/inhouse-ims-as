@@ -57,7 +57,7 @@ At cps20, `unresolved_sessions` equals established count because hold=0 leaves d
 | Call setup latency | ~52ms p50 at cps10; wider spread at cps20 (p50 ~8–11ms, p95 ~32ms) — loopback UDP, accept-all UAS, not S-SBC path. |
 | First saturated resource | **Not observed** — CPU/RSS flat; no target-side telemetry wired (`target_resource_observations.status=unavailable` in harness). |
 | HPA / capacity alert thresholds | **Still open** — requires higher load, cluster topology, and maintainer O1 target decision. |
-| 容量量级估算 §6 C6 (peak vs hour-average) | Partial: 1s peaks recorded; 100s sliding peaks **not** available at these durations. C1–C5, C7 unchanged (market model gaps). |
+| capacity-estimate §6 C6 (peak vs hour-average) | Partial: 1s peaks recorded; 100s sliding peaks **not** available at these durations. C1–C5, C7 unchanged (market model gaps). |
 
 ## Limits (do not extrapolate)
 

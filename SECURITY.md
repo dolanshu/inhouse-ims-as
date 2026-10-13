@@ -12,32 +12,29 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 安全政策（Security policy）
+# Security policy
 
-## 报告（Reporting）
+## Reporting
 
-将疑似漏洞私下报告给维护者（<dolan.d.shu@gmail.com>）。不要用公开 issue 报告安全问题。
-请包含你观察到的现象、复现方法，以及 `./VERSION` 中的版本号。
+Report suspected vulnerabilities privately to the maintainer (<dolan.d.shu@gmail.com>). Do not report security issues in a public issue. Please include what you observed, how to reproduce it, and the version number in `./VERSION`.
 
-## 范围（Scope）
+## Scope
 
-在范围内的：位于 `apps/` 与 `platform/` 下的 AS 进程、`services/` 下的控制面、
-`deploy/` 下的部署资产，以及面向 trunk 的攻击面。
+In scope: the AS processes under `apps/` and `platform/`, the control plane under `services/`, the deployment assets under `deploy/`, and the attack surface facing the trunk.
 
-按设计明确在范围之外的：
+Explicitly out of scope by design:
 
-- **合法监听（Lawful interception）** —— 未实现也不计划实现（ADR-0016）。
-- **媒体处理（Media handling）** —— 本系统只做信令（ADR-0004）。
-- **计费与 CDR** —— 未实现（ADR-0017）。
+- **Lawful interception** — not implemented and not planned (ADR-0016).
+- **Media handling** — this system does signaling only (ADR-0004).
+- **Billing and CDR** — not implemented (ADR-0017).
 
-## 对系统的期望
+## Expectations of the system
 
-- SIP trunk 被视为**不可信**：对端要按白名单校验，TLS 与 S-SBC 端到端终止。
-  任何能伪装成 S-SBC 的人都能灌入呼叫，所以对端真实性不是可选项。
-- 证书轮换是配置热更新 —— 不重启、不掉在途呼叫。
-- 每个控制台操作都要鉴权并审计。
-- 载荷日志可开关，日志里默认关闭。
+- The SIP trunk is treated as **untrusted**: peers must be validated against an allowlist, and TLS must terminate end-to-end with the S-SBC. Anyone who can impersonate the S-SBC can inject calls, so peer authenticity is not optional.
+- Certificate rotation is a configuration hot-update — no restart, and no in-flight calls dropped.
+- Every console operation must be authenticated and audited.
+- Payload logging is toggleable and off by default in logs.
 
-## 绝不提交的东西
+## Things never committed
 
-密钥、证书、token、真实网络地址，以及真实流量抓包。仓库里只放 `.env.example` 占位符。
+Keys, certificates, tokens, real network addresses, and real traffic captures. The repository holds only `.env.example` placeholders.

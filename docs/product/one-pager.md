@@ -206,7 +206,7 @@ Helm is the only production delivery form (ADR-0013), chart name `3rdparty-as`.
 | [`../delivery/airgap-package.md`](../delivery/airgap-package.md) | Offline install package (image sync + `helm package`) creation and use | `docs/delivery/` |
 | [`../delivery/preflight.sh`](../delivery/preflight.sh) | Pre-deployment environment validation script | `docs/delivery/` |
 | [`../../deploy/helm/README.md`](../../deploy/helm/README.md) | **Authoritative** description of Helm chart parameters and render behavior | Existing |
-| [`../architecture/新系统整体架构.md`](../architecture/新系统整体架构.md) | Design baseline: network position, layering, config governance, redundancy and ISSU, security boundary, open items and risks | Existing |
+| [`../architecture/system-architecture.md`](../architecture/system-architecture.md) | Design baseline: network position, layering, config governance, redundancy and ISSU, security boundary, open items and risks | Existing |
 | [`../plan.md`](../plan.md) | Milestone status, product decision log, open items (O1–O5) | Existing |
 | [`../product-packaging-plan.md`](../product-packaging-plan.md) | The packaging plan this file belongs to, and the deliverable list | Existing |
 | [`../acceptance/test-plan.md`](../acceptance/test-plan.md) | Acceptance criteria and automated-layering boundaries (e2e marker status) | Existing |

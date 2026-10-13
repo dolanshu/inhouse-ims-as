@@ -12,80 +12,80 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 故障定界手册（Fault Demarcation）— In-house IMS Application Server
+# Fault Demarcation Manual (Fault Demarcation) — In-house IMS Application Server
 
-> **交付物归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第一批 **1.4 故障定界手册**。按该计划 §3.2，本交付物属 **A 类**（文档本身不依赖未决项）；但**真实集群 / 真实对端证据仍 blocked**（见 §8）。
+> **Deliverable ownership**: [`../product-packaging-plan.md`](../product-packaging-plan.md) §1 first batch **1.4 Fault demarcation manual**. Per §3.2 of that plan, this deliverable is **class A** (the document itself does not depend on undecided items); but **real-cluster / real-peer evidence is still blocked** (see §8).
 >
-> **互链**：与 [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md)（RACI，本文 §3 的归属结论以该文 §4 为准绳）、[`runbook-l1.md`](runbook-l1.md)、[`runbook-l2.md`](runbook-l2.md)（分层故障树）、[`rollback-playbook.md`](rollback-playbook.md)（回退）互链。
+> **Cross-links**: cross-linked with [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) (RACI; the ownership conclusions in §3 of this document are bound by that document's §4), [`runbook-l1.md`](runbook-l1.md), [`runbook-l2.md`](runbook-l2.md) (layered fault tree), and [`rollback-playbook.md`](rollback-playbook.md) (rollback).
 >
-> **状态说明**：上游文档中的过期「未创建」标注已于 2026-10-10 统一清理；本文件所述的 blocked 状态（**真实集群证据 / 演练记录**）**仍然成立**。
+> **Status note**: the outdated "not created" annotations in upstream documents were cleaned up uniformly on 2026-10-10; the blocked states described in this document (**real cluster evidence / drill records**) **still hold**.
 >
-> **⚠️ iFC 触发在 S-CSCF / HSS 侧（评审 G-P0-5已裁决）**。本产品**只实现 ISC 触发之后的业务判决、摘流与回退**，**不实现 iFC**。AS 侧既不持有 iFC 触发上下文，也不持有 iFC 触发日志。凡「呼叫为什么没到 AS」类问题的**触发侧**证据，一律只能由 OP-NET / OP-HSS / OP-SBC 提供。
+> **⚠️ iFC triggering is on the S-CSCF / HSS side (review G-P0-5 adjudicated)**. This product **only implements the business decision, traffic removal, and rollback after ISC triggering**, and **does not implement iFC**. The AS side holds neither the iFC trigger context nor iFC trigger logs. For all "why didn't the call reach the AS" questions, the **trigger-side** evidence can only be provided by OP-NET / OP-HSS / OP-SBC.
 >
-> **本文不提供 LI / IRI**（ADR-0016：**不为其预留任何采集点**；IRI 属网内网元职能，第三方 AS 介入会引入跨法域暴露）。**TLS 解密各方自理，密钥不跨方共享** —— AS 侧**不接受**为解密而复制对端私钥（`AGENT.md` §11 / §13）。
+> **This document provides no LI / IRI** (ADR-0016: **no collection point reserved for it**; IRI is an in-network network element function, and third-party AS involvement would introduce cross-jurisdiction exposure). **TLS decryption is each party's own responsibility, and keys are not shared across parties** — the AS side **does not accept** copying peer private keys for decryption (`AGENT.md` §11 / §13).
 >
-> **testbed 仿真不是现网证据**。`testbed/` 是研发 / 演示资产，ADR-0014 明确 v1 不把 testbed 作为交付物；kind / compose 上的抓包与日志**不得**充当运营商 IOT 或现网证据。
+> **testbed simulation is not production evidence**. `testbed/` is an R&D / demo asset, and ADR-0014 explicitly makes the testbed not a v1 deliverable; packet captures and logs on kind / compose **must not** serve as operator IOT or production evidence.
 >
-> **证据口径**：M8 RC 产物就绪但**退出签字仍搁置**（RC 就绪 ≠ 通过）；**E1 / E4 / E5 未验收**；**e2e**：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**；**7.2d（M4b-7.2d / M8-7.2d）仍 blocked**；签收矩阵 pass 9 / fail 0 / **blocked 12** / n-a 4 / **open 24**（[`../acceptance/report.md`](../acceptance/report.md) §0.5）。
+> **Evidence wording**: M8 RC artifacts are ready but **exit sign-off is still shelved** (RC ready ≠ passed); **E1 / E4 / E5 not accepted**; **e2e**: `pytest -m e2e` **8 tests pass stably** (fail, not skip, when native is missing), REQ-F-1 = **automated subset covered / full text still open**; **7.2d (M4b-7.2d / M8-7.2d) still blocked**; sign-off matrix pass 9 / fail 0 / **blocked 12** / n-a 4 / **open 24** ([`../acceptance/report.md`](../acceptance/report.md) §0.5).
 >
-> **零容量数字**：本文无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 百分比容量，也不引用 M6 dev-host 数字。O1 容量目标**未裁决**（`AGENT.md` §2）。**不得用容量数字定界** —— 任何「到某个量级就应该是对方的问题」的推断在本文口径下**不成立**。
+> **Zero capacity numbers**: this document contains no CPS / CAPS / BHCA / concurrency / throughput / latency / percentage capacity, and does not cite M6 dev-host numbers. The O1 capacity target is **undecided** (`AGENT.md` §2). **Demarcation must not use capacity numbers** — any inference of "above a certain magnitude it must be the peer's problem" **does not hold** under this document's wording.
 >
-> **计费域全程 N/A**：不做 CDR、不投递、不归档、不批价（ADR-0017）；以按 Call-ID 的呼叫轨迹替代话单，且**呼叫轨迹不是话单**。Diameter Sh 不做（数据来自自有数据面）；媒体不做（ADR-0004）。
+> **Billing domain N/A throughout**: no CDR, no delivery, no archiving, no pricing (ADR-0017); replaced by call traces by Call-ID, and **call traces are not call records**. Diameter Sh not done (data comes from our own data plane); media not done (ADR-0004).
 >
-> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
+> **B6 review status**: this document has been reviewed under B6 with a review record left — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 first review) and §7 (2026-10-12 closure re-review); **the conclusion awaits maintainer confirmation** and must not serve as a basis for external delivery or acceptance before confirmation (`AGENT.md` §3.3).
 
 ---
 
-## 1. 定界总原则
+## 1. General Demarcation Principles
 
-**顺序固定：先分层，再定责。** 分层顺序与 [`runbook-l2.md`](runbook-l2.md) §1 一致：部署层 → 接入层 → 控制面层 → 判决层 → 状态存储层。反向排（先怀疑判决）是最常见的浪费。**先问「这一层有没有证据」，再问「是谁的锅」**。
+**Fixed order: layer first, then assign responsibility.** The layering order is consistent with [`runbook-l2.md`](runbook-l2.md) §1: deployment layer → access layer → control plane layer → decision layer → state store layer. Reversing it (suspecting the decision first) is the most common waste. **Ask "does this layer have evidence" before asking "whose fault is it"**.
 
-**「5 分钟自证不是你的锅」—— AS 侧能自证的**
+**"Prove in 5 minutes it is not your fault" — what the AS side can self-certify**
 
-| 能自证 | 取证方式 |
+| Can self-certify | Forensics method |
 |---|---|
-| 进程是否 ready | `/health/live`、`/health/ready`（端口来自 `AS_HEALTH_PORT`） |
-| 收到 / 发出过哪些 SIP 消息 | 按 Call-ID 的运行时日志（§4.2 字段契约） |
-| 各副本生效的配置版本是否一致 | `printenv CONFIG_VERSION` |
-| Redis 是否可达 | `as_state_store_available{use_case}` |
-| 哪些实例允许摘除 | `as_downscale_removable{use_case,pod}` |
-| 判决路径本身 | `decide()` 是纯函数（无 socket / 无时钟 / 无全局状态），可重放 |
+| Whether the process is ready | `/health/live`, `/health/ready` (port from `AS_HEALTH_PORT`) |
+| Which SIP messages were received / sent | Runtime logs by Call-ID (§4.2 field contract) |
+| Whether the configuration version in effect per replica is consistent | `printenv CONFIG_VERSION` |
+| Whether Redis is reachable | `as_state_store_available{use_case}` |
+| Which instances may be drained | `as_downscale_removable{use_case,pod}` |
+| The decision path itself | `decide()` is a pure function (no socket / no clock / no global state), replayable |
 
-**AS 侧不能自证的（必须向对方取证，见 §6）**：① S-CSCF → S-SBC 段的 **iFC 触发上下文与结果**（该段**完全不经过 AS**）；② S-SBC → AS trunk 段**对端**侧的信令落地结果（双方**各自抓本侧**）；③ 出腿信令在**下游网元**侧收到了什么；④ **容量边界**（O1 未裁决，任何容量数字都不成立）；⑤ 呼叫轨迹的长期保留与查询（O4 / D5 **取值已裁（G6，2026-10-10）**：保留期默认 10 天、部署可配；存储选型 in-cluster PostgreSQL —— **实现未落**，轨迹存储 / 查询 / 删除能力当前不存在）。
+**What the AS side cannot self-certify (must collect evidence from the peer, see §6)**: ① the **iFC trigger context and result** of the S-CSCF → S-SBC segment (that segment **does not pass through the AS at all**); ② the **peer-side** signaling landing result of the S-SBC → AS trunk segment (both sides **capture on their own side**); ③ what the outgoing leg signaling was received by at the **downstream network element**; ④ the **capacity boundary** (O1 undecided, so no capacity number holds); ⑤ long-term retention and query of call traces (O4 / D5 **values adjudicated (G6, 2026-10-10)**: retention default 10 days, deployment-configurable; storage selection in-cluster PostgreSQL — **not yet implemented**, and trace storage / query / deletion capabilities do not currently exist).
 
-**三条纪律**：① **AS 侧证据不足时不得先行定界** —— 先与 OP-NOC 拉双方时间线联合对齐（RACI §4，⑧ 行的 A角是 OP-NOC）；② **404 / 603 不是故障**，是判决结果（§3、§5.3、§5.4）；③ **「没查过」不等于「已排除」**，求助与升级时必须写明已做过什么、结果如何（[`runbook-l1.md`](runbook-l1.md) §4 证据清单）。
+**Three disciplines**: ① **no prior demarcation when AS-side evidence is insufficient** — first align both timelines jointly with OP-NOC (RACI §4, the A role in row ⑧ is OP-NOC); ② **404 / 603 are not failures**, they are decision results (§3, §5.3, §5.4); ③ **"not checked" is not the same as "ruled out"** — in help requests and escalations, state what has been done and with what results ([`runbook-l1.md`](runbook-l1.md) §4 evidence checklist).
 
 ---
 
-## 2. 四方归属判断流程
+## 2. Four-Party Ownership Judgment Flow
 
 ```mermaid
 flowchart TD
-    P["现象：呼叫失败 / 掉话 / 业务异常"] --> L0["第 0 步：AS 侧进程是否在<br/>AS 层还是对端层？"]
-    L0 --> L1["第 1 步：AS 侧自查<br/>· 有入腿日志吗？<br/>· 有该 use_case 的 as_* 序列吗？<br/>· CONFIG_VERSION 一致吗？"]
-    L1 --> L2{"第 2 步：AS 侧有证据吗？"}
-    L2 -->|"无入腿日志 + 无 active_calls 变化"| ND["待定：呼叫未到达 AS"]
-    L2 -->|"有入腿日志"| L3{"第 3 步：AS 回了什么码？"}
-    L2 -->|"连序列都不存在"| L4["第 4 步：AS 自身是否异常？"]
+    P["Symptom: call failure / dropped call / business anomaly"] --> L0["Step 0: is the AS-side process up<br/>AS layer or peer layer?"]
+    L0 --> L1["Step 1: AS-side self-check<br/>· Any inbound leg logs?<br/>· Any as_* series for that use_case?<br/>· CONFIG_VERSION consistent?"]
+    L1 --> L2{"Step 2: Any AS-side evidence?"}
+    L2 -->|"No inbound leg logs + no active_calls change"| ND["Undetermined: call did not reach the AS"]
+    L2 -->|"Inbound leg logs present"| L3{"Step 3: What code did the AS return?"}
+    L2 -->|"Not even series exist"| L4["Step 4: Is the AS itself anomalous?"]
 
-    L3 -->|"403"| AS1["归属 AS<br/>边界策略（接入层）"]
-    L3 -->|"404 / 603"| AS2["归属 AS<br/>判决结果 · 预期行为"]
-    L3 -->|"502"| AS3["归属 AS<br/>下游非透传失败被映射"]
-    L3 -->|"408/480/486/503/504"| AS4["归属 AS 中继<br/>下游失败码透传"]
-    L3 -->|"200 建立后中断"| AS5["归属待定<br/>按 BYE 来源三分"]
+    L3 -->|"403"| AS1["Owned by AS<br/>boundary policy (access layer)"]
+    L3 -->|"404 / 603"| AS2["Owned by AS<br/>decision result · expected behavior"]
+    L3 -->|"502"| AS3["Owned by AS<br/>downstream non-passthrough failure mapped"]
+    L3 -->|"408/480/486/503/504"| AS4["Owned by AS relay<br/>downstream failure code passthrough"]
+    L3 -->|"interrupted after 200 established"| AS5["Ownership undetermined<br/>split three ways by BYE source"]
 
-    L4 -->|"as_state_store_available=0"| AS6["归属 AS<br/>状态存储层"]
-    L4 -->|"Pod CrashLoop / Ingress 不 Ready"| AS7["归属 AS<br/>部署层（7.2d blocked）"]
-    L4 -->|"控制台登录失败 / 审计缺失"| AS8["归属 AS<br/>控制面层"]
+    L4 -->|"as_state_store_available=0"| AS6["Owned by AS<br/>state store layer"]
+    L4 -->|"Pod CrashLoop / Ingress not Ready"| AS7["Owned by AS<br/>deployment layer (7.2d blocked)"]
+    L4 -->|"console login failure / audit missing"| AS8["Owned by AS<br/>control plane layer"]
 
-    ND --> E1["AS 侧证据不足<br/>不得先行定界"]
-    E1 --> REQ["按 §6 取证请求清单<br/>向 OP-SBC / OP-NET / OP-HSS 取证"]
+    ND --> E1["Insufficient AS-side evidence<br/>no prior demarcation"]
+    E1 --> REQ["Per §6 evidence request checklist<br/>collect evidence from OP-SBC / OP-NET / OP-HSS"]
 
-    REQ --> OPN["归属 S-SBC<br/>trunk / 网络策略 / 桥接"]
-    REQ --> OPNET["归属 S-CSCF<br/>iFC 触发 / 触发灰度 / 签约数据"]
-    REQ --> OPHSS["归属 HSS<br/>iFC 签约数据"]
+    REQ --> OPN["Owned by S-SBC<br/>trunk / network policy / bridging"]
+    REQ --> OPNET["Owned by S-CSCF<br/>iFC triggering / trigger grayscale / subscription data"]
+    REQ --> OPHSS["Owned by HSS<br/>iFC subscription data"]
 
-    AS2 --> DONE["结论入档<br/>证据 + 时间线 + 归属"]
+    AS2 --> DONE["Conclusion filed<br/>evidence + timeline + ownership"]
     AS1 --> DONE
     AS3 --> DONE
     AS4 --> DONE
@@ -97,9 +97,9 @@ flowchart TD
     OPHSS --> DONE
     AS5 --> REQ
 
-    BILL["计费域 OP-BILL<br/>N/A —— 与本产品无接口<br/>不做 CDR / 计费（ADR-0017）"]:::na
-    OPNET -.->|"话单 / 计费分歧"| BILL
-    BILL -.->|"改按 §6 向 CDR 归属方取证"| REQ
+    BILL["Billing domain OP-BILL<br/>N/A — no interface with this product<br/>no CDR / billing (ADR-0017)"]:::na
+    OPNET -.->|"call record / billing dispute"| BILL
+    BILL -.->|"instead per §6 collect evidence from the CDR owner"| REQ
 
     style AS1 fill:#fdecea,stroke:#ea4335
     style AS2 fill:#fef7e0,stroke:#f9ab00
@@ -109,55 +109,55 @@ flowchart TD
     style na fill:#f1f3f4,stroke:#5f6365,stroke-dasharray: 5 5
 ```
 
-**读图要点**
+**Key points for reading the diagram**
 
-1. 第 1 步是**分水岭**：AS 侧有没有证据，决定了后面是「定责」还是「取证」。**没有证据就不要走到定责**。
-2. `404 / 603` 走的是**业务结果**分支，不是故障分支。
-3. 虚线的计费域**没有连线即无责任**：与本产品无接口。若投诉涉及话单/计费，改按 §6 向客户 CDR 归属方取证，不在 AS 侧定责。
+1. Step 1 is the **watershed**: whether the AS side has evidence determines whether what follows is "assigning responsibility" or "collecting evidence". **Without evidence, do not proceed to assigning responsibility**.
+2. `404 / 603` take the **business result** branch, not the failure branch.
+3. The dashed billing domain has **no responsibility without a connection**: no interface with this product. If a complaint involves call records/billing, instead collect evidence from the customer's CDR owner per §6; do not assign responsibility on the AS side.
 
 ---
 
-## 3. 归属判断速查表
+## 3. Ownership Judgment Quick Reference
 
-> 归属口径与 [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §4 一致；file:line 证据在 [`../product/compliance-matrix.md`](../product/compliance-matrix.md) 与本文 §5。
+> The ownership wording is consistent with [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §4; file:line evidence is in [`../product/compliance-matrix.md`](../product/compliance-matrix.md) and §5 of this document.
 
-| # | 现象 | AS 侧证据特征 | 归属 | 我方动作 | 需对方提供的证据 |
+| # | Symptom | AS-side evidence characteristics | Ownership | Our action | Evidence needed from the peer |
 |---|---|---|---|---|---|
-| 1 | **呼叫未到 AS** | 无入腿日志；`as_active_calls` 无变化；`as_downscale_removable` 全为 0（draining 中被保护） | **先分三支**：① Pod / Endpoints 异常 → AS；② 边界策略拒收 → AS；③ 以上都正常 → **对方** | 查 Pod、`/health/ready`、`AS_PEER_ALLOWED_ADDRESSES` / `AS_PEER_ALLOWED_CERT_FINGERPRINTS` 是否命中 | S-SBC trunk 侧是否发出 INVITE、是否被其本侧策略丢弃；**S-CSCF 侧 iFC 触发上下文与结果**（该段不经过 AS） |
-| 2 | **AS 返 403** | 三条共用同一码：明文在要求 TLS 时被拒 / 对端白名单未命中 / 证书校验失败 | **AS（接入层 · 边界策略）** | 确认对端是否以 TLS 发起；`AS_TLS_CA_PATH` 是否含对端签发链；对端地址 / 指纹是否在白名单内。空策略**fail-closed**（`transport.py:272-273`） | 对端证书与握手细节（**密钥不跨方共享**）；⚠️ 宿主机 `http_proxy` 造成的 `403/000` 是**采证路径**问题，不是产品 403 |
-| 3 | **AS 返 404 / 603** | `404` = **无匹配规则**；`603` = **策略拒绝**（如反诈超限） | **AS，但属预期判决，不是故障** | 先问「预期判决是什么」，再问「为什么没命中」；本应命中 → 走**变更单**（不走GitOps） | 无需对方证据 |
-| 4 | **AS 返 502** | 下游失败码**不在**透传集合 `{408, 480, 486, 503, 504}`，被映射为 `502`（`call_controller.py:19-21,98-104`） | **AS 中继**：AS 收到了下游失败并做了映射 | 看运行时日志的 `RESIP_RUNTIME_UAS_FAILURE_MAPPED` 的 `downstream_status` / `upstream_status` | 下游网元侧该`downstream_status` 的成因 |
-| 5 | **下游失败码透传** | 入腿回了 `408/480/486/503/504`，与下游一致 | **下游网元**（AS 只做透传） | 用 `RESIP_RUNTIME_UAC_FAILURE` 的 `status` 与 `RESIP_RUNTIME_UAS_FAILURE_MAPPED` 对照证明「AS 未改码」 | 下游拒绝/失败原因。⚠️ native 产品路径**只对 `486` 有端到端测试**，其余四码在产品路径上**无证据**，先不要当已验证行为上报缺陷 |
-| 6 | **呼叫建立后中断** | 三种BYE 来源：入腿远端 BYE / 下游 BYE / 本地主动 end；`RESIP_RUNTIME_OUTBOUND_CANCEL_FORWARD` 只覆盖 CANCEL 转发 | **按 BYE 来源三分**，不得默认归AS | 以 §4.1 的两腿关联法把入腿 `inbound_call_id` 与出腿 `outgoing_call_id` 对上，再判断谁先发 BYE | 入腿远端 BYE → S-SBC / 主叫侧；下游 BYE → 下游网元 |
-| 7 | **CANCEL / 487 分支异常** | `RESIP_RUNTIME_OUTBOUND_CANCEL_FORWARD inbound_call_id=...`（`direction=inbound`, `method=CANCEL`）；487 通常是**主叫放弃** | **先当预期行为**；异常计数才升级 | 与契约场景 S4 对齐。⚠️ native DUM 语义仍在 **E1 未验收**范围内，不得据此下产品结论 | 主叫放弃的发起侧记录 |
-| 8 | **状态存储不可用** | `as_state_store_available{use_case}` 持续 `0` → `ASCallStateStoreUnavailable`（critical）。在途呼叫状态全在 Redis | **AS（状态存储层）** | 会话 / dialog / 反诈速率窗口都在 Redis，**Redis 不可用 = 在途呼叫无法维持**。⚠️ 未配置 `REDIS_URL` 时**序列不存在（不是 0）**，规则永不触发 | Redis 若为客户自建，需客户提供其侧可达性与拓扑（**Redis HA 拓扑取值已裁 —— O5 / D3（G7）**：primary/replica + Sentinel，沿用 ADR-0008 拓扑、不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据） |
-| 9 | **config-service CrashLoop / Ingress 不 Ready** | DSN 主机名是占位 `postgres:5432`；Ingress 注解 prefix 被改写；`empty reply`（curl 52）；admission webhook Job WARN | **AS（部署层）**，但**真实集群证据 blocked** | 按 [`runbook-l2.md`](runbook-l2.md) §4.6 的对照表逐条排；**empty reply 视为未过关**，不得在 plan 里勾 7.2d 关门 | 客户 ingress 规范与 LB 侧采证配合（**7.2d 当前 blocked**） |
-| 10 | **控制台登录失败 / 审计缺失** | 角色矩阵 `viewer`/`approver`/`admin`；审计表 append-only（`BEFORE UPDATE OR DELETE` / `BEFORE TRUNCATE` 触发器） | **AS（控制面层）** | 越权与审计完整性事件**同时通知 OP-SEC** | 无 |
-| 11 | **缩容或升级期间掉话（draining 不收敛）** | `as_active_calls` 不降；`as_downscale_removable` 长期为 `0`；readiness 不是 `503` | **AS（draining / 编排）**，机制见 ADR-0009 / ADR-0010 | 按 [`runbook-l1.md`](runbook-l1.md) §3.1 四步；**不得 SIGKILL**；检查 `preStop sleep` + SIGTERM 路径 | 无。⚠️ 现有 draining 证据来自 `AS_M5_SIMULATED_ACTIVE_CALLS` **模拟**在途呼叫（G-P1-1），**真实 SIP 负载下不掉呼叫未验收**，**不得**用模拟证据向对方承诺「生产不掉话」 |
+| 1 | **Call did not reach the AS** | No inbound leg logs; no change in `as_active_calls`; `as_downscale_removable` all 0 (protected while draining) | **Split into three branches first**: ① Pod / Endpoints anomalous → AS; ② boundary policy rejection → AS; ③ both normal → **peer** | Check Pod, `/health/ready`, whether `AS_PEER_ALLOWED_ADDRESSES` / `AS_PEER_ALLOWED_CERT_FINGERPRINTS` hit | Whether the S-SBC trunk side sent the INVITE, whether it was dropped by its local policy; **the S-CSCF-side iFC trigger context and result** (that segment does not pass through the AS) |
+| 2 | **AS returns 403** | Three cases share one code: cleartext rejected when TLS is required / peer whitelist not matched / certificate validation failed | **AS (access layer · boundary policy)** | Confirm whether the peer initiated with TLS; whether `AS_TLS_CA_PATH` contains the peer's issuing chain; whether the peer address / fingerprint is in the whitelist. Empty policy is **fail-closed** (`transport.py:272-273`) | Peer certificate and handshake details (**keys are not shared across parties**); ⚠️ `403/000` caused by the host's `http_proxy` is an **evidence-collection path** issue, not a product 403 |
+| 3 | **AS returns 404 / 603** | `404` = **no matching rule**; `603` = **policy rejection** (e.g., anti-fraud limit exceeded) | **AS, but an expected decision, not a failure** | Ask "what is the expected decision" before asking "why it did not hit"; should have hit → go through the **change order** (not GitOps) | No peer evidence needed |
+| 4 | **AS returns 502** | Downstream failure code **not** in the passthrough set `{408, 480, 486, 503, 504}`, mapped to `502` (`call_controller.py:19-21,98-104`) | **AS relay**: the AS received the downstream failure and mapped it | Look at the runtime log's `RESIP_RUNTIME_UAS_FAILURE_MAPPED`'s `downstream_status` / `upstream_status` | The cause of that `downstream_status` on the downstream network element side |
+| 5 | **Downstream failure code passthrough** | The inbound leg returned `408/480/486/503/504`, consistent with the downstream | **Downstream network element** (the AS only passes through) | Use `RESIP_RUNTIME_UAC_FAILURE`'s `status` and `RESIP_RUNTIME_UAS_FAILURE_MAPPED` comparison to prove "the AS did not change the code" | The downstream rejection/failure reason. ⚠️ The native product path **has end-to-end tests only for `486`**; the other four codes have **no evidence** on the product path, so do not report defects as verified behavior yet |
+| 6 | **Call interrupted after establishment** | Three BYE sources: inbound leg remote BYE / downstream BYE / local active end; `RESIP_RUNTIME_OUTBOUND_CANCEL_FORWARD` only covers CANCEL forwarding | **Split three ways by BYE source**, must not default to the AS | Use the two-leg correlation method in §4.1 to match the inbound leg's `inbound_call_id` with the outgoing leg's `outgoing_call_id`, then judge who sent BYE first | Inbound leg remote BYE → S-SBC / caller side; downstream BYE → downstream network element |
+| 7 | **CANCEL / 487 branch anomaly** | `RESIP_RUNTIME_OUTBOUND_CANCEL_FORWARD inbound_call_id=...` (`direction=inbound`, `method=CANCEL`); 487 is usually the **caller giving up** | **Treat as expected behavior first**; escalate only for anomalous counts | Align with contract scenario S4. ⚠️ Native DUM semantics are still within the **E1 not accepted** scope, so no product conclusions may be drawn from this | Caller-give-up initiating side record |
+| 8 | **State store unavailable** | `as_state_store_available{use_case}` persistently `0` → `ASCallStateStoreUnavailable` (critical). In-flight call state is all in Redis | **AS (state store layer)** | Session / dialog / anti-fraud rate windows are all in Redis, so **Redis unavailable = in-flight calls cannot be sustained**. ⚠️ When `REDIS_URL` is not configured the **series does not exist (not 0)**, so the rule never triggers | If Redis is customer-built, the customer needs to provide their side's reachability and topology (**Redis HA topology values are adjudicated — O5 / D3 (G7)**: primary/replica + Sentinel, following the ADR-0008 topology, not Redis Cluster; the chart still renders single replica, with no evidence of measured failover behavior) |
+| 9 | **config-service CrashLoop / Ingress not Ready** | DSN hostname is the placeholder `postgres:5432`; Ingress annotation prefix rewritten; `empty reply` (curl 52); admission webhook Job WARN | **AS (deployment layer)**, but **real-cluster evidence blocked** | Per the comparison table in [`runbook-l2.md`](runbook-l2.md) §4.6, troubleshoot item by item; **treat `empty reply` as not passed**, and do not tick 7.2d closure in the plan | Customer ingress standards and LB-side forensics cooperation (**7.2d currently blocked**) |
+| 10 | **Console login failure / audit missing** | Role matrix `viewer`/`approver`/`admin`; audit table append-only (`BEFORE UPDATE OR DELETE` / `BEFORE TRUNCATE` triggers) | **AS (control plane layer)** | Privilege escalation and audit integrity events **also notify OP-SEC** | None |
+| 11 | **Dropped calls during downscale or upgrade (draining not converging)** | `as_active_calls` does not drop; `as_downscale_removable` persistently `0`; readiness is not `503` | **AS (draining / orchestration)**, mechanism see ADR-0009 / ADR-0010 | Per the four steps in [`runbook-l1.md`](runbook-l1.md) §3.1; **must not SIGKILL**; check the `preStop sleep` + SIGTERM path | None. ⚠️ Existing draining evidence comes from `AS_M5_SIMULATED_ACTIVE_CALLS` **simulated** in-flight calls (G-P1-1), and **not dropping calls under real SIP load is not accepted**; **must not** use simulated evidence to promise the peer "no dropped calls in production" |
 
 ---
 
-## 4. 抓包与日志对齐方法
+## 4. Packet Capture and Log Alignment Methods
 
-### 4.1 逐段抓包责任方
+### 4.1 Per-Segment Packet Capture Responsibility
 
-权威表见 [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §3。要点：
+The authoritative table see [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §3. Key points:
 
-| 链路段 | 谁抓 | AS 侧能提供什么 |
+| Link segment | Who captures | What the AS side can provide |
 |---|---|---|
-| S-CSCF → S-SBC（iFC 触发） | **对方** | **不提供** —— 该段完全不经过 AS |
-| S-SBC → AS trunk（SIP over TLS `5061`） | **双方各自抓本侧** | Call-ID 关联的 JSON 日志字段契约 + `/metrics` 的 `as_*` 序列 |
-| AS → 下游（出腿） | **对方** | 入腿 / 出腿双向的 `inbound_call_id` / `outgoing_call_id` |
-| AS 内部 | **我方** | 判决结果、状态存储交互、配置版本 |
-| `testbed/` 仿真链路 | **我方** | 全部 —— ⚠️ **不是现网证据** |
+| S-CSCF → S-SBC (iFC triggering) | **Peer** | **Not provided** — that segment does not pass through the AS at all |
+| S-SBC → AS trunk (SIP over TLS `5061`) | **Both sides capture on their own side** | Call-ID correlated JSON log field contract + `as_*` series from `/metrics` |
+| AS → downstream (outgoing leg) | **Peer** | `inbound_call_id` / `outgoing_call_id` both directions for inbound / outgoing legs |
+| AS internal | **Ours** | Decision results, state store interactions, configuration version |
+| `testbed/` simulated link | **Ours** | All — ⚠️ **not production evidence** |
 
-**方法**：① 双方各自在**本侧**抓包，**TLS 下解密属各方责任，密钥不跨方共享**；② **两腿 Call-ID 不同**（B2BUA 两侧独立，REQ-F-2），跨腿关联用「**时间戳 + Route / Record-Route**」——以入腿 `inbound_call_id` 为起点，沿 `route_uri` 与下游返回的 `Record-Route` 走，再对齐出腿 `outgoing_call_id`；③ 先对齐时间基准再比对，窗口不足时**不要**用「看起来同时」当证据；④ **绝不提交真实抓包**（`AGENT.md` §11 / §13），只提交脱敏后的字段 / 文本行。
+**Method**: ① both sides capture on **their own side**, and **decryption under TLS is each party's responsibility, with keys not shared across parties**; ② **the two legs' Call-IDs differ** (B2BUA sides are independent, REQ-F-2), so cross-leg correlation uses "**timestamp + Route / Record-Route**" — starting from the inbound leg's `inbound_call_id`, following `route_uri` and the `Record-Route` returned by the downstream, then aligning the outgoing leg's `outgoing_call_id`; ③ align the time base before comparison, and when the window is insufficient **do not** use "appears simultaneous" as evidence; ④ **never commit real packet captures** (`AGENT.md` §11 / §13); only commit redacted fields / text lines.
 
-### 4.2 AS 侧日志字段契约（取证口径）
+### 4.2 AS-Side Log Field Contract (forensics wording)
 
-REQ-NF-13 的取证挂载点是 JSON 日志，字段固定为 **`timestamp` / `level` / `trace_id` / `call_id` / `direction` / `method`**（`trace_id` 即 Call-ID）。权威文件是**字段契约**（不是 runbook）：[`../acceptance/m8-resip-runtime-log-contract.md`](../acceptance/m8-resip-runtime-log-contract.md)。解析器 `platform/src/as_platform/sip/resip_runtime_log_contract.py`，由 `platform/tests/test_resip_runtime_log_contract.py`（`contract` marker）守卫 —— **C++ 改名或改键即红**。
+REQ-NF-13's forensics mounting point is JSON logs, with fields fixed as **`timestamp` / `level` / `trace_id` / `call_id` / `direction` / `method`** (`trace_id` is the Call-ID). The authoritative document is the **field contract** (not the runbook): [`../acceptance/m8-resip-runtime-log-contract.md`](../acceptance/m8-resip-runtime-log-contract.md). The parser is `platform/src/as_platform/sip/resip_runtime_log_contract.py`, guarded by `platform/tests/test_resip_runtime_log_contract.py` (`contract` marker) — **renaming or changing keys in C++ turns it red**.
 
-**示例行（原文照抄，可直接用于检索）**
+**Example lines (copied verbatim, directly usable for searching)**
 
 ```text
 RESIP_RUNTIME_LISTENING address=127.0.0.1 advertised=127.0.0.1 udp_port=5060
@@ -169,150 +169,150 @@ RESIP_RUNTIME_OUTBOUND_CANCEL_FORWARD inbound_call_id=in-1@127.0.0.1
 RESIP_RUNTIME_UAS_ANSWER_RELAYED outgoing_call_id=out-1@127.0.0.1
 ```
 
-**读法**：① `RESIP_RUNTIME_UAC_INVITE_SENT` 是**跨腿关联的唯一入口**（唯一同时带 `inbound_call_id` 与 `outgoing_call_id` 的事件）；② 只有 `inbound_call_id` → 出腿未发出；③ 只有 `outgoing_call_id` → 关联缺失，查 `*_CORRELATION_MISS`；④ 含空格的 `message=` 行按格式漂移 **fail-closed**（解析器返回 `None`），**不要**手工拼字段去凑。
+**How to read**: ① `RESIP_RUNTIME_UAC_INVITE_SENT` is the **only entry point for cross-leg correlation** (the only event carrying both `inbound_call_id` and `outgoing_call_id`); ② only `inbound_call_id` → the outgoing leg was not sent; ③ only `outgoing_call_id` → correlation missing, check `*_CORRELATION_MISS`; ④ `message=` lines containing spaces are **fail-closed** on format drift (the parser returns `None`), so **do not** manually assemble fields to fit.
 
-> ⚠️ **JSON 富化的边界**：native 行本身不经过 Python logging，富化发生在**采集转发侧**；集群没做这一步时 Pod 日志里仍是 `key=value` 原生行、**不是** JSON。**这不是完整的 OTel 三信号** —— traces 没有，OTLP exporter 当前为 `NoOpExporter`，**不要**用「trace 视图里没有」推断「调用路径没发生」。
+> ⚠️ **Boundary of JSON enrichment**: native lines themselves do not pass through Python logging, and enrichment happens on the **collection-forwarding side**; when the cluster does not do this step, Pod logs still contain the native `key=value` lines, **not** JSON. **This is not the complete OTel three signals** — traces are absent, the OTLP exporter is currently `NoOpExporter`, so **do not** infer "the call path did not happen" from "not in the trace view".
 
-### 4.3 AS 侧取证命令（命令原文）
+### 4.3 AS-Side Forensics Commands (commands as written)
 
 ```sh
-# Pod 与 ready 状态
+# Pod and ready status
 kubectl -n <ns> get pods -l app.kubernetes.io/part-of=3rdparty-as
 
-# 各副本生效的配置版本（不一致 → 控制面层）
+# Configuration version in effect per replica (inconsistent → control plane layer)
 kubectl -n <ns> exec deploy/<release>-<use-case> -- printenv CONFIG_VERSION
 
-# 运行时日志（按 Call-ID 检索；示例行见 §4.2）
+# Runtime logs (search by Call-ID; example lines see §4.2)
 kubectl -n <ns> logs deploy/<release>-<use-case> --since=30m | grep 'RESIP_RUNTIME_'
 
-# 指标（镜像内无 curl 时走 port-forward，见下行）
+# Metrics (go through port-forward when curl is not in the image, see the next line)
 kubectl -n <ns> exec deploy/<release>-<use-case> -- curl -s :8080/metrics | grep '^as_'
 kubectl -n <ns> port-forward deploy/<release>-<use-case> 8080:8080
 ```
 
-**取证时的三个已知坑**
+**Three known pitfalls during forensics**
 
-- **chart 未接线抓取**：Pod 模板无 `prometheus.io/scrape` 注解，chart 内无 ServiceMonitor / PodMonitor → 标准部署下 Prometheus **收不到** `as_*` 序列。「Prometheus 里没有」≠「进程没产出」。
-- **`as_state_store_available` 的「没数据」不是 `0`**：仅当 `REDIS_URL` 非空时才探测并写序列。
-- **`as_rule_hits_total` 无生产调用方**（定义在 `telemetry/metrics.py`，不在告警契约表内）→ **不能靠它判断规则命中**；用 `call_id` + 生效规则版本 + 判决路径（纯函数，可重放）判断。
-
----
-
-## 5. 常见故障剧本
-
-每条结构：**触发观察 → 判定步骤 → 处置 → 回退 → 证据留存**。
-
-### 5.1 呼叫未到达 AS
-
-- **触发观察**：用户侧呼叫失败；AS 侧按该号码检索**无入腿日志**；`as_active_calls` 无对应变化。
-- **判定步骤**：① Pod / Service Endpoints 是否异常 → 是则 AS；② `/health/ready` 是否为 `503`（draining 中正常摘流）→ 是则 AS（转§5.7）；③ `as_downscale_removable` 是否全为 `0` → 是则 AS；④ ingress / 网络策略是否拒收对端，或 `AS_PEER_ALLOWED_ADDRESSES` / `AS_PEER_ALLOWED_CERT_FINGERPRINTS` 未命中 → 是则 AS；⑤ `/metrics` 中该 `use_case` **有序列但无入腿日志** → **对方**。
-- **处置**：AS 侧命中①–④ 就地处置；命中⑤ **立即停止定界**，转§6 取证。
-- **回退**：若因我方边界策略误配（fail-closed 拒收），按变更流水线恢复策略 ——配置**不走 GitOps**，走变更单（[`rollback-playbook.md`](rollback-playbook.md) L1）。
-- **证据留存**：时间线（含时区）、Pod 列表、ready 状态、该 `use_case` 的 `as_*` 序列、策略配置快照（**脱敏**，不保存任何 Secret）。
-
-### 5.2 AS 返 403
-
-- **触发观察**：入腿被AS 以 `403 Forbidden` 拒绝，或 TLS 握手失败。
-- **判定步骤**：① 对端是否以 TLS 发起（要求 TLS 时，`tls` / `sips` 之外的 transport 一律拒）→ 明文发起则 AS；② `AS_TLS_CA_PATH` 指向的 CA 是否包含对端签发链；③ 对端地址 / 证书指纹是否在白名单内（空策略 **fail-closed**，授权 nobody）；④ 若是宿主机 `curl` 得到的 `403 / 000` → 检查 `http_proxy`，用 `NO_PROXY=127.0.0.1,localhost kubectl port-forward` 重采 —— 这是**采证路径**问题，不是产品 403。
-- **处置**：策略正确而对端仍被拒 → 转客户 PKI / 网络部联合处理；**不得**为通过联调把白名单改成 `*`（安全控制不是可用性开关）。
-- **回退**：策略变更走变更单；证书轮换是**配置热更新**，**绝不重启进程、绝不丢在途呼叫**（ADR-0016 / `AGENT.md` §13）。
-- **证据留存**：`AS_TLS_*` / `AS_PEER_*` 的**变量名与取值来源**（不保存证书内容）；`403` 出现的时间窗。⚠️ **E4 / REQ-S-2 / REQ-S-3 当前无实验室证据**，本剧本是操作纪律，**不是**已验证流程。
-
-### 5.3 AS 返 404（不是故障）
-
-- **触发观察**：入腿被 `404 Not Found` 拒绝。
-- **判定步骤**：`404` = **无匹配规则**，是判决链的默认结果。查号段 / 前缀规则是否覆盖该被叫。
-- **处置**：本应命中 → 规则问题，走**变更单**提交（编辑草稿 → 提交 → 审批 → 灰度分发）；**不是**运维直接 UPDATE 数据库。
-- **回退**：变更单回滚到 `vN-1`（`rolled_back` 终态），见 [`rollback-playbook.md`](rollback-playbook.md) L1。
-- **证据留存**：`call_id`、生效的 `CONFIG_VERSION`、规则版本号、判决路径重放结果。⚠️ live Call-ID trace（REQ-F-13）当前 **BLOCKED**（无 live trace source / API），所以轨迹**拿不出来**，只能用上述三项替代判定。
-
-### 5.4 AS 返 603（不是故障）
-
-- **触发观察**：入腿被 `603 Decline` 拒绝。
-- **判定步骤**：`603` = **策略拒绝 / 策略判决拒绝**（如反诈超限）。查生效规则版本与命中的策略。
-- **处置**：判决符合预期 → 不是故障，记录即可；与预期不符 → 走变更单调整规则或回滚。
-- **回退**：同 §5.3。
-- **证据留存**：同 §5.3。⚠️ 产品路径**当前只发 `603 Decline`**；`608 Rejected` 只出现在 POC 抓包基线的运营商侧对端声明中，**不要**把它当产品拒绝码。
-
-### 5.5 AS 返 502
-
-- **触发观察**：入腿收到 `502 Bad Gateway`。
-- **判定步骤**：查运行时日志的 `RESIP_RUNTIME_UAS_FAILURE_MAPPED`：`downstream_status` 不在 `{408, 480, 486, 503, 504}` 内 → 被映射为 `502`。**AS 没有改码，是映射规则**。
-- **处置**：按下游失败处理 —— 需要下游网元给出 `downstream_status` 的成因；AS 侧不重试、不改判决。
-- **回退**：若映射本身被判为不合理 → 走文档链改判决映射，**不得**在故障处置中热改代码。
-- **证据留存**：`downstream_status` / `upstream_status` 对照行、时间戳、`outgoing_call_id`。
-
-### 5.6 下游失败码透传（486 / 480 / 408 / 503 / 504）
-
-- **触发观察**：入腿回了透传集合中的码。
-- **判定步骤**：用 `RESIP_RUNTIME_UAC_FAILURE status=<code>` 与 `RESIP_RUNTIME_UAS_FAILURE_MAPPED downstream_status=… upstream_status=…` 对照，证明 `upstream_status == downstream_status` → AS **未改码**。
-- **处置**：归属下游网元；AS 侧不背这个码。
-- **回退**：不适用（AS 未做变更）。
-- **证据留存**：上述两行日志 + 下游侧取证请求（§6）。⚠️ **native 产品路径只对 `486` 有端到端测试**，其余四码在产品路径上**无证据**。
-
-### 5.7 缩容或升级期间掉话（draining 不收敛）
-
-- **触发观察**：Pod 已 cordon / 已删，但 `as_active_calls` 不降、`as_downscale_removable` 长期为 `0`。
-- **判定步骤**：① readiness 是否为 `503`；② Endpoint 是否摘流；③ `AS_DOWNSCALE_GUARD_ENABLED` / `AS_DOWNSCALE_GUARD_PROTECT_ABOVE` 是否被 Helm 正确注入；④ 是否走了 `preStop sleep` + SIGTERM（**不得 SIGKILL**）；⑤ `plan_scale_down` 的 `allowed` / `candidates` / `reason`。
-- **处置**：四步操作见 [`runbook-l1.md`](runbook-l1.md) §3.1 与 [`../acceptance/m5-downscale-runbook.md`](../acceptance/m5-downscale-runbook.md)；`allowed=False` 时**不要删 Pod**，或先对高负载实例发起 draining。
-- **回退**：镜像 / manifest 层回退走 `helm history` → `helm rollback <revision>` → `kubectl rollout status`（原文见 [`rollback-playbook.md`](rollback-playbook.md) L3）；draining 本身是 ADR-0009 定义的退出路径，**不是**容量结论。
-- **证据留存**：`plan_scale_down` 输出、`as_active_calls` / `as_downscale_removable` 时间序列、readiness 状态、Helm revision。⚠️ **证据边界**：现有 draining / 缩容证据用 `AS_M5_SIMULATED_ACTIVE_CALLS=N` **模拟**在途呼叫（SIGTERM 后每秒减 1），是 kind 上的**机制证据**；**真实 SIP 负载下的不掉呼叫待 M7 / M8 验收**（G-P1-1）。**不得**用模拟证据向对方承诺生产不掉话。
+- **The chart has not wired scraping**: the Pod template has no `prometheus.io/scrape` annotation, and the chart has no ServiceMonitor / PodMonitor → under standard deployment, Prometheus **cannot receive** `as_*` series. "Absent in Prometheus" ≠ "the process produced nothing".
+- **The "no data" of `as_state_store_available` is not `0`**: it probes and writes the series only when `REDIS_URL` is non-empty.
+- **`as_rule_hits_total` has no production caller** (defined in `telemetry/metrics.py`, not in the alert contract table) → **cannot rely on it to judge rule hits**; use `call_id` + the effective rule version + the decision path (pure function, replayable) to judge.
 
 ---
 
-## 6. AS 侧无证据时的取证请求清单
+## 5. Common Fault Playbooks
 
-**触发条件**：§2 第 2 步判定「AS 侧无证据」，或 §5.1 判定步骤⑤命中。**在此之前不得定责。**
+Each is structured: **trigger observation → judgment steps → handling → rollback → evidence retention**.
 
-**对照 [`../acceptance/report.md`](../acceptance/report.md) §0.6 / §0.8 的 blocked 与 defer 项，下列项目前 AS 侧拿不出证据，需向 S-CSCF / HSS / S-SBC 侧取证**：
+### 5.1 Call Did Not Reach the AS
 
-| 项 | AS 侧现状 | 需向谁取证 | 取什么 |
+- **Trigger observation**: user-side call failure; searching the AS side by that number yields **no inbound leg logs**; no corresponding change in `as_active_calls`.
+- **Judgment steps**: ① whether Pod / Service Endpoints are anomalous → if yes, AS; ② whether `/health/ready` is `503` (normal traffic removal while draining) → if yes, AS (switch to §5.7); ③ whether `as_downscale_removable` is all `0` → if yes, AS; ④ whether ingress / network policy rejects the peer, or `AS_PEER_ALLOWED_ADDRESSES` / `AS_PEER_ALLOWED_CERT_FINGERPRINTS` did not hit → if yes, AS; ⑤ in `/metrics`, that `use_case` **has the series but no inbound leg logs** → **peer**.
+- **Handling**: if the AS side hits ①–④, handle in place; if ⑤ is hit, **stop demarcation immediately** and switch to §6 evidence collection.
+- **Rollback**: if caused by our boundary policy misconfiguration (fail-closed rejection), restore the policy through the change pipeline — configuration **does not go through GitOps**, it goes through change orders ([`rollback-playbook.md`](rollback-playbook.md) L1).
+- **Evidence retention**: timeline (including time zone), Pod list, ready status, that `use_case`'s `as_*` series, policy configuration snapshot (**redacted**, saving no Secret).
+
+### 5.2 AS Returns 403
+
+- **Trigger observation**: the inbound leg is rejected by the AS with `403 Forbidden`, or the TLS handshake fails.
+- **Judgment steps**: ① whether the peer initiated with TLS (when TLS is required, any transport other than `tls` / `sips` is rejected) → cleartext initiation means AS; ② whether the CA pointed to by `AS_TLS_CA_PATH` contains the peer's issuing chain; ③ whether the peer address / certificate fingerprint is in the whitelist (empty policy is **fail-closed**, authorizing nobody); ④ if the `403 / 000` came from the host's `curl` → check `http_proxy`, and re-capture with `NO_PROXY=127.0.0.1,localhost kubectl port-forward` — this is an **evidence-collection path** issue, not a product 403.
+- **Handling**: policy correct but the peer is still rejected → jointly handle with customer PKI / network department; **must not** change the whitelist to `*` to pass integration testing (a security control is not an availability switch).
+- **Rollback**: policy changes go through change orders; certificate rotation is a **configuration hot update** that **never restarts the process and never drops in-flight calls** (ADR-0016 / `AGENT.md` §13).
+- **Evidence retention**: **variable names and value sources** of `AS_TLS_*` / `AS_PEER_*` (not saving certificate contents); the time window in which `403` appeared. ⚠️ **E4 / REQ-S-2 / REQ-S-3 currently have no lab evidence**; this playbook is operational discipline, **not** a verified process.
+
+### 5.3 AS Returns 404 (not a failure)
+
+- **Trigger observation**: the inbound leg is rejected with `404 Not Found`.
+- **Judgment steps**: `404` = **no matching rule**, the default result of the decision chain. Check whether the number range / prefix rules cover the called party.
+- **Handling**: should have hit → rule issue, submit through the **change order** (edit draft → submit → approval → grayscale distribution); **not** operations staff directly UPDATE-ing the database.
+- **Rollback**: roll back the change order to `vN-1` (`rolled_back` terminal state), see [`rollback-playbook.md`](rollback-playbook.md) L1.
+- **Evidence retention**: `call_id`, the effective `CONFIG_VERSION`, rule version number, decision path replay result. ⚠️ The live Call-ID trace (REQ-F-13) is currently **BLOCKED** (no live trace source / API), so the trace **cannot be retrieved**, and only the three items above can substitute for the judgment.
+
+### 5.4 AS Returns 603 (not a failure)
+
+- **Trigger observation**: the inbound leg is rejected with `603 Decline`.
+- **Judgment steps**: `603` = **policy rejection / policy decision rejection** (e.g., anti-fraud limit exceeded). Check the effective rule version and the hit policy.
+- **Handling**: the decision matches expectations → not a failure, just record; if it does not match expectations → adjust rules or roll back through the change order.
+- **Rollback**: same as §5.3.
+- **Evidence retention**: same as §5.3. ⚠️ The product path **currently only sends `603 Decline`**; `608 Rejected` appears only in the operator-side peer declaration of the POC packet capture baseline, so **do not** treat it as a product rejection code.
+
+### 5.5 AS Returns 502
+
+- **Trigger observation**: the inbound leg receives `502 Bad Gateway`.
+- **Judgment steps**: check the runtime log's `RESIP_RUNTIME_UAS_FAILURE_MAPPED`: `downstream_status` is not within `{408, 480, 486, 503, 504}` → mapped to `502`. **The AS did not change the code; it is the mapping rule**.
+- **Handling**: handle as a downstream failure — the downstream network element needs to give the cause of the `downstream_status`; the AS side does not retry and does not change the decision.
+- **Rollback**: if the mapping itself is judged unreasonable → change the decision mapping through the documentation chain; **must not** hot-patch code during fault handling.
+- **Evidence retention**: the `downstream_status` / `upstream_status` comparison line, timestamp, `outgoing_call_id`.
+
+### 5.6 Downstream Failure Code Passthrough (486 / 480 / 408 / 503 / 504)
+
+- **Trigger observation**: the inbound leg returned a code from the passthrough set.
+- **Judgment steps**: use `RESIP_RUNTIME_UAC_FAILURE status=<code>` and `RESIP_RUNTIME_UAS_FAILURE_MAPPED downstream_status=… upstream_status=…` comparison to prove `upstream_status == downstream_status` → the AS **did not change the code**.
+- **Handling**: owned by the downstream network element; the AS side does not take on this code.
+- **Rollback**: not applicable (the AS made no change).
+- **Evidence retention**: the two log lines above + the downstream-side evidence request (§6). ⚠️ **the native product path has end-to-end tests only for `486`**; the other four codes have **no evidence** on the product path.
+
+### 5.7 Dropped Calls During Downscale or Upgrade (draining not converging)
+
+- **Trigger observation**: the Pod is cordoned / deleted, but `as_active_calls` does not drop and `as_downscale_removable` is persistently `0`.
+- **Judgment steps**: ① whether readiness is `503`; ② whether the Endpoint has traffic removed; ③ whether `AS_DOWNSCALE_GUARD_ENABLED` / `AS_DOWNSCALE_GUARD_PROTECT_ABOVE` were correctly injected by Helm; ④ whether the `preStop sleep` + SIGTERM path was taken (**must not SIGKILL**); ⑤ `plan_scale_down`'s `allowed` / `candidates` / `reason`.
+- **Handling**: the four-step operation see [`runbook-l1.md`](runbook-l1.md) §3.1 and [`../acceptance/m5-downscale-runbook.md`](../acceptance/m5-downscale-runbook.md); when `allowed=False`, **do not delete the Pod**, or first initiate draining on high-load instances.
+- **Rollback**: image / manifest layer rollback goes through `helm history` → `helm rollback <revision>` → `kubectl rollout status` (commands as written see [`rollback-playbook.md`](rollback-playbook.md) L3); draining itself is the exit path defined by ADR-0009 and is **not** a capacity conclusion.
+- **Evidence retention**: `plan_scale_down` output, `as_active_calls` / `as_downscale_removable` time series, readiness status, Helm revision. ⚠️ **Evidence boundary**: existing draining / downscale evidence uses `AS_M5_SIMULATED_ACTIVE_CALLS=N` to **simulate** in-flight calls (decreasing by 1 per second after SIGTERM), which is **mechanism evidence** on kind; **not dropping calls under real SIP load awaits M7 / M8 acceptance** (G-P1-1). **Must not** use simulated evidence to promise the peer no dropped calls in production.
+
+---
+
+## 6. Evidence Request Checklist When the AS Side Has No Evidence
+
+**Trigger condition**: step 2 in §2 judges "no AS-side evidence", or step ⑤ in §5.1 hits. **No responsibility may be assigned before this.**
+
+**Compared with the blocked and deferred items in [`../acceptance/report.md`](../acceptance/report.md) §0.6 / §0.8, the following items currently cannot be evidenced from the AS side and require collecting evidence from the S-CSCF / HSS / S-SBC side**:
+
+| Item | AS-side current state | From whom to collect evidence | What to collect |
 |---|---|---|---|
-| **REQ-S-2 / REQ-S-3**（运营商 PKI / 端到端 TLS / 证书热轮换尾） | 本环境无 lab 与对端，**明确 defer**，矩阵中保持 **blocked**（D-1） | OP-SEC / OP-NET | 真实对端证书链、握手与轮换的线缆级证据 |
-| **REQ-F-13** live trace（按 Call-ID 的轨迹查询） | **BLOCKED**：缺后端，无 live trace source / API（M4b-7.4） | 内部（AS-Vendor 二线） | 现阶段只能用 `call_id` + `CONFIG_VERSION` + 判决路径替代 |
-| **REQ-NF-1**（客户 K8s live kill / restart / BYE 状态外置） | 本环境无客户集群，**明确 defer**，矩阵中保持 **blocked**（D-2） | OP-NOC | 客户集群上的 live 基线 |
-| **REQ-NF-3 / REQ-NF-4** | **blocked**（REQ-NF-3 的固定容量数字条目与 `AGENT.md` §2 冲突，O1 仍open） | 维护者（口径裁决） | 验收口径裁决，不是取证 |
-| **REQ-F-15 真 AS 补测 / REQ-S-4** | open / 仅工程切片 | AS-Vendor + OP-SEC | 安全相关结论**不得**写成已通过验收 |
-| **ADR-0008 冗余演练**（含跨站点 1+1 温备切换） | **blocked** | OP-NOC + OP-NET | 切换是运维动作，**必须演练**；备站无在途呼叫 |
-| **D6（testbed 是否 v1 客户验收）** | 裁决 pending | 维护者 | 裁决前 D6 行保持 blocked |
-| **M5D 10 项 defer** | defer（构成 M5 REQ 级不通过） | 维护者 | 见 [`../acceptance/report.md`](../acceptance/report.md) §0.4 |
+| **REQ-S-2 / REQ-S-3** (operator PKI / end-to-end TLS / certificate hot rotation tail) | This environment has no lab or peer, **explicitly deferred**, kept **blocked** in the matrix (D-1) | OP-SEC / OP-NET | Cable-level evidence of the real peer certificate chain, handshake, and rotation |
+| **REQ-F-13** live trace (trace query by Call-ID) | **BLOCKED**: missing backend, no live trace source / API (M4b-7.4) | Internal (AS-Vendor second line) | For now, only `call_id` + `CONFIG_VERSION` + decision path can substitute |
+| **REQ-NF-1** (customer K8s live kill / restart / BYE state externalization) | This environment has no customer cluster, **explicitly deferred**, kept **blocked** in the matrix (D-2) | OP-NOC | The live baseline on the customer cluster |
+| **REQ-NF-3 / REQ-NF-4** | **blocked** (REQ-NF-3's fixed capacity number entries conflict with `AGENT.md` §2, O1 still open) | Maintainer (wording adjudication) | Acceptance wording adjudication, not evidence collection |
+| **REQ-F-15 real AS supplementary testing / REQ-S-4** | open / engineering slice only | AS-Vendor + OP-SEC | Security-related conclusions **must not** be written as passed acceptance |
+| **ADR-0008 redundancy drill** (including cross-site 1+1 warm standby failover) | **blocked** | OP-NOC + OP-NET | Failover is an operations action and **must be drilled**; the standby site has no in-flight calls |
+| **D6 (whether the testbed is v1 customer acceptance)** | Adjudication pending | Maintainer | The D6 row stays blocked before adjudication |
+| **M5D 10 deferrals** | deferred (constituting M5 REQ-level non-pass) | Maintainer | See [`../acceptance/report.md`](../acceptance/report.md) §0.4 |
 
-**取证请求单必填字段**（缺一项对方无法定位）：时间窗（含时区，首现 / 持续 / 最近一次）、Call-ID（**跨腿 B2BUA 的两个 Call-ID 都带**）、我方已核查项与结果、AS 侧 namespace / Pod 名 / `use_case`、AS 侧 `CONFIG_VERSION`、希望对方提供的段（S-CSCF→S-SBC 触发段 / S-SBC→AS trunk 段对端侧 / 下游侧）。
+**Required fields for evidence request tickets** (missing one and the peer cannot locate it): time window (including time zone, first occurrence / persistent / most recent), Call-ID (**both cross-leg B2BUA Call-IDs**), our side's already-checked items and results, AS-side namespace / Pod names / `use_case`, AS-side `CONFIG_VERSION`, the segment hoped to be provided by the peer (S-CSCF→S-SBC trigger segment / S-SBC→AS trunk segment peer side / downstream side).
 
-**纪律**：请求单与回复一并入档；**不保存**密码 / token / cookie / 私钥，**不提交真实抓包**（`AGENT.md` §11 / §13）。
+**Discipline**: request tickets and replies are filed together; **do not save** passwords / tokens / cookies / private keys, and **do not commit real packet captures** (`AGENT.md` §11 / §13).
 
 ---
 
-## 7. 与 RACI、Runbook 的关系
+## 7. Relationship with RACI and Runbook
 
-| 本文章节 | 对应 RACI 活动（RACI §2） | 对应 runbook 章节 |
+| Section of this document | Corresponding RACI activity (RACI §2) | Corresponding runbook section |
 |---|---|---|
-| §1 定界总原则 | ⑧ 故障定界（AS-Vendor R，**OP-NOC A**） | [`runbook-l2.md`](runbook-l2.md) §1 |
-| §2 四方归属流程 | ⑧ + ① iFC 触发（**对方 A/R**，我方 I） | [`runbook-l2.md`](runbook-l2.md) §4.1–§4.6 |
-| §3 速查表 ①②④⑨⑩⑪ | ⑧、②（trunk 互通，A 角是 OP-SBC）、③（TLS，A 角是 OP-SBC 侧证书） | [`runbook-l2.md`](runbook-l2.md) §4.2 / §4.5 / §4.6 / §4.7 |
-| §3 速查表 ③（404/603） | ④ AS 侧号码 / 号段规则与变更单（AS-Vendor **A/R**） | [`runbook-l1.md`](runbook-l1.md) §3.3；L2 §4.3 |
-| §3 速查表 ⑧（状态存储） | ⑪ 备份与恢复（AS-Vendor **A/R**）；⑦ NOC 值班 | [`runbook-l1.md`](runbook-l1.md) §3.5；L2 §4.5 |
-| §4 抓包与日志对齐 | ⑨ 接口抓包与日志取证（AS-Vendor **A/R**） | [`runbook-l2.md`](runbook-l2.md) §2 / §3 |
-| §5 故障剧本 | ⑧ + ⑥ ISC 触发后的摘流 / 回退（AS-Vendor **A/R**，OP-NOC R） | [`runbook-l1.md`](runbook-l1.md) §3.1–§3.5 |
-| §6 取证请求清单 | ⑧ + ⑩ 变更窗口协调（**OP-NET A**） | [`runbook-l1.md`](runbook-l1.md) §4 求助证据清单 |
+| §1 general demarcation principles | ⑧ fault demarcation (AS-Vendor R, **OP-NOC A**) | [`runbook-l2.md`](runbook-l2.md) §1 |
+| §2 four-party ownership flow | ⑧ + ① iFC triggering (**peer A/R**, ours I) | [`runbook-l2.md`](runbook-l2.md) §4.1–§4.6 |
+| §3 quick reference ①②④⑨⑩⑪ | ⑧, ② (trunk interoperability, A role is OP-SBC), ③ (TLS, A role is the OP-SBC-side certificate) | [`runbook-l2.md`](runbook-l2.md) §4.2 / §4.5 / §4.6 / §4.7 |
+| §3 quick reference ③ (404/603) | ④ AS-side number / number range rules and change orders (AS-Vendor **A/R**) | [`runbook-l1.md`](runbook-l1.md) §3.3; L2 §4.3 |
+| §3 quick reference ⑧ (state store) | ⑪ backup and restore (AS-Vendor **A/R**); ⑦ NOC on-duty | [`runbook-l1.md`](runbook-l1.md) §3.5; L2 §4.5 |
+| §4 packet capture and log alignment | ⑨ interface packet capture and log forensics (AS-Vendor **A/R**) | [`runbook-l2.md`](runbook-l2.md) §2 / §3 |
+| §5 fault playbooks | ⑧ + ⑥ traffic removal / rollback after ISC triggering (AS-Vendor **A/R**, OP-NOC R) | [`runbook-l1.md`](runbook-l1.md) §3.1–§3.5 |
+| §6 evidence request checklist | ⑧ + ⑩ change window coordination (**OP-NET A**) | [`runbook-l1.md`](runbook-l1.md) §4 help evidence checklist |
 
-**职责边界提醒**：RACI ⑧ 行中「定界结论」的 **A 角是 OP-NOC**，AS-Vendor 是 R（AS 侧自查）。AS 侧出的是**自查结论与证据**，不是最终定责。
+**Responsibility boundary reminder**: in RACI row ⑧, the **A role for "demarcation conclusion" is OP-NOC**, and AS-Vendor is R (AS-side self-check). What the AS side produces is a **self-check conclusion and evidence**, not the final responsibility assignment.
 
 ---
 
-## 8. 未决与阻塞
+## 8. Undecided and Blocked
 
-| 项 | 阻塞源 | 对本文的影响 | 责任方 |
+| Item | Blocking source | Impact on this document | Responsible party |
 |---|---|---|---|
-| 真实集群 / 真实对端证据 | M8 **7.2d blocked**、M8 退出签字搁置 | §3 第 9 行、§5.1、§5.2 只有工程切片证据；**「真实生产已验证」不得写入任何材料** | 维护者 + OP-NOC |
-| iFC 触发侧取证 | OP-NET / OP-HSS 配置（G-P0-5 / G-P1-10） | §2 与 §3 第 1 行的「呼叫未到 AS」**无法闭环**；AS 侧只能自证 override 生效 | OP-NET / OP-HSS |
-| E1（reSIProcate 生产路径行为） | M8 验收（O2 / O3） | §3 第 5、6、7 行的 native 侧行为只有 `486` 有端到端测试；其余**无产品路径证据** | AS-Vendor |
-| E4 / REQ-S-2 / REQ-S-3 | M8 验收 + 运营商 PKI | §5.2 是操作纪律，**不是**已验证流程 | AS-Vendor + OP-SEC / OP-NET |
-| E5 / REQ-NF-1（状态外置与恢复） | REQ-NF-1 签收归 M8（D-2 defer） | §3 第 8 行的恢复侧结论无客户集群证据 | AS-Vendor |
-| REQ-F-13 live trace | 无live trace source / API（**BLOCKED**） | §5.3 / §5.4 只能用替代字段判命中，**拿不出 live 轨迹** | AS-Vendor |
-| O1（容量目标） | 维护者裁决仍 open | §1明确：**不得用容量数字定界** | 维护者 + OP-NET |
-| O5 / D3（容灾等级 / Redis Sentinel 拓扑） | 客户 SLA | 取值已裁（G7）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（ADR-0008）；**实现未落**（chart 仍单副本渲染，failover 实测行为无证据），§3 第 8 行只能到「AS 侧可达性」，failover 窗口判定仍需实测取证 | OP-NET + 维护者 |
-| O4 / D5（轨迹保留期 / 存储选型） | 客户合规 | 取值已裁（G6）：保留期默认 10 天、部署可配；存储选型 in-cluster PostgreSQL；**实现未落**（轨迹存储 / 查询 / 删除当前不存在），本文**不含任何保留期**；轨迹相关取证范围随实现落地确认 | OP-SEC |
-| ADR-0008 冗余演练 | **blocked** | 跨站点 1+1 温备切换的定界剧本**未编写** | OP-NOC + OP-NET |
-| M8 退出签字 | 搁置 | 本文全篇不得读作「已验收」 | 维护者 |
-| 本文评审状态 | 按 `AGENT.md` §3.3 需独立 review record | 已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据 | 维护者 |
+| Real-cluster / real-peer evidence | M8 **7.2d blocked**, M8 exit sign-off shelved | §3 row 9, §5.1, §5.2 have only engineering slice evidence; **"verified in real production" must not be written into any material** | Maintainer + OP-NOC |
+| iFC trigger-side evidence | OP-NET / OP-HSS configuration (G-P0-5 / G-P1-10) | "Call did not reach the AS" in §2 and §3 row 1 **cannot be closed**; the AS side can only self-certify override effectiveness | OP-NET / OP-HSS |
+| E1 (reSIProcate production path behavior) | M8 acceptance (O2 / O3) | Native-side behavior in §3 rows 5, 6, 7 has end-to-end tests only for `486`; the rest have **no product path evidence** | AS-Vendor |
+| E4 / REQ-S-2 / REQ-S-3 | M8 acceptance + operator PKI | §5.2 is operational discipline, **not** a verified process | AS-Vendor + OP-SEC / OP-NET |
+| E5 / REQ-NF-1 (state externalization and recovery) | REQ-NF-1 sign-off belongs to M8 (D-2 defer) | The recovery-side conclusion in §3 row 8 has no customer-cluster evidence | AS-Vendor |
+| REQ-F-13 live trace | No live trace source / API (**BLOCKED**) | §5.3 / §5.4 can only judge hits with substitute fields, **cannot retrieve a live trace** | AS-Vendor |
+| O1 (capacity target) | Maintainer adjudication still open | §1 is explicit: **demarcation must not use capacity numbers** | Maintainer + OP-NET |
+| O5 / D3 (disaster recovery level / Redis Sentinel topology) | Customer SLA | Values adjudicated (G7): in-site N+1 + cross-site 1+1 warm standby, Redis primary/replica + Sentinel (ADR-0008); **not yet implemented** (the chart still renders single replica, with no evidence of measured failover behavior), so §3 row 8 can only reach "AS-side reachability", and failover window judgment still needs measured forensics | OP-NET + maintainer |
+| O4 / D5 (trace retention period / storage selection) | Customer compliance | Values adjudicated (G6): retention default 10 days, deployment-configurable; storage selection in-cluster PostgreSQL; **not yet implemented** (trace storage / query / deletion do not currently exist), so this document **contains no retention period**; the trace-related forensics scope is confirmed as implementation lands | OP-SEC |
+| ADR-0008 redundancy drill | **blocked** | The demarcation playbook for cross-site 1+1 warm standby failover is **not yet written** | OP-NOC + OP-NET |
+| M8 exit sign-off | Shelved | This document as a whole must not be read as "already accepted" | Maintainer |
+| This document's review status | Per `AGENT.md` §3.3 an independent review record is required | A review record has been left under B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 first review) and §7 (2026-10-12 closure re-review); **the conclusion awaits maintainer confirmation** and must not serve as a basis for external delivery or acceptance before confirmation | Maintainer |

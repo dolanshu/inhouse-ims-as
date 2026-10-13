@@ -12,70 +12,70 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0020 — Feature 能力门控与开关（Feature capability gating）
+# ADR-0020 — Feature capability gating and switches
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §0 账本条目 19 —— 分层 feature 门控（部署级总开关 + 运行态细粒度覆盖）
-- **回应 REQ**: REQ-G-1
+- **Decides**: §0 ledger item 19 — layered feature gating (deployment-level master switch + runtime fine-grained override)
+- **Responds to REQ**: REQ-G-1
 
-## Context（背景）
+## Context
 
-- 交付形态是**单租户、一客户一系统**，部署在运营商网络之外（AGENT.md §2）。因此"开关"要解决的问题**不是**多租户之间的特性隔离，而是同一个系统在客户现场的**启停 / 灰度 / 回滚**。
-- 产品按**统一 release 版本**交付（ADR-0018），升级窗口成本与风险不可接受。需要一种**不重建、不整体升级**即可启停某个能力、按范围灰度、必要时快速回退的机制。
-- 配置治理已有决策（[ADR-0006](0006-config-governance.md)）：PostgreSQL 版本库 + 变更单状态机 + 灰度分发，而非 GitOps。feature 开关应当**复用**这条流水线，而不是引入第二套交付形态。
-- **License 门控是非目标**：本期不做 License key 校验，也不做授权分级。
+- The delivery form is **single-tenant, one system per customer**, deployed outside the carrier network (AGENT.md §2). Therefore the problem a "switch" solves is **not** feature isolation between tenants, but the **start/stop / canary / rollback** of one system at the customer site.
+- The product is delivered on a **unified release version** (ADR-0018), so an upgrade-window cost and risk are unacceptable. We need a mechanism to start/stop a capability, canary it by scope, and quickly roll back if necessary — without rebuilding or doing a full upgrade.
+- Configuration governance already has a decision ([ADR-0006](0006-config-governance.md)): PostgreSQL version store + change-order state machine + canary distribution, rather than GitOps. Feature switches should **reuse** this pipeline, not introduce a second delivery form.
+- **License gating is a non-goal**: this cycle does no License-key validation and no authorization tiering.
 
-## Decision（决策）
+## Decision
 
-采用**分层门控**，两层各司其职：
+Adopt **layered gating**, with the two tiers each owning a distinct responsibility:
 
-| 层 | 粒度 | 生效方式 | 存储 | 与变更流水线的关系 |
+| Tier | Granularity | Activation | Storage | Relation to change pipeline |
 |---|---|---|---|---|
-| ① 部署级总开关 | 整个部署 | 经配置变更流水线**热加载，不重启** | PG 版本库中的一类版本化配置 | 走 变更单 → 审批 → 写 PG → 灰度分发 → 回滚 |
-| ② 运行态细粒度覆盖 | 号段 / 呼叫 / 用户 / 百分比 | 热判定（判决时求值） | 状态外置（Redis），最终一致 | 覆盖值同样受流水线治理；判定结果必须幂等 |
+| ① Deployment-level master switch | Entire deployment | Hot-loaded via the config change pipeline, no restart | A class of versioned config in the PG version store | Goes change-order → approval → write PG → canary distribution → rollback |
+| ② Runtime fine-grained override | number range / call / user / percentage | Hot evaluation (evaluated at decision time) | State externalized (Redis), eventually consistent | Override values are also governed by the pipeline; evaluation results must be idempotent |
 
-- **feature 开关是 [ADR-0006](0006-config-governance.md) 变更流水线中的一类版本化配置**，走与规则同一条路径（变更单 → 审批 → 写 PG → 灰度分发 → 回滚），不新开通道。
-- **开关只做能力启停，不改变接口契约。** 关闭时走**既有默认路径**，不新增"关闭态"的对外行为分支。
-- ② 层判决必须**在 Redis 脑裂窗口下保持幂等**（关联风险 R5、未决 D3）：同一判决重复求值结果一致，不得因窗口内的读抖动产生不一致放行或反复翻转。
-- **每个 feature 必须在 ADR / HLD 显式裁决**：
-  1. 是否需要开关；
-  2. 默认态（**默认关**）；
-  3. 灰度策略；
-  4. **移除条件**（防"开关债务"）—— 开关是临时脚手架，不是永久形态。
+- **A feature switch is a class of versioned config in the [ADR-0006](0006-config-governance.md) change pipeline**, following the same path as rules (change-order → approval → write PG → canary distribution → rollback); no new channel is opened.
+- **A switch only toggles capability on/off; it does not change the interface contract.** When off, it takes the **existing default path**; it does not add a new "off-state" external behavior branch.
+- Tier ② evaluation must **stay idempotent under the Redis split-brain window** (related risk R5, open item D3): repeated evaluation of the same decision yields the same result, with no inconsistent pass or repeated flip caused by read jitter within the window.
+- **Every feature must be explicitly adjudicated in its ADR / HLD**:
+  1. whether a switch is needed;
+  2. default state (**default off**);
+  3. canary strategy;
+  4. **removal condition** (guard against "switch debt") — a switch is temporary scaffolding, not a permanent shape.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- 能力可独立启停 / 灰度 / 回滚，无需整体升级或重建系统。
-- 复用 [ADR-0006](0006-config-governance.md) 既有配置治理，不新增交付形态（无 GitOps、无第二套版本库、无第二套审批链）。
-- **默认关 + 灰度 + 移除条件**把"上线中的新能力"的爆炸半径限制在可控范围。
+- Capabilities can be independently started/stopped, canaried, and rolled back, without a full upgrade or rebuild of the system.
+- Reuses the [ADR-0006](0006-config-governance.md) existing configuration governance, adding no new delivery form (no GitOps, no second version store, no second approval chain).
+- **Default off + canary + removal condition** bounds the blast radius of "a new capability going live" to a controllable range.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- 新增运行态维度带来**多副本一致性**与**脑裂幂等**负担（关联风险 R5、未决 D3）。
-- 两层门控增加 HLD / LLD / 测试成本 —— **开 / 关两态都必须被覆盖**。
-- **开关债务**：开关容易只增不拆，因此每个开关必须写明移除条件，否则长期维护成本持续累积。
-- **M0（当前里程碑）不落地实现**，只落架构 seam 与规则；运行态覆盖的判定粒度与配置 schema 尚未确定（未决 D7）。
+- The new runtime dimension brings **multi-replica consistency** and **split-brain idempotency** burden (related risk R5, open item D3).
+- The two-tier gating increases HLD / LLD / test cost — **both the on and off states must be covered**.
+- **Switch debt**: switches tend to only grow, never be removed, so each switch must state its removal condition, otherwise long-term maintenance cost keeps accumulating.
+- **M0 (current milestone) does not land implementation**, only the architecture seam and rules; the evaluation granularity and config schema for runtime overrides are not yet determined (open item D7).
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 无开关（仅整体升级） | 每次能力启停都要整体升级，升级窗口成本与风险不可接受 |
-| License 键门控 | 本期非目标；引入授权体系与合规面，超出范围 |
-| 纯部署级静态开关 | 无法按号段 / 呼叫 / 用户 / 百分比灰度，粒度不足 |
-| 纯运行态开关 | 缺少部署级总闸，故障时无法一键收敛，回退慢 |
+| No switch (full upgrade only) | Every capability start/stop requires a full upgrade; the upgrade-window cost and risk are unacceptable |
+| License-key gating | Non-goal this cycle; introduces an authorization system and compliance surface, out of scope |
+| Deployment-level static switch only | Cannot canary by number range / call / user / percentage; granularity insufficient |
+| Runtime switch only | Lacks the deployment-level master breaker; cannot converge in one step on failure, slow rollback |
 
-## Evidence（证据）
+## Evidence
 
-- 暂无实现证据 —— **M0 不落地实现**，只落架构 seam 与规则。待 **M2 内核 seam / M4 控制面**落地时补。
+- No implementation evidence yet — **M0 does not land implementation**, only the architecture seam and rules. To be filled when **M2 kernel seam / M4 control plane** lands.
 
-## Related（相关）
+## Related
 
-- [`../新系统整体架构.md`](../新系统整体架构.md) §5.3 与 §0 决策 19
-- [ADR-0006](0006-config-governance.md)（配置治理：PostgreSQL 版本库 + 变更单状态机）
-- 风险 R5（Redis 成为新 SPoF）
-- 未决 D3（Redis 脑裂窗口下的判决幂等）、未决 D7（运行态覆盖判定粒度与配置 schema）
-- 非目标：**不做多租户**（AGENT.md §2）
+- [`../system-architecture.md`](../system-architecture.md) §5.3 and §0 decision 19
+- [ADR-0006](0006-config-governance.md) (configuration governance: PostgreSQL version store + change-order state machine)
+- Risk R5 (Redis becomes a new SPoF)
+- Open item D3 (decision idempotency under Redis split-brain window), open item D7 (runtime-override evaluation granularity and config schema)
+- Non-goal: **no multi-tenancy** (AGENT.md §2)

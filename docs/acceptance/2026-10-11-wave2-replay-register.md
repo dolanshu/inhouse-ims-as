@@ -12,132 +12,132 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# Wave 2 回放对拍用例登记（A4-3「独立 issue」仓内载体）
+# Wave 2 Replay Differential Case Register (the In-Repo Carrier of A4-3's "Separate Issue")
 
-> **落盘日期：2026-10-11。状态：已落盘，待维护者评审。**
+> **Landed date: 2026-10-11. Status: landed, pending maintainer review.**
 >
-> **本文件是 A4-3 裁决所指「独立 issue」的仓内载体；本项目无外部 issue 跟踪，仓内文档即追踪系统。**
-> 2026-10-11 维护者裁决：G2 / A4-3 所称「后置到独立 issue」以**仓内登记 doc**（即本文件）作为载体，
-> 不再另行创建外部 issue。裁决出处见 §1。
+> **This file is the in-repo carrier of the "separate issue" referred to in the A4-3 adjudication; this project has no external issue tracking, and in-repo documents are the tracking system.**
+> 2026-10-11 maintainer adjudication: the "deferred to a separate issue" mentioned in G2 / A4-3 takes the **in-repo registration doc** (i.e., this file) as the carrier,
+> and no external issue will be created separately. The adjudication source see §1.
 >
-> **当前状态：载体已建，用例未实现，待 A4 e2e 批次 Wave 1 落地后启动。**
+> **Current status: the carrier has been created, the cases are not implemented, to be started after the A4 e2e batch's Wave 1 lands.**
 >
-> **本文件不签收 REQ-F-1**：REQ-F-1（14 条 B2BUA 全文回放）全文状态**仍 open**；本文件只是追踪载体，
-> 不是实现、不是验收证据。本文件同样不签收 REQ-F-2 / REQ-F-4，不签收任何里程碑，不构成外部验收通过。
+> **This file does not sign off REQ-F-1**: REQ-F-1's (14-message B2BUA full replay) full-text status is **still open**; this file is only a tracking carrier,
+> not an implementation, not acceptance evidence. This file likewise does not sign off REQ-F-2 / REQ-F-4, does not sign off any milestone, and does not constitute external acceptance pass.
 
 ---
 
-## 1. 背景与裁决出处
+## 1. Background and Adjudication Source
 
-Wave 2（14 条逐条消息回放对拍）在 e2e 分波计划中被明确后置，又经 2026-10-10 裁决记为
-「后置到独立 issue、本迭代不创建」；2026-10-11 维护者裁决以本仓内文件作为该 issue 的载体。
+Wave 2 (14-message per-message replay differential comparison) was explicitly deferred in the e2e wave plan, then recorded by the 2026-10-10 adjudication as
+"deferred to a separate issue, not created this iteration"; on 2026-10-11 the maintainer adjudicated this in-repo file as the carrier of that issue.
 
-| 出处 | 位置（2026-10-11 逐行核实） | 原文要点 |
+| Source | Location (line-by-line verified 2026-10-11) | Key points of the original text |
 |---|---|---|
-| e2e 分波计划 | [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md) 「Wave 2 — REQ-F-1 形状（仍无控制台）」节（`:66-74`） | Wave 2 工作定义与完成标准（见 §3 摘录） |
-| 同上 | 同文件 Wave 1 节「**明确不做（Wave 1）：14 条逐条 header 对拍、控制台、kind、容量数字。**」（`:64`） | 14 条逐条对拍不属于 Wave 1 |
-| 2026-10-10 裁决 | [`../handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](../handoff/2026-10-10-unfinished-assessment-and-next-plan.md) §0-A.6 裁决记录表 **G2 / A4-3** 行（`:56`） | 「Wave 2 的 14 条回放用例后置到独立 issue；本迭代仅登记为 gap；本任务**不创建 issue**。」 |
-| 决策记录抄录 | [`../plan.md`](../plan.md) §0「产品决策记录」表 G2 / A4-3 行（`:39`） | 「Wave 2 回放用例后置到独立 issue；本迭代按 gap 记录」 |
-| 载体裁决 | 维护者 2026-10-11 裁决（登记于 [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §2 P5 条目 2026-10-11 收尾轮追加段） | 以仓内 doc 代替外部 issue；本文件即该载体 |
+| e2e wave plan | [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md) "Wave 2 — REQ-F-1 Shape (still no console)" section (`:66-74`) | Wave 2 work definition and completion criteria (see §3 excerpt) |
+| Same as above | Same file, Wave 1 section's "**Explicitly not doing (Wave 1): 14-message per-message header differential comparison, console, kind, capacity numbers.**" (`:64`) | The 14-message per-message differential comparison is not part of Wave 1 |
+| 2026-10-10 adjudication | [`../handoff/2026-10-10-unfinished-assessment-and-next-plan.md`](../handoff/2026-10-10-unfinished-assessment-and-next-plan.md) §0-A.6 adjudication record table **G2 / A4-3** row (`:56`) | "Wave 2's 14 replay cases are deferred to a separate issue; this iteration only registers them as a gap; this task **does not create an issue**." |
+| Decision record transcription | [`../plan.md`](../plan.md) §0 "product decision record" table G2 / A4-3 row (`:39`) | "Wave 2 replay cases deferred to a separate issue; this iteration records them as a gap" |
+| Carrier adjudication | Maintainer's 2026-10-11 adjudication (registered in [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §2 P5 item, 2026-10-11 closing-round appended paragraph) | Use an in-repo doc in place of an external issue; this file is that carrier |
 
 ---
 
-## 2. 用例清单：14 条基准消息
+## 2. Case List: 14 Baseline Messages
 
-基准实物已在仓内：[`../../testbed/contracts/sip-baseline/S1-basic-call/`](../../testbed/contracts/sip-baseline/S1-basic-call/)
-（场景 S1 基本呼叫，sippy 基线，抓取日期 2026-09-28；序列说明见该目录 `README.md`）。
-下表文件名逐字录自该目录（2026-10-11 Glob 实测，共 14 个 `.txt`，另加 `README.md`），按 `01 → 14` 排序；
-方向（`in` = 进入 AS 的入腿、`out` = AS 发出的出腿）、对端（`trunk` / `core`）与消息类型均可从文件名直接读出，
-本表不编造消息文件内部细节。
+The baseline artifacts are already in-repo: [`../../testbed/contracts/sip-baseline/S1-basic-call/`](../../testbed/contracts/sip-baseline/S1-basic-call/)
+(scenario S1 basic call, sippy baseline, capture date 2026-09-28; sequence description see that directory's `README.md`).
+The file names in the table below are transcribed verbatim from that directory (2026-10-11 Glob verified, 14 `.txt` files in total, plus `README.md`), sorted `01 → 14`;
+the direction (`in` = inbound leg entering the AS, `out` = outgoing leg sent by the AS), the peer (`trunk` / `core`), and the message type can all be read directly from the file names,
+and this table does not fabricate internal details of the message files.
 
-| # | 文件名（逐字） | 方向 | 对端 | 消息类型 | 序列中的位置（据该目录 README） |
+| # | File name (verbatim) | Direction | Peer | Message type | Position in the sequence (per that directory's README) |
 |---|---|---|---|---|---|
-| 01 | `01-in-invite-trunk.txt` | 入腿（trunk→AS） | trunk | INVITE | 呼叫起始 |
-| 02 | `02-out-100-trunk.txt` | 出腿（AS→trunk） | trunk | 100 Trying | 入腿 INVITE 的临时响应 |
-| 03 | `03-out-invite-core.txt` | 出腿（AS→core） | core | INVITE | B2BUA 翻腿（新 Call-ID） |
-| 04 | `04-in-100-core.txt` | 入腿（core→AS） | core | 100 Trying | 出腿 INVITE 的临时响应 |
-| 05 | `05-in-180-core.txt` | 入腿（core→AS） | core | 180 Ringing | 被叫振铃 |
-| 06 | `06-out-180-trunk.txt` | 出腿（AS→trunk） | trunk | 180 Ringing | 振铃回送主叫 |
-| 07 | `07-in-200-core.txt` | 入腿（core→AS） | core | 200 OK | 被叫应答 |
-| 08 | `08-out-ack-core.txt` | 出腿（AS→core） | core | ACK | 确认出腿应答 |
-| 09 | `09-out-200-trunk.txt` | 出腿（AS→trunk） | trunk | 200 OK | 应答回送主叫 |
-| 10 | `10-in-ack-trunk.txt` | 入腿（trunk→AS） | trunk | ACK | 呼叫建立完成 |
-| 11 | `11-in-bye-core.txt` | 入腿（core→AS） | core | BYE | 释放发起（core 侧先挂） |
-| 12 | `12-out-200-core.txt` | 出腿（AS→core） | core | 200 OK | BYE 响应（core 侧） |
-| 13 | `13-out-bye-trunk.txt` | 出腿（AS→trunk） | trunk | BYE | 释放翻腿到 trunk |
-| 14 | `14-in-200-trunk.txt` | 入腿（trunk→AS） | trunk | 200 OK | 释放完成（终态） |
+| 01 | `01-in-invite-trunk.txt` | Inbound leg (trunk→AS) | trunk | INVITE | Call start |
+| 02 | `02-out-100-trunk.txt` | Outgoing leg (AS→trunk) | trunk | 100 Trying | Provisional response to the inbound leg's INVITE |
+| 03 | `03-out-invite-core.txt` | Outgoing leg (AS→core) | core | INVITE | B2BUA leg flip (new Call-ID) |
+| 04 | `04-in-100-core.txt` | Inbound leg (core→AS) | core | 100 Trying | Provisional response to the outgoing leg's INVITE |
+| 05 | `05-in-180-core.txt` | Inbound leg (core→AS) | core | 180 Ringing | Called party ringing |
+| 06 | `06-out-180-trunk.txt` | Outgoing leg (AS→trunk) | trunk | 180 Ringing | Ringing returned to the caller |
+| 07 | `07-in-200-core.txt` | Inbound leg (core→AS) | core | 200 OK | Called party answers |
+| 08 | `08-out-ack-core.txt` | Outgoing leg (AS→core) | core | ACK | Confirms the outgoing leg's answer |
+| 09 | `09-out-200-trunk.txt` | Outgoing leg (AS→trunk) | trunk | 200 OK | Answer returned to the caller |
+| 10 | `10-in-ack-trunk.txt` | Inbound leg (trunk→AS) | trunk | ACK | Call establishment complete |
+| 11 | `11-in-bye-core.txt` | Inbound leg (core→AS) | core | BYE | Release initiation (the core side hangs up first) |
+| 12 | `12-out-200-core.txt` | Outgoing leg (AS→core) | core | 200 OK | BYE response (core side) |
+| 13 | `13-out-bye-trunk.txt` | Outgoing leg (AS→trunk) | trunk | BYE | Release leg flip to the trunk |
+| 14 | `14-in-200-trunk.txt` | Inbound leg (trunk→AS) | trunk | 200 OK | Release complete (terminal state) |
 
-另：同目录 `README.md` 为场景与序列说明，不在 14 条消息计数内。
-
----
-
-## 3. 对拍工作定义
-
-工作定义全部来自 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md) Wave 2 节（`:66-74`），
-本节只作概括与引用，**不改写其结论**：
-
-1. **拓扑前提**：在 Wave 1 拓扑上，对**一通** T1（翻译接通）呼叫采集入 / 出腿关键消息
-   （方法 + 最终响应码序列），与 `S1-basic-call` 基准做**归一化**对比（`:70`）。
-2. **双腿 Call-ID**：断言 **C_in ≠ C_out**（REQ-F-2 子集）（`:71`）。
-3. **SDP 逐字节**：SDP offer 入腿与出腿**逐字节**一致（REQ-F-4）；**若实现成本不可接受，则单列 follow-up**（`:72`）。
-4. **完成标准（原文要点）**：`test-plan.md` 的 REQ-F-1 勾选只能改为
-   「**自动化子集已覆盖 / 全文仍 open**」并链到具体用例名；**未对拍 14 条时不得打勾全文**（`:74`）。
-
-Wave 1 节明写「**明确不做（Wave 1）：14 条逐条 header 对拍**」（`:64`），即本批用例不属于 Wave 1 范围。
+Additionally: the same directory's `README.md` is the scenario and sequence description, not counted in the 14 messages.
 
 ---
 
-## 4. 关联需求与现状
+## 3. Differential Work Definition
 
-| 关联项 | 关系 | 现状口径 |
+The work definition comes entirely from [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md) Wave 2 section (`:66-74`),
+this section only summarizes and references, **without rewriting its conclusions**:
+
+1. **Topology prerequisite**: on the Wave 1 topology, for **one** T1 (translation call established) call, collect the inbound / outgoing legs' key messages
+   (method + final response code sequence), and perform a **normalized** comparison against the `S1-basic-call` baseline (`:70`).
+2. **Two-leg Call-ID**: assert **C_in ≠ C_out** (REQ-F-2 subset) (`:71`).
+3. **SDP byte-for-byte**: the SDP offer is **byte-identical** between the inbound and outgoing legs (REQ-F-4); **if the implementation cost is unacceptable, list a separate follow-up** (`:72`).
+4. **Completion criteria (key points of the original text)**: `test-plan.md`'s REQ-F-1 tick may only change to
+   "**automated subset covered / full text still open**" and link to the specific case name; **do not tick the full text before the 14 messages have been differentially compared** (`:74`).
+
+The Wave 1 section explicitly states "**Explicitly not doing (Wave 1): 14-message per-message header differential comparison**" (`:64`), i.e., this batch of cases is not within Wave 1's scope.
+
+---
+
+## 4. Related Requirements and Current Status
+
+| Related item | Relationship | Current status wording |
 |---|---|---|
-| **REQ-F-1** | 14 条 B2BUA 全文回放即本批用例本体 | **全文仍 open，本文件不签收。** 既有口径见 [`../product/compliance-matrix.md`](../product/compliance-matrix.md)：`:79`「14 条消息全文回放未签收」、`:117`「14 条全文未签收」、`:234` S1 行「Partial（14 条全文未签收）」、`:266`「REQ-F-1 的 14 条 B2BUA **未**由 harness 签收」（2026-10-11 检索核实） |
-| **REQ-F-2** | Wave 2 对拍断言 C_in ≠ C_out，是 REQ-F-2（双腿独立 Call-ID）的子集 | 随 Wave 2 用例实现时覆盖；本文件不改变其签收状态 |
-| **REQ-F-4** | SDP offer 入 / 出腿逐字节恒等 | e2e 计划允许在成本不可接受时**单列为 follow-up**；本文件不预判取舍 |
-| 基准实物 | [`../../testbed/contracts/sip-baseline/S1-basic-call/`](../../testbed/contracts/sip-baseline/S1-basic-call/) 14 个消息文件 + README | 已在仓内、可追溯（§2 清单） |
+| **REQ-F-1** | The 14-message B2BUA full replay is the body of this batch of cases | **Full text still open, not signed off by this file.** The existing wording see [`../product/compliance-matrix.md`](../product/compliance-matrix.md): `:79` "14-message full replay not signed off", `:117` "14-message full text not signed off", `:234` S1 row "Partial (14-message full text not signed off)", `:266` "REQ-F-1's 14-message B2BUA **not** signed off by harness" (verified by search 2026-10-11) |
+| **REQ-F-2** | Wave 2's differential assertion C_in ≠ C_out is a subset of REQ-F-2 (two legs with independent Call-IDs) | Covered when the Wave 2 cases are implemented; this file does not change its sign-off status |
+| **REQ-F-4** | SDP offer byte-identical between the inbound / outgoing legs | The e2e plan allows listing it as a **separate follow-up** when the cost is unacceptable; this file does not prejudge the choice |
+| Baseline artifacts | [`../../testbed/contracts/sip-baseline/S1-basic-call/`](../../testbed/contracts/sip-baseline/S1-basic-call/) 14 message files + README | Already in-repo, traceable (§2 list) |
 
-**e2e 落地现状（2026-10-11 检索核实）：**
+**Current e2e landing status (verified by search 2026-10-11):**
 
-- `pytest.mark.e2e` 在全仓 `.py` 文件中**命中 0 处**——连 Wave 1 都尚未落地；
-  与 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md) 文首「`pytest -m e2e` 当前 **0 条**」（`:4`）一致。
-- **启动前提**：① A4 e2e 批次的 **Wave 1 先行落地**（`testbed/e2e/test_sip_first_edition.py`，
-  裁决见 2026-10-10 handoff §0-A.6 G2 / A4-1 行 `:54`）；② 在**具备必需 native extension** 的环境运行
-  （G2 / A4-2：缺 native 时 **fail** 不 skip，`:55`）。
-
----
-
-## 5. 不做的事（本文件边界）
-
-- **本文件不实现任何用例**：不新建 `testbed/e2e/` 测试文件、不写对拍 harness、不改任何产品 / 测试代码。
-- **不补抓包**：基准以仓内既有 `S1-basic-call` 14 个文件为准；不新增抓包、不引用真实流量。
-- **不签收**：不签收 REQ-F-1 / REQ-F-2 / REQ-F-4，不签收任何里程碑，不构成外部验收通过。
-- **不替维护者排期**：用例实现属于 A4 e2e 批次，启动顺序以维护者授权为准。
-- **未来实现时的回写约定**：新建 `testbed/e2e/` 测试文件实现对拍后，在本文件**追加**一节登记结果
-  （实现日期、用例文件名、对拍范围、SDP 对拍是纳入还是单列 follow-up），并按 e2e 计划完成标准
-  把 REQ-F-1 勾选改为「自动化子集已覆盖 / 全文仍 open」；14 条未全部对拍前**不得**勾选全文。
+- `pytest.mark.e2e` has **0 hits** across the repo's `.py` files — even Wave 1 has not yet landed;
+  consistent with [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md)'s opening "`pytest -m e2e` currently has **0** tests" (`:4`).
+- **Start prerequisite**: ① the A4 e2e batch's **Wave 1 lands first** (`testbed/e2e/test_sip_first_edition.py`,
+  adjudication see 2026-10-10 handoff §0-A.6 G2 / A4-1 row `:54`); ② run in an environment **with the required native extension**
+  (G2 / A4-2: **fail** not skip when native is missing, `:55`).
 
 ---
 
-## 6. 实现结果回写（2026-10-12 追加；§1–§5 原文一律保留不改）
+## 5. Non-Goals (this file's boundary)
 
-> 本节按 §5 的「未来实现时的回写约定」追加。启动前提已满足：
-> ① Wave 1 已于 2026-10-11 落地；② 本机已具备必需 native extension。
+- **This file does not implement any case**: it does not create new `testbed/e2e/` test files, does not write a differential harness, and does not modify any product / test code.
+- **No supplementary packet captures**: the baseline is the existing 14 files in `S1-basic-call` in-repo; no new captures are added, and no real traffic is referenced.
+- **No sign-off**: does not sign off REQ-F-1 / REQ-F-2 / REQ-F-4, does not sign off any milestone, and does not constitute external acceptance pass.
+- **Does not schedule on the maintainer's behalf**: case implementation belongs to the A4 e2e batch, and the start order is subject to maintainer authorization.
+- **Write-back convention at future implementation**: after a new `testbed/e2e/` test file implements the differential comparison, **append** a section to this file registering the result
+  (implementation date, case file name, differential scope, whether SDP differential comparison is included or listed as a separate follow-up), and per the e2e plan's completion criteria
+  change the REQ-F-1 tick to "automated subset covered / full text still open"; **must not** tick the full text before all 14 messages have been differentially compared.
 
-| 回写项 | 内容 |
+---
+
+## 6. Implementation Result Write-Back (added 2026-10-12; the original text of §1–§5 is preserved unchanged)
+
+> This section is appended per §5's "write-back convention at future implementation". The start prerequisite has been met:
+> ① Wave 1 landed on 2026-10-11; ② this machine already has the required native extension.
+
+| Write-back item | Content |
 |---|---|
-| **实现日期** | 2026-10-12 |
-| **用例文件** | `testbed/e2e/test_s1_replay_contract.py`（3 条 e2e 用例；与 Wave 1 的 `test_sip_first_edition.py` 并列，互不导入） |
-| **对拍范围** | **归一化**序列对拍 —— 按 e2e 计划 Wave 2 的定义「方法 + **最终**响应码序列」，1xx 临时响应丢弃；入腿与出腿各断言 `INVITE → 200 → ACK → BYE → 200`；另含 **C_in ≠ C_out**（REQ-F-2 子集） |
-| **SDP 对拍** | **纳入，未单列 follow-up** —— 断言入腿 INVITE 的 body 与出腿 INVITE 的 body **逐字节相等**（REQ-F-4） |
-| **REQ-F-1 勾选** | 已按完成标准改为「**自动化子集已覆盖 / 全文仍 open**」并链到上述用例名；`test-plan.md` REQ-F-1 段的所有 `- [ ]` **一项未打勾**（14 条逐条 header 对拍仍 open）；见 [`../acceptance/test-plan.md`](../acceptance/test-plan.md) 「REQ-F-1 自动化覆盖状态（2026-10-12 追加）」段 |
-| **实测结果** | `uv run pytest -m e2e -q` → **8 passed**（Wave 1 的 5 条 + Wave 2 的 3 条）；Wave 2 单独连续 4 次 **3 passed**；临时移走 `_resip_runtime*.so` 后 **8 failed / 0 skipped**（A4-2 成立） |
-| **执行记录** | [`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md) |
+| **Implementation date** | 2026-10-12 |
+| **Case file** | `testbed/e2e/test_s1_replay_contract.py` (3 e2e cases; side by side with Wave 1's `test_sip_first_edition.py`, with no mutual imports) |
+| **Differential scope** | **Normalized** sequence differential comparison — per the e2e plan's Wave 2 definition "method + **final** response code sequence", with 1xx provisional responses discarded; each of the inbound and outgoing legs asserts `INVITE → 200 → ACK → BYE → 200`; additionally includes **C_in ≠ C_out** (REQ-F-2 subset) |
+| **SDP differential comparison** | **Included, no separate follow-up** — asserts the inbound leg INVITE's body and the outgoing leg INVITE's body are **byte-equal** (REQ-F-4) |
+| **REQ-F-1 tick** | Changed per the completion criteria to "**automated subset covered / full text still open**" and linked to the above case name; not a single `- [ ]` in `test-plan.md`'s REQ-F-1 section is **ticked** (the 14-message per-message header differential comparison is still open); see [`../acceptance/test-plan.md`](../acceptance/test-plan.md) "REQ-F-1 automated coverage status (added 2026-10-12)" section |
+| **Measured result** | `uv run pytest -m e2e -q` → **8 passed** (Wave 1's 5 + Wave 2's 3); Wave 2 alone passed **3 passed** 4 times consecutively; after temporarily moving away `_resip_runtime*.so`, **8 failed / 0 skipped** (A4-2 holds) |
+| **Execution record** | [`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md) |
 
-**实现方式与代价（如实记录）**：为采集双腿消息序列，本用例用 `monkeypatch` **在测试模块内**包装了
-`TransparentBridge._on_message` 与 `_forward_response` 两个**私有**方法（观测点为 AS 两侧的 bridge hop：
-`north` 看入腿、`south` 看出腿）。**产品代码与 `as_simulators` 一个字节未改**，代价是这份用例依赖私有 API，
-bridge 内部改名会导致本文件失效。
+**Implementation approach and cost (recorded factually)**: to collect the two-leg message sequences, this case uses `monkeypatch` to wrap **within the test module**
+`TransparentBridge._on_message` and `_forward_response`, two **private** methods (the observation points are the bridge hops on both sides of the AS:
+`north` sees the inbound leg, `south` sees the outgoing leg). **Not a single byte of the product code and `as_simulators` was changed**, at the cost of this case depending on a private API,
+and renaming internals of the bridge will invalidate this file.
 
-**仍 open（不因本节而闭合）**：14 条消息的**逐条 header 对拍** —— 含 100/180 临时响应序列、Via branch 模式、
-Route 消费等。Wave 2 的定义本身即归一化骨架对拍，不含逐条 header。
-**本节不签收 REQ-F-1 全文，不签收 REQ-F-2 / REQ-F-4，不签收任何里程碑。**
+**Still open (not closed by this section)**: the 14-message **per-message header differential comparison** — including the 100/180 provisional response sequence, Via branch patterns,
+Route consumption, etc. Wave 2's definition itself is the normalized skeleton differential comparison, which does not include per-message headers.
+**This section does not sign off REQ-F-1's full text, does not sign off REQ-F-2 / REQ-F-4, and does not sign off any milestone.**

@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - **As of:** 2026-10-03
 - **Scope:** Product architecture across M2–M6, with implementation status called out explicitly.
 - **Normative source:** [`../requirements/prd.md`](../requirements/prd.md). Milestone and unresolved-item status: [`../plan.md`](../plan.md).
-- **Baseline:** [`新系统整体架构.md`](新系统整体架构.md) and the accepted ADRs linked below.
+- **Baseline:** [`system-architecture.md`](system-architecture.md) and the accepted ADRs linked below.
 
 ## 1. Purpose and Status Convention
 

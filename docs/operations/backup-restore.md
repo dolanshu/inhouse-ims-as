@@ -12,46 +12,46 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 备份恢复方案（Backup & Restore）— In-house IMS Application Server
+# Backup and Restore Plan (Backup & Restore) — In-house IMS Application Server
 
-> **交付物归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第二批 **2.5 备份恢复方案 + 演练记录**。按该计划 §3.2，本交付物属 **B 类**：**依赖真实集群环境，M8 真实集群证据当前搁置（7.2d 仍 blocked）**，**M8 退出签字仍搁置**（评审 **G-P1-10**）。本文给出**方案与记录模板**，**不是**已演练的结论。
+> **Deliverable ownership**: [`../product-packaging-plan.md`](../product-packaging-plan.md) §1 second batch **2.5 Backup and restore plan + drill record**. Per §3.2 of that plan, this deliverable is **class B**: **depends on a real cluster environment, M8 real-cluster evidence currently shelved (7.2d still blocked)**, and **M8 exit sign-off is still shelved** (review **G-P1-10**). This document provides the **plan and record template**, **not** a drilled conclusion.
 >
-> **⚠️ Chart 不自带备份 Job。** chart 只提供**一次性 schema 迁移 Job**（`stateStores.migrateJob`），**那不是备份**。备份排期由**客户的备份工具**承担（Velero、cron Job，或 HA 场景下的集群外 WAL 归档）。
+> **⚠️ The chart does not ship a backup Job.** The chart only provides a **one-time schema migration Job** (`stateStores.migrateJob`), which is **not a backup**. Backup scheduling is borne by the **customer's backup tooling** (Velero, cron Job, or out-of-cluster WAL archiving in HA scenarios).
 >
-> **⚠️ 内建 Redis / PostgreSQL 是单副本，不是 HA。** Redis HA 拓扑取值已裁（**O5 / D3，G7**：primary/replica + Sentinel，沿用 ADR-0008 拓扑，不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据；RPO / RTO 数值仍未裁）；生产 PG HA 由**客户拥有**（Patroni、云 RDS，或改用外部 `postgres.host` 并设 `stateStores.enabled=false`）。ADR-0008 定的是**冗余口径**（站点内 N+1零单点、跨站点 1+1 温备非双活），**HA 拓扑由客户与 ADR-0008 共同决定**。
-> - **2026-10-10 追加（G7 / D3，已同步；上文原文保留不改）**：**O5 与 D3 的取值已裁** —— 基线为**站点内 N+1 + 跨站 1+1 warm standby**，Redis 选 **primary/replica + Sentinel**（ADR-0008），不选 Redis Cluster。**边界不得夸大**：**不承诺机架 / AZ 级容错**，且 **RPO / RTO 数值仍未裁决**（见下方状态块）。本行「单副本不是 HA」描述的是**当前 chart 实际形态**，**该事实不因裁决而改变** —— 裁决给的是目标拓扑，不是已部署的拓扑。落地见 `../plan.md` §0 决策记录 G7 / B3 + D3 行与 [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7。
+> **⚠️ The built-in Redis / PostgreSQL is single replica, not HA.** The Redis HA topology values are already adjudicated (**O5 / D3, G7**: primary/replica + Sentinel, following the ADR-0008 topology, not Redis Cluster; the chart still renders single replica, with no evidence of measured failover behavior; RPO / RTO values are still not adjudicated); production PG HA is **owned by the customer** (Patroni, cloud RDS, or switch to external `postgres.host` and set `stateStores.enabled=false`). ADR-0008 defines the **redundancy wording** (in-site N+1 zero single point of failure, cross-site 1+1 warm standby, not active-active); the **HA topology is jointly decided by the customer and ADR-0008**.
+> - **2026-10-10 addition (G7 / D3, synced; the original text above is preserved unchanged)**: **the values of O5 and D3 are already adjudicated** — the baseline is **in-site N+1 + cross-site 1+1 warm standby**, with Redis choosing **primary/replica + Sentinel** (ADR-0008), not Redis Cluster. **Boundaries must not be overstated**: **no rack / AZ-level fault tolerance is promised**, and **RPO / RTO values are still not adjudicated** (see the status block below). This row's "single replica is not HA" describes the **current chart's actual form**; **that fact does not change because of the adjudication** — the adjudication gives the target topology, not the deployed topology. Landing see `../plan.md` §0 decision records G7 / B3 + D3 row and [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7.
 >
-> **⚠️ 本文不含任何容量数字**：无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 百分比容量，也不引用 M6 dev-host 数字（O1 未裁决，`AGENT.md` §2）。本文亦不含备份窗口的时长承诺。
+> **⚠️ This document contains no capacity numbers**: no CPS / CAPS / BHCA / concurrency / throughput / latency / percentage capacity, and it does not cite M6 dev-host numbers (O1 undecided, `AGENT.md` §2). This document also contains no duration commitment for backup windows.
 >
-> **⚠️ RPO / RTO 需与客户共同记录，本文不单方面给数值。** 呼叫轨迹的**保留期**与**存储选型**取值已裁（**O4 / D5，G6**：默认 10 天、部署可配；in-cluster PostgreSQL）—— **实现未落**（轨迹存储 / 查询 / 删除能力当前不存在），**本文不写任何保留天数**。
-> - **2026-10-10 追加（G6，已同步；上文原文保留不改）**：**O4 取值已裁**（默认 10 天、部署可配）、**D5 选型已裁**（in-cluster PostgreSQL），故上句「为未决项」的措辞已过期。**但「本文不写任何保留天数」继续有效，理由改为**：轨迹存储 / 查询 / 删除**本次不实现**，写下天数等于陈述一个不存在的行为。**RPO / RTO 本文仍不单方面给数值** —— 该项**未**随 G6 / G7 一并裁决。
+> **⚠️ RPO / RTO must be recorded jointly with the customer; this document does not unilaterally give values.** The **retention period** and **storage selection** values for call traces are already adjudicated (**O4 / D5, G6**: default 10 days, deployment-configurable; in-cluster PostgreSQL) — **not yet implemented** (trace storage / query / deletion capabilities do not currently exist); **this document writes no retention days**.
+> - **2026-10-10 addition (G6, synced; the original text above is preserved unchanged)**: **O4 value adjudicated** (default 10 days, deployment-configurable), **D5 selection adjudicated** (in-cluster PostgreSQL), so the "pending item" wording in the previous sentence is outdated. **But "this document writes no retention days" remains in effect, with the reason changed to**: trace storage / query / deletion **is not implemented this round**; writing down days would be stating a non-existent behavior. **RPO / RTO are still not given unilaterally by this document** — this item was **not** adjudicated together with G6 / G7.
 >
-> **互链**：[`runbook-l1.md`](runbook-l1.md) §3.5（备份与恢复日常命令）、[`runbook-l2.md`](runbook-l2.md) §6（数据库与迁移排障）、[`rollback-playbook.md`](rollback-playbook.md) §4（有状态组件维护窗口）、[`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §2行 ⑪ / §5.1（备份与恢复 RACI、窗口协作）、[`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md)（原件，**不删除、不移动、不改写**）。
+> **Cross-links**: [`runbook-l1.md`](runbook-l1.md) §3.5 (backup and restore daily commands), [`runbook-l2.md`](runbook-l2.md) §6 (database and migration troubleshooting), [`rollback-playbook.md`](rollback-playbook.md) §4 (stateful component maintenance windows), [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §2 row ⑪ / §5.1 (backup and restore RACI, window cooperation), [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) (original document, **not deleted, not moved, not rewritten**).
 >
-> **状态说明**：上游文档中的过期「未创建」标注已于 2026-10-10 统一清理；本文件所述的 blocked 状态（**真实集群环境 / 演练记录**）**仍然成立**。
+> **Status note**: the outdated "not created" annotations in upstream documents were cleaned up uniformly on 2026-10-10; the blocked states described in this document (**real cluster environment / drill records**) **still hold**.
 >
-> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
+> **B6 review status**: this document has been reviewed under B6 with a review record left — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 first review) and §7 (2026-10-12 closure re-review); **the conclusion awaits maintainer confirmation** and must not serve as a basis for external delivery or acceptance before confirmation (`AGENT.md` §3.3).
 
 ---
 
-## 1. 数据分类与备份对象
+## 1. Data Classification and Backup Targets
 
-| 数据 | 存储 | 丢失后果 | 备份必要性 | 现状 |
+| Data | Store | Loss consequence | Backup necessity | Current state |
 |---|---|---|---|---|
-| **治理态**：规则版本、变更单、审批记录、审计（schema `as_config` / `console_audit`，表 `console_audit`）、控制台用户 | **PostgreSQL**（chart 内建单副本 StatefulSet，或客户外部 PG） | **审计链断裂**：变更单与审批人不可追溯，规则版本历史丢失，审计表 append-only 语义被破坏 —— 这类事件须**同时通知 OP-SEC** | **必须备份** | 命令见 §2；**排期由客户备份工具承担**；PG HA 拓扑由客户 + ADR-0008 决定 |
-| **运行态**：会话 / dialog 状态、反诈速率窗口 | **Redis**（chart 内建单副本） | **在途呼叫失败与计数丢失** —— 丢失 ≈ 呼叫失败（ADR-0007）；AS 侧**不能主动摘在途呼叫**，所以恢复路径尤其依赖对方不摘 | 备份策略**由客户与维护者共同决定**（ADR-0007 把Redis 定位为可备份项，但**不强制**） | chart 单 Redis **不是 HA**；Sentinel 拓扑取值已裁 **O5 / D3（G7）**（primary/replica + Sentinel，ADR-0008，不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据）；可用性探针仅在 `REDIS_URL` 非空时才产出 `as_state_store_available` <br>**2026-10-10 追加（G7 / D3）**：Sentinel 拓扑**取值已裁**（primary/replica + Sentinel，ADR-0008），不选 Redis Cluster；但 chart 仍是单副本，**实现未落**。 |
-| **呼叫轨迹**（按 Call-ID 的投诉追溯与反诈举证） | **in-cluster PostgreSQL**（D5 已裁，G6；实现未落） | 投诉追溯 / 反诈举证的轨迹证据不可得（当前无存储实现） | **待实现落地后确定**（当前无轨迹存储可备份） | **保留期 O4 已裁（G6）**（默认 10 天、部署可配）、**存储选型 D5 已裁（G6）**（in-cluster PostgreSQL）；**实现未落**：轨迹存储 / 查询 / 删除本次不实现，本文**不写保留天数**（理由：无实现可写）、**不写存储方案** <br>**2026-10-10 追加（G6，已同步；同行原文保留不改）**：两处**取值均已裁** —— O4 = 默认 10 天且部署可配；D5 = **in-cluster PostgreSQL**（不再是二选一）。**实现未落**：轨迹存储 / 查询 / 删除本次不实现，故本行「待裁决」的**实质**已转为「**待落地**」，且本文仍不写保留天数。 |
-| **证书与凭据** | 客户 PKI / k8s Secret | 密文不丢失即无影响 | **不入备份脚本** | `tls.secretName` 指向客户 Secret（`tls.crt` / `tls.key` / `ca.crt`）；`AS_CONFIG_DSN`、审计 HMAC key 走 Secret。**备份脚本不得导出 Secret 内容**；恢复时由客户按其 PKI 流程重新下发 |
+| **Governance state**: rule versions, change orders, approval records, audit (schema `as_config` / `console_audit`, table `console_audit`), console users | **PostgreSQL** (chart built-in single-replica StatefulSet, or customer external PG) | **Broken audit chain**: change orders and approvers become untraceable, rule version history is lost, and the append-only semantics of the audit table are broken — such events must **also notify OP-SEC** | **Must back up** | Commands see §2; **scheduling is borne by the customer's backup tooling**; PG HA topology is decided by the customer + ADR-0008 |
+| **Runtime state**: session / dialog state, anti-fraud rate windows | **Redis** (chart built-in single replica) | **In-flight call failure and counter loss** — loss ≈ call failure (ADR-0007); the AS side **cannot proactively remove in-flight calls**, so the recovery path is especially dependent on the peer not removing them | Backup strategy is **jointly decided by the customer and the maintainer** (ADR-0007 positions Redis as a backup-able item, but **does not mandate it**) | The chart's single Redis **is not HA**; the Sentinel topology values are already adjudicated **O5 / D3 (G7)** (primary/replica + Sentinel, ADR-0008, not Redis Cluster; the chart still renders single replica, with no evidence of measured failover behavior); the availability probe only produces `as_state_store_available` when `REDIS_URL` is non-empty <br>**2026-10-10 addition (G7 / D3)**: the Sentinel topology **values are adjudicated** (primary/replica + Sentinel, ADR-0008), not Redis Cluster; but the chart is still single replica, **not yet implemented**. |
+| **Call traces** (complaint tracing and anti-fraud evidence by Call-ID) | **in-cluster PostgreSQL** (D5 adjudicated, G6; not yet implemented) | Trace evidence for complaint tracing / anti-fraud evidence is unavailable (no storage implementation currently) | **To be determined after implementation lands** (no trace storage to back up currently) | **Retention period O4 adjudicated (G6)** (default 10 days, deployment-configurable), **storage selection D5 adjudicated (G6)** (in-cluster PostgreSQL); **not yet implemented**: trace storage / query / deletion is not implemented this round, so this document **writes no retention days** (reason: nothing to write) and **no storage scheme** <br>**2026-10-10 addition (G6, synced; the original text in the same row is preserved unchanged)**: both **values are adjudicated** — O4 = default 10 days and deployment-configurable; D5 = **in-cluster PostgreSQL** (no longer either-or). **Not yet implemented**: trace storage / query / deletion is not implemented this round, so this row's "pending adjudication" has **substantively** turned into "**pending implementation**", and this document still writes no retention days. |
+| **Certificates and credentials** | Customer PKI / k8s Secret | No impact as long as secrets are not lost | **Not in the backup script** | `tls.secretName` points to the customer Secret (`tls.crt` / `tls.key` / `ca.crt`); `AS_CONFIG_DSN` and the audit HMAC key go through Secret. **Backup scripts must not export Secret contents**; on restore, the customer re-issues them per their PKI process |
 
-> **恢复顺序的硬约束**：治理态（PG）与运行态（Redis）**不是同构的**。Redis 丢失 ≈ 在途呼叫失败；PostgreSQL 丢失 ≈ 审计链断裂。**先恢复 PG、再恢复 Redis、最后复核控制台**（§4）。
+> **Hard constraint on recovery order**: governance state (PG) and runtime state (Redis) **are not isomorphic**. Redis loss ≈ in-flight call failure; PostgreSQL loss ≈ broken audit chain. **Restore PG first, then Redis, and finally re-verify the console** (§4).
 
 ---
 
-## 2. 备份策略
+## 2. Backup Strategy
 
-### 2.1 PostgreSQL（治理态 —— 必须保留审计链）
+### 2.1 PostgreSQL (governance state — the audit chain must be preserved)
 
-**命令原文（照抄 [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) §Backup & restore）**
+**Command as written (copied verbatim from [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) §Backup & restore)**
 
 ```sh
 kubectl -n <ns> exec as-3rdparty-as-postgres-0 -- \
@@ -59,61 +59,61 @@ kubectl -n <ns> exec as-3rdparty-as-postgres-0 -- \
 kubectl -n <ns> cp as-3rdparty-as-postgres-0:/tmp/as_config.dump ./as_config.dump
 ```
 
-**前置与期望**：治理PG 可达；使用具备备份权限的角色；`kubectl cp` 需要 Pod 内有 `pg_dump`（PostgreSQL 官方镜像有）。期望 `./as_config.dump` 落盘且**大小非零**。
+**Prerequisites and expectations**: the governance PG is reachable; use a role with backup privileges; `kubectl cp` requires `pg_dump` inside the Pod (the official PostgreSQL image has it). Expect `./as_config.dump` to land on disk and be **non-zero in size**.
 
-**调度**：**chart 不自带备份 Job**。排期由**客户备份工具**承担 —— Velero、cron Job，或 HA 场景下的**集群外 WAL 归档**。**RPO / RTO 与客户共同记录**；本文不代填数值（`AGENT.md` §2 与本文状态块）。
+**Scheduling**: **the chart does not ship a backup Job**. Scheduling is borne by the **customer's backup tooling** — Velero, cron Job, or **out-of-cluster WAL archiving** in HA scenarios. **RPO / RTO recorded jointly with the customer**; this document does not fill in values on their behalf (`AGENT.md` §2 and this document's status block).
 
-**HA 场景的替代路径**：外部 `postgres.host` + `stateStores.enabled=false`（客户自管 PG），或客户侧 Patroni / 云 RDS。
+**Alternative path in HA scenarios**: external `postgres.host` + `stateStores.enabled=false` (customer-managed PG), or customer-side Patroni / cloud RDS.
 
-### 2.2 Redis（运行态 —— 策略由客户共同决定）
+### 2.2 Redis (runtime state — strategy jointly decided by the customer)
 
-- ADR-0007 把 Redis 定位为运行态存储：**丢失 ≈ 呼叫失败**，因此备份为**可选项**而非强制项；但**RPO / RTO 仍须与客户共同记录**。
-- 客户若选择备份：按其 Redis 持久化策略（RDB / AOF）与客户备份工具执行；**本文不代客户裁决**。
-- ⚠️ **Redis 维护窗口内预期出现短暂运行态不可用** —— 在途呼叫状态全在 Redis。这是**已知窗口行为**，不是缺陷；处置见 [`rollback-playbook.md`](rollback-playbook.md) §4。
+- ADR-0007 positions Redis as the runtime store: **loss ≈ call failure**, so backup is an **option** rather than mandatory; but **RPO / RTO must still be recorded jointly with the customer**.
+- If the customer chooses to back up: execute per their Redis persistence strategy (RDB / AOF) and customer backup tooling; **this document does not adjudicate on the customer's behalf**.
+- ⚠️ **Brief runtime unavailability is expected within the Redis maintenance window** — in-flight call state is all in Redis. This is **known window behavior**, not a defect; handling see [`rollback-playbook.md`](rollback-playbook.md) §4.
 
-### 2.3 不进入备份范围的东西
+### 2.3 Things Not in the Backup Scope
 
-| 不备份 | 理由 |
+| Not backed up | Reason |
 |---|---|
-| **CDR / 话单** | 不采集、不投递、不归档（ADR-0017）。呼叫轨迹**不是**话单 |
-| **媒体 / RTP** | 不做媒体（ADR-0004）：没有 RTP、没有转码、没有 DTMF、没有 MRF |
-| **Secret 内容**（私钥、`AS_CONFIG_DSN`、审计 HMAC key） | 由客户 PKI / Secret 管理流程重新下发；`AGENT.md` §11/ §13禁止提交密钥 |
-| **Diameter Sh 侧数据** | 不做 Sh（`AGENT.md` §2）；无此类数据 |
-| **LI / IRI 材料** | 不做 LI（ADR-0016），**不为其预留任何采集点** |
+| **CDR / call records** | Not collected, not delivered, not archived (ADR-0017). Call traces **are not** call records |
+| **Media / RTP** | No media (ADR-0004): no RTP, no transcoding, no DTMF, no MRF |
+| **Secret contents** (private keys, `AS_CONFIG_DSN`, audit HMAC key) | Re-issued by the customer PKI / Secret management process; `AGENT.md` §11/ §13 prohibit committing secrets |
+| **Diameter Sh side data** | No Sh (`AGENT.md` §2); no such data |
+| **LI / IRI materials** | No LI (ADR-0016), **no collection point reserved for it** |
 
 ---
 
-## 3. PostgreSQL HA / PITR 三档
+## 3. PostgreSQL HA / PITR Three Tiers
 
-> 原文照抄 [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) §PostgreSQL HA / PITR。chart 发的是**单副本** StatefulSet；**生产 HA 由客户拥有**。下表是**工程建议**，**不是**对客户 topologies 的裁决。
+> Copied verbatim from [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) §PostgreSQL HA / PITR. The chart ships a **single-replica** StatefulSet; **production HA is owned by the customer**. The table below is an **engineering recommendation**, **not** an adjudication of customer topologies.
 
-| 档 | 最低期望 |
+| Tier | Minimum expectation |
 |---|---|
-| **Lab / kind** | emptyDir 或单 PVC；**备份可选** |
-| **On-prem prod** | 记录 **RPO/RTO**（**与客户共同记录**）；用 `pg_dump -Fc`（见 §2.1）或 WAL 归档到**集群外**存储；故障切换由客户的 Postgres HA（Patroni、云 RDS 等）承担，**或**改用外部 `postgres.host` 并设 `stateStores.enabled=false` |
-| **Restore drill** | 把 dump 恢复到一个**新实例**；若 schema 版本变了，**重跑 `as-config-migrate`**；把 runtime Secret 指向新主机（步骤见 §4） |
+| **Lab / kind** | emptyDir or a single PVC; **backup optional** |
+| **On-prem prod** | Record **RPO/RTO** (**recorded jointly with the customer**); use `pg_dump -Fc` (see §2.1) or WAL archiving to **out-of-cluster** storage; failover is borne by the customer's Postgres HA (Patroni, cloud RDS, etc.), **or** switch to external `postgres.host` and set `stateStores.enabled=false` |
+| **Restore drill** | Restore the dump to a **new instance**; if the schema version changed, **re-run `as-config-migrate`**; point the runtime Secret to the new host (steps see §4) |
 
-**Redis HA 拓扑取值已裁（O5 / D3，G7：primary/replica + Sentinel，ADR-0008，不选 Redis Cluster）；chart 单 Redis 仍不是 HA（单副本渲染，failover 实测行为无证据）。**
+**Redis HA topology values are adjudicated (O5 / D3, G7: primary/replica + Sentinel, ADR-0008, not Redis Cluster); the chart's single Redis is still not HA (single-replica rendering, no evidence of measured failover behavior).**
 
-> **2026-10-10 追加（G7 / D3，已同步；上文原文保留不改）**：O5 / D3 的**取值已裁** —— 站点内 N+1 + 跨站 1+1 warm standby，Redis 用 primary/replica + Sentinel（ADR-0008），**不选** Redis Cluster。上句「chart 单 Redis 不是 HA」**继续有效**：裁决给的是目标拓扑，**实现未落**，且**不承诺机架 / AZ 级容错**。**RPO / RTO 数值仍未裁决**，§2.1 / §2.2 的数值栏继续留空由客户与维护者填入。
+> **2026-10-10 addition (G7 / D3, synced; the original text above is preserved unchanged)**: **the values of O5 / D3 are adjudicated** — in-site N+1 + cross-site 1+1 warm standby, Redis using primary/replica + Sentinel (ADR-0008), **not** Redis Cluster. The previous sentence "the chart's single Redis is not HA" **remains in effect**: the adjudication gives the target topology, **not yet implemented**, and **no rack / AZ-level fault tolerance is promised**. **RPO / RTO values are still not adjudicated**, and the value fields in §2.1 / §2.2 remain blank for the customer and maintainer to fill in.
 
 ---
 
-## 4. 恢复步骤（Restore drill）
+## 4. Recovery Steps (Restore drill)
 
-**前置**：§2.1 已拿到可用 dump；治理库可达；**owner DSN 只在可信主机或一次性 Job 中使用，绝不进 runtime Pod / Deployment**（ADR-0006；L2 §6）。
+**Prerequisites**: a usable dump has been obtained per §2.1; the governance database is reachable; **the owner DSN is used only on trusted hosts or in a one-time Job, never in a runtime Pod / Deployment** (ADR-0006; L2 §6).
 
-| 步 | 动作 | 验证方法 |
+| Step | Action | Verification method |
 |---|---|---|
-| **1. 恢复 dump 到新实例** | 在**新**实例上恢复（不覆盖原实例，原实例保留作回退参照）；DSN host 用**新主机名** | dump 恢复无错误；新实例上 `as_config` 与 `console_audit` 两个 schema 均存在 |
-| **2. 核对角色** | 三角色：`as_config_owner`（owner）/ `as_config_web`（runtime Pod 用，**非owner**）/ `as_config_runtime`（`NOLOGIN` 最小权限，审计 append-only 相关） | runtime Secret里的 `AS_CONFIG_DSN` 用的是 **`as_config_web`**，**不是** owner；`AS_AUDIT_RESOURCE_HMAC_KEY_B64` 存在 |
-| **3. schema 版本变化时重跑迁移** | 每个 schema 版本跑一次（命令原文见下）；**库为空时必须先跑** | `as-config-migrate` 成功返回；重复执行幂等 |
-| **4. 把 runtime Secret 指向新 host** | 更新 Secret 指向新实例（Secret 内容**不由本文提供**，走客户 Secret 管理流程） | 各实例重启/热加载后 `printenv CONFIG_VERSION` 有值且**各副本一致** |
-| **5. 复核控制台登录** | 浏览器经**HTTPS**（同源）登录控制台 | 登录成功、可看到审批队列；⚠️ **不保存凭据**，不把会话 cookie 截图入档 |
-| **6. 复核审计可查** | 导出审计记录 | 输出无 password / token；runtime 角色对 audit 表的 INSERT/UPDATE/DELETE/TRUNCATE **被拒绝**（append-only，fail-closed） |
-| **7. 复核 Redis 侧** | 按§1 的恢复顺序，Redis 在 PG 之后 | `as_state_store_available{use_case}` 回到 `1`；⚠️ 未配置 `REDIS_URL` 时**该序列不存在（不是 0）** |
+| **1. Restore dump to a new instance** | Restore on the **new** instance (do not overwrite the original instance; keep the original as a rollback reference); the DSN host uses the **new hostname** | Dump restore is error-free; both schemas `as_config` and `console_audit` exist on the new instance |
+| **2. Verify roles** | Three roles: `as_config_owner` (owner) / `as_config_web` (used by runtime Pods, **not owner**) / `as_config_runtime` (`NOLOGIN` least privilege, audit append-only related) | The `AS_CONFIG_DSN` in the runtime Secret uses **`as_config_web`**, **not** the owner; `AS_AUDIT_RESOURCE_HMAC_KEY_B64` exists |
+| **3. Re-run migration when the schema version changed** | Run once per schema version (command as written below); **must run first when the database is empty** | `as-config-migrate` returns successfully; repeated executions are idempotent |
+| **4. Point the runtime Secret to the new host** | Update the Secret to point to the new instance (Secret contents **not provided by this document**; go through the customer Secret management process) | After each instance restarts/hot-reloads, `printenv CONFIG_VERSION` has a value and **is consistent across replicas** |
+| **5. Re-verify console login** | Log in to the console from a browser over **HTTPS** (same origin) | Login succeeds and the approval queue is visible; ⚠️ **do not save credentials**, do not file session cookie screenshots |
+| **6. Re-verify audit queryability** | Export audit records | Output contains no password / token; the runtime role's INSERT/UPDATE/DELETE/TRUNCATE on the audit table is **rejected** (append-only, fail-closed) |
+| **7. Re-verify the Redis side** | Per the recovery order in §1, Redis comes after PG | `as_state_store_available{use_case}` returns to `1`; ⚠️ when `REDIS_URL` is not configured the **series does not exist (not 0)** |
 
-**迁移命令原文（每个 schema 版本跑一次；照抄原件）**
+**Migration command as written (run once per schema version; copied verbatim from the original document)**
 
 ```sh
 kubectl -n <ns> port-forward pod/as-3rdparty-as-postgres-0 15432:5432
@@ -124,7 +124,7 @@ export AS_CONFIG_SCHEMA=as_config
 uv run as-config-migrate
 ```
 
-**Helm migrate Job（生产 / 可重复）** —— Secret `as-config-migrate-owner` 的键 `AS_CONFIG_OWNER_DSN`（仅 owner 登录）：
+**Helm migrate Job (production / repeatable)** — Secret `as-config-migrate-owner`'s key `AS_CONFIG_OWNER_DSN` (owner login only):
 
 ```sh
 helm upgrade --install as deploy/helm -f deploy/helm/values-onprem.example.yaml ...
@@ -132,57 +132,57 @@ kubectl -n <ns> delete job/as-3rdparty-as-config-migrate --ignore-not-found
 kubectl -n <ns> wait --for=condition=complete job/as-3rdparty-as-config-migrate --timeout=300s
 ```
 
-⚠️ **Job 复用坑**：同名 Job 不重建 → **必须先 `delete job ... --ignore-not-found` 再 `wait`**，否则会**等到一个已完成的旧 Job 而误判成功**。
+⚠️ **Job reuse pitfall**: a same-named Job is not rebuilt → **must `delete job ... --ignore-not-found` first, then `wait`**, otherwise you will **wait on an already-completed old Job and misjudge success**.
 
 ---
 
-## 5. 恢复演练记录模板
+## 5. Restore Drill Record Template
 
-**当前状态：⚠️ 无真实集群演练记录。** 下表为模板，**当前没有任何一行已填数据**。M8 **7.2d blocked**、退出签字搁置（G-P1-10）。⚠️ **耗时一栏由演练方填写，本文不预设任何数值**（也不给时长承诺）。
+**Current state: ⚠️ No real-cluster drill record.** The table below is a template, **with no rows currently filled in**. M8 **7.2d blocked**, exit sign-off shelved (G-P1-10). ⚠️ **The elapsed-time column is filled in by the drill party; this document presets no values** (and gives no duration commitment).
 
-| 字段 | 填写要求 |
+| Field | Fill-in requirement |
 |---|---|
-| **日期** | 演练实际执行日期（含时区） |
-| **范围** | 治理态 / 运行态 / 两者；是否含控制台复核 |
-| **备份来源** | dump 文件标识 / WAL 归档批次 / 备份工具与调度（**不含任何凭据**） |
-| **恢复目标** | 新实例的主机标识；**不覆盖原实例** |
-| **耗时** | **由演练方填写**；本文不预设、不承诺 |
-| **校验项** | §4 的 7 步逐条勾选（含 `CONFIG_VERSION` 一致性、控制台 HTTPS 登录、审计 append-only 拒绝验证） |
-| **结果** | 通过 / 有条件通过 / 不通过；证据路径（`artifacts/<milestone>/<YYYY-MM-DD>/`，脱敏后） |
-| **遗留问题** | 未闭合项、责任方、需要谁裁决 |
+| **Date** | Actual execution date of the drill (including time zone) |
+| **Scope** | Governance state / runtime state / both; whether console re-verification is included |
+| **Backup source** | Dump file identifier / WAL archive batch / backup tooling and schedule (**containing no credentials**) |
+| **Restore target** | Host identifier of the new instance; **do not overwrite the original instance** |
+| **Elapsed time** | **Filled in by the drill party**; this document presets nothing and commits to nothing |
+| **Verification items** | Check all 7 steps of §4 item by item (including `CONFIG_VERSION` consistency, console HTTPS login, audit append-only rejection verification) |
+| **Result** | Pass / conditional pass / fail; evidence path (`artifacts/<milestone>/<YYYY-MM-DD>/`, after redaction) |
+| **Open issues** | Unclosed items, responsible party, who needs to adjudicate |
 
-> **记录纪律**：演练记录属证据，按 `AGENT.md` §3.2 / §3.3 需配套独立 review record 才算走完文档链；记录**不构成验收结论**。kind / compose / `testbed/` 的仿真结果**不得**充当演练记录（ADR-0014：testbed 非 v1 交付物）。
+> **Record discipline**: drill records are evidence, and per `AGENT.md` §3.2 / §3.3 need a supporting independent review record to complete the documentation chain; records **do not constitute an acceptance conclusion**. kind / compose / `testbed/` simulation results **must not** serve as drill records (ADR-0014: the testbed is not a v1 deliverable).
 
 ---
 
-## 6. 边界与不做的事
+## 6. Boundaries and Non-Goals
 
-| 不做 | 理由 |
+| Not doing | Reason |
 |---|---|
-| **CDR 归档 / 计费备份** | 不做 CDR：不采集、不投递、不归档、不批价（ADR-0017）。呼叫轨迹**不是**话单 |
-| **媒体备份** | 不做媒体：无 RTP、无转码、无 DTMF、没有 MRF、没有媒体锚定（ADR-0004） |
-| **Diameter Sh 侧数据备份** | 不做 Sh —— 数据来自我们自己的数据面（`AGENT.md` §2） |
-| **LI / IRI 留存** | 不做 LI：IRI 属网内网元职能，ADR-0016 **不为其预留任何采集点** |
-| **在本文写保留天数** | 呼叫轨迹保留期 **O4 已裁（G6）**（默认 10 天、部署可配）、存储选型 **D5 已裁（G6）**（in-cluster PostgreSQL）；**实现未落**（无实现可写），本文不硬编码 <br>**2026-10-10 追加（G6）**：O4 / D5 **取值已裁**（10 天可配 / in-cluster PostgreSQL），但**实现未落**，本条禁令**继续有效**。 |
-| **在本文写 RPO / RTO 数值** | **RPO / RTO 数值仍未裁（G7 未给出）**；由客户与维护者共同记录，本文不单方面给数值 <br>**2026-10-10 追加（G7）**：RPO / RTO **未随本次裁决给出数值**，本条**原样保留、不删不改**。 |
-| **在本文写恢复时长承诺** | 本文只给**步骤与验证方法**；实际耗时由演练方填入 §5 |
-| **自带备份 Job / 第二套安装形态** | chart 不自带备份 Job；生产形态只有 Helm（ADR-0013） |
+| **CDR archiving / billing backup** | No CDR: not collected, not delivered, not archived, not priced (ADR-0017). Call traces **are not** call records |
+| **Media backup** | No media: no RTP, no transcoding, no DTMF, no MRF, no media anchoring (ADR-0004) |
+| **Diameter Sh side data backup** | No Sh — data comes from our own data plane (`AGENT.md` §2) |
+| **LI / IRI retention** | No LI: IRI is an in-network network element function, ADR-0016 **reserves no collection point for it** |
+| **Writing retention days in this document** | The call trace retention period **O4 is adjudicated (G6)** (default 10 days, deployment-configurable), and the storage selection **D5 is adjudicated (G6)** (in-cluster PostgreSQL); **not yet implemented** (nothing to write), so this document does not hard-code it <br>**2026-10-10 addition (G6)**: O4 / D5 **values are adjudicated** (10 days configurable / in-cluster PostgreSQL), but **not yet implemented**, so this prohibition **remains in effect**. |
+| **Writing RPO / RTO values in this document** | **RPO / RTO values are still not adjudicated (G7 gave none)**; recorded jointly by the customer and the maintainer, this document gives no unilateral values <br>**2026-10-10 addition (G7)**: RPO / RTO **were not given values in this adjudication**, so this item is **preserved as-is, not deleted or modified**. |
+| **Writing recovery duration commitments in this document** | This document gives only **steps and verification methods**; actual elapsed time is filled in by the drill party in §5 |
+| **Shipping a backup Job / a second installation form** | The chart does not ship a backup Job; the only production form is Helm (ADR-0013) |
 
 ---
 
-## 7. 未决与阻塞
+## 7. Undecided and Blocked
 
-| 项 | 阻塞源 | 对本文的影响 | 责任方 |
+| Item | Blocking source | Impact on this document | Responsible party |
 |---|---|---|---|
-| **真实集群恢复演练** | M8 **7.2d blocked**、退出签字搁置（G-P1-10） | §4 只有**步骤与验证方法**，**无一次已执行的演练**；§5 **无任何已填记录** | 维护者 + OP-NOC |
-| **PG HA 拓扑** | 由客户拥有（ADR-0008 / ADR-0026）；容灾等级 **O5 取值已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby；**实现未落**，备站位置与 PG HA 拓扑仍由客户拥有 | §3 的「On-prem prod」档是**工程建议**，不是对客户拓扑的裁决 | OP-NET（客户 SLA）+ 维护者 |
-| **Redis HA（Sentinel）** | **O5 / D3 取值已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（ADR-0008，不选 Redis Cluster）；**实现未落**（chart 仍单副本渲染，failover 实测行为无证据） | §1 运行态的丢失影响可判定，但**恢复路径**取决于客户侧拓扑落地与 failover 实测取证 | OP-NET + 维护者 |
-| **呼叫轨迹保留期（O4）与存储选型（D5）** | 客户合规要求 | §1 的轨迹行按 G6 已裁口径登记（默认 10 天、部署可配；in-cluster PostgreSQL）；因**实现未落**，本文仍不得出现保留天数 | **OP-SEC**（A/R）+ AS-Vendor |
-| **ADR-0008 冗余演练** | 矩阵中 **blocked** | 跨站点 **1+1 温备（非双活）** 的切换与恢复剧本**未编写**；备站无在途呼叫 | OP-NOC + OP-NET |
-| **E5 / REQ-NF-1（状态外置与恢复）** | REQ-NF-1 签收归 M8（D-2 defer） | 呼叫级 checkpoint 恢复路径只有**工程切片证据**，本文只覆盖 **PG / Redis 两个存储**的恢复 | AS-Vendor |
-| **M5D 10 项 defer** | M5 REQ 级不通过构成项 | 部分控制面能力仍defer，影响恢复后的复核完整性 | 维护者 |
-| **RPO / RTO 记录** | 需与客户共同记录 | §2.1 / §2.2 的数值栏**由客户与维护者填入**，本文留空 | AS-Vendor + OP-NOC |
-| **本文评审状态** | `AGENT.md` §3.3 需独立 review record | 已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据 | 维护者 |
+| **Real-cluster restore drill** | M8 **7.2d blocked**, exit sign-off shelved (G-P1-10) | §4 has only **steps and verification methods**, with **no executed drill**; §5 has **no filled-in records** | Maintainer + OP-NOC |
+| **PG HA topology** | Owned by the customer (ADR-0008 / ADR-0026); the disaster recovery level **O5 value is adjudicated (G7)**: in-site N+1 + cross-site 1+1 warm standby; **not yet implemented**, with the standby site location and PG HA topology still owned by the customer | The "On-prem prod" tier in §3 is an **engineering recommendation**, not an adjudication of customer topology | OP-NET (customer SLA) + maintainer |
+| **Redis HA (Sentinel)** | **O5 / D3 values are adjudicated (G7)**: in-site N+1 + cross-site 1+1 warm standby, Redis primary/replica + Sentinel (ADR-0008, not Redis Cluster); **not yet implemented** (the chart still renders single replica, with no evidence of measured failover behavior) | The loss impact of §1 runtime state can be judged, but the **recovery path** depends on customer-side topology landing and failover measured forensics | OP-NET + maintainer |
+| **Call trace retention period (O4) and storage selection (D5)** | Customer compliance requirements | The trace row in §1 is registered per the G6 adjudicated wording (default 10 days, deployment-configurable; in-cluster PostgreSQL); because **not yet implemented**, this document still must not contain retention days | **OP-SEC** (A/R) + AS-Vendor |
+| **ADR-0008 redundancy drill** | **blocked** in the matrix | The failover and recovery playbook for the cross-site **1+1 warm standby (not active-active)** is **not yet written**; the standby site has no in-flight calls | OP-NOC + OP-NET |
+| **E5 / REQ-NF-1 (state externalization and recovery)** | REQ-NF-1 sign-off belongs to M8 (D-2 defer) | The call-level checkpoint recovery path has only **engineering slice evidence**; this document covers only the recovery of **PG / Redis, the two stores** | AS-Vendor |
+| **M5D 10 deferrals** | M5 REQ-level non-pass constituents | Some control plane capabilities are still deferred, affecting the completeness of post-recovery re-verification | Maintainer |
+| **RPO / RTO records** | Must be recorded jointly with the customer | The value fields in §2.1 / §2.2 are **filled in by the customer and the maintainer**, left blank in this document | AS-Vendor + OP-NOC |
+| **This document's review status** | `AGENT.md` §3.3 requires an independent review record | A review record has been left under B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 first review) and §7 (2026-10-12 closure re-review); **the conclusion awaits maintainer confirmation** and must not serve as a basis for external delivery or acceptance before confirmation | Maintainer |
 
-**本表的 2026-10-10 裁决同步注记（2026-10-11 追加，上表各行原文保留不改）**：上表 **O5 / D3 / O4 / D5 四行**的「未决」措辞已过期 —— G7 裁 O5（站点内 N+1 + 跨站 1+1 warm standby）与 D3（Redis primary/replica + Sentinel），G6 裁 O4（默认 10 天、部署可配）与 D5（in-cluster PostgreSQL）。**四行均不因此闭合**：轨迹存储 / 查询 / 删除**本次不实现**；chart 仍是单副本、**RPO / RTO 数值未裁决**、备站位置与 PG HA 拓扑仍**由客户拥有**。上表「责任方」列与「本文不得出现保留天数」**继续有效**。落地见 `../plan.md` §0 决策记录 G6 / G7 行与 [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7。**本文不构成客户验收。**
-**2026-10-12 追加**：上表 O4 / D5 / O5 / D3 / RPO-RTO 相关主单元格已就地更新为已裁口径（G6 / G7，实现未落；RPO / RTO 仍未裁），本注记留为审计链。
+**Adjudication sync note for 2026-10-10 (added 2026-10-11; the original text of each row in the table above is preserved unchanged)**: the "undecided" wording in the **O5 / D3 / O4 / D5 four rows** of the table above is outdated — G7 adjudicates O5 (in-site N+1 + cross-site 1+1 warm standby) and D3 (Redis primary/replica + Sentinel), and G6 adjudicates O4 (default 10 days, deployment-configurable) and D5 (in-cluster PostgreSQL). **None of the four rows are thereby closed**: trace storage / query / deletion **is not implemented this round**; the chart is still single replica, **RPO / RTO values are not adjudicated**, and the standby site location and PG HA topology are **still owned by the customer**. The "responsible party" column in the table above and "this document must not contain retention days" **remain in effect**. Landing see `../plan.md` §0 decision records G6 / G7 rows and [`../handoff/2026-10-11-open-adjudication-register.md`](../handoff/2026-10-11-open-adjudication-register.md) §7. **This document does not constitute customer acceptance.**
+**2026-10-12 addition**: the main cells related to O4 / D5 / O5 / D3 / RPO-RTO in the table above have been updated in place to the adjudicated wording (G6 / G7, not yet implemented; RPO / RTO still not adjudicated); this note remains as the audit chain.

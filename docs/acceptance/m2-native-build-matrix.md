@@ -58,6 +58,6 @@ Cache layout (default):
 ## Boundary
 
 - **In scope:** vendor checksum, offline source build, probe link with repo cache
-  RPATH, S1 UDP loopback smoke (`probe 退出 OK`).
+  RPATH, S1 UDP loopback smoke (`probe exits OK`).
 - **Out of scope:** product integration, TLS/mTLS REQ-S gates,
   operator PKI or S-SBC evidence.

@@ -12,72 +12,72 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0027：版本生命周期与 EOL 策略
+# ADR-0027: Version Lifecycle and EOL Policy
 
 - **Status**: accepted
 - **Date**: 2026-10-09
-- **Decides**: 版本生命周期与 EOL 策略
-- **回应 REQ**: REQ-NF-16
+- **Decides**: version lifecycle and EOL policy
+- **Responds to REQ**: REQ-NF-16
 
 ---
 
-## Context（背景）
+## Context
 
-ADR-0018 解决了"版本号从哪里来"的问题（根 VERSION 是 release 唯一源头，组件接口版本在 pyproject.toml），但没有回答"一个版本发布后，支持多久、什么时候停止支持、怎么升级"。
+ADR-0018 resolved "where the version number comes from" (the root VERSION is the single source of release, component interface versions live in `pyproject.toml`), but did not answer "once a version is released, how long is it supported, when does support stop, and how is it upgraded."
 
-对于运营商客户（尤其是香港电信运营商），版本生命周期是采购评审的基本门槛：
-- 运维团队需要知道当前版本还能用多久，才能规划升级窗口
-- 商务团队需要知道 EOL 承诺，才能签 SLA
-- 安全团队需要知道 EOL 后是否还有安全补丁
+For carrier customers (especially Hong Kong telecom operators), the version lifecycle is a basic threshold for procurement review:
+- Operations teams need to know how long the current version remains usable, so they can plan upgrade windows.
+- Commercial teams need the EOL commitment, so they can sign SLAs.
+- Security teams need to know whether security patches are still provided after EOL.
 
-当前项目处于 v0.2.0 阶段，尚未正式发布 GA 版本。在 v1.0 GA 之前，必须明确版本生命周期策略，否则无法通过运营商内部评审。
+The project is currently at the v0.2.0 stage and has not formally released a GA version. Before v1.0 GA, a clear version lifecycle policy must be defined; otherwise the carrier internal review cannot be passed.
 
-## Decision（决策）
+## Decision
 
-**支持周期**：每个 minor 版本（如 1.0、1.1、1.2）从 GA 起至少支持 **12 个月**。支持期内提供 bug fix 与安全补丁。
+**Support period**: each minor version (e.g. 1.0, 1.1, 1.2) is supported for **at least 12 months** from GA, providing bug fixes and security patches during the support period.
 
-**EOL 提前通知期**：版本 EOL 前至少 **6 个月**发布 EOL 公告，给客户留出升级窗口。
+**EOL advance-notice period**: at least **6 months** before a version's EOL, an EOL announcement is published, giving customers an upgrade window.
 
-**升级路径**：
-- 相邻 minor 版本（如 1.0 → 1.1 → 1.2）必须支持直接升级，不中断业务（ISSU，见 ADR-0009）
-- 跨 major 版本（如 1.x → 2.0）须提供迁移指南与数据迁移工具
+**Upgrade path**:
+- Adjacent minor versions (e.g. 1.0 → 1.1 → 1.2) must support direct upgrade without service interruption (ISSU, see ADR-0009).
+- Cross-major versions (e.g. 1.x → 2.0) require a migration guide and data-migration tooling.
 
-**LTS 版本**：当前不定义 LTS 版本。如未来运营商客户明确要求 LTS，须新增 ADR 定义 LTS 策略（支持周期、升级路径、维护成本分摊）。
+**LTS versions**: no LTS version is defined at this time. If a future carrier customer explicitly requires LTS, a new ADR must be added to define the LTS policy (support period, upgrade path, maintenance-cost sharing).
 
-**安全补丁**：EOL 后不再提供安全补丁。客户必须升级到受支持版本。
+**Security patches**: after EOL, no further security patches are provided. Customers must upgrade to a supported version.
 
-**适用范围**：本策略仅适用于 GA 版本（major.minor.0）。开发版（0.x.y）与 pre-release 不享受生命周期承诺。
+**Scope**: this policy applies only to GA versions (`major.minor.0`). Development versions (`0.x.y`) and pre-releases are not covered by the lifecycle commitment.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **运营商评审可过审**：版本生命周期是采购评审的基本门槛，明确策略后不会被质疑"不支持多久"
-- **运维可规划**：客户运维团队可根据支持周期规划升级窗口，避免突然 EOL 导致被动
-- **商务可承诺**：SLA 与维保合同可基于支持周期定价
+- **Carrier review can pass**: version lifecycle is a basic threshold for procurement review; with a clear policy, the question "how long is it unsupported" will not be raised.
+- **Operations can plan**: the customer operations team can plan upgrade windows based on the support period, avoiding passive exposure to a sudden EOL.
+- **Commercial can commit**: SLAs and maintenance contracts can be priced based on the support period.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **维护成本增加**：12 个月支持期意味着每个 minor 版本发布后至少 12 个月内需要维护 bug fix 与安全补丁分支。对于小团队，可能增加维护负担。
-- **不定义 LTS**：部分运营商客户可能要求 LTS（如 3–5 年支持），当前策略不满足。如未来需要，须新增 ADR 并评估维护成本。
-- **EOL 后无安全补丁**：对于安全敏感客户，EOL 后无补丁可能不可接受。须在售前阶段明确沟通。
+- **Increased maintenance cost**: a 12-month support period means each minor version must be maintained (bug-fix and security-patch branches) for at least 12 months after release. For a small team, this may increase the maintenance burden.
+- **No LTS defined**: some carrier customers may require LTS (e.g. 3–5 years of support); the current policy does not satisfy this. If needed in the future, a new ADR must be added and maintenance costs evaluated.
+- **No security patches after EOL**: for security-sensitive customers, no patches after EOL may be unacceptable. This must be communicated clearly during the pre-sales stage.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 定义 LTS 版本（3–5 年支持） | 当前团队规模与维护成本不支持 LTS。如未来运营商客户明确要求，须新增 ADR 评估成本分摊 |
-| 支持周期 6 个月 | 6 个月对运营商客户过短，无法通过采购评审。行业惯例为 12–24 个月 |
-| EOL 后继续提供安全补丁 | 维护成本过高，且与"不支持 LTS"策略矛盾。EOL 即停止所有支持 |
+| Define LTS version (3–5 year support) | Current team size and maintenance cost do not support LTS. If a future carrier customer explicitly requires it, a new ADR must be added to evaluate cost sharing |
+| 6-month support period | 6 months is too short for carrier customers and cannot pass procurement review. Industry practice is 12–24 months |
+| Continue providing security patches after EOL | Maintenance cost is too high and contradicts the "no LTS" policy. EOL means all support stops |
 
-## Evidence（证据）
+## Evidence
 
-- `docs/product-packaging-plan.md` §3.5 明确"版本生命周期与 EOL 策略"为第三批交付物，需新增 requirement + ADR
-- `docs/reviews/product-packaging-plan-review-2026-10-09.md` G-P1-4 / G-P1-9 指出 ADR-0018 仅覆盖版本号语义，生命周期/EOL 是新增决策
-- 香港电信运营商采购评审通常要求版本生命周期承诺（行业惯例）。
+- `docs/product-packaging-plan.md` §3.5 explicitly lists "version lifecycle and EOL policy" as a third-batch deliverable, requiring a new requirement + ADR.
+- `docs/reviews/product-packaging-plan-review-2026-10-09.md` G-P1-4 / G-P1-9 points out that ADR-0018 only covers version-number semantics; lifecycle/EOL is a new decision.
+- Hong Kong telecom operator procurement reviews typically require a version-lifecycle commitment (industry practice).
 
-## Related（相关）
+## Related
 
-- [ADR-0018](0018-release-versioning.md) 统一产品 release 版本 + 组件接口独立版本
-- [`../新系统整体架构.md`](../新系统整体架构.md) §11.3 开发模式 —— 版本治理节
-- [`docs/product-packaging-plan.md`](../../product-packaging-plan.md) §3.5 版本生命周期与 EOL 策略
+- [ADR-0018](0018-release-versioning.md) unified product release version + independent component interface versions
+- [`../system-architecture.md`](../system-architecture.md) §11.3 development model —— version-governance section
+- [`docs/product-packaging-plan.md`](../../product-packaging-plan.md) §3.5 version lifecycle and EOL policy

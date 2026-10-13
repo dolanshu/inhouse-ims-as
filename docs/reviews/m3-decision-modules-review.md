@@ -12,49 +12,49 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M3 决策模块评审记录（translation / anti-fraud）
+# M3 Decision Module Review Record (translation / anti-fraud)
 
-> 评审对象：`apps/translation/src/as_translation/decision.py` 与其测试；`apps/anti-fraud/src/as_anti_fraud/decision.py` 与其测试
-> 评审日期：2026-09-28
-> 评审人：AI agent（实跑门禁 + 对照 AGENT.md §4/§5、ADR-0002/0016、基线事实）
-> 评审结论：**通过** —— 两模块均建立于内核之上；1 项结构偏差已确认可接受
+> Review object: `apps/translation/src/as_translation/decision.py` and its tests; `apps/anti-fraud/src/as_anti_fraud/decision.py` and its tests
+> Review date: 2026-09-28
+> Reviewer: AI agent (actually ran the gate + cross-checked AGENT.md §4/§5, ADR-0002/0016, baseline facts)
+> Review verdict: **pass** — both modules are built on top of the kernel; 1 structural deviation is confirmed acceptable
 
-## 门禁证据
+## Gate evidence
 
-| 项 | 结果 |
+| Item | Result |
 |---|---|
 | `uv run ruff format --check .` | 111 files already formatted |
 | `uv run ruff check .` | All checks passed! |
 | `uv run mypy` | Success: no issues found in 25 source files |
 | `uv run pytest -m "unit or contract" -q` | 169 passed, 2 skipped |
-| TDD | 两模块均先红（`ModuleNotFoundError`）后绿 |
+| TDD | Both modules went red first (`ModuleNotFoundError`), then green |
 
-## 评审发现
+## Review findings
 
-| # | 发现 | 裁决 |
+| # | Finding | Adjudication |
 |---|---|---|
-| M1 | 两模块的判决都以内核 `decide()` 为唯一入口，只在内核判决之上叠加用例语义 | 接受：M2 门禁"能在其上构建用例而不碰 sippy"得到实证，且未重复实现匹配/优先级 |
-| M2 | translation 的 `+8613800138000 → 013800138000` 断言来自已抓取基线 S1 与规则 R-MOB-CM-40，不是臆造 | 接受：把派生基线的事实固化成用例层断言 |
-| M3 | anti-fraud 用独立 `RATE_LIMIT` reason，与内核 `MATCH_BLOCK` 区分；且明确不改写号码（翻译属 translation 用例） | 接受：用例职责不互相侵入 |
-| M4 | 速率窗口的计数由调用方注入（`Mapping[str, int]`），模块内不读时钟、不开 socket | 接受：保持决策模块纯函数（AGENT.md §5）；窗口语义由 StateStore 承担（ADR-0002） |
-| M5 | 超限判定用 `>=` 而非 `>`，并在 docstring 解释 | 接受：边界语义正确（用 `>` 会多放行一次） |
-| M6 | anti-fraud 在 `FORWARD` / `TRANSLATE` 之后才做速率筛查 | 接受：先被内核拒的呼叫不应消耗窗口，否则可被利用来耗尽窗口 |
-| M7 | 两个成员下同名 `test_decision.py` 导致 pytest 收集冲突，解决方式是给 `apps/anti-fraud/tests/` 加 `__init__.py` | 接受：不改根 `pyproject.toml` 的导入模式、不动其他成员的前提下代价最小；**遗留**：建议后续统一为 `importmode = "importlib"` 或在成员内改用不同测试文件名 |
-| M8 | 均未跨 app 导入（无 `as_translation` ↔ `as_anti_fraud`），无 `# type: ignore` / `# noqa` | 接受（AGENT.md §4） |
+| M1 | The verdicts of both modules use the kernel `decide()` as their only entry point, layering use-case semantics only on top of the kernel verdict | Accepted: the M2 gate claim "use cases can be built on top of it without touching sippy" is empirically substantiated, and matching/priority is not re-implemented |
+| M2 | The translation assertion `+8613800138000 → 013800138000` comes from the already-captured baseline S1 and rule R-MOB-CM-40, not from invention | Accepted: it freezes a fact derived from the baseline into a use-case-layer assertion |
+| M3 | anti-fraud uses an independent `RATE_LIMIT` reason, distinct from the kernel `MATCH_BLOCK`; and it explicitly does not rewrite the number (translation belongs to the translation use case) | Accepted: use-case responsibilities do not encroach on each other |
+| M4 | The rate-window counter is injected by the caller (`Mapping[str, int]`); the module does not read the clock and opens no socket | Accepted: keeps the decision module a pure function (AGENT.md §5); window semantics are carried by StateStore (ADR-0002) |
+| M5 | The over-limit determination uses `>=` rather than `>`, and this is explained in the docstring | Accepted: the boundary semantics are correct (using `>` would let one extra call through) |
+| M6 | anti-fraud performs rate screening only after `FORWARD` / `TRANSLATE` | Accepted: calls already rejected by the kernel should not consume window budget, otherwise the window could be exhausted by abuse |
+| M7 | Two members have same-named `test_decision.py`, causing a pytest collection conflict; the fix was to add `__init__.py` to `apps/anti-fraud/tests/` | Accepted: lowest cost without changing the root `pyproject.toml` import mode and without touching other members; **leftover**: it is recommended to later standardize on `importmode = "importlib"`, or use distinct test filenames inside each member |
+| M8 | Neither imports across apps (no `as_translation` ↔ `as_anti_fraud`), and there is no `# type: ignore` / `# noqa` | Accepted (AGENT.md §4) |
 
-## 缺口（不阻塞）
+## Gaps (non-blocking)
 
-| # | 缺口 | 去向 |
+| # | Gap | Destination |
 |---|---|---|
-| M9 | 计数器如何写入/读取 StateStore（窗口滑动、TTL、脑裂幂等）尚未接线 | M3 后续（接线层），依赖未决 D3 |
-| M10 | 两用例尚无 `contract` 层重放（契约用例集对两者重放是 M3 门禁） | M3 收尾 |
-| M11 | 无 `integration` / `e2e` 层用例 | 首个该层用例的里程碑，并把层②③ 改阻塞 |
+| M9 | How the counter is written to / read from StateStore (window sliding, TTL, split-brain idempotency) is not wired up yet | Later M3 work (the wiring layer), depends on the undecided D3 |
+| M10 | Neither use case yet has a `contract`-layer replay (replaying the contract case set against both is an M3 gate) | M3 wrap-up |
+| M11 | No `integration` / `e2e` layer use cases | The milestone with the first use case in that layer, which switches layers ②③ to blocking |
 
-## 确认签字
+## Confirmation sign-off
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 评审结论 | 通过 |
-| 门禁 | 全绿（169 passed / 2 skipped） |
-| 评审人 | AI agent，2026-09-28 |
-| 维护者签字 | 待填 |
+| Review verdict | Pass |
+| Gate | Fully green (169 passed / 2 skipped) |
+| Reviewer | AI agent, 2026-09-28 |
+| Maintainer signature | To be filled in |

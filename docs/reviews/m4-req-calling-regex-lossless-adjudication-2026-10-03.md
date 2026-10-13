@@ -33,7 +33,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | 1 Rule CRUD (F-12) | **Runnable** for **called + prefix** on dev HTTPS; not blocked by calling/regex |
 | 2 Approval (F-14) | Runnable |
 | 3 Trace (F-13) | **BLOCKED** (7.4 deferred) |
-| 4 Distribution (F-15) | **PARTIAL** (API + fleet UI; full browser distribution / AS load 补测) |
+| 4 Distribution (F-15) | **PARTIAL** (API + fleet UI; full browser distribution / AS load supplementary re-test) |
 | 5 Audit (S-4) | Runnable in scope of 1–2 |
 | 7.2d production preflight | **BLOCKED** (M5) |
 

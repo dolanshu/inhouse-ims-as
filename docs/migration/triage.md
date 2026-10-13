@@ -41,7 +41,7 @@ A file with no verdict is not migrated. A verdict without evidence is not a verd
 
 ## 3. Inventory and initial classification
 
-The scale is measured at triage time. **The classification column is an initial proposal**, derived from the POC's `AGENT.md`, its ADRs, and [`../architecture/新系统整体架构.md`](../architecture/新系统整体架构.md) — it is not a file-by-file review. Each row is confirmed or overturned in M1, which is precisely why M1 writes no product code.
+The scale is measured at triage time. **The classification column is an initial proposal**, derived from the POC's `AGENT.md`, its ADRs, and [`../architecture/system-architecture.md`](../architecture/system-architecture.md) — it is not a file-by-file review. Each row is confirmed or overturned in M1, which is precisely why M1 writes no product code.
 
 ### `as_platform/` → `platform/` (~4.2 kLOC)
 

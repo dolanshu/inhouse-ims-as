@@ -5,54 +5,54 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 执行记录：A6 执行口径 + B1–B6（2026-10-12）
+# Execution Record: A6 Execution Stance + B1–B6 (2026-10-12)
 
-> **状态：已执行，待维护者评审；不签收任何 REQ / 里程碑。**
-> 维护者 2026-10-12 指令：① A6「由谁改」＝ **(a) 写进 release 流程 / 脚本，自动同步**；
-> ② `kubeVersion` 最小值**由我反推并告知**；③ **B1–B5 执行，不需要授权，采纳建议**；
-> ④ **B6 评审项目单独落盘，并告知**。
+> **Status: executed, awaiting maintainer review; signs off no REQ / milestone.**
+> Maintainer instruction 2026-10-12: ① A6 "who changes it" = **(a) write it into the release process / script, auto-sync**;
+> ② the `kubeVersion` minimum is **derived by me and reported back**; ③ **B1–B5 executed, no authorization needed, adopt the recommendations**;
+> ④ **the B6 review items are landed separately and reported back**.
 >
-> 本文一律**追加**，不改写任何既有原文。
-> **未执行任何 git 写操作**（无 `commit` / `add` / `push` / `tag` / 建分支 / 改 remote）——
-> 注：工作区出现的 staged 状态非本轮所为，见 §8。
+> This document is **append-only** and rewrites no existing original text.
+> **No git write operation was performed** (no `commit` / `add` / `push` / `tag` / branch creation / remote change) ——
+> note: any staged state appearing in the working area was not caused by this round, see §8.
 >
-> **执行环境**：已登记环境 `dev-win03ib7niepf0`（host `WIN-03IB7NIEPF0`）。
+> **Execution environment**: registered environment `dev-win03ib7niepf0` (host `WIN-03IB7NIEPF0`).
 
 ---
 
-## 0. 结论速览
+## 0. Quick Conclusion Overview
 
-| 项 | 结果 |
+| Item | Result |
 |---|---|
-| **A6 · 由谁改** | ✅ 裁决 **(a) 自动同步**；实现为 `scripts/sync-chart-version.sh`（默认 `--check` 只读，`--apply` 才写）。**当前 `Chart.yaml` 仍未同步**（G4「当前不修改」继续有效） |
-| **A6 · `kubeVersion`** | ✅ **最小值 = `>=1.23.0-0`**（由 chart 实际 API 反推，见 §1.2）。**尚未写入 `Chart.yaml`** |
-| **B1** | ✅ 建议获采纳并落盘：**内部工程目标下限基线 = 本机 loopback 模型下 CPS 1280 无失败**；对外承诺值**不填**。**O1 取值仍未裁** |
-| **B2 / B3** | ⚠️ **性质更正**：取值**已裁**（G6 / G7），本次不涉及"裁决"。等的是**是否启动实现**（需 requirement → ADR → design → review）。**RPO / RTO 数值仍未裁** |
-| **B4** | ✅ **Python 3.12 spike 通过**：CPython 3.12.14 下依赖全装、native 扩展可编可加载、`make gate-native` exit 0。已**完整回滚**到 3.10 |
-| **B5** | ❌ **不可代签**。N2 九项是**维护者的书面裁决动作**，本文 §5 只整理待裁清单与正本位置 |
-| **B6** | ✅ 评审项目已单独落盘：[`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md)（16 份逐份 + 4 个通用维度 + 结论栏留空） |
+| **A6 · who changes it** | ✅ Adjudicated **(a) auto-sync**; implemented as `scripts/sync-chart-version.sh` (`--check` is read-only by default, only `--apply` writes). **`Chart.yaml` is still not synced** (G4 "no change for now" remains in effect) |
+| **A6 · `kubeVersion`** | ✅ **minimum = `>=1.23.0-0`** (derived backwards from the chart's actual APIs, see §1.2). **Not yet written into `Chart.yaml`** |
+| **B1** | ✅ Recommendation adopted and landed: **internal engineering lower-bound baseline = CPS 1280 with no failures on the local loopback model**; the external commitment value is **left unfilled**. **The O1 value is still not adjudicated** |
+| **B2 / B3** | ⚠️ **Nature correction**: the values **are already adjudicated** (G6 / G7), and this round does not involve "adjudication". What is being waited on is **whether to start implementation** (requires requirement → ADR → design → review). **The RPO / RTO numbers are still not adjudicated** |
+| **B4** | ✅ **Python 3.12 spike passed**: under CPython 3.12.14 all dependencies install, the native extension compiles and loads, `make gate-native` exit 0. **Fully rolled back** to 3.10 |
+| **B5** | ❌ **Cannot be delegated-signed**. The nine N2 items are a **written maintainer adjudication action**; §5 of this document only organizes the pending-adjudication list and the primary-document locations |
+| **B6** | ✅ Review items landed separately: [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) (16 files enumerated + 4 general dimensions + conclusion column left blank) |
 
 ---
 
-## 1. A6 执行口径
+## 1. A6 Execution Stance
 
-### 1.1 「由谁改」＝ (a) 自动同步
+### 1.1 "Who changes it" = (a) auto-sync
 
-实现：`scripts/sync-chart-version.sh`
+Implementation: `scripts/sync-chart-version.sh`
 
-| 模式 | 行为 |
+| Mode | Behaviour |
 |---|---|
-| `--check`（**默认**） | 只读：比较根 `VERSION` 与 `Chart.yaml` 的 `version` / `appVersion`，有差异则打印 DRIFT 并 **exit 1** |
-| `--apply` | 写入 `Chart.yaml`（仅改这两行，其余字节保留） |
+| `--check` (**default**) | read-only: compares the root `VERSION` against `version` / `appVersion` in `Chart.yaml`; on divergence prints DRIFT and **exits 1** |
+| `--apply` | writes `Chart.yaml` (only those two lines, all other bytes preserved) |
 
-**实测**：
+**Measured**:
 
 ```
 bash scripts/sync-chart-version.sh --check
@@ -61,285 +61,285 @@ bash scripts/sync-chart-version.sh --check
 → exit 1
 ```
 
-**当前状态：不同步**（根 `VERSION` = `0.2.0`，`Chart.yaml` = `0.0.0-skeleton` / `appVersion: "0.0.0"`）。
-脚本只提供能力，**未执行 `--apply`** —— 首次同步的时机与取值仍待维护者决定（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效）。
+**Current state: not synced** (root `VERSION` = `0.2.0`, `Chart.yaml` = `0.0.0-skeleton` / `appVersion: "0.0.0"`).
+The script only provides the capability; **`--apply` was not executed** — the timing and values of the first sync are still for the maintainer to decide (G4 "currently do not modify `VERSION` and `Chart.yaml`" remains in effect).
 
-### 1.2 `kubeVersion` 最小值 = `>=1.23.0-0`（反推明细）
+### 1.2 `kubeVersion` minimum = `>=1.23.0-0` (derivation detail)
 
-扫描 `deploy/helm/templates/` 实际用到的 API 与特性：
+Scan of the APIs and features actually used in `deploy/helm/templates/`:
 
-| apiVersion / 特性 | 出现的模板 | GA 于 |
+| apiVersion / feature | Template where it appears | GA in |
 |---|---|---|
 | `apps/v1` | Deployment / StatefulSet | 1.9 |
-| `networking.k8s.io/v1`（Ingress） | `config-service-ingress.yaml` | 1.19 |
-| `policy/v1`（PodDisruptionBudget） | `pdb.yaml` | 1.21 |
-| `batch/v1`（Job） | `state-migrate-job.yaml` | 1.21 |
-| **`autoscaling/v2`（HPA）** | `hpa.yaml` | **1.23** |
-| **`ttlSecondsAfterFinished`（Job TTL）** | `state-migrate-job.yaml` | **1.23** |
+| `networking.k8s.io/v1` (Ingress) | `config-service-ingress.yaml` | 1.19 |
+| `policy/v1` (PodDisruptionBudget) | `pdb.yaml` | 1.21 |
+| `batch/v1` (Job) | `state-migrate-job.yaml` | 1.21 |
+| **`autoscaling/v2` (HPA)** | `hpa.yaml` | **1.23** |
+| **`ttlSecondsAfterFinished` (Job TTL)** | `state-migrate-job.yaml` | **1.23** |
 
-**约束最大者为 1.23**（HPA v2 与 Job TTL 均于 1.23 GA）⇒ `kubeVersion: ">=1.23.0-0"`。
+**The binding constraint is 1.23** (both HPA v2 and Job TTL went GA in 1.23) ⇒ `kubeVersion: ">=1.23.0-0"`.
 
-已扫描确认**不存在**更高门槛的特性：`startupProbe`、`minReadySeconds`、`ephemeralContainers`、
-`topologySpreadConstraints`、`seccompProfile`、`appArmorProfile` 均为 0 处命中。
+A scan confirmed that **no** higher-barrier feature exists: `startupProbe`, `minReadySeconds`, `ephemeralContainers`,
+`topologySpreadConstraints`, `seccompProfile`, `appArmorProfile` all have 0 hits.
 
-**尚未写入 `Chart.yaml`** —— 写入属 chart 改动，与 G4「当前不修改 `Chart.yaml`」冲突，需维护者另行授权。
+**Not yet written into `Chart.yaml`** — writing it is a chart change and conflicts with G4 "currently do not modify `Chart.yaml`", so it needs separate maintainer authorization.
 
 ---
 
-## 2. B1 · O1 建议获采纳并落盘
+## 2. B1 · O1 Recommendation Adopted and Landed
 
-落盘位置：[`../plan.md`](../plan.md) §5.1 表下「O1 口径建议」段的**采纳与确认**子段。
+Landing location: the **adopted and confirmed** sub-section of the "O1 stance recommendation" paragraph under the §5.1 table in [`../plan.md`](../plan.md).
 
-| 层 | 本次落盘 |
+| Layer | Landed this round |
 |---|---|
-| **内部工程目标** | **下限基线 = 本机 loopback 模型下 CPS 1280 无失败**（峰值并发 19200、`unresolved_sessions` 30、零 error）。定性为「**已验证下限基线**」，不是目标值、不是承诺值 |
-| **对外承诺值** | **不填**，状态「待饱和点测量」 |
+| **Internal engineering target** | **lower-bound baseline = CPS 1280 with no failures on the local loopback model** (peak concurrency 19200, `unresolved_sessions` 30, zero errors). Qualitatively labelled a "**verified lower-bound baseline**", neither a target value nor a commitment value |
+| **External commitment value** | **left unfilled**, status "awaiting saturation-point measurement" |
 
-**边界**：B1 的**取值仍未裁决** —— `plan.md` §5.1 O1 行「维护者目标裁决仍 open」**继续成立**。
-本次落的是**下限基线**，回答「设计与回归按什么量级做」，**不回答**「容量目标是多少」。
-**未落任何容量取值 / HPA 阈值 / 容量类告警**；G5 裁决句继续有效。
+**Boundary**: B1's **value is still not adjudicated** — the "maintainer target adjudication still open" wording of the `plan.md` §5.1 O1 row **remains in effect**.
+What landed this round is the **lower-bound baseline**, which answers "at what magnitude should design and regression be done", and does **not** answer "what is the capacity target".
+**No capacity value / HPA threshold / capacity-class alert was landed**; the G5 adjudication sentence remains in effect.
 
 ---
 
-## 3. B2 / B3 · 性质更正（不是"等裁决"，是"等实现授权"）
+## 3. B2 / B3 · Nature Correction (not "waiting for adjudication", but "waiting for implementation authorization")
 
-**更正我上一轮的说法**：我把 B2 / B3 归进「Lane B 六项全等你」，容易被读成"等裁决"。
-实际上这两项的**取值早已裁决完毕**：
+**Correcting what I said last round**: I grouped B2 / B3 into "all six Lane B items await you", which is easily read as "awaiting adjudication".
+In fact the **values of these two items were adjudicated long ago**:
 
-| 项 | 裁决内容 | 出处 | 真正的状态 |
+| Item | Adjudicated content | Source | True status |
 |---|---|---|---|
-| **B2** | O4＝默认 10 天、部署可配；D5＝in-cluster PostgreSQL | §0-A.6 **G6 / B2 + D5** | **已裁**；轨迹存储 / 查询 / 删除**实现未落** |
-| **B3** | O5＝站点内 N+1 + 跨站 1+1 warm standby；D3＝Redis primary/replica + Sentinel | §0-A.6 **G7 / B3 + D3** | **已裁**；Redis Sentinel**实现未落**；**RPO / RTO 数值仍未裁** |
+| **B2** | O4 = default 10 days, deployment-configurable; D5 = in-cluster PostgreSQL | §0-A.6 **G6 / B2 + D5** | **adjudicated**; trace storage / query / delete **not implemented** |
+| **B3** | O5 = in-site N+1 + cross-site 1+1 warm standby; D3 = Redis primary/replica + Sentinel | §0-A.6 **G7 / B3 + D3** | **adjudicated**; Redis Sentinel **not implemented**; **RPO / RTO numbers still not adjudicated** |
 
-因此 B2 / B3 剩下的是**实现工作**，属需求级，按 `AGENT.md` §3 须走
-**requirement → ADR → HLD/LLD → 契约 → 代码+测试 → 验收项 + review record**，
-**不是一次"执行"指令就能开跑的**。
+What remains for B2 / B3 is therefore **implementation work**, which is requirement-level and per `AGENT.md` §3 must go through
+**requirement → ADR → HLD/LLD → contract → code + tests → acceptance items + review record**,
+and is **not something a single "execute" instruction can start**.
 
-**我能立刻做的**：起草 requirement / ADR 草案供你确认。要的话说一声。
+**What I can do immediately**: draft requirement / ADR drafts for you to confirm. Say the word.
 
 ---
 
-## 4. B4 · Python 3.12 spike（结论：**可行**，已回滚）
+## 4. B4 · Python 3.12 Spike (Conclusion: **feasible**, rolled back)
 
-### 4.1 前置事实（先说清楚 pin 的实际规模）
+### 4.1 Precondition facts (first, the actual scale of the pins)
 
-`requires-python = ">=3.10,<3.11"` 共 **7 处**（不是先前文档里写的 5 处）：
-`platform`、`services/config-service`、`services/console`、`apps/translation`、`apps/anti-fraud`、
-`testbed/load`、`testbed/simulators`。
+`requires-python = ">=3.10,<3.11"` appears in **7 places** (not 5 as earlier documents stated):
+`platform`, `services/config-service`, `services/console`, `apps/translation`, `apps/anti-fraud`,
+`testbed/load`, `testbed/simulators`.
 
-运行时依赖只有 5 个主流包：`fastapi>=0.115`、`httpx>=0.27`、`psycopg[binary]>=3.1`、`redis>=5.0`、`uvicorn>=0.30`。
+The runtime dependencies are only 5 mainstream packages: `fastapi>=0.115`, `httpx>=0.27`, `psycopg[binary]>=3.1`, `redis>=5.0`, `uvicorn>=0.30`.
 
-### 4.2 依赖层（隔离 venv，未改仓库）
+### 4.2 Dependency layer (isolated venv, repo unchanged)
 
 ```
 uv venv --python 3.12 /tmp/spike312/venv        → exit 0
 uv pip install --python .../python fastapi httpx "psycopg[binary]" redis uvicorn → exit 0
 ```
-装成：`psycopg 3.3.6`、`redis 8.1.0`、`uvicorn 0.54.0`、`starlette 1.7.0`、`pydantic 2.14.1` 等。**依赖层无阻塞。**
+Installed: `psycopg 3.3.6`, `redis 8.1.0`, `uvicorn 0.54.0`, `starlette 1.7.0`, `pydantic 2.14.1`, etc. **The dependency layer is not blocked.**
 
-### 4.3 完整 spike（改 pin → 重锁 → 重编 native → 跑门禁）
+### 4.3 Full spike (change pins → re-lock → rebuild native → run the gate)
 
-**第一次尝试失败，原因是我命令写错，不是 3.12 的问题**（如实记录）：
+**The first attempt failed; the reason was a wrong command of mine, not a 3.12 problem** (recorded faithfully):
 
 ```
-uv sync --python 3.12        → OK，扩展编成 _resip_runtime.cpython-312-...so
-make gate-native             → GATE=2（7 failed, 1092 passed）
+uv sync --python 3.12        → OK, the extension compiled to _resip_runtime.cpython-312-...so
+make gate-native             → GATE=2 (7 failed, 1092 passed)
 ```
 
-失败全部集中在两个 E1 真栈契约文件，根因是 `load_resip_runtime_extension()` 返回 `None`。
-**真正原因**：`make gate` 内部的 `uv run` 会重新解析解释器，此时 `--python 3.12` 已不生效，
-它把环境切回了 **CPython 3.10.12**（日志：`Using CPython 3.10.12 interpreter at: /usr/bin/python3.10`），
-于是 3.10 的 `EXTENSION_SUFFIXES` 找不到 `cpython-312` 的 `.so`。
+All failures were concentrated in the two E1 real-stack contract files; the root cause is that `load_resip_runtime_extension()` returns `None`.
+**The real cause**: the `uv run` inside `make gate` re-resolves the interpreter, at which point `--python 3.12` no longer applies,
+and it switched the environment back to **CPython 3.10.12** (log: `Using CPython 3.10.12 interpreter at: /usr/bin/python3.10`),
+so 3.10's `EXTENSION_SUFFIXES` could not find the `cpython-312` `.so`.
 
-**修正后（用 `UV_PYTHON=3.12` 贯穿到 `uv run`）**：
+**After the fix (using `UV_PYTHON=3.12` all the way through to `uv run`)**:
 
 ```
 UV_PYTHON=3.12 uv sync                  → SYNC2=0
-UV_PYTHON=3.12 make m2-platform-resip-build → EXT2=0（_resip_runtime.cpython-312-x86_64-linux-gnu.so）
+UV_PYTHON=3.12 make m2-platform-resip-build → EXT2=0 (_resip_runtime.cpython-312-x86_64-linux-gnu.so)
 UV_PYTHON=3.12 make gate-native         → GATE2=0
 → 1099 passed, 3 skipped, 214 deselected
 ```
 
-3 条 skip 的构成：2 条是既有的 `test_derived_baseline.py:245` / `:279`，
-另 1 条 `test_sip_recovery.py:69` 是因为**本次 spike 只编了 `_resip_runtime`**（未编 recovery / two_leg），
-**不是 3.12 的问题**。
+Composition of the 3 skips: 2 are the pre-existing `test_derived_baseline.py:245` / `:279`,
+and the third, `test_sip_recovery.py:69`, is because **this spike only compiled `_resip_runtime`** (recovery / two_leg were not compiled);
+it is **not a 3.12 problem**.
 
-### 4.4 结论
+### 4.4 Conclusion
 
-**Python 3.12 可行**：依赖可装、native 扩展可编可加载、真栈门禁全绿。
+**Python 3.12 is feasible**: dependencies install, the native extension compiles and loads, and the real-stack gate is all green.
 
-### 4.5 已完整回滚（必读）
+### 4.5 Fully Rolled Back (must read)
 
-spike 会改动 7 处 pin、`uv.lock`、`.venv` 与 native 产物，因此**做完立即回滚**：
+The spike changes 7 pins, `uv.lock`, `.venv` and the native artifacts, so it was **rolled back immediately after finishing**:
 
 ```
-还原 7 个 pyproject.toml + uv.lock（自 /tmp/spike-backup）
-uv sync（3.10）→ SYNC=0
-重编三个扩展   → EXT=0（_resip_runtime.cpython-310-...so 等）
-make gate-native → GATE=0，1100 passed / 2 skipped / 214 deselected
+restored 7 pyproject.toml + uv.lock (from /tmp/spike-backup)
+uv sync (3.10) → SYNC=0
+rebuilt three extensions → EXT=0 (_resip_runtime.cpython-310-...so etc.)
+make gate-native → GATE=0, 1100 passed / 2 skipped / 214 deselected
 ```
 
-**当前工作树：`git diff --name-only -- '*/pyproject.toml' uv.lock` → 0 处**（完全还原），
-门禁计数与 spike 前**逐字一致**。
+**Current work tree: `git diff --name-only -- '*/pyproject.toml' uv.lock` → 0 entries** (fully restored),
+and the gate counts are **verbatim identical** to those before the spike.
 
-**若要正式迁移 3.12，仍需**：requirement → ADR → review（`AGENT.md` §3），
-以及把 `UV_PYTHON` / `requires-python` 的口径在 CI 里固定下来 —— **本次不落**。
+**To migrate to 3.12 officially, still required**: requirement → ADR → review (`AGENT.md` §3),
+plus pinning down the `UV_PYTHON` / `requires-python` stance in CI — **not landed this round**.
 
 ---
 
-## 5. B5 · N2 九项（**不可代签**，本节只整理材料）
+## 5. B5 · N2 Nine Items (**cannot be delegated-signed**; this section only organizes the material)
 
-**为什么不能由我执行**：B5 的出口判据是「**维护者书面裁决**」，`2026-10-10` 评估文档 §4 B5 明写
-「**谁做：维护者（裁决与授权）+ agent（执行）**」。N2 的每一行都是一次**签字**，
-我代签等于伪造维护者裁决。
+**Why I cannot execute this**: the exit criterion of B5 is "**written maintainer adjudication**"; §4 B5 of the `2026-10-10` assessment document states verbatim
+"**who does it: maintainer (adjudication and authorization) + agent (execution)**". Every row of N2 is a **signature**,
+and my signing on their behalf would amount to forging a maintainer adjudication.
 
-**待裁清单**（正本与须同步处逐字录自
-[`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md) §N2）：
+**Pending-adjudication list** (primary documents and required sync points transcribed verbatim from
+[`2026-10-07-m8-next-step-plan.md`](2026-10-07-m8-next-step-plan.md) §N2):
 
-| # | 要签署的结论 | 正本 | 须同步 |
+| # | Conclusion to be signed | Primary document | Required sync |
 |---|---|---|---|
-| 1 | 进入 M8 的授权补记（2026-10-06 已发生） | RC 计划 §10 | — |
-| 2 | B-1 最小 M5.1；B-2 维持 2026-10-04 工程关门并降级为非 REQ 验收；B-3 故事 C 保持 L1 | `m5-req-acceptance-review-2026-10-06.md` | — |
-| 3 | F8 接受「字段契约已落地」；C++ JSON 回调留在 RC 后 | `m8-phase-a-f6-f8-note-2026-10-06.md` §5 | `callload-remediation-adjudication` |
-| 4 | F6 接受 **documented limitation**（长连接无 dialog 终止时只靠 2048 指纹 LRU 与 4096 连接上限） | 同上 §5 | adjudication F6 行；**结论不是「已修复」** |
-| 5 | D6 testbed 客户验收放 **v1.1** | `m8-environment-evidence.md` D-3 | 矩阵 `D6-testbed验收` 改 n-a；RC 计划 §10 |
-| 6 | NF-3 标 **n-a** | `m8-test-plan-matrix.md` | — |
-| 7 | 确认四项排除：主叫/正则、PM/AM/UM、D1、D10 极端扩展 | 矩阵对应 n-a 行 `signed_by` | D1 备注写为已接受风险，或另立迁移项 |
-| 8 | M5D-1…M5D-6 **移出 v1** | `plan.md` §5 新行（**维护者写**） | M5 REQ 复评会签栏；不落这 6 行，M5 REQ 维持不通过 |
-| 9 | M1 / M2 / M6 / M7 签 **工程完成** | `m1-exit-review.md` 等 | `m8-exit-review` |
+| 1 | Authorization addendum for entering M8 (already happened on 2026-10-06) | RC plan §10 | — |
+| 2 | B-1 minimal M5.1; B-2 keep the 2026-10-04 engineering gate and downgrade to non-REQ acceptance; B-3 keep story C at L1 | `m5-req-acceptance-review-2026-10-06.md` | — |
+| 3 | F8 accepts "the field contract has landed"; the C++ JSON callback stays after RC | `m8-phase-a-f6-f8-note-2026-10-06.md` §5 | `callload-remediation-adjudication` |
+| 4 | F6 accepts a **documented limitation** (for long-lived connections with no dialog termination, only the 2048-fingerprint LRU and the 4096 connection cap apply) | same §5 | adjudication F6 row; **the conclusion is not "already fixed"** |
+| 5 | D6 testbed customer acceptance deferred to **v1.1** | `m8-environment-evidence.md` D-3 | matrix `D6-testbed验收` changed to n-a; RC plan §10 |
+| 6 | NF-3 marked **n-a** | `m8-test-plan-matrix.md` | — |
+| 7 | Confirm the four exclusions: caller/regex, PM/AM/UM, D1, D10 extreme extensions | the `signed_by` cells of the corresponding n-a matrix rows | record D1's note as accepted risk, or raise a separate migration item |
+| 8 | M5D-1…M5D-6 **moved out of v1** | new row in `plan.md` §5 (**written by the maintainer**) | M5 REQ re-evaluation co-sign column; without landing these 6 rows, M5 REQ stays not passing |
+| 9 | M1 / M2 / M6 / M7 signed as **engineering complete** | `m1-exit-review.md` etc. | `m8-exit-review` |
 
-**注**：N2 完成后 **M5 REQ 级仍是不通过**、M8 仍是「RC 就绪、待退出签字」（原文 §N2 末句）。
-
----
-
-## 6. B6 · 评审项目已单独落盘
-
-文件：[`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md)
-
-- **16 份的计数口径已对齐**：`docs/product/` 6 份 + `docs/operations/` 7 份（含其 `README.md`）+ `docs/delivery/` 3 份（含其 `README.md`）= **16**
-- 附带资产单列（2 份 Grafana JSON、看板 README、`preflight.sh`、`scripts/` 3 个文件）
-- 每份都过 **4 个通用维度**：D-1 事实准确性 / D-2 与已裁决口径一致 / D-3 对外可用性 / D-4 follow-up
-- **16 份逐份列出已知需重点核对的点**（如 `ne-datasheet.md` 的容量取值必须仍为空、`security-privacy.md` 的 chart 无备份 Job 事实未变、`version-lifecycle.md` §7 与 Lane D 的 4.3 是同一件事）
-- **结论栏一律留空** —— 我没有评审、没有签收
+**Note**: after N2 completes, **M5 at REQ level is still not passing**, and M8 remains "RC-ready, awaiting exit signature" (last sentence of the original §N2).
 
 ---
 
-## 7. 本轮改动的文件
+## 6. B6 · Review Items Landed Separately
 
-| 文件 | 性质 |
+File: [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md)
+
+- **The counting stance of the 16 files is aligned**: 6 in `docs/product/` + 7 in `docs/operations/` (including their `README.md`) + 3 in `docs/delivery/` (including its `README.md`) = **16**
+- Attached assets listed separately (2 Grafana JSON files, dashboard README, `preflight.sh`, 3 files in `scripts/`)
+- Every file goes through **4 general dimensions**: D-1 factual accuracy / D-2 consistency with adjudicated stances / D-3 external usability / D-4 follow-up
+- **The 16 files each enumerate the known points requiring focused checking** (e.g. the capacity value in `ne-datasheet.md` must still be empty, the fact that the chart has no backup Job in `security-privacy.md` is unchanged, `version-lifecycle.md` §7 and Lane D 4.3 are the same thing)
+- **The conclusion column is left blank throughout** — I did not review anything and signed off nothing
+
+---
+
+## 7. Files Changed This Round
+
+| File | Nature |
 |---|---|
-| `scripts/sync-chart-version.sh` | **新建**（A6 自动同步，默认只读校验） |
-| `docs/reviews/product-packaging-review-checklist-2026-10-12.md` | **新建**（B6 评审载体） |
-| `docs/handoff/2026-10-12-a6-b-packaging-execution.md` | **新建**（本文） |
-| `docs/plan.md` | 追加：§0 决策表 A6 行；§5.1「采纳与确认」段 |
-| 7 个 `pyproject.toml` + `uv.lock` | **改后已完整还原，当前零 diff**（B4 spike 的临时改动） |
+| `scripts/sync-chart-version.sh` | **newly created** (A6 auto-sync, read-only check by default) |
+| `docs/reviews/product-packaging-review-checklist-2026-10-12.md` | **newly created** (B6 review carrier) |
+| `docs/handoff/2026-10-12-a6-b-packaging-execution.md` | **newly created** (this document) |
+| `docs/plan.md` | append: §0 decision table A6 row; §5.1 "adopted and confirmed" paragraph |
+| 7 `pyproject.toml` + `uv.lock` | **changed and then fully restored, currently zero diff** (temporary changes from the B4 spike) |
 
 ---
 
-## 8. 两点如实说明
+## 8. Two Faithful Statements
 
-1. **未执行任何 git 写操作**。工作区若出现 staged（`M ` / `A `）状态，非本轮所为
-   （本轮只做文件读写、make / uv / docker 命令），**也没有 commit / push / tag / 建分支**。
-2. **B5 我没有代签**，B2 / B3 我没有开工。前者是维护者的签字动作，后者需 requirement → ADR 流程；
-   把这两类说成"已执行"会制造假证据，故如实列为未完成。
-
----
-
-**落盘日期：2026-10-12。状态：已执行，待维护者评审。**
-不签收任何 REQ / 里程碑，不构成外部验收通过；外部 IOT 与真实环境采证 hold 继续有效。
+1. **No git write operation was performed.** If the working area shows staged (`M ` / `A `) state, it was not caused by this round
+   (this round only did file reads/writes and make / uv / docker commands), and there was also **no commit / push / tag / branch creation**.
+2. **I did not delegate-sign B5**, and I did not start B2 / B3. The former is the maintainer's signing action, the latter requires the requirement → ADR process;
+   describing either of these as "executed" would create false evidence, so they are listed as not completed.
 
 ---
 
-## 9. 同日追加更正（2026-10-12 晚些时候；§5 / §6 / §8 原文保留，此处只追加）
-
-### 9.1 B5 已代签 —— §5「不可代签」的表述已被维护者授权推翻
-
-§5 写的是「B5 不可代签，本节只整理材料」。**维护者 2026-10-12 明确授权 agent 代签**，
-因此该处置已变更：
-
-- **已执行代签**，九项逐项落正本并附依据（无一项凭空签）。
-- 代签总记录：[`2026-10-12-m8-n2-countersign-record.md`](2026-10-12-m8-n2-countersign-record.md)（含九项逐项落点、依据、五条不得推出的结论）。
-- 同步落盘：`m8-test-plan-matrix.md`、`m8-phase-a-f6-f8-note-2026-10-06.md`、
-  `m5-req-acceptance-review-2026-10-06.md`、`callload-remediation-adjudication-2026-10-05.md`、
-  `m8-environment-evidence.md`、`2026-10-06-m8-release-candidate-plan.md`、
-  `m8-exit-review-2026-10-06.md`，以及 `docs/plan.md` §5.2-bis（M5D-1…M5D-6 六行）与 §0 决策表。
-- **各正本签字一律写「agent 代签（维护者 2026-10-12 授权）」**，不伪装成亲签。
-- **N3 未执行**（「哪些 open 行可签」本身是判断，需维护者参与）；RC 计划 §10 的
-  「阶段 A 完成」「M8 退出签字」两栏**未填**。
-
-### 9.2 B6 的更正 —— 结论栏并非我填写，是并行写入
-
-§6 与 §0 速览写「结论栏一律留空 —— 我没有评审、没有签收」。**该表述只对我建文件的那一刻为真。**
-
-**发现的事实**：本轮工作过程中，`product-packaging-review-checklist-2026-10-12.md` 被**另一个 agent 写入**
-（§3 标题改为「结论栏已于 2026-10-12 由 agent 填写」、新增 §6「评审记录」、16 份全部填「需修改」），
-`docs/product-packaging-plan.md` §5 亦被改动，评估文档 §4 B6 段也被追加了对应的状态行。
-
-**我没有做这些写入，也没有评审任何一份文档。** 因此：
-
-- §6 中「结论栏一律留空」**仅描述我建文件时的状态**，不再描述当前状态；
-- 那份评审的**结论与质量我未复核**，是否可信、是否采纳，**由维护者判断**；
-- 本次如实记录，**不删除、不改写对方的写入**（保史；且非我所写）。
-
-### 9.3 一条必须报告的流程问题
-
-本次发现**同一工作树上有两个 writing member 同时写入**
-（本 agent + 填写 B6 结论栏的另一个 agent），这违反了本项目
-「一个工作树同时只能有一个 writing member」的既定约束
-（该约束记录在 `.codebuddy/rules/hard-rules.md`）。本次**未造成冲突性覆盖**
-（双方改动落在不同段落），但属于流程风险，特此报告，由维护者决定如何处置。
+**Landed: 2026-10-12. Status: executed, awaiting maintainer review.**
+Signs off no REQ / milestone, constitutes no external acceptance pass; the hold on external IOT and real-environment evidence collection remains in effect.
 
 ---
 
-## 10. 本轮最终状态
+## 9. Same-Day Additional Correction (later on 2026-10-12; original text of §5 / §6 / §8 retained, only appended here)
 
-| 项 | 状态 |
+### 9.1 B5 Has Been Delegated-Signed — the "cannot be delegated-signed" wording of §5 has been overturned by maintainer authorization
+
+§5 states "B5 cannot be delegated-signed, this section only organizes the material". **The maintainer explicitly authorized the agent to sign on their behalf on 2026-10-12**,
+so the handling has changed:
+
+- **The delegated signature has been executed**, with all nine items landed item by item into their primary documents together with the basis (no item was signed out of thin air).
+- Delegated-signature master record: [`2026-10-12-m8-n2-countersign-record.md`](2026-10-12-m8-n2-countersign-record.md) (containing the per-item landing points, the basis, and the five conclusions that must not be drawn).
+- Synced and landed: `m8-test-plan-matrix.md`, `m8-phase-a-f6-f8-note-2026-10-06.md`,
+  `m5-req-acceptance-review-2026-10-06.md`, `callload-remediation-adjudication-2026-10-05.md`,
+  `m8-environment-evidence.md`, `2026-10-06-m8-release-candidate-plan.md`,
+  `m8-exit-review-2026-10-06.md`, plus `docs/plan.md` §5.2-bis (the six rows M5D-1…M5D-6) and the §0 decision table.
+- **Every primary-document signature reads "agent delegated signature (authorized by the maintainer on 2026-10-12)"**, never disguised as a personal signature.
+- **N3 was not executed** (which "open rows can be signed" is itself a judgement and needs maintainer involvement); the
+  "Phase A complete" and "M8 exit signature" columns of RC plan §10 are **left blank**.
+
+### 9.2 Correction to B6 — the conclusion column was not filled in by me; it was written in parallel
+
+§6 and the §0 overview state "the conclusion column is left blank throughout — I did not review anything and signed off nothing". **That statement was true only for the moment I created the file.**
+
+**Fact discovered**: during this round's work, `product-packaging-review-checklist-2026-10-12.md` was **written by another agent**
+(its §3 heading was changed to "the conclusion column was filled in by the agent on 2026-10-12", a new §6 "Review record" was added, and all 16 files were filled with "needs modification"),
+`docs/product-packaging-plan.md` §5 was also modified, and the corresponding status line was appended to §4 B6 of the assessment document.
+
+**I did not make these writes and did not review any document.** Therefore:
+
+- "the conclusion column is left blank throughout" in §6 **only describes the state when I created the file** and no longer describes the current state;
+- I have **not re-checked** the conclusions or quality of that review; whether it is trustworthy and whether it is adopted are for the **maintainer to judge**;
+- this record is faithful and **nothing of the other party's writes is deleted or rewritten** (preserving history; and not written by me).
+
+### 9.3 A process problem that must be reported
+
+This round discovered that **two writing members were writing into the same work tree simultaneously**
+(this agent + the other agent that filled in the B6 conclusion column), which violates this project's
+established constraint that "only one writing member may operate in a work tree at a time"
+(that constraint is recorded in `.codebuddy/rules/hard-rules.md`). This time **no conflicting overwrite was caused**
+(the two sets of changes landed in different paragraphs), but it is a process risk and is reported here for the maintainer to decide how to handle.
+
+---
+
+## 10. Final Status of This Round
+
+| Item | Status |
 |---|---|
-| A6 由谁改 | ✅ (a) 自动同步，脚本 `scripts/sync-chart-version.sh`（默认只读校验）；**当前仍未同步** |
-| A6 `kubeVersion` | ✅ 反推得 `>=1.23.0-0`；**尚未写入 Chart.yaml** |
-| B1 | ✅ 建议采纳并落盘（内部工程目标下限基线）；**O1 取值仍未裁** |
-| B2 / B3 | ✅ 已单独留 item，本轮不启动（载体 `2026-10-12-b2-b3-deferred-items.md`） |
-| B4 | ✅ spike 通过并**已完整回滚**；正式迁移未启动 |
-| B5 | ✅ **已代签**（N2 九项），N3 未执行 |
-| B6 | ⚠️ 评审项目已落盘；**结论栏由并行 agent 填写，我未复核** |
+| A6 who changes it | ✅ (a) auto-sync, script `scripts/sync-chart-version.sh` (read-only check by default); **still not synced** |
+| A6 `kubeVersion` | ✅ derived as `>=1.23.0-0`; **not yet written into Chart.yaml** |
+| B1 | ✅ recommendation adopted and landed (internal engineering target lower-bound baseline); **the O1 value is still not adjudicated** |
+| B2 / B3 | ✅ kept as separate items, not started this round (carrier `2026-10-12-b2-b3-deferred-items.md`) |
+| B4 | ✅ spike passed and **fully rolled back**; the official migration was not started |
+| B5 | ✅ **delegated-signed** (the nine N2 items), N3 not executed |
+| B6 | ⚠️ review items landed; **the conclusion column was filled in by a parallel agent and I did not re-check it** |
 
-**最终门禁**：`make gate` 与 `make gate-native` 均 exit 0（**1100 passed / 2 skipped / 214 deselected**）；
-`uv run pytest -m e2e -q` → **8 passed**；根守卫 `uv run pytest tests/ -q` → **131 passed**；
-`uv run ruff check .` → `All checks passed!`；
-`git diff --name-only -- '*/pyproject.toml' uv.lock` → **0 处**（B4 spike 已完整还原）。
+**Final gate**: both `make gate` and `make gate-native` exit 0 (**1100 passed / 2 skipped / 214 deselected**);
+`uv run pytest -m e2e -q` → **8 passed**; root guard `uv run pytest tests/ -q` → **131 passed**;
+`uv run ruff check .` → `All checks passed!`;
+`git diff --name-only -- '*/pyproject.toml' uv.lock` → **0 entries** (the B4 spike has been fully restored).
 
 ---
 
-## 11. B6 移交说明（2026-10-12 追加）
+## 11. B6 Handover Note (added 2026-10-12)
 
-维护者 2026-10-12 明确：**B6 有其他人在做，本线不用管。**
+The maintainer stated explicitly on 2026-10-12: **someone else is doing B6, this line does not need to handle it.**
 
-据此，本 agent 对 B6 的后续动作**全部停止**：
+Accordingly, this agent has **stopped all** follow-up actions on B6:
 
-- **不再评审、不再填写、不再复核** `product-packaging-review-checklist-2026-10-12.md` 的任何内容；
-- §6 与 §0 速览中「结论栏一律留空」的表述**仅对我建文件那一刻为真**，此后该文件的改动
-  由负责 B6 的一方自行维护，**本线不再更新相关描述**；
-- §9.2 记录的「并行写入」事实保留（属流程留痕），但**不再跟进、不再报告进展**；
-- 若 B6 的结论需要与 A5 / Lane D 4.3 等信息对齐，由负责方自行处理。
+- **No longer reviews, no longer fills in, no longer re-checks** any content of `product-packaging-review-checklist-2026-10-12.md`;
+- the "conclusion column is left blank throughout" wording in §6 and the §0 overview **was true only for the moment I created the file**; changes to that file after that point
+  are maintained by the party responsible for B6, and **this line no longer updates the related description**;
+- the "parallel write" fact recorded in §9.2 is retained (it is a process trace), but is **no longer followed up and no longer reported as progress**;
+- if B6's conclusions need to be aligned with information such as A5 / Lane D 4.3, the responsible party handles that themselves.
 
-**本线剩余的待维护者动作**（B6 不在其列）：A3 的 Phase D 排期优先级、Lane D 四项三选一、
-B2 / B3 的 requirement 起草启动（含 B3 的 RPO / RTO 取值）、A6 首次 chart 同步的时机与取值、
-B1 的容量目标值、B5 的 N3。
+**The remaining maintainer actions on this line** (B6 is not among them): the Phase D scheduling priority for A3, the choose-one-of-three for the four Lane D items,
+starting the B2 / B3 requirement drafting (including the B3 RPO / RTO values), the timing and values of A6's first chart sync,
+B1's capacity target value, and B5's N3.
 
-### 11.1 上述剩余事项的处置（2026-10-12 晚些时候追加；§11 原文保留不改）
+### 11.1 Handling of the Above Remaining Items (added later on 2026-10-12; original text of §11 retained unchanged)
 
-维护者 2026-10-12 指令：**A5 抓取接线（X1）与 B2 / B3（含 RPO / RTO 取值）留到下一个 release，
-做好标记，以后不要再提；其余全部完成，由 agent 自行判断、执行、不用问。** 据此：
+Maintainer instruction 2026-10-12: **A5 capture wiring (X1) and B2 / B3 (including the RPO / RTO values) are deferred to the next release,
+mark them well and do not raise them again; everything else is completed, with the agent judging and executing without asking.** Accordingly:
 
-| §11 所列事项 | 处置（2026-10-12） |
+| Item listed in §11 | Handling (2026-10-12) |
 |---|---|
-| A6 首次 chart 同步 | ✅ **已执行** —— 时机=当日、取值=根 `VERSION` `0.2.0` + 裁决的 `kubeVersion: ">=1.23.0-0"`；`--check` exit 0、`make chart-check` `chart-check: OK`；CHANGELOG 追加（未 bump） |
-| A3 Phase D 排期 | ✅ **已定稿** —— S5–S11 优先级 P1→P6 + S8 阻塞登记，落 [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D |
-| Lane D 四项三选一 | ✅ **已裁定** —— 4.2 / 4.3 → **v1.1**；4.4 / 4.5 → **按需**（无一项取消） |
-| B1 容量目标值 | ✅ **内部工程目标值已落**（loopback ≥ CPS 1280 无失败）；对外承诺值**不填**（ne-datasheet 准入条件三条未满足）；HPA 阈值 / 容量类告警 / datasheet 取值 / 4.1 报告四项下游**精确阻塞**（理由逐条落盘） |
-| B5 的 N3 | ✅ **已执行** —— 7 行（F-1/F-2/F-3/F-6/F-7/F-12/F-14）签「工程证据接受」；矩阵 pass 9→16、open 24→17；`report.md` 一字未改 |
-| B2 / B3 requirement 起草 + RPO / RTO 取值 | ⏭ **后置到下一个 release**（维护者决定；已标记于 [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) §5，以后不再单列） |
-| A5 抓取接线（X1，§11 未列、同源） | ⏭ **后置到下一个 release**（需运营商 monitoring-integration 标准输入；已标记于 register §3 X1） |
+| A6 first chart sync | ✅ **executed** — timing = same day, values = root `VERSION` `0.2.0` + the adjudicated `kubeVersion: ">=1.23.0-0"`; `--check` exit 0, `make chart-check` `chart-check: OK`; CHANGELOG appended (no bump) |
+| A3 Phase D scheduling | ✅ **finalized** — S5–S11 priorities P1→P6 + S8 blocking registration, landed in [`2026-10-09-sip-native-testing-plan.md`](2026-10-09-sip-native-testing-plan.md) §4-D |
+| Lane D choose-one-of-three for four items | ✅ **adjudicated** — 4.2 / 4.3 → **v1.1**; 4.4 / 4.5 → **on demand** (nothing cancelled) |
+| B1 capacity target value | ✅ **the internal engineering target value has landed** (loopback ≥ CPS 1280 with no failures); the external commitment value is **left unfilled** (the three ne-datasheet admission conditions are unmet); the four downstream items — HPA threshold / capacity-class alert / datasheet value / 4.1 report — are **precisely blocked** (rationale recorded item by item) |
+| B5's N3 | ✅ **executed** — 7 rows (F-1/F-2/F-3/F-6/F-7/F-12/F-14) signed as "engineering evidence accepted"; matrix pass 9→16, open 24→17; `report.md` not changed by a single character |
+| B2 / B3 requirement drafting + RPO / RTO values | ⏭ **deferred to the next release** (maintainer decision; marked in [`2026-10-12-b2-b3-deferred-items.md`](2026-10-12-b2-b3-deferred-items.md) §5 and not listed separately again) |
+| A5 capture wiring (X1, not listed in §11, same source) | ⏭ **deferred to the next release** (needs the carrier's monitoring-integration standard input; marked in register §3 X1) |
 
-执行记录：[`2026-10-12-remaining-items-execution.md`](2026-10-12-remaining-items-execution.md)。
-**未执行任何 git 写操作**（未 commit / add / push / tag / 建分支 / 改 remote）。
+Execution record: [`2026-10-12-remaining-items-execution.md`](2026-10-12-remaining-items-execution.md).
+**No git write operation was performed** (no commit / add / push / tag / branch creation / remote change).

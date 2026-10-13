@@ -12,152 +12,152 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M8 发布候选退出评审记录（2026-10-06）
+# M8 release candidate exit review record (2026-10-06)
 
-- **评审对象（object）**：M8 发布候选（RC）退出，范围 = RC 计划 §3 退出条件 1–5（阶段 A–B 闭合、阶段 C v1 签收矩阵、阶段 D 环境 true blocker 结论、阶段 E 报告/版本/签字、本总审 + 里程碑签字表）。
-- **评审日期（date）**：2026-10-06
-- **评审人（reviewer）**：AI agent（维护者缺席期间用户指令 self-decision；**维护者会签 PENDING**，本记录不替代维护者签字，不构成关门结论）。
-- **评审结论（conclusion）**：**RC就绪，defer项未清，不宣称全绿；维护者签字后方可关门**（不是"通过"）。
+- **Review target (object)**: M8 release candidate (RC) exit; scope = RC plan §3 exit conditions 1–5 (Phase A–B closure, Phase C v1 sign-off matrix, Phase D environment true blocker conclusions, Phase E report/version/signature, this final review + milestone signature table).
+- **Review date (date)**: 2026-10-06
+- **Reviewer (reviewer)**: AI agent (self-decision by user instruction while the maintainer was absent; **maintainer countersignature PENDING**; this record does not replace the maintainer's signature and does not constitute a close-out conclusion).
+- **Review conclusion (conclusion)**: **RC ready, defer items unresolved, no claim of fully green; closure only after the maintainer's signature** (not a "Pass").
 
-依据：[`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md) §3 / §3.1 / §5、[`plan.md`](../plan.md) §4（M8 定义）/ §5（O/D 未决项）、AGENT.md §3.3（review record 格式）/ §10.4（tag 仅维护者）。
+Basis: [`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md) §3 / §3.1 / §5, [`plan.md`](../plan.md) §4 (M8 definition) / §5 (O/D open items), AGENT.md §3.3 (review record format) / §10.4 (tags maintainer-only).
 
 ---
 
-## 1. 退出条件逐项核对（RC 计划 §3 条件 1–5）
+## 1. Item-by-item check of exit conditions (RC plan §3 conditions 1–5)
 
-| # | 退出条件 | 本 RC 状态 | 结论 |
+| # | Exit condition | Status in this RC | Conclusion |
 |---|---|---|---|
-| 1 | 阶段 A–B 闭合：P1 尾项 + M5.1 / 全链复评达到维护者认可的 REQ 证据门槛 | A：F9 门禁本地就绪、F8 契约落地、F6 documented limitation、gate-strict + performance 阻塞 + runbook；B：MINIMAL M5.1、B-2 降级、B-3 L1，复评 REQ 级不通过 + 10 defer。**维护者认可待补** | 未闭合（待维护者） |
-| 2 | 阶段 C：test-plan v1 范围内验收项有可追溯证据 | 矩阵 [`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md)：pass 9 / fail 0 / blocked 12 / n-a 4 / open 24；全部 `signed_by` 为维护者待签 | 未闭合（待签收） |
-| 3 | 阶段 D：环境类 true blocker 有记录结论 | D-1/D-2 明确 defer，D-3 裁决 pending（建议 v1.1）；记录见 [`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) | 记录齐备，终态待维护者 |
-| 4 | 阶段 E：`report.md` 升级为 M8 发布候选报告；VERSION + CHANGELOG 与交付一致；`plan.md` §0 / §4 M8 行标记 | report.md §0 已升级（历史保史为附录）；VERSION 维持 `0.2.0`（未 bump，CHANGELOG 首标题一致）；plan.md §0 / §4 M8 行标 **RC就绪、待维护者退出签字**（未标已完成） | 产物就绪，签字待补 |
-| 5 | Review records：M8 总审 + 各里程碑退出签字表 | 本文件即 M8 总审；签字表见 §4（M1/M2/M6/M7/M8，全为维护者待签） | 记录已建，签字待补 |
+| 1 | Phase A–B closure: P1 tail items + M5.1 / full-chain re-review reach the REQ evidence threshold recognised by the maintainer | A: F9 gate locally ready, F8 contract landed, F6 documented limitation, gate-strict + performance blocking + runbook; B: MINIMAL M5.1, B-2 downgrade, B-3 L1, re-review not passing at REQ level + 10 defer. **Maintainer recognition still pending** | Not closed (pending maintainer) |
+| 2 | Phase C: acceptance items within the v1 test-plan scope have traceable evidence | Matrix [`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md): pass 9 / fail 0 / blocked 12 / n-a 4 / open 24; all `signed_by` are maintainer pending signature | Not closed (pending sign-off) |
+| 3 | Phase D: environment-type true blockers have a recorded conclusion | D-1/D-2 explicitly deferred, D-3 adjudication pending (v1.1 recommended); records in [`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md) | Records complete, terminal state pending maintainer |
+| 4 | Phase E: `report.md` upgraded to the M8 release candidate report; VERSION + CHANGELOG consistent with the delivery; `plan.md` §0 / §4 M8 row marked | report.md §0 already upgraded (history preserved as appendix); VERSION stays at `0.2.0` (not bumped, CHANGELOG top heading consistent); plan.md §0 / §4 M8 row marked **RC ready, pending maintainer exit signature** (not marked completed) | Artifacts ready, signature pending |
+| 5 | Review records: M8 final review + milestone exit signature table | This file is the M8 final review; see §4 for the signature table (M1/M2/M6/M7/M8, all maintainer pending signature) | Records created, signatures pending |
 
-**总评**：5 项中无一项达到"维护者已确认"；RC 产物齐备可供评审，但**不得宣称为全绿或已关门**。
+**Overall**: none of the 5 items has reached "maintainer confirmed"; the RC artifacts are complete enough for review, but it **must not be claimed as fully green or already closed**.
 
 ---
 
-## 2. Issues 列表（签字前须逐项终态）
+## 2. Issues list (each item must reach a terminal state before signature)
 
-| # | Issue | 现状 | 终态要求 |
+| # | Issue | Current state | Terminal-state requirement |
 |---|---|---|---|
-| 1 | **F9 门禁落地 pending** | 本地门禁配置就绪（blocking native 目标 + chart-check + gate-strict），尚未纳入必跑 | 维护者确认 `make gate-strict` 与 blocking 目标在本机可复现为绿 |
-| 2 | **矩阵 24 open** | F-1/2/3/4/5/6/7/8/9/10/11/12/14/16、NF-2/5/9/10/13/14/15、S-1/S-4、D12/O5-HA；均有工程证据，待 M8 退出评审签收 | 维护者逐项签收或书面接受 |
-| 3 | **矩阵 12 blocked** | F-13、5.4-F-13、F-15、5.4-F-15真AS、NF-1、NF-3、NF-4、NF-7、S-2、S-3、ADR-0008演练、D6；每项已指到 plan §5 / O1 / v1.1 / Phase D | 转终态（证据 / 有条件通过 / defer 授权） |
-| 4 | **D-1 运营商 PKI / 外网 S-SBC** | 明确 defer（本环境无 lab 与对端） | 维护者排期采证或书面接受风险 |
-| 5 | **D-2 客户 K8s NF-1 live** | 明确 defer（本环境无客户集群） | 同上 |
-| 6 | **D-3（D6 testbed v1 验收）** | 维护者裁决 pending；本 RC 建议 v1.1 | 维护者书面裁决 v1 / v1.1 |
-| 7 | **M5D 10 项 defer** | C-1、C-2、C-3、C-6、C-7、C-9、H-8、H-11、A-2、T-1（复评 §6；拟新增 M5D-1…M5D-6 由维护者落定） | 关闭或移出 v1（维护者书面） |
-| 8 | **O1 容量目标裁决** | dev-host 实测为非 SLA；维护者目标裁决仍 open（plan §5.1 O1） | 维护者目标裁决 |
-| 9 | **NF-3 验收口径** | test-plan 固定容量数字与 AGENT §2 冲突 | 维护者裁决改写口径或标 N/A |
-| 10 | **D1 风险** | Python 3.10 EOL（2026-10），风险登记，不默认阻断 RC | 维护者确认接受为风险（或立项迁移） |
+| 1 | **F9 gate landing pending** | Local gate configuration ready (blocking native targets + chart-check + gate-strict), not yet part of the mandatory run | Maintainer confirms `make gate-strict` and the blocking targets reproduce as green on this machine |
+| 2 | **Matrix 24 open** | F-1/2/3/4/5/6/7/8/9/10/11/12/14/16, NF-2/5/9/10/13/14/15, S-1/S-4, D12/O5-HA; all have engineering evidence, pending sign-off in the M8 exit review | Maintainer signs off item by item or gives written acceptance |
+| 3 | **Matrix 12 blocked** | F-13, 5.4-F-13, F-15, 5.4-F-15真AS, NF-1, NF-3, NF-4, NF-7, S-2, S-3, ADR-0008演练, D6; each item already points to plan §5 / O1 / v1.1 / Phase D | Move to a terminal state (evidence / conditional pass / defer authorization) |
+| 4 | **D-1 carrier PKI / external-network S-SBC** | Explicitly deferred (this environment has no lab or peer) | Maintainer schedules evidence collection or gives written risk acceptance |
+| 5 | **D-2 customer K8s NF-1 live** | Explicitly deferred (this environment has no customer cluster) | Same as above |
+| 6 | **D-3 (D6 testbed v1 acceptance)** | Maintainer adjudication pending; this RC recommends v1.1 | Maintainer gives a written adjudication of v1 / v1.1 |
+| 7 | **M5D 10 defer items** | C-1, C-2, C-3, C-6, C-7, C-9, H-8, H-11, A-2, T-1 (re-review §6; proposed new M5D-1…M5D-6 to be settled by the maintainer) | Close or move out of v1 (maintainer in writing) |
+| 8 | **O1 capacity target adjudication** | dev-host measured values are not an SLA; the maintainer's target adjudication remains open (plan §5.1 O1) | Maintainer target adjudication |
+| 9 | **NF-3 acceptance framing** | the test-plan's fixed capacity numbers conflict with AGENT §2 | Maintainer adjudicates a rewritten framing or marks it N/A |
+| 10 | **D1 risk** | Python 3.10 EOL (2026-10), registered as a risk, does not block the RC by default | Maintainer confirms acceptance as a risk (or raises a migration item) |
 
-v1 明确排除重申（不计入全绿）：主叫/正则（v1.1）、PM/AM/UM 完整产品、D1、D10 极端扩展（mid-transaction / owner-CAS 极端）。
+v1 explicit exclusions restated (not counted toward full green): 主叫/正则 (v1.1), complete PM/AM/UM product, D1, D10 extreme extensions (mid-transaction / owner-CAS extremes).
 
 ---
 
-## 3. 里程碑签字表（E-5）
+## 3. Milestone signature table (E-5)
 
-列定义：对象 / 结论 / 签字 / 日期 / 备注。**以下签字栏全部为维护者待签**；历史引用仅说明既有记录，不构成签字。
+Column definitions: object / conclusion / signature / date / notes. **All signature columns below are pending maintainer signature**; historical references only describe existing records and do not constitute a signature.
 
-| 对象 | 结论 | 签字 | 日期 | 备注 |
+| Object | Conclusion | Signature | Date | Notes |
 |---|---|---|---|---|
-| M1 甄别与行为基线 | 门禁达成（历史结论） | 维护者待签 | — | 历史记录 [`m1-exit-review.md`](m1-exit-review.md) 存在；文首 M1 §6 签字仍为历史项 |
-| M2 内核 / transport-runtime | 工程完成（2026-10-05），REQ-S-* 验收未签 | 维护者待签 | — | 工程裁决见 `m2-engineering-closure-adjudication-2026-10-05.md`；REQ-S-2/S-3 尾项 D-1 defer |
-| M6 容量研究 | 工程完成（2026-10-05），O1 目标未发布 | 维护者待签 | — | 工程裁决见 `m6-engineering-complete-adjudication-2026-10-05.md`；O1 裁决 open |
-| M7 生产 SIP 集成 | 工程完成（2026-10-05），REQ-NF-1/E1 全量未签收 | 维护者待签 | — | 工程裁决见 `m7-final-engineering-adjudication-2026-10-05.md`；D10/REQ-NF-1 待 D-2 |
-| M8 发布候选 | RC就绪，defer项未清，不宣称全绿（本记录结论） | 维护者待签 | — | 维护者签字 + tag 后方可关门（AGENT §10.4，仅维护者） |
+| M1 screening and behaviour baseline | Gate achieved (historical conclusion) | Maintainer pending signature | — | Historical record [`m1-exit-review.md`](m1-exit-review.md) exists; the M1 §6 signature at the top of that document is still a historical item |
+| M2 core / transport-runtime | Engineering complete (2026-10-05), REQ-S-* acceptance unsigned | Maintainer pending signature | — | Engineering adjudication in `m2-engineering-closure-adjudication-2026-10-05.md`; REQ-S-2/S-3 tail items D-1 deferred |
+| M6 capacity study | Engineering complete (2026-10-05), O1 target unpublished | Maintainer pending signature | — | Engineering adjudication in `m6-engineering-complete-adjudication-2026-10-05.md`; O1 adjudication open |
+| M7 production SIP integration | Engineering complete (2026-10-05), REQ-NF-1/E1 full sign-off absent | Maintainer pending signature | — | Engineering adjudication in `m7-final-engineering-adjudication-2026-10-05.md`; D10/REQ-NF-1 pending D-2 |
+| M8 release candidate | RC ready, defer items unresolved, no claim of full green (conclusion of this record) | Maintainer pending signature | — | Closure only after maintainer signature + tag (AGENT §10.4, maintainer only) |
 
-另：M5 为**工程关门（2026-10-04，维护者 chat 授权代签；含义已降级为非 REQ 验收）**，REQ 级不通过（见 [`m5-req-acceptance-review-2026-10-06.md`](m5-req-acceptance-review-2026-10-06.md)）；M3/M4 工程结论见 report 附录历史，REQ 全绿归 M8 或维护者单独签收（plan §5.4）。
+Additionally: M5 is **engineering close-out (2026-10-04, maintainer chat authorization for a proxy signature; the meaning has been downgraded to non-REQ acceptance)**, not passing at REQ level (see [`m5-req-acceptance-review-2026-10-06.md`](m5-req-acceptance-review-2026-10-06.md)); M3/M4 engineering conclusions are in the report appendix as history, REQ full green belongs to M8 or separate maintainer sign-off (plan §5.4).
 
 ---
 
-## 4. E-6 打包校验记录（本总审执行，2026-10-06）
+## 4. E-6 packaging verification record (executed in this final review, 2026-10-06)
 
-| 检查 | 结果 |
+| Check | Result |
 |---|---|
-| `uv run pytest tests/test_version_consistency.py -q` | **9 passed**；VERSION `0.2.0`，CHANGELOG 首标题 `== 0.2.0`，未新增版本节 |
-| 密钥复检（新 M8 文档） | `BEGIN PRIVATE KEY` 零命中；`--password` / `passwd` 零命中 |
-| `helm template` | 已覆盖，引用 `chart-check: OK`（形状证据，不重跑重型构建） |
-| README/runbook vs `AS_SIP_*`/`AS_TLS_*` | 实现：`platform/src/as_platform/runtime/transport_env.py`；README 无 env 名（无错名）；runbook `AS_REQUIRE_NATIVE_EXTENSIONS=1` 与实现一致；记文档缺口（非阻塞），无 typo 可改 |
-| 镜像 push/tag | 明确留给维护者（AGENT §10.4），未执行 |
+| `uv run pytest tests/test_version_consistency.py -q` | **9 passed**; VERSION `0.2.0`, CHANGELOG top heading `== 0.2.0`, no new version section added |
+| Secret re-check (new M8 documents) | `BEGIN PRIVATE KEY` zero hits; `--password` / `passwd` zero hits |
+| `helm template` | Already covered, citing `chart-check: OK` (shape evidence, heavy build not re-run) |
+| README/runbook vs `AS_SIP_*`/`AS_TLS_*` | Implementation: `platform/src/as_platform/runtime/transport_env.py`; README has no env names (no wrong names); runbook `AS_REQUIRE_NATIVE_EXTENSIONS=1` consistent with the implementation; documentation gap recorded (non-blocking), no typo to fix |
+| Image push/tag | Explicitly left to the maintainer (AGENT §10.4), not executed |
 
 ---
 
-## 确认（confirmation）
+## Confirmation
 
-| 项 | 记录 |
+| Item | Record |
 |---|---|
-| 评审结论 | RC就绪，defer项未清，不宣称全绿；维护者签字后方可关门（不是"通过"） |
-| 自决策 | M8 Phase E 由 AI agent 在维护者缺席期间按 RC 计划 §4 Phase E（E-1…E-6）执行；用户指令 self-decision；所有签字均为维护者待签 |
-| 维护者确认 | **待签字**（本栏须由维护者填写；本记录不构成关门结论） |
-| 所需维护者动作 | (1) 确认 blocking 门禁目标与 `gate-strict` 本机可复现为绿；(2) 排期 D-1/D-2 环境采证或书面接受风险；(3) 裁决 D-3（D6）、O1 目标、NF-3 口径、M5D-1…M5D-6 行落定；(4) 完成 M1/M2/M6/M7/M8 退出签字；(5) 仅由维护者执行 tag（AGENT §10.4） |
-| 输入评审 | [`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md)、[`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md)、[`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)、[`m5-req-acceptance-review-2026-10-06.md`](m5-req-acceptance-review-2026-10-06.md)、[`m8-phase-a-f6-f8-note-2026-10-06.md`](m8-phase-a-f6-f8-note-2026-10-06.md) |
-| 未采信证据 | `artifacts/m8/` 占位目录（待采证，无证据效力）；`make gate` 本地绿仅为工程门禁，不替代 REQ 签收 |
+| Review conclusion | RC ready, defer items unresolved, no claim of full green; closure only after the maintainer's signature (not a "Pass") |
+| Self-decision | M8 Phase E was executed by the AI agent per RC plan §4 Phase E (E-1…E-6) while the maintainer was absent, by user instruction for self-decision; all signatures are pending maintainer signature |
+| Maintainer confirmation | **Pending signature** (this field must be filled in by the maintainer; this record does not constitute a close-out conclusion) |
+| Required maintainer actions | (1) Confirm the blocking gate targets and that `gate-strict` reproduces as green on this machine; (2) schedule D-1/D-2 environment evidence collection or give written risk acceptance; (3) adjudicate D-3 (D6), the O1 target, the NF-3 framing, and settle the M5D-1…M5D-6 rows; (4) complete the M1/M2/M6/M7/M8 exit signatures; (5) execute the tag only by the maintainer (AGENT §10.4) |
+| Inputs reviewed | [`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md), [`m8-test-plan-matrix.md`](../acceptance/m8-test-plan-matrix.md), [`m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md), [`m5-req-acceptance-review-2026-10-06.md`](m5-req-acceptance-review-2026-10-06.md), [`m8-phase-a-f6-f8-note-2026-10-06.md`](m8-phase-a-f6-f8-note-2026-10-06.md) |
+| Evidence not accepted | `artifacts/m8/` placeholder directory (awaiting evidence collection, no evidentiary force); a local green `make gate` is only the engineering gate and does not replace REQ sign-off |
 
 ---
 
-## 3.1 里程碑签字栏代签填写（2026-10-12；§3 表原文保留不改，本节在其后追加填写结果）
+## 3.1 Proxy-signature entries for the milestone signature columns (2026-10-12; the §3 table text is preserved unchanged, this section appends the entries after it)
 
-> **授权来源**：维护者 **2026-10-12 明确授权由 agent 代签** M8 的 N2 九项书面裁决
-> （N2 第 9 项 = M1 / M2 / M6 / M7 签**工程完成**；代签总记录见
-> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)）。
-> **本节不是维护者亲签**，每行标注「agent 代签」并附依据。
+> **Authorization source**: the maintainer **explicitly authorized on 2026-10-12 for the agent to sign by proxy** the nine written adjudications of N2 for M8
+> (N2 item 9 = signing **engineering complete** for M1 / M2 / M6 / M7; the full proxy-signature record is in
+> [`../handoff/2026-10-12-m8-n2-countersign-record.md`](../handoff/2026-10-12-m8-n2-countersign-record.md)).
+> **This section is not the maintainer's own signature**; each row is marked "agent proxy signature" with its basis attached.
 
-| 对象 | 代签填写 | 日期 | 依据（不新造结论，只正式化既有结论） |
+| Object | Proxy-signature entry | Date | Basis (no new conclusions invented, only existing conclusions formalized) |
 |---|---|---|---|
-| **M1** 甄别与行为基线 | 结论维持「**门禁达成（有条件通过）**」；签字：**agent 代签（维护者 2026-10-12 授权）** | 2026-10-12 | [`m1-exit-review.md`](m1-exit-review.md) 文首评审结论「有条件通过，条件为 HLD/LLD 补建，已列入 M2 前置，**不回退 M1 结论**」；§6 历史签字项 |
-| **M2** 内核 / transport-runtime | 结论维持「**工程完成（2026-10-05）**，REQ-S-* 验收未签」；签字：同上 | 2026-10-12 | `m2-engineering-closure-adjudication-2026-10-05.md`；REQ-S-2/S-3 尾项 D-1 defer |
-| **M6** 容量研究 | 结论维持「**工程完成（2026-10-05）**，O1 目标未发布」；签字：同上 | 2026-10-12 | `m6-engineering-complete-adjudication-2026-10-05.md`；O1 裁决 open（2026-10-12 仅落「内部工程目标下限基线」，非目标值） |
-| **M7** 生产 SIP 集成 | 结论维持「**工程完成（2026-10-05）**，REQ-NF-1/E1 全量未签收」；签字：同上 | 2026-10-12 | `m7-final-engineering-adjudication-2026-10-05.md`；D10 / REQ-NF-1 待 D-2 |
-| **M8** | **未签** —— 本节不填 | — | M8 退出签字属收尾动作，**不在 N2 九项授权范围内** |
+| **M1** screening and behaviour baseline | Conclusion unchanged: "**Gate achieved (conditional pass)**"; signature: **agent proxy signature (maintainer authorization 2026-10-12)** | 2026-10-12 | Review conclusion at the top of [`m1-exit-review.md`](m1-exit-review.md): "conditional pass, on the condition that HLD/LLD are supplemented, already listed as M2 prerequisites, **the M1 conclusion is not rolled back**"; §6 historical signature item |
+| **M2** core / transport-runtime | Conclusion unchanged: "**Engineering complete (2026-10-05)**, REQ-S-* acceptance unsigned"; signature: same as above | 2026-10-12 | `m2-engineering-closure-adjudication-2026-10-05.md`; REQ-S-2/S-3 tail items D-1 deferred |
+| **M6** capacity study | Conclusion unchanged: "**Engineering complete (2026-10-05)**, O1 target unpublished"; signature: same as above | 2026-10-12 | `m6-engineering-complete-adjudication-2026-10-05.md`; O1 adjudication open (on 2026-10-12 only "internal engineering target lower-bound baseline" was recorded, not a target value) |
+| **M7** production SIP integration | Conclusion unchanged: "**Engineering complete (2026-10-05)**, REQ-NF-1/E1 full sign-off absent"; signature: same as above | 2026-10-12 | `m7-final-engineering-adjudication-2026-10-05.md`; D10 / REQ-NF-1 pending D-2 |
+| **M8** | **Unsigned** — not filled in this section | — | The M8 exit signature is a close-out action and is **not within the scope of the nine N2 authorizations** |
 
-**边界（不得据本节推出过度结论）**
+**Boundaries (no over-conclusions may be drawn from this section)**
 
-1. **「工程完成」≠「里程碑签收」≠「REQ 全绿」。** 四行签的都是**工程完成**这一层；
-   `plan.md` §「M6 状态更新」所载「维护者 **M6 里程碑签收**仍 open」**原样保留**，
-   `report.md` 的 open / blocked 计数**未改**。
-2. M1 签的是「门禁达成（有条件通过）」，其条件（HLD/LLD 补建）原记录为「已列入 M2 前置」；
-   本节**不重新判定**该条件是否已闭合。
-3. §3 表原「以下签字栏全部为维护者待签」一句，因本节而部分失效（M1/M2/M6/M7 已由代签填）；
-   该句**保留为历史**。**M8 行仍为维护者待签**。
-4. 本文档文首「维护者会签 PENDING」与结论「RC就绪，defer项未清，不宣称全绿」**均不变**。
+1. **"Engineering complete" ≠ "milestone sign-off" ≠ "REQ fully green".** All four rows sign only the **engineering complete** layer;
+   the "maintainer **M6 milestone sign-off** remains open" statement recorded in `plan.md` §"M6 status update" is **preserved as is**,
+   and the open / blocked counts in `report.md` are **unchanged**.
+2. M1 signs "gate achieved (conditional pass)"; its condition (HLD/LLD supplementation) was originally recorded as "already listed as an M2 prerequisite";
+   this section **does not re-adjudicate** whether that condition has been closed.
+3. The §3 table's original sentence "all signature columns below are pending maintainer signature" is partially superseded by this section (M1/M2/M6/M7 have now been filled by proxy signature);
+   that sentence is **retained as history**. **The M8 row still awaits the maintainer's signature.**
+4. The document's opening "maintainer countersignature PENDING" and the conclusion "RC ready, defer items unresolved, no claim of full green" **both remain unchanged**.
 
-## 3.2 内部版收尾后的里程碑签字表状态（2026-10-13；§3 与 §3.1 原文保留不改）
+## 3.2 Milestone signature table state after internal-build close-out (2026-10-13; the text of §3 and §3.1 is preserved unchanged)
 
-> 本节只追加登记，§3 表与 §3.1 代签结果一字未改。
+> This section only appends registrations; not a single character of the §3 table or the §3.1 proxy-signature results was changed.
 
-| 对象 | 状态 | 签字 | 日期 | 备注 |
+| Object | State | Signature | Date | Notes |
 |---|---|---|---|---|
-| M1 | 工程完成 | agent 代签（维护者 2026-10-12 授权） | 2026-10-12 | §3.1 已填，本批次维持不变；「工程完成」≠ 里程碑签收 ≠ REQ 全绿 |
-| M2 | 工程完成 | agent 代签（维护者 2026-10-12 授权） | 2026-10-12 | §3.1 已填，本批次维持不变；「工程完成」≠ 里程碑签收 ≠ REQ 全绿 |
-| M6 | 工程完成 | agent 代签（维护者 2026-10-12 授权） | 2026-10-12 | §3.1 已填，本批次维持不变；「工程完成」≠ 里程碑签收 ≠ REQ 全绿 |
-| M7 | 工程完成 | agent 代签（维护者 2026-10-12 授权） | 2026-10-12 | §3.1 已填，本批次维持不变；「工程完成」≠ 里程碑签收 ≠ REQ 全绿 |
-| **M8** | **内部版本，不签收** | **未签 —— 维护者待签** | — | 本版 = 内部版收尾（function 完整 + 模拟器证据 + 可重复构建工件），**不是 M8 退出签字**；M8 退出签字排在外部硬依赖闭环之后。内部版收尾评审见 [`m8-internal-release-exit-review-2026-10-12.md`](m8-internal-release-exit-review-2026-10-12.md) |
+| M1 | Engineering complete | agent proxy signature (maintainer authorization 2026-10-12) | 2026-10-12 | Filled in §3.1, unchanged in this batch; "engineering complete" ≠ milestone sign-off ≠ REQ fully green |
+| M2 | Engineering complete | agent proxy signature (maintainer authorization 2026-10-12) | 2026-10-12 | Filled in §3.1, unchanged in this batch; "engineering complete" ≠ milestone sign-off ≠ REQ fully green |
+| M6 | Engineering complete | agent proxy signature (maintainer authorization 2026-10-12) | 2026-10-12 | Filled in §3.1, unchanged in this batch; "engineering complete" ≠ milestone sign-off ≠ REQ fully green |
+| M7 | Engineering complete | agent proxy signature (maintainer authorization 2026-10-12) | 2026-10-12 | Filled in §3.1, unchanged in this batch; "engineering complete" ≠ milestone sign-off ≠ REQ fully green |
+| **M8** | **Internal build, not signed off** | **Unsigned — pending maintainer signature** | — | This build = internal-build close-out (functional completeness + simulator evidence + reproducible build artifacts), **not the M8 exit signature**; the M8 exit signature is scheduled after the external hard dependencies are closed. See [`m8-internal-release-exit-review-2026-10-12.md`](m8-internal-release-exit-review-2026-10-12.md) for the internal-build close-out review |
 
-**边界**：
+**Boundaries**:
 
-1. 本节不签 M8，也不签任何 REQ。
-2. `agent 代签（维护者 2026-10-12 授权）` 不等于维护者亲签。
-3. 文首「维护者会签 PENDING」与结论「RC就绪，defer项未清，不宣称全绿」均维持不变。
-4. 本批次未执行任何 git 写操作；commit 拆分与 tag 仍由维护者决定。
+1. This section does not sign M8 and does not sign any REQ.
+2. `agent proxy signature (maintainer authorization 2026-10-12)` is not equal to the maintainer's own signature.
+3. The opening "maintainer countersignature PENDING" and the conclusion "RC ready, defer items unresolved, no claim of full green" both remain unchanged.
+4. This batch executed no git write operations; commit splitting and the tag remain the maintainer's decision.
 
-## 3.3 M8 退出签字（路径 C，2026-10-13；§3 / §3.1 / §3.2 原文保留不改）
+## 3.3 M8 exit signature (path C, 2026-10-13; the text of §3 / §3.1 / §3.2 is preserved unchanged)
 
-> §3 表原「以下签字栏全部为维护者待签」与 §3.2 的 M8「内部版本，不签收」**保留为历史**。
-> 本节登记维护者 2026-10-13 按**路径 C** 作出裁决后的**终态**：M8 里程碑要 close，路径为
-> **签 M8 退出签字 + 同时书面接受外部硬依赖风险**。
+> The §3 table's original "all signature columns below are pending maintainer signature" and §3.2's M8 "internal build, not signed off" are **retained as history**.
+> This section registers the **terminal state** after the maintainer's 2026-10-13 adjudication under **path C**: the M8 milestone is to be closed, via
+> **signing the M8 exit signature + at the same time giving written acceptance of the external hard dependency risk**.
 
-| 对象 | 结论 | 签字 | 日期 | 备注 |
+| Object | Conclusion | Signature | Date | Notes |
 |---|---|---|---|---|
-| **M8 发布候选** | **M8 退出签字 —— 含维护者书面接受外部硬依赖风险（路径 C）** | **agent 代签（维护者 2026-10-13 授权）**（**不是维护者亲签**） | `2026-10-13` | 前提文件 [`m8-external-dependency-risk-acceptance-2026-10-13.md`](m8-external-dependency-risk-acceptance-2026-10-13.md)；四项外部硬依赖（D-1 / D-2 / ADR-0008 演练 / D12-O5）**保持 `blocked`**、转下一 release；4 行 `defer` 与 F-13 / NF-7 转 v1.1 立项。**签字覆盖里程碑退出，不覆盖 REQ 级验收**（M5 REQ 级仍不通过）；不宣称 M8 全绿；矩阵 27 行 `pass` 口径仍为「工程证据接受」 |
-| M1 / M2 / M6 / M7 | 维持 §3.1 的「工程完成（agent 代签，维护者 2026-10-12 授权）」 | agent 代签（维护者 2026-10-12 授权） | 2026-10-12 | 不受本节影响；「工程完成」≠ 里程碑签收 ≠ REQ 全绿 |
+| **M8 release candidate** | **M8 exit signature — includes the maintainer's written acceptance of the external hard dependency risk (path C)** | **agent proxy signature (maintainer authorization 2026-10-13)** (**not the maintainer's own signature**) | `2026-10-13` | Prerequisite document [`m8-external-dependency-risk-acceptance-2026-10-13.md`](m8-external-dependency-risk-acceptance-2026-10-13.md); the four external hard dependencies (D-1 / D-2 / ADR-0008 演练 / D12-O5) **remain `blocked`** and move to the next release; the 4 `defer` rows and F-13 / NF-7 become v1.1 items. **The signature covers milestone exit, not REQ-level acceptance** (M5 REQ level still does not pass); no claim that M8 is fully green; the `pass` framing for the 27 matrix rows remains "engineering evidence accepted" |
+| M1 / M2 / M6 / M7 | Continue with the §3.1 "engineering complete (agent proxy signature, maintainer authorization 2026-10-12)" | agent proxy signature (maintainer authorization 2026-10-12) | 2026-10-12 | Unaffected by this section; "engineering complete" ≠ milestone sign-off ≠ REQ fully green |
 
-**边界**：
+**Boundaries**:
 
-1. **本节不代签。** M8 退出签字栏**只能由维护者亲签填写**；本表该栏留空待填。此前所有代签授权（N2 九项、N3、批次 4）**均不含 M8 退出签字**。
-1-bis. **2026-10-13 授权更正**：维护者已就 **M8 退出签字栏**显式下达「**授权代签**」指令。上述第 1 条「本节不代签 / 均不含 M8 退出签字」**保留为授权前的历史纪律**；本次据此代签，签字栏写明「agent 代签（维护者 2026-10-13 授权）」，**不是维护者亲签**。**M8 里程碑据此 close**；该 close 不覆盖 REQ 级验收（M5 REQ 级仍不通过），不宣称 M8 全绿，不构成发版，也不产生 tag。
-2. 文首「维护者会签 PENDING」与结论「RC就绪，defer项未清，不宣称全绿」**保留为历史**，不因本节而被改写或视为失效。
-3. 本节未执行任何 git 写操作（无 add / commit / tag / push / branch / stash）。
-4. **tag 仅维护者执行**（`AGENT.md` §10.4）；本节不产生 tag，也不构成发版。
-5. 接受风险 ≠ 验证通过 ≠ 这些矩阵行转终态；四项外部硬依赖保持 `blocked`，重启条件 = 维护者另行裁决 + 外部资源到位，后置 ≠ 取消。
+1. **This section does not sign by proxy.** The M8 exit signature column **may only be filled in by the maintainer's own signature**; that column in this table is left blank pending entry. All previous proxy-signature authorizations (the nine N2 items, N3, batch 4) **do not include the M8 exit signature**.
+1-bis. **2026-10-13 authorization correction**: the maintainer has explicitly issued an instruction to "**authorize signing by proxy**" for the **M8 exit signature column**. Item 1 above ("this section does not sign by proxy / does not include the M8 exit signature") is **retained as the pre-authorization historical discipline**; this proxy signature is made accordingly, and the signature column explicitly reads "agent proxy signature (maintainer authorization 2026-10-13)", which is **not the maintainer's own signature**. **The M8 milestone is closed accordingly**; that close does not cover REQ-level acceptance (M5 REQ level still does not pass), does not claim M8 is fully green, does not constitute a release, and produces no tag.
+2. The opening "maintainer countersignature PENDING" and the conclusion "RC ready, defer items unresolved, no claim of full green" are **retained as history** and are neither rewritten nor treated as invalidated by this section.
+3. This section executed no git write operations (no add / commit / tag / push / branch / stash).
+4. **Tags are executed only by the maintainer** (`AGENT.md` §10.4); this section produces no tag and does not constitute a release.
+5. Accepting risk ≠ verified pass ≠ these matrix rows moving to a terminal state; the four external hard dependencies remain `blocked`, and the restart condition = a separate maintainer adjudication + external resources in place; deferred ≠ cancelled.

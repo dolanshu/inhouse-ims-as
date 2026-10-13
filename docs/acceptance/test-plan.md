@@ -12,488 +12,486 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 验收测试计划（Test Plan）— 3rdparty-as
+# Acceptance Test Plan — 3rdparty-as
 
-**版本**：v0.3（验收标准 + 自动化边界）
-**日期**：2026-09-28（正文）；**2026-10-09** 增补真栈 / e2e 边界
-**状态**：REQ 勾选仍多为 open。自动化分层见下节；**端到端（e2e）套件尚未落地**，计划见 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md)。**2026-10-12 更正（e2e 口径）**：e2e 已非 0 条 —— 见自动化分层表 ③ 与下文 REQ-F-1 段 2026-10-12 追加块；上一句原文保留不改。
-**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
+**Version**: v0.3 (acceptance criteria + automation boundary)
+**Date**: 2026-09-28 (body); **2026-10-09** added the real-stack / e2e boundary
+**Status**: most REQ checkboxes are still open. See the automation-layering section below; **the end-to-end (e2e) suite has not landed**, plan in [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md). **2026-10-12 correction (e2e position)**: e2e is no longer zero cases — see automation-layering table ③ and the 2026-10-12 addendum in the REQ-F-1 section below; the previous sentence is retained unchanged.
+**B6 review status**: this document has a review record from the B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (first review 2026-10-12) and §7 (closed-loop re-review 2026-10-12); **the conclusion awaits maintainer confirmation** and until then must not be used as a basis for external delivery or acceptance (`AGENT.md` §3.3).
 
-**M4b-8 BLOCKED 矩阵（2026-10-03）**：维护者裁决见 [`reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md`](../reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md)。**M4 工程关门**（2026-10-04）后，下列项为 **补测/后置**，不阻塞 §4.3：见 [`plan.md`](../plan.md) **§5.4**（F-13、F-15 真 AS、主叫/正则 v1.1、REQ 全绿）。dev HTTPS 上已采证：**被叫+前缀** CRUD→审批、fleet、distribution start 等（[`m4b-8-runbook.md`](m4b-8-runbook.md)）。**步骤 3（F-13）**：BLOCKED→**§5.4**。**7.2d**：**M5**。
+**M4b-8 BLOCKED matrix (2026-10-03)**: the maintainer ruling is in [`reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md`](../reviews/m4-req-calling-regex-lossless-adjudication-2026-10-03.md). After **M4 engineering closed** (2026-10-04), the items below are **supplementary testing / deferred**, and do not block §4.3: see [`plan.md`](../plan.md) **§5.4** (F-13, F-15 real AS, caller/regex in v1.1, REQ all green). Evidence already collected on dev HTTPS: **callee + prefix** CRUD → approval, fleet, distribution start, etc. ([`m4b-8-runbook.md`](m4b-8-runbook.md)). **Step 3 (F-13)**: BLOCKED → **§5.4**. **7.2d**: **M5**.
 
-> 本文档从 PRD v0.2（prd.md）的验收标准部分提取而来。
-> 具体 test case（步骤、断言、数据准备）由 M2 设计阶段补充。
-> **协议章节号说明**：同 PRD，文中 RFC 3261 章节号以 IETF 2002 年发布的 RFC 3261 原文为准。
+> This document is extracted from the acceptance-criteria part of PRD v0.2 (prd.md).
+> The concrete test cases (steps, assertions, data preparation) are to be added during the M2 design phase.
+> **Note on protocol section numbers**: as in the PRD, the RFC 3261 section numbers here follow the original RFC 3261 as published by the IETF in 2002.
 
-## 自动化分层（2026-10-09）
+## Automation layering (2026-10-09)
 
-| 层 | pytest 标记 | 现状 |
+| Layer | pytest marker | Current state |
 |----|-------------|------|
-| ① | `unit or contract` | `make gate`。绝大多数不经 `_resip_runtime`。E1 有 `.so` 时跑真栈；**S1/S4** 用 `accept_all_invites` harness（旁路 `decide()`）；**S2/S3** 走 `decide()`。 |
-| ② | `integration` | 真栈子集：TCP/TLS、FORWARD 双腿、SDP、`test_product_path`（仿真链 + `demo_rules`，**无** accept-all）。门禁层② 全量 integration **不编** native；native 路径另由 `make m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate` 覆盖。 |
-| ③ | `e2e` | **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 **fail 不 skip**）。REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**，详见下文 REQ-F-1 段 2026-10-12 追加块。 |
-| 容量 | `performance` / `as_load` | M6 产品 runtime 压测对端是 `load_uas_runtime.py`（**accept-all harness**），不是业务判决路径。 |
+| ① | `unit or contract` | `make gate`. The vast majority do not go through `_resip_runtime`. E1 runs the real stack when the `.so` exists; **S1/S4** use the `accept_all_invites` harness (bypassing `decide()`); **S2/S3** go through `decide()`. |
+| ② | `integration` | The real-stack subset: TCP/TLS, two-leg FORWARD, SDP, `test_product_path` (simulated chain + `demo_rules`, **no** accept-all). Gate layer ② running all of `integration` **does not build** the native; the native path is covered separately by `make m2-platform-resip-build` + `AS_REQUIRE_NATIVE_EXTENSIONS=1 make gate`. |
+| ③ | `e2e` | **8 stable passes** (Wave 1's five cases in `testbed/e2e/test_sip_first_edition.py` + Wave 2's three cases in `testbed/e2e/test_s1_replay_contract.py`; **fails rather than skips** when the native extension is missing). REQ-F-1 = **automated subset covered / full text still open**; see the 2026-10-12 addendum in the REQ-F-1 section below. |
+| Capacity | `performance` / `as_load` | The peer of the M6 product-runtime load test is `load_uas_runtime.py` (an **accept-all harness**), not the business decision path. |
 
-`accept_all_invites` **不是** ims-sim，也 **不是** 生产路径：真栈上固定 100/180/200，用于栈/SDP 探针。REQ-F-1 的 14 条 B2BUA **未**由 harness 签收。
+`accept_all_invites` is **not** ims-sim and is **not** the production path: on the real stack it is fixed at 100/180/200 and is used for stack / SDP probes. The 14 B2BUA messages of REQ-F-1 are **not** signed off by the harness.
 
 ---
 
-## §1.1 呼叫信令核心路径（REQ-F-1 到 REQ-F-5）
+## §1.1 Core call signalling path (REQ-F-1 to REQ-F-5)
 
-### REQ-F-1 验收标准
+### REQ-F-1 acceptance criteria
 
-**真栈自动化边界（2026-10-09）**：`accept_all_invites` harness 在产品 `_resip_runtime` 上覆盖入向可见前缀 **100 → 180 → 200（带 SDP）**（`test_e1_contract_resip_runtime.py`、`test_e1_contract_resip_runtime_full.py`）。这不是下面 14 条 B2BUA 全文。出腿 INVITE、独立 Call-ID、SDP 逐字节透传、Route 消费、ACK/BYE 仍在 integration（`test_m7_forward_two_leg_integration.py`、`test_req_f4_sdp_identity_integration.py`、`test_resip_two_leg_integration.py`），**未**并入 `make gate`。S5–S11 的真栈全文回放同样推迟。跨仿真 S-SBC 且 **不**用 accept-all 的路径见 `test_product_path.py`（`integration`）。**pytest `e2e` 标记仍为空**；补齐计划见 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md)。不作为 REQ-F-1 全文签收。
+**Real-stack automation boundary (2026-10-09)**: the `accept_all_invites` harness covers the inbound visible prefixes **100 → 180 → 200 (with SDP)** on the product `_resip_runtime` (`test_e1_contract_resip_runtime.py`, `test_e1_contract_resip_runtime_full.py`). This is not the 14-message full text below. The outbound INVITE, the independent Call-ID, byte-identical SDP pass-through, Route consumption, and ACK/BYE remain in integration (`test_m7_forward_two_leg_integration.py`, `test_req_f4_sdp_identity_integration.py`, `test_resip_two_leg_integration.py`) and are **not** merged into `make gate`. Full real-stack replay of S5–S11 is likewise deferred. The path across a simulated S-SBC **without** accept-all is in `test_product_path.py` (`integration`). **The pytest `e2e` marker is still empty**; the completion plan is in [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md). This does not count as sign-off of the full text of REQ-F-1.
 
-> **排期与覆盖状态更新（2026-10-12 追加；上方原文保留不改）**：① **e2e 标记已非空** —— Wave 1（5 条）与 Wave 2（3 条归一化骨架对拍，含 C_in≠C_out 与 SDP 逐字节恒等）已落地，REQ-F-1 状态为「自动化子集已覆盖 / 全文仍 open」，14 条逐条 header 对拍仍未实现（载体 [`2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md)）。② **S5–S11 排期已定稿**（优先级 P1 S5 → P6 S11；S8 因基线缺 Route / Record-Route 头登记为阻塞项，补采前不排），见 [`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md) §4-D。**未签收任何 REQ。**
+> **Scheduling and coverage status update (added 2026-10-12; the text above is retained unchanged)**: ① **The e2e marker is no longer empty** — Wave 1 (5 cases) and Wave 2 (3 normalised skeleton comparison cases, including C_in ≠ C_out and byte-identical SDP) have landed; REQ-F-1's status is "automated subset covered / full text still open", and the 14-message per-header comparison is still not implemented (carrier [`2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md)). ② **The S5–S11 schedule is finalised** (priority P1 S5 → P6 S11; S8 is registered as blocked because the baseline lacks Route / Record-Route headers, so it is not scheduled until those are collected), see [`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md) §4-D. **No REQ has been signed off.**
 
-- [ ] 启动仿真 S-SBC 和仿真对端（Return UAS）
-- [ ] 从仿真 S-CSCF 发送 INVITE（目标号码命中业务规则）
-- [ ] 依次断言收到 14 条消息：INVITE(上游) → 100 Trying(下游) → 100 Trying(上游) → 180 Ringing(上游) → 180 Ringing(下游) → 200 OK(上游) → 200 OK(下游) → ACK(下游) → ACK(上游) → BYE(上游) → 200 OK(下游) → BYE(下游) → 200 OK(上游) → BYE 之后的 200 OK 确认
-- [ ] 消息方法和响应码严格等于 POC 基线 `testbed/contracts/sip-baseline/S1-basic-call/` 中的 14 条
-- [ ] Via branch 参数符合 z9hG4bK 模式（reSIProcate 会产生不同的 hex 值，模式对即算过）
-- [ ] 不检查 SDP `o=` 时间戳、不检查头域书写顺序
+- [ ] Start the simulated S-SBC and the simulated peer (Return UAS)
+- [ ] Send INVITE from the simulated S-CSCF (the target number hits a business rule)
+- [ ] Assert in order that 14 messages are received: INVITE(upstream) → 100 Trying(downstream) → 100 Trying(upstream) → 180 Ringing(upstream) → 180 Ringing(downstream) → 200 OK(upstream) → 200 OK(downstream) → ACK(downstream) → ACK(upstream) → BYE(upstream) → 200 OK(downstream) → BYE(downstream) → 200 OK(upstream) → the 200 OK confirmation after BYE
+- [ ] The message methods and response codes are strictly equal to the 14 in the POC baseline `testbed/contracts/sip-baseline/S1-basic-call/`
+- [ ] The Via branch parameter matches the z9hG4bK pattern (reSIProcate produces different hex values; matching the pattern counts as a pass)
+- [ ] Do not check the SDP `o=` timestamp, do not check header field ordering
 
-> **REQ-F-1 自动化覆盖状态（2026-10-12 追加；上方所有 `- [ ]` 勾选一律保留不改）**
+> **REQ-F-1 automation coverage status (added 2026-10-12; all `- [ ]` checkboxes above are retained unchanged)**
 >
-> 按 [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md) Wave 2 的完成标准
-> （「REQ-F-1 勾选只能改为『**自动化子集已覆盖 / 全文仍 open**』并链到具体用例名；**未对拍 14 条时不得打勾全文**」），
-> 当前状态为：
+> Per the completion criteria of Wave 2 in [`2026-10-09-e2e-test-plan.md`](2026-10-09-e2e-test-plan.md)
+> ("the REQ-F-1 checkbox may only be changed to '**automated subset covered / full text still open**' and linked to concrete case names; **the full text must not be checked off while the 14 messages are not compared**"),
+> the current status is:
 >
-> **状态＝「自动化子集已覆盖 / 全文仍 open」。**
+> **Status = "automated subset covered / full text still open".**
 >
-> | 已由自动化覆盖的子集 | 用例 |
+> | Subset already covered by automation | Case |
 > |---|---|
-> | 双腿**归一化**消息序列与 `S1-basic-call` 基准骨架一致（入腿、出腿各为 `INVITE → 200 → ACK → BYE → 200`，1xx 临时响应按"最终响应码序列"口径丢弃） | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_both_legs_match_the_normalised_baseline` |
-> | **C_in ≠ C_out**（双腿独立 Call-ID，REQ-F-2 子集） | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_second_leg_starts_a_new_call_id` |
-> | **SDP offer 入腿与出腿逐字节恒等**（REQ-F-4） | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_sdp_offer_is_byte_identical_across_legs` |
+> | The **normalised** message sequence of both legs matches the `S1-basic-call` baseline skeleton (each leg is `INVITE → 200 → ACK → BYE → 200`, with 1xx provisional responses dropped under the "final response code sequence" definition) | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_both_legs_match_the_normalised_baseline` |
+> | **C_in ≠ C_out** (independent Call-IDs for the two legs, a REQ-F-2 subset) | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_second_leg_starts_a_new_call_id` |
+> | **The SDP offer is byte-identical across the inbound and outbound legs** (REQ-F-4) | `testbed/e2e/test_s1_replay_contract.py::test_e2e_s1_replay_sdp_offer_is_byte_identical_across_legs` |
 >
-> **仍 open、上方勾选因此一项未动**：14 条消息的**逐条 header 对拍**（含 100/180 临时响应序列、
-> Via branch 模式、Route 消费等）。Wave 2 的定义本身即「方法 + **最终**响应码序列」的**归一化**对拍，
-> 不含逐条 header；该子集仍由 [`../acceptance/2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md) 追踪。
+> **Still open, so none of the checkboxes above has been touched**: the **per-message header comparison** of the 14 messages (including the 100/180 provisional response sequence, the Via branch pattern, Route consumption, etc.). Wave 2's definition is itself a **normalised** comparison of "method + **final** response code sequence" and does not include per-message headers; that subset is still tracked by [`../acceptance/2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md).
 >
-> 运行方式：`uv run pytest -m e2e -q`（需先 `make m2-platform-resip-build`；缺 native 时 **fail 不 skip**，A4-2）。
-> 执行记录：[`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md)。
-> **本追加不签收 REQ-F-1 全文。**
+> How to run: `uv run pytest -m e2e -q` (run `make m2-platform-resip-build` first; when the native is missing it **fails rather than skips**, A4-2).
+> Execution record: [`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md).
+> **This addendum does not sign off the full text of REQ-F-1.**
 
-### REQ-F-2 验收标准
-- [ ] 完成 REQ-F-1 的基本呼叫
-- [ ] 提取入腿（上游）INVITE Call-ID（记为 C_in）
-- [ ] 提取出腿（下游）INVITE Call-ID（记为 C_out）
-- [ ] 断言 **C_in ≠ C_out**（两条腿对话独立，RFC 3261 §12 B2BUA 两侧各维护独立对话状态）
-- [ ] 提取入腿 200 OK / ACK / BYE 的 Call-ID，断言**全部等于 C_in**（同一对话内 Call-ID 必须相同，RFC 3261 §8.1.1.4）
-- [ ] 提取出腿 200 OK / ACK / BYE 的 Call-ID，断言**全部等于 C_out**
+### REQ-F-2 acceptance criteria
+- [ ] Complete the basic call of REQ-F-1
+- [ ] Extract the Call-ID of the inbound (upstream) INVITE (recorded as C_in)
+- [ ] Extract the Call-ID of the outbound (downstream) INVITE (recorded as C_out)
+- [ ] Assert **C_in ≠ C_out** (the two legs are independent dialogs; RFC 3261 §12 B2BUA maintains independent dialog state on each side)
+- [ ] Extract the Call-IDs of the inbound 200 OK / ACK / BYE and assert that **they all equal C_in** (within the same dialog the Call-ID must be identical, RFC 3261 §8.1.1.4)
+- [ ] Extract the Call-IDs of the outbound 200 OK / ACK / BYE and assert that **they all equal C_out**
 
-### REQ-F-3 验收标准
-- [ ] 完成 REQ-F-1 的基本呼叫
-- [ ] 提取上游 INVITE 的 Request-URI
-- [ ] 提取下游 INVITE 的 Request-URI
-- [ ] 断言 host/port 部分不同（路由地址改变）
-- [ ] 断言 user 部分：**非翻译场景**保持不变；**翻译场景**按翻译规则改变 —— 基线 S1 即翻译场景（`+8613800138000` → `013800138000`），不得以"user 必须逐字节相等"作为翻译业务用例的验收
+### REQ-F-3 acceptance criteria
+- [ ] Complete the basic call of REQ-F-1
+- [ ] Extract the Request-URI of the upstream INVITE
+- [ ] Extract the Request-URI of the downstream INVITE
+- [ ] Assert that the host/port parts differ (the routing address changes)
+- [ ] Assert the user part: in a **non-translation scenario** it stays unchanged; in a **translation scenario** it changes according to the translation rule — baseline S1 is a translation scenario (`+8613800138000` → `013800138000`), so "the user part must be byte-identical" must not be used as the acceptance criterion for the translation business case
 
-> 说明：本条断言已由派生基线测试 `testbed/simulators/tests/test_derived_baseline.py` 对 `S1-basic-call` 的 14 条消息实际执行；归一化后两侧指向同一被叫（`13800138000`）。
+> Note: this assertion has actually been executed by the derived baseline test `testbed/simulators/tests/test_derived_baseline.py` over the 14 messages of `S1-basic-call`; after normalisation both sides point at the same callee (`13800138000`).
 
-### REQ-F-4 验收标准
-- [ ] 完成 REQ-F-1 的基本呼叫
-- [ ] 提取上游 INVITE 的 SDP body（bytes）
-- [ ] 提取下游 INVITE 的 SDP body（bytes）
-- [ ] 断言两者逐字节相等
-- [ ] 提取上游 200 OK 的 SDP body 和下游 200 OK 的 SDP body，同样逐字节相等
+### REQ-F-4 acceptance criteria
+- [ ] Complete the basic call of REQ-F-1
+- [ ] Extract the SDP body (bytes) of the upstream INVITE
+- [ ] Extract the SDP body (bytes) of the downstream INVITE
+- [ ] Assert that the two are byte-identical
+- [ ] Extract the SDP body of the upstream 200 OK and the SDP body of the downstream 200 OK, and likewise assert they are byte-identical
 
-### REQ-F-5 验收标准
-- [ ] 完成 REQ-F-1 的基本呼叫，其中上游 INVITE 带一个 Route 头（例如 `Route: <sip:proxy.example.com:5060>`）
-- [ ] 断言我们消费了寻址到我们的 Route 头（下游 INVITE 不再保留该 Route 值）
-- [ ] 断言下游请求的目标地址是**我们路由策略选定的对端**（不是运营商侧 Route 指向的代理）
-- [ ] 构造下游对端返回带 Record-Route 的 200 OK
-- [ ] 断言上游的 200 OK 里 Record-Route 头存在且值与下游 Record-Route 一致（RFC 3261 §12.1.2 Route Set 反向推导）
-
----
-
-## §1.2 路由与策略决策（REQ-F-6 到 REQ-F-7）
-
-### REQ-F-6 验收标准
-- [ ] 启动仿真环境，规则表只包含 +86138*（不含 +86199*）
-- [ ] 从仿真 S-CSCF 发送 INVITE 到 +861990000000
-- [ ] 断言我们返回 404 Not Found（RFC 3261 §21.4.5）
-- [ ] 断言不创建 B2BUA 对话（即不发下游 INVITE）
-- [ ] 对拍 POC 基线 `testbed/contracts/sip-baseline/S2-no-match-404/` 的 4 条消息
-- [ ] 断言匹配对象为目标号码（被叫方向）
-- [ ] 断言最长前缀优先匹配
-
-### REQ-F-7 验收标准
-- [ ] 启动仿真环境，规则表包含 +86168* → R-BLOCK-90（阻止策略）
-- [ ] 从仿真 S-CSCF 发送 INVITE 到 +861681000000
-- [ ] 断言我们返回 603 Decline（RFC 3261 §21.6.2）
-- [ ] 断言不创建 B2BUA 对话
-- [ ] 对拍 POC 基线 `testbed/contracts/sip-baseline/S3-policy-reject-603/` 的 4 条消息
-- [ ] 构造一个既匹配"阻止"又匹配"翻译"的优先级冲突场景，断言优先级逻辑正确（**阻止规则 > 翻译规则 > 默认路由**）
-- [ ] 断言匹配对象为目标号码；最长前缀优先
+### REQ-F-5 acceptance criteria
+- [ ] Complete the basic call of REQ-F-1, where the upstream INVITE carries one Route header (for example `Route: <sip:proxy.example.com:5060>`)
+- [ ] Assert that we consumed the Route header addressed to us (the downstream INVITE no longer retains that Route value)
+- [ ] Assert that the destination address of the downstream request is **the peer selected by our routing policy** (not the proxy that the operator-side Route points at)
+- [ ] Construct a 200 OK returned by the downstream peer carrying Record-Route
+- [ ] Assert that Record-Route is present in the upstream 200 OK and that its value matches the downstream Record-Route (RFC 3261 §12.1.2 Route Set reverse derivation)
 
 ---
 
-## §1.3 呼叫生命周期（REQ-F-8 到 REQ-F-11）
+## §1.2 Routing and policy decisions (REQ-F-6 to REQ-F-7)
 
-### REQ-F-8 验收标准（两分支）
+### REQ-F-6 acceptance criteria
+- [ ] Start the simulated environment, with the rule table containing only +86138* (not +86199*)
+- [ ] Send INVITE to +861990000000 from the simulated S-CSCF
+- [ ] Assert that we return 404 Not Found (RFC 3261 §21.4.5)
+- [ ] Assert that no B2BUA dialog is created (i.e. no downstream INVITE is sent)
+- [ ] Compare against the 4 messages of the POC baseline `testbed/contracts/sip-baseline/S2-no-match-404/`
+- [ ] Assert that the match target is the target number (the callee direction)
+- [ ] Assert longest-prefix-first matching
 
-#### 场景 ①：CANCEL 在 180 Ringing **之前**发（无 early dialog）
-- [ ] 启动仿真环境，下游 Return UAS 不立即返回 180 Ringing（或返回延迟足够让上游抢先发 CANCEL）
-- [ ] 从仿真 S-CSCF 发送 INVITE（命中业务规则）
-- [ ] 在 180 Ringing **之前**、对端任何响应到达前，从仿真 S-CSCF 发送 CANCEL
-- [ ] 断言收到 CANCEL 后我们立即返回 200 OK（对 CANCEL 的确认）
-- [ ] 断言我们向下游发送 CANCEL（不是 BYE——出腿尚无最终响应）
-- [ ] 断言下游返回 487 Request Terminated（INVITE 事务被 CANCEL 终止，RFC 3261 §9.2）
-- [ ] 断言我们向上游透传 487
-- [ ] 断言我们向上游发送 ACK
-- [ ] 对拍 POC 基线 `testbed/contracts/sip-baseline/S4-caller-cancel/` 的消息序列
-
-#### 场景 ②：CANCEL 在 180 Ringing **之后**、200 OK **之前**发（有 early dialog）
-- [ ] 启动仿真环境，下游 Return UAS 返回 180 Ringing 但延迟返回 200 OK
-- [ ] 从仿真 S-CSCF 发送 INVITE（命中业务规则）
-- [ ] 在 180 Ringing **之后**、200 OK **之前**，从仿真 S-CSCF 发送 CANCEL
-- [ ] 断言我们返回 CANCEL 的 200 OK
-- [ ] 断言我们向下游发送 CANCEL（对尚未产生最终响应的 INVITE 事务）
-- [ ] 断言对端（Return UAS）回 INVITE 的 487
-- [ ] 断言我们向上游透传 487
-- [ ] 断言我们向上游发送 ACK
-
-#### 场景 ③：CANCEL 在 200 OK **之后**发（对话已建立）
-- [ ] 启动仿真环境，下游 Return UAS 正常回 200 OK
-- [ ] 完成基本呼叫（REQ-F-1），对话建立后（200 OK + ACK 完成）
-- [ ] 上游发送 CANCEL
-- [ ] 断言 CANCEL 对已建立对话无效（RFC 3261 §9）
-- [ ] 断言我们走 BYE 拆对话：向下游发 BYE → 对端回 200 OK → 向上游透传 BYE 到对话清理完成
-
-### REQ-F-9 验收标准
-- [ ] 启动仿真环境
-- [ ] 完成一次基本呼叫（REQ-F-1），建立对话
-- [ ] 对话建立后，从仿真 S-CSCF 发送一个 re-INVITE（携带正确的 Route 头 + 正确的 Call-ID + 匹配的 local/remote tag）
-- [ ] 断言我们把 re-INVITE 路由到了正确的下游对端（不是新建对话、不是丢到黑洞）
-- [ ] 同样测试 UPDATE 和 BYE 的 in-dialog 路由
-- [ ] M2 阶段用 `testbed/simulators/` 写完整的 in-dialog 对拍场景
-
-### REQ-F-10 验收标准
-- [ ] 启动仿真环境，下游对端配置为返回 486 Busy Here
-- [ ] 从仿真 S-CSCF 发送 INVITE
-- [ ] 断言我们向下游发出 INVITE 后收到 486
-- [ ] 断言我们向上游转发 486（不是改成 404 或 200 OK）
-- [ ] 同样测试下游返回 480 和 408 的场景
-- [ ] 验证对话状态在收到非 2xx 后正确清理
-
-### REQ-F-11 验收标准（两分支）
-
-#### 场景 ①：CANCEL 先于最终响应到达（RFC 合法路径）
-- [ ] 启动仿真环境，用可控延迟或 mock 注入让 CANCEL 先于对端最终响应到达
-- [ ] 从仿真 S-CSCF 发送 INVITE
-- [ ] 向入腿注入 CANCEL（早于出腿最终响应返回）
-- [ ] 断言出腿下游返回 INVITE 的 487
-- [ ] 断言我们向上游透传 487 + 发送 ACK
-- [ ] 对话状态最终为 Terminated，无悬挂对话
-
-#### 场景 ②：最终响应已到达（CANCEL 对出腿无效）
-- [ ] 启动仿真环境，下游 Return UAS 正常返回 200 OK 或非 2xx 最终响应
-- [ ] 在我们已收到下游最终响应之后，上游才发 CANCEL
-- [ ] 断言 CANCEL 对出腿无效（RFC 3261 §9）
-- [ ] 断言我们走 BYE 拆对话（若 200 OK）或直接清理（若非 2xx）
-- [ ] 对话状态最终为 Terminated
+### REQ-F-7 acceptance criteria
+- [ ] Start the simulated environment, with the rule table containing +86168* → R-BLOCK-90 (block policy)
+- [ ] Send INVITE to +861681000000 from the simulated S-CSCF
+- [ ] Assert that we return 603 Decline (RFC 3261 §21.6.2)
+- [ ] Assert that no B2BUA dialog is created
+- [ ] Compare against the 4 messages of the POC baseline `testbed/contracts/sip-baseline/S3-policy-reject-603/`
+- [ ] Construct a priority conflict scenario that matches both "block" and "translation", and assert that the priority logic is correct (**block rule > translation rule > default routing**)
+- [ ] Assert that the match target is the target number; longest prefix first
 
 ---
 
-## §1.4 控制台与配置管理（REQ-F-12 到 REQ-F-15）
+## §1.3 Call lifecycle (REQ-F-8 to REQ-F-11)
 
-### REQ-F-12 验收标准
-- [ ] 控制台界面存在：规则列表、创建、编辑、删除按钮
-- [ ] 创建规则时能填写：匹配对象（**M4：被叫**；主叫为 v1.1）、匹配模式（**M4：前缀**；正则为 v1.1）、目标业务类型（翻译/反欺诈/路由/阻止/默认）、启用/禁用开关
-- [ ] **M4**：激活后的规则与控制台填写的被叫前缀、目标类型/明细一致（与 REQ-F-6/F-7 被叫匹配轴一致；见 PRD REQ-F-12 M4 范围说明）
-- [ ] 规则保存后进入审批队列（REQ-F-14 联动）
-- [ ] 审批通过后规则生效，禁用的规则不参与匹配
-- [ ] 规则 CRUD 操作生成审计日志（REQ-S-4）
+### REQ-F-8 acceptance criteria (two branches)
 
-### REQ-F-13 验收标准
-- [ ] 控制台提供按 Call-ID 查询入口
-- [ ] 查询结果展示完整的 SIP 消息轨迹：每条消息包含方向（入/出）、时间戳、方法、响应码、Call-ID、From/To
-- [ ] 轨迹查询结果中能看到翻译规则命中信息（REQ-F-16 联动）
-- [ ] 业务方（Actor 4）也能通过接口查询同一条轨迹
+#### Scenario ①: CANCEL is sent **before** 180 Ringing (no early dialog)
+- [ ] Start the simulated environment, with the downstream Return UAS not immediately returning 180 Ringing (or returning late enough that the upstream can send CANCEL first)
+- [ ] Send INVITE from the simulated S-CSCF (hits a business rule)
+- [ ] Before 180 Ringing and before any response from the peer arrives, send CANCEL from the simulated S-CSCF
+- [ ] Assert that after receiving CANCEL we immediately return 200 OK (the acknowledgement of CANCEL)
+- [ ] Assert that we send CANCEL downstream (not BYE — the outbound leg has no final response yet)
+- [ ] Assert that downstream returns 487 Request Terminated (the INVITE transaction is terminated by CANCEL, RFC 3261 §9.2)
+- [ ] Assert that we pass the 487 through to upstream
+- [ ] Assert that we send ACK upstream
+- [ ] Compare against the message sequence of the POC baseline `testbed/contracts/sip-baseline/S4-caller-cancel/`
 
-### REQ-F-14 验收标准
-- [ ] 规则创建/更新/删除提交后，状态变为"待审批"
-- [ ] 审批人在审批队列中能看到待审批项
-- [ ] 批准后规则生效，状态变为"已生效"
-- [ ] 拒绝必须填写拒绝理由；规则状态变为"已拒绝"
-- [ ] 全流程有审计日志（REQ-S-4）
+#### Scenario ②: CANCEL is sent **after** 180 Ringing and **before** 200 OK (early dialog present)
+- [ ] Start the simulated environment, with the downstream Return UAS returning 180 Ringing but delaying the 200 OK
+- [ ] Send INVITE from the simulated S-CSCF (hits a business rule)
+- [ ] After 180 Ringing and before 200 OK, send CANCEL from the simulated S-CSCF
+- [ ] Assert that we return 200 OK to the CANCEL
+- [ ] Assert that we send CANCEL downstream (against the INVITE transaction that has not yet produced a final response)
+- [ ] Assert that the peer (Return UAS) returns 487 to the INVITE
+- [ ] Assert that we pass the 487 through to upstream
+- [ ] Assert that we send ACK upstream
 
-### REQ-F-15 验收标准
-- [ ] 灰度分发能分批（每批 N 个实例）通知 AS 实例加载新规则版本
-- [ ] 每批分发后有健康检查（实例 active_calls 正常、无进程重启）
-- [ ] 某批分发失败时，自动回滚到上一版本
-- [ ] 运维能手动触发回滚
-- [ ] 全流程有审计日志
+#### Scenario ③: CANCEL is sent **after** 200 OK (dialog already established)
+- [ ] Start the simulated environment, with the downstream Return UAS returning 200 OK normally
+- [ ] Complete the basic call (REQ-F-1); once the dialog is established (200 OK + ACK completed)
+- [ ] Upstream sends CANCEL
+- [ ] Assert that CANCEL has no effect on an established dialog (RFC 3261 §9)
+- [ ] Assert that we tear the dialog down with BYE: send BYE downstream → peer returns 200 OK → pass BYE through upstream until the dialog cleanup completes
 
-### M4b-8 浏览器验收执行程序（从属于上述 REQ；依赖就绪后执行）
+### REQ-F-9 acceptance criteria
+- [ ] Start the simulated environment
+- [ ] Complete one basic call (REQ-F-1) and establish a dialog
+- [ ] After the dialog is established, send a re-INVITE from the simulated S-CSCF (carrying the correct Route header + the correct Call-ID + matching local/remote tags)
+- [ ] Assert that we route the re-INVITE to the correct downstream peer (not creating a new dialog, not dropping it into a black hole)
+- [ ] Test in-dialog routing of UPDATE and BYE the same way
+- [ ] In the M2 phase, write the complete in-dialog comparison scenarios under `testbed/simulators/`
 
-本程序是 REQ-F-12/13/14/15 与 REQ-S-4 的执行步骤，不新增或替代其验收标准。开始前须具备：same-origin HTTPS console/API serving；已配置 PostgreSQL、audit 与 auth；两个不同账号及权限明确的 operator、approver；已知且有预期 SIP 事件的 Call-ID；以及可安全操作的测试 AS instances。当前缺少已配置的 HTTPS serving/proxy、lossless runtime rule mapping、live trace source/API、AS instance inventory、notification transport 与 health source；受这些后端阻塞的步骤标记 **BLOCKED**，不得记作通过。
+### REQ-F-10 acceptance criteria
+- [ ] Start the simulated environment, with the downstream peer configured to return 486 Busy Here
+- [ ] Send INVITE from the simulated S-CSCF
+- [ ] Assert that after we send INVITE downstream we receive 486
+- [ ] Assert that we forward 486 upstream (not rewriting it to 404 or 200 OK)
+- [ ] Test the scenarios where downstream returns 480 and 408 the same way
+- [ ] Verify that the dialog state is cleaned up correctly after a non-2xx is received
 
-**M4 浏览器 HTTPS（2026-10-03 关门裁决）**：M4/M4b-8 可在 **compose、自签证书或本地反代** 提供的同源 HTTPS 上执行并收集脱敏证据；这不替代下文 7.2d 的正式生产/集群 preflight。正式 **7.2d** ingress/trusted-proxy 证明归入 **M5** 验收，见 [`reviews/m4-closure-adjudication-2026-10-03.md`](../reviews/m4-closure-adjudication-2026-10-03.md) 与 `plan.md` §4.2。
+### REQ-F-11 acceptance criteria (two branches)
 
-**M4b-7.2d ingress/TLS preflight (BLOCKED)**：在开始任何 login/browser 操作流前，对实际客户/测试部署完成并记录以下检查：
+#### Scenario ①: CANCEL arrives before the final response (the RFC-legal path)
+- [ ] Start the simulated environment, and use controllable delay or mock injection so that CANCEL arrives before the peer's final response
+- [ ] Send INVITE from the simulated S-CSCF
+- [ ] Inject CANCEL into the inbound leg (before the outbound leg's final response returns)
+- [ ] Assert that the outbound leg's downstream returns 487 to the INVITE
+- [ ] Assert that we pass the 487 through upstream and send ACK
+- [ ] The dialog state ends as Terminated, with no dangling dialog
 
-- 保留默认 ingress-nginx annotation prefix `nginx.ingress.kubernetes.io`；确认没有自定义 prefix 令 chart 注解失效。
-- 检查外部 ingress-nginx controller 配置，确认 `no-tls-redirect-locations` 不包含 `/`，不会豁免 console/API 路由的 HTTPS redirect。
-- 确认 Ingress 使用为实际 hostname 配置的客户 TLS Secret。
-- 从外部客户端请求 HTTP `/` 与 `/internal/v1`，确认请求被重定向到 HTTPS 或被拒绝；在真实浏览器检查 network/request evidence，确认 credentials 从未通过 HTTP 提交。
-- 验证 forwarded scheme 仅在请求来源属于显式配置的 ingress proxy IP/CIDRs 时才被信任。
-
-chart 固定的 redirect annotations 只作用于 chart Ingress 对象，不能配置或证明外部 controller 的行为。以上真实 controller/deployment/browser evidence 全部具备之前，此 preflight 与 7.2d 保持 **BLOCKED**；模板渲染或 route mocks 不可替代。
-
-1. 以 operator 登录浏览器，逐项创建、编辑、禁用并删除测试规则；每项变更提交为审批请求。刷新后确认 live 状态与审批队列一致，且页面无 fixture fallback。
-2. 以不同的 approver 处理请求：批准至少一个有效变更，拒绝至少一个并填写理由；验证缺少拒绝理由会被拒绝，creator/submitter 不能批准或拒绝自己的 order（分别尝试后确认状态未变化），且另一 approver 的批准/拒绝成功。检查批准/拒绝后的规则与请求状态。
-3. 按已知 Call-ID 查询 live trace，核对每条预期消息的方向、时间戳、方法、响应码、Call-ID、From/To，并核对适用的规则命中信息。
-4. 对测试实例执行分批 distribution；核验每批实例通知、加载版本与 active_calls/进程健康结果。注入一批健康失败，核验自动回滚到上一版本；再执行并核验一次手动回滚。
-5. 按 §3 验证每项允许、拒绝及失败操作的 audit actor、时间、action、resource、outcome 与适用的 before/after snapshots；确认 password、verifier、session/CSRF token、cookie/request headers 已脱敏。检查 append-only trigger/constraints 与 runtime DB grants，并实际验证显式 id INSERT、UPDATE、DELETE、TRUNCATE 均被拒绝；触发 audit unavailable/authorization/stale-revision 等失败路径，确认 fail-closed 行为及相应审计记录。
-
-记录每步的结果与环境/版本，保存脱敏后的浏览器截图、HTTP 请求/响应及 console/network 错误记录、trace 查询结果、distribution/health/rollback reports、对应 audit snapshots，以及数据库 grants 和拒绝写入的验证输出。不得保存密码、token、cookie 或其他 secret。缺少任一真实后端时，标注该步骤 **BLOCKED: missing backend**，不得以 route mock、fixture 或静态页面结果替代 REQ acceptance。
-
----
-
-## §1.5 业务决策链（REQ-F-16）
-
-### REQ-F-16 验收标准
-- [ ] 启动仿真环境，配置翻译规则 +86755* → +852755*
-- [ ] 从仿真 S-CSCF 发送 INVITE 到 +867551234567
-- [ ] 断言我们提取被叫号码 +867551234567，按规则翻译为 +8527551234567
-- [ ] 断言下游 INVITE 的 Request-URI 为 sip:+8527551234567@<路由目标>
-- [ ] 通过 REQ-F-13 轨迹查询能看到：翻译前号码、翻译后号码、匹配的规则 ID 与版本号、路由目标
-
----
-
-## §2 非功能需求（REQ-NF-*）
-
-### REQ-NF-1 验收标准
-- [ ] 启动仿真环境
-- [ ] 发起一个基本呼叫（REQ-F-1），等待对话建立（ACK 交换完成）
-- [ ] 在呼叫中途（对话活跃状态），强行 kill 承载该呼叫的进程
-- [ ] 进程被 K8s 拉起后自动重启
-- [ ] 从上游（S-CSCF/S-SBC）发送 BYE
-- [ ] 断言重启后的新进程**仍能把 BYE 正确路由到对端**（说明对话状态没有丢失）
-- [ ] 对话状态校验：Redis 中该 Call-ID 的对话记录完整存在
-
-### REQ-NF-2 验收标准
-- [ ] 目录结构：`apps/translation/` 和 `apps/anti-fraud/` 各自独立（不是一个进程里跑两个用例）
-- [ ] K8s Deployment：每个用例一个 Deployment，副本数独立配置
-- [ ] kill 承载 translation 用例的 Pod，断言 anti-fraud 用例不受影响（anti-fraud Pod 不重启、负载不掉）
-
-### REQ-NF-3 验收标准
-- [ ] 配置 HPA：translation Deployment 基于 active_calls（阈值 500）
-- [ ] 注入 1000 并发基本呼叫
-- [ ] 断言 translation Deployment 的副本数从 3 扩到 ≥ 5
-- [ ] 停止注入，等待 30 秒，断言副本数缩回到阈值以下
-- [ ] 在扩缩过程中，已建立的呼叫不丢失（REQ-NF-1 同步验证）
-
-### REQ-NF-4 验收标准
-- [ ] 发起滚动升级
-- [ ] 在升级过程中注入基本呼叫
-- [ ] 新呼叫被路由到新版本副本（旧版本副本已摘流）
-- [ ] 旧版本副本上存量呼叫正常完成（BYE → 200 OK）
-- [ ] 旧版本副本的 active_calls 归零后，Pod 被 K8s 删除
-- [ ] 升级全程无呼叫丢失
-
-### REQ-NF-5 验收标准
-- [ ] testbed 中有一个 S-SBC 仿真器：它接收仿真 S-CSCF 发来的消息，转发给我们 AS；接收我们 AS 的响应，转回给仿真 S-CSCF
-- [ ] AS 的代码中没有任何 "is_intranet" / "is_extranet" / "network_mode" 类型的分支判断
-- [ ] 换一个不同实现的 S-SBC 仿真器（比如用 Kamailio），断言 AS 侧行为一致
-
-### REQ-NF-6 验收标准
-- [ ] grep 生产代码，没有 RTP / G.711 / G.729 / DTMF / 转码 相关实现
-- [ ] seam 文件存在（接口定义），生产实现是 stub / raise NotImplementedError / 空函数
-- [ ] seam 注释写明"触发条件"和"什么情况下才需要实现"
-
-### REQ-NF-7 验收标准
-- [ ] 控制台能按 Call-ID 查询完整的 SIP 消息轨迹（INVITE 到 BYE 的全部消息，入/出方向、时间戳、方法、响应码）
-- [ ] 轨迹保留期待定——验证清理任务能正确执行即可，具体天数 M4 冻结
-- [ ] 清理任务：PG 定时执行，删除过期轨迹行；手动触发清理命令可立即执行
-- [ ] grep 生产代码，没有 CDR / 批价 / 计费 相关实现
-
-### REQ-NF-8 验收标准
-- [ ] grep 生产代码，没有 lawful_intercept / IRI / intercept 相关实现
-- [ ] 架构文档 §9.2 明确"LI 由 S-CSCF/SBC 网内出，不在我方交付边界"
-
-### REQ-NF-9 验收标准
-- [ ] Helm chart 能独立部署一个完整系统到指定 namespace
-- [ ] namespace 之间无共享（独立的 Redis、独立的 PG、独立的 AS Pod 组）
-- [ ] 一个 namespace 中的故障（Redis 挂了、AS 进程崩了）不影响另一个 namespace
-
-### REQ-NF-10 验收标准
-- [ ] 控制台能提交规则草稿、发起变更单、触发审批
-- [ ] 审批通过后，config-service 写入 PG 新版本（不可变）
-- [ ] 灰度分发：分批通知 AS 实例加载新版本，每批有健康检查
-- [ ] 分发异常时自动回滚到上一版本
-- [ ] 全流程有审计日志落 PG
-- [ ] grep 代码，没有 git / github / gitlab 相关的配置加载逻辑
-
-### REQ-NF-11 验收标准
-- [ ] 根目录存在唯一的 `./VERSION` 文件
-- [ ] `grep -r "VERSION=" platform/ apps/ services/` 无结果（各组件不拥有 VERSION 文件）
-- [ ] `tests/test_version_consistency.py` 通过
-- [ ] 修改根 VERSION 后，所有组件报告的产品版本号同步变化
-
-### REQ-NF-12 验收标准
-- [ ] `pyproject.toml` 包含 `[tool.uv.workspace]` 配置
-- [ ] 运行 `uv sync` 能一次性拉齐所有依赖
-- [ ] `git clone` 本仓库后直接 `make dev` 能起服务，不需要额外 `git clone` 其他仓库
-
-### REQ-NF-13 验收标准
-- [ ] 启动 AS 实例，Prometheus/Grafana 侧能采集到 active_calls、cps、规则匹配率、4xx 率、5xx 率 指标
-- [ ] 每通呼叫有完整的 trace span 链：入腿 INVITE → 业务决策 → 出腿 INVITE → BYE
-- [ ] JSON 日志中每条包含 trace_id，可与 metrics/traces 关联
-- [ ] 结构化 JSON 日志字段包含：timestamp、level、trace_id、call_id、direction、method
-
-### REQ-NF-14 验收标准
-- [ ] Prometheus Alertmanager 中有预设告警规则：
-  - active_calls 突增 > 30%（5 分钟窗口）
-  - 5xx 率 > 1%（5 分钟窗口）
-  - 进程重启循环（1min 内 > 3 次）
-  - 证书到期 30 天内
-- [ ] 手动触发上述任一条件，断言 Alertmanager 正确发出告警（通知通道待定，M2 冻结）
-
-### REQ-NF-15 验收标准
-- [ ] PRD 与 [`req-nf-15-testbed-performance.md`](../requirements/req-nf-15-testbed-performance.md) 存在且 ADR-0014 `回应 REQ` 指向 REQ-NF-15（D8 追溯）
-- [ ] `testbed/load/` harness 经真实 UDP socket 驱动被测栈（`as_load` integration 测试在门禁 `integration` 层通过）
-- [ ] 容量研究证据包含 `summary.json`（含 `c6_windows` 1s/100s）与目标侧 `resources.json` 快照；禁止用驱动回调冒充容量测量（ADR-0014）
-- [ ] M6 O1 内部测量报告记录 dev-host 正式批次与局限；**不**将报告数字作为 SLA 或对外营销容量
-- [ ] 生产集群多副本饱和点、HPA 阈值与 `performance` marker 阻塞门禁 —— **M8** 或维护者单独裁决前保持 open
+#### Scenario ②: The final response has already arrived (CANCEL has no effect on the outbound leg)
+- [ ] Start the simulated environment, with the downstream Return UAS normally returning a 200 OK or a non-2xx final response
+- [ ] Only after we have received the downstream final response does upstream send CANCEL
+- [ ] Assert that CANCEL has no effect on the outbound leg (RFC 3261 §9)
+- [ ] Assert that we tear the dialog down with BYE (if 200 OK) or clean up directly (if non-2xx)
+- [ ] The dialog state ends as Terminated
 
 ---
 
-## §3 安全需求（REQ-S-*）
+## §1.4 Console and configuration management (REQ-F-12 to REQ-F-15)
 
-### REQ-S-1 验收标准
-- [ ] config-service 中存在白名单配置（IP:port 或证书指纹）
-- [ ] 从白名单外对端发 SIP 消息到我们，断言消息被丢弃或返回 403
-- [ ] 从白名单内对端发消息，断言正常处理
-- [ ] 白名单变更需经过审批流程（REQ-F-14）
+### REQ-F-12 acceptance criteria
+- [ ] The console UI exists: rule list, create, edit, delete buttons
+- [ ] When creating a rule you can fill in: match target (**M4: callee**; caller is v1.1), match mode (**M4: prefix**; regex is v1.1), target business type (translation / anti-fraud / routing / block / default), and an enable/disable switch
+- [ ] **M4**: after activation the rule is consistent with the callee prefix and target type/detail filled in on the console (consistent with the callee matching axis of REQ-F-6/F-7; see the M4 scope note in PRD REQ-F-12)
+- [ ] After a rule is saved it enters the approval queue (linked with REQ-F-14)
+- [ ] After approval the rule takes effect; disabled rules do not participate in matching
+- [ ] Rule CRUD operations generate audit logs (REQ-S-4)
 
-### REQ-S-2 验收标准
-- [ ] AS 与 S-SBC 之间所有 SIP 信令走 TLS（端口 5061 或其他加密端口）
-- [ ] 明文连接（TCP 端口 5060）被拒绝（握手失败或连接被关闭）
-- [ ] TLS 证书链由运营商 PKI 签发，验证通过
+### REQ-F-13 acceptance criteria
+- [ ] The console provides a Call-ID query entry point
+- [ ] The query results display the complete SIP message trace: each message includes direction (inbound/outbound), timestamp, method, response code, Call-ID, From/To
+- [ ] The trace query results show translation rule hit information (linked with REQ-F-16)
+- [ ] The business side (Actor 4) can also query the same trace through the interface
 
-### REQ-S-3 验收标准
-- [ ] 证书轮换时（新旧证书并存窗口），正在进行的呼叫不受影响
-- [ ] 轮换期间新建 TLS 连接使用新证书
-- [ ] 旧证书过期后，仍持有旧证书的对端连接被正确拒绝（或已在窗口内完成切换）
-- [ ] 轮换过程无进程重启
+### REQ-F-14 acceptance criteria
+- [ ] After a rule create/update/delete is submitted, the status becomes "pending approval"
+- [ ] The approver can see the pending items in the approval queue
+- [ ] After approval the rule takes effect and the status becomes "in effect"
+- [ ] A rejection must supply a rejection reason; the rule status becomes "rejected"
+- [ ] The whole flow has audit logs (REQ-S-4)
 
-### REQ-S-4 验收标准
-- [ ] 控制台每项操作均必须校验操作者授权；规则 CRUD、审批、回滚等写操作明确包含在内
-- [ ] 鉴权方式：RBAC 角色 + 密码或客户端证书
-- [ ] 所有操作生成审计日志，包含：操作者、时间戳、操作类型、资源；变更须记录变更前后值，读取或拒绝的尝试应在适用时记录空快照；密码、密码验证器、会话/CSRF 令牌、Cookie/请求头必须脱敏
-- [ ] 审计日志不可篡改：运行时 API 数据库角色有审计表 SELECT 和仅限非 id 字段（actor、action、resource、outcome、occurred_at、before_json、after_json）的列级 INSERT，表级 INSERT 及 id 列 INSERT 均无权限，由序列分配 id；无 UPDATE、DELETE、TRUNCATE 权限。测试验证有效权限并证明显式 id INSERT 及上述修改/截断操作被拒绝，且追加写入触发器/约束阻止修改与截断（迁移/owner 角色另行处理）
+### REQ-F-15 acceptance criteria
+- [ ] Canary distribution can notify AS instances in batches (N instances per batch) to load the new rule version
+- [ ] After each batch there is a health check (instance active_calls normal, no process restart)
+- [ ] If a batch fails to distribute, it automatically rolls back to the previous version
+- [ ] Operations can manually trigger a rollback
+- [ ] The whole flow has audit logs
+
+### M4b-8 browser acceptance procedure (subordinate to the REQs above; executed once the dependencies are ready)
+
+This procedure is the execution steps for REQ-F-12/13/14/15 and REQ-S-4; it neither adds nor replaces their acceptance criteria. Before starting you must have: a same-origin HTTPS console/API serving; PostgreSQL, audit and auth configured; two different accounts with clearly separated permissions, operator and approver; a known Call-ID with expected SIP events; and test AS instances that can be operated on safely. What is currently missing is the configured HTTPS serving/proxy, lossless runtime rule mapping, the live trace source/API, the AS instance inventory, the notification transport and the health source; steps blocked by these backends are marked **BLOCKED** and must not be recorded as passed.
+
+**M4 browser HTTPS (2026-10-03 closure ruling)**: M4/M4b-8 may be executed on same-origin HTTPS provided by **compose, a self-signed certificate or a local reverse proxy**, and redacted evidence may be collected; this does not replace the formal production/cluster preflight of 7.2d below. Formal **7.2d** ingress/trusted-proxy proof belongs to **M5** acceptance; see [`reviews/m4-closure-adjudication-2026-10-03.md`](../reviews/m4-closure-adjudication-2026-10-03.md) and `plan.md` §4.2.
+
+**M4b-7.2d ingress/TLS preflight (BLOCKED)**: before starting any login/browser operation flow, complete and record the following checks against the real customer/test deployment:
+
+- Keep the default ingress-nginx annotation prefix `nginx.ingress.kubernetes.io`; confirm that no custom prefix has invalidated the chart annotations.
+- Inspect the external ingress-nginx controller configuration and confirm that `no-tls-redirect-locations` does not contain `/`, so it does not exempt the console/API routes from the HTTPS redirect.
+- Confirm that the Ingress uses the customer TLS Secret configured for the actual hostname.
+- Request HTTP `/` and `/internal/v1` from an external client and confirm the requests are redirected to HTTPS or rejected; in a real browser check the network/request evidence to confirm credentials were never submitted over HTTP.
+- Verify that the forwarded scheme is trusted only when the request origin belongs to the explicitly configured ingress proxy IPs/CIDRs.
+
+The redirect annotations fixed in the chart apply only to the chart's Ingress objects and cannot configure or prove the behaviour of an external controller. Until all the above real controller/deployment/browser evidence is available, this preflight and 7.2d remain **BLOCKED**; template rendering or route mocks cannot substitute.
+
+1. Log into the browser as the operator, and create, edit, disable and delete a test rule item by item; submit each change as an approval request. After refreshing, confirm the live status matches the approval queue and that the page has no fixture fallback.
+2. Handle the requests as a different approver: approve at least one valid change, reject at least one with a reason; verify that a rejection without a reason is rejected, that the creator/submitter cannot approve or reject their own order (try each and confirm the status did not change), and that another approver's approve/reject succeeds. Check the rule and request status after approval/rejection.
+3. Query the live trace by the known Call-ID, and check the direction, timestamp, method, response code, Call-ID and From/To of every expected message, along with the applicable rule hit information.
+4. Execute batched distribution against the test instances; verify per-batch instance notification, the loaded version, and the active_calls/process health results. Inject a health failure in one batch and verify the automatic rollback to the previous version; then perform and verify one manual rollback.
+5. Per §3, verify the audit actor, time, action, resource, outcome and applicable before/after snapshots for every permitted, rejected and failed operation; confirm that password, verifier, session/CSRF token, cookie/request headers are redacted. Check the append-only triggers/constraints and runtime DB grants, and actually verify that explicit id INSERT, UPDATE, DELETE and TRUNCATE are all rejected; trigger failure paths such as audit unavailable/authorization/stale-revision, and confirm fail-closed behaviour and the corresponding audit records.
+
+Record the result of each step along with the environment/version; save the redacted browser screenshots, HTTP requests/responses, console/network error logs, trace query results, distribution/health/rollback reports, the corresponding audit snapshots, plus the output verifying the database grants and the rejected writes. Passwords, tokens, cookies and other secrets must not be saved. When any real backend is missing, mark that step **BLOCKED: missing backend**; route mocks, fixtures or static page results must not be substituted for REQ acceptance.
 
 ---
 
-## §4 治理需求（REQ-G-*）
+## §1.5 Business decision chain (REQ-F-16)
 
-### REQ-G-1 验收标准
-- [ ] 每个 feature 的 HLD 节包含 "Enablement" 子节，写明默认态、灰度策略、移除条件
-- [ ] feature 开关的开/关两态都有测试覆盖
-- [ ] 代码中没有"开关存在了但没写移除条件"的情况（AST 扫描守卫）
-
-### REQ-G-2 验收标准
-- [ ] PR checklist 包含"已更新 REQ-* / ADR / 设计文档 / 契约用例 / 验收记录"
-- [ ] review record 能追溯到至少一个 REQ-* 编号
-- [ ] 代码改动能追溯到 requirement（通过 ADR 或直接引用）
-
-### REQ-G-3 验收标准
-- [ ] `make gate` 四步（format/check/mypy/pytest）不包含 AST 扫描（AST 扫描由 `make gate-strict` 单独触发）
-- [ ] 故意写一行不标注的架构性代码，断言 AST 扫描阻断（通过 `make gate-strict`）
-- [ ] 扫描覆盖率：所有非 trivial 的架构性代码都有 ADR 标注
-
-### REQ-G-4 验收标准
-- [ ] `make gate` 退出码为 0
-- [ ] `make test` 中层① 失败时阻断后续层
-- [ ] pre-commit hook 在本地提交前运行 `make gate` 的 lint/format 部分
+### REQ-F-16 acceptance criteria
+- [ ] Start the simulated environment and configure the translation rule +86755* → +852755*
+- [ ] Send INVITE to +867551234567 from the simulated S-CSCF
+- [ ] Assert that we extract the callee number +867551234567 and translate it per the rule to +8527551234567
+- [ ] Assert that the Request-URI of the downstream INVITE is sip:+8527551234567@<routing target>
+- [ ] Assert that the REQ-F-13 trace query shows: the pre-translation number, the post-translation number, the matched rule ID and version number, and the routing target
 
 ---
 
-## §5 M2 内核验收（unit / contract 层）
+## §2 Non-functional requirements (REQ-NF-*)
 
-> 本节是 M2 内核（platform）的验收标准，对应 `docs/architecture/lld.md`。
-> 层与 marker：`unit` = 纯逻辑，无 socket；`contract` = 语言无关契约用例，对**每一个**实现重放。
-> 决策逻辑（`decide()`、规则匹配）按 AGENT.md §6 **强制 TDD**：红 - 绿 - 重构。
+### REQ-NF-1 acceptance criteria
+- [ ] Start the simulated environment
+- [ ] Place a basic call (REQ-F-1) and wait for the dialog to be established (the ACK exchange completes)
+- [ ] Mid-call (while the dialog is in the active state), forcibly kill the process carrying that call
+- [ ] After the process is brought back up by K8s it restarts automatically
+- [ ] Send BYE from upstream (S-CSCF/S-SBC)
+- [ ] Assert that the new process **after the restart can still route the BYE correctly to the peer** (showing that the dialog state was not lost)
+- [ ] Dialog state verification: the dialog record for that Call-ID exists completely in Redis
 
-### 5.1 `decide()` 判决矩阵（marker: unit）
+### REQ-NF-2 acceptance criteria
+- [ ] Directory structure: `apps/translation/` and `apps/anti-fraud/` are each independent (not two use cases running in one process)
+- [ ] K8s Deployment: one Deployment per use case, with replica counts configured independently
+- [ ] Kill the Pod carrying the translation use case and assert that the anti-fraud use case is unaffected (the anti-fraud Pod does not restart, load does not drop)
 
-规则集（测试夹具）：
-| 前缀 | action | 说明 |
+### REQ-NF-3 acceptance criteria
+- [ ] Configure HPA: the translation Deployment scales on active_calls (threshold 500)
+- [ ] Inject 1000 concurrent basic calls
+- [ ] Assert that the translation Deployment's replica count scales from 3 to ≥ 5
+- [ ] Stop injecting, wait 30 seconds, and assert that the replica count scales back below the threshold
+- [ ] During scaling, already-established calls are not lost (verified together with REQ-NF-1)
+
+### REQ-NF-4 acceptance criteria
+- [ ] Start a rolling upgrade
+- [ ] Inject basic calls during the upgrade
+- [ ] New calls are routed to the new-version replicas (old-version replicas have been drained)
+- [ ] Existing calls on old-version replicas complete normally (BYE → 200 OK)
+- [ ] After active_calls on an old-version replica reaches zero, the Pod is deleted by K8s
+- [ ] No calls are lost throughout the upgrade
+
+### REQ-NF-5 acceptance criteria
+- [ ] There is an S-SBC simulator in the testbed: it receives messages from the simulated S-CSCF and forwards them to our AS; it receives responses from our AS and sends them back to the simulated S-CSCF
+- [ ] There is no "is_intranet" / "is_extranet" / "network_mode" style branch check anywhere in the AS code
+- [ ] Swap in an S-SBC simulator with a different implementation (for example Kamailio) and assert that the AS-side behaviour is identical
+
+### REQ-NF-6 acceptance criteria
+- [ ] grep the production code: no RTP / G.711 / G.729 / DTMF / transcoding related implementation
+- [ ] The seam files exist (interface definitions), and the production implementations are stubs / raise NotImplementedError / empty functions
+- [ ] The seam comments state the "trigger conditions" and "under what circumstances an implementation is needed"
+
+### REQ-NF-7 acceptance criteria
+- [ ] The console can query the complete SIP message trace by Call-ID (all messages from INVITE to BYE, with inbound/outbound direction, timestamp, method, response code)
+- [ ] The trace retention period is undecided — it suffices to verify that the cleanup job runs correctly; the concrete number of days is frozen at M4
+- [ ] Cleanup job: PG runs it on a schedule and deletes expired trace rows; manually triggering the cleanup command executes it immediately
+- [ ] grep the production code: no CDR / wholesale pricing / billing related implementation
+
+### REQ-NF-8 acceptance criteria
+- [ ] grep the production code: no lawful_intercept / IRI / intercept related implementation
+- [ ] The architecture document §9.2 states explicitly that "LI is done inside the S-CSCF/SBC network and is not within our delivery boundary"
+
+### REQ-NF-9 acceptance criteria
+- [ ] The Helm chart can independently deploy one complete system into a specified namespace
+- [ ] There is no sharing between namespaces (an independent Redis, an independent PG, an independent AS Pod group)
+- [ ] A failure in one namespace (Redis dying, the AS process crashing) does not affect the other namespace
+
+### REQ-NF-10 acceptance criteria
+- [ ] The console can submit rule drafts, raise change records and trigger approval
+- [ ] After approval, config-service writes a new (immutable) version into PG
+- [ ] Canary distribution: notify AS instances in batches to load the new version, with a health check per batch
+- [ ] On a distribution failure it automatically rolls back to the previous version
+- [ ] The whole flow has audit logs written to PG
+- [ ] grep the code: no git / github / gitlab related configuration loading logic
+
+### REQ-NF-11 acceptance criteria
+- [ ] A single `./VERSION` file exists at the repository root
+- [ ] `grep -r "VERSION=" platform/ apps/ services/` returns nothing (no component owns a VERSION file)
+- [ ] `tests/test_version_consistency.py` passes
+- [ ] After modifying the root VERSION, the product version reported by all components changes in sync
+
+### REQ-NF-12 acceptance criteria
+- [ ] `pyproject.toml` contains the `[tool.uv.workspace]` configuration
+- [ ] Running `uv sync` pulls all dependencies into alignment in one go
+- [ ] After `git clone` of this repository, `make dev` starts the services directly with no extra `git clone` of other repositories
+
+### REQ-NF-13 acceptance criteria
+- [ ] After starting an AS instance, the active_calls, cps, rule match rate, 4xx rate and 5xx rate metrics can be collected on the Prometheus/Grafana side
+- [ ] Every call has a complete trace span chain: inbound INVITE → business decision → outbound INVITE → BYE
+- [ ] Each JSON log line contains trace_id, and can be correlated with metrics/traces
+- [ ] The structured JSON log fields include: timestamp, level, trace_id, call_id, direction, method
+
+### REQ-NF-14 acceptance criteria
+- [ ] The Prometheus Alertmanager has preset alert rules:
+  - active_calls spike > 30% (5-minute window)
+  - 5xx rate > 1% (5-minute window)
+  - process restart loop (> 3 times within 1min)
+  - certificate expiring within 30 days
+- [ ] Manually trigger any of the above conditions and assert that Alertmanager fires the alert correctly (the notification channel is undecided, frozen at M2)
+
+### REQ-NF-15 acceptance criteria
+- [ ] The PRD and [`req-nf-15-testbed-performance.md`](../requirements/req-nf-15-testbed-performance.md) exist, and ADR-0014's `responds to REQ` points at REQ-NF-15 (D8 traceability)
+- [ ] The `testbed/load/` harness drives the system under test over real UDP sockets (the `as_load` integration test passes at gate layer `integration`)
+- [ ] The capacity study evidence includes `summary.json` (with `c6_windows` 1s/100s) and a `resources.json` snapshot from the target side; it is forbidden to pass off the driver callback as a capacity measurement (ADR-0014)
+- [ ] The M6 O1 internal measurement report records the formal dev-host batch and its limitations; the report figures are **not** to be used as an SLA or as externally marketed capacity
+- [ ] Production-cluster multi-replica saturation point, HPA thresholds and the `performance` marker blocking the gate — stay open until **M8** or a separate maintainer ruling
+
+---
+
+## §3 Security requirements (REQ-S-*)
+
+### REQ-S-1 acceptance criteria
+- [ ] An allowlist configuration exists in config-service (IP:port or certificate fingerprint)
+- [ ] From a peer outside the allowlist, send SIP messages to us and assert that the messages are dropped or that 403 is returned
+- [ ] From a peer inside the allowlist, send messages and assert they are processed normally
+- [ ] Allowlist changes must go through the approval flow (REQ-F-14)
+
+### REQ-S-2 acceptance criteria
+- [ ] All SIP signalling between AS and S-SBC goes over TLS (port 5061 or another encrypted port)
+- [ ] Plaintext connections (TCP port 5060) are rejected (the handshake fails or the connection is closed)
+- [ ] The TLS certificate chain is issued by the operator PKI and verification passes
+
+### REQ-S-3 acceptance criteria
+- [ ] During certificate rotation (the window where the old and new certificates coexist), calls in progress are unaffected
+- [ ] New TLS connections during rotation use the new certificate
+- [ ] After the old certificate expires, peer connections still holding the old certificate are correctly rejected (or the switchover was completed within the window)
+- [ ] There is no process restart during rotation
+
+### REQ-S-4 acceptance criteria
+- [ ] Every console operation must verify the operator's authorisation; this explicitly includes write operations such as rule CRUD, approval and rollback
+- [ ] Authorisation method: RBAC roles plus a password or client certificate
+- [ ] All operations generate audit logs containing: the operator, timestamp, operation type, resource; changes must record the before and after values, and read or rejected attempts should record an empty snapshot where applicable; passwords, password verifiers, session/CSRF tokens and cookies/request headers must be redacted
+- [ ] Audit logs are tamper-proof: the runtime API database role has SELECT on the audit table and column-level INSERT limited to non-id fields (actor, action, resource, outcome, occurred_at, before_json, after_json); it has no permission for table-level INSERT or for INSERT into the id column, with id assigned by a sequence; it has no UPDATE, DELETE or TRUNCATE permission. Tests verify the effective permissions and prove that explicit id INSERT and the above modification/truncate operations are rejected, and that append-only triggers/constraints prevent modification and truncation (the migration/owner role is handled separately)
+
+---
+
+## §4 Governance requirements (REQ-G-*)
+
+### REQ-G-1 acceptance criteria
+- [ ] The HLD section of each feature contains an "Enablement" subsection stating the default state, the canary strategy and the removal condition
+- [ ] Both the on and off states of the feature switch have test coverage
+- [ ] There is no case in the code where "the switch exists but no removal condition was written" (an AST scan guard)
+
+### REQ-G-2 acceptance criteria
+- [ ] The PR checklist includes "REQ-* / ADR / design document / contract cases / acceptance record updated"
+- [ ] A review record can be traced back to at least one REQ-* number
+- [ ] A code change can be traced back to a requirement (via an ADR or a direct reference)
+
+### REQ-G-3 acceptance criteria
+- [ ] The four steps of `make gate` (format/check/mypy/pytest) do not include the AST scan (the AST scan is triggered separately by `make gate-strict`)
+- [ ] Deliberately write one line of architectural code without an annotation and assert that the AST scan blocks it (via `make gate-strict`)
+- [ ] Scan coverage: all non-trivial architectural code has an ADR annotation
+
+### REQ-G-4 acceptance criteria
+- [ ] `make gate` exits with code 0
+- [ ] When layer ① of `make test` fails, the subsequent layers are blocked
+- [ ] The pre-commit hook runs the lint/format part of `make gate` before a local commit
+
+---
+
+## §5 M2 kernel acceptance (unit / contract layer)
+
+> This section is the acceptance criteria for the M2 kernel (platform), corresponding to `docs/architecture/lld.md`.
+> Layers and markers: `unit` = pure logic, no sockets; `contract` = language-agnostic contract cases, replayed for **every** implementation.
+> Decision logic (`decide()`, rule matching) is **TDD-mandatory** per AGENT.md §6: red - green - refactor.
+
+### 5.1 `decide()` decision matrix (marker: unit)
+
+Rule set (test fixture):
+| Prefix | action | Note |
 |---|---|---|
-| `+86755` | translate（target = `return-uas`） | 翻译业务 |
-| `+8675512` | translate（target = `return-uas`） | 更长前缀，用于验证最长前缀优先 |
-| `+86138` | forward | 直接转发 |
-| `+86168` | block（603） | 反诈阻止 |
+| `+86755` | translate (target = `return-uas`) | Translation business |
+| `+8675512` | translate (target = `return-uas`) | A longer prefix, used to verify longest-prefix-first |
+| `+86138` | forward | Direct forwarding |
+| `+86168` | block (603) | Anti-fraud block |
 
-| # | 被叫号码 | 期望 action | 期望 reason_code | 断言要点 |
+| # | Callee number | Expected action | Expected reason_code | Assertion focus |
 |---|---|---|---|---|
-| 1 | `+867550123456` | TRANSLATE | `MATCH_TRANSLATE` | 命中 `+86755`，target 为 `return-uas` |
-| 2 | `+8675512345678` | TRANSLATE | `MATCH_TRANSLATE` | 同时匹配 `+86755` 与 `+8675512`，**断言命中更长的前缀** `+8675512`（`matched_rule_id` 可区分） |
-| 3 | `+861681000000` | DECLINE | `MATCH_BLOCK` | 返回 603，且**不创建出腿**（REQ-F-7） |
-| 4 | `+8613800000000` | FORWARD | `MATCH_FORWARD` | 直接转发 |
-| 5 | `+869990000000` | NOT_FOUND | `NO_MATCH` | 返回 404，且不创建出腿（REQ-F-6） |
-| 6 | `867551234567`（无 `+`） | TRANSLATE | `MATCH_TRANSLATE` | 号码归一化后匹配，等价用例 1 |
-| 7 | 号码同时命中 block 与 translate（如 `+86168` block 与 `+8616` translate） | DECLINE | `MATCH_BLOCK` | **block 优先于 translate**（与 §1.2 REQ-F-7 验收一致） |
+| 1 | `+867550123456` | TRANSLATE | `MATCH_TRANSLATE` | Hits `+86755`, target is `return-uas` |
+| 2 | `+8675512345678` | TRANSLATE | `MATCH_TRANSLATE` | Matches both `+86755` and `+8675512`; **assert that the longer prefix is hit** — `+8675512` (`matched_rule_id` can tell them apart) |
+| 3 | `+861681000000` | DECLINE | `MATCH_BLOCK` | Returns 603 and **does not create the outbound leg** (REQ-F-7) |
+| 4 | `+8613800000000` | FORWARD | `MATCH_FORWARD` | Direct forwarding |
+| 5 | `+869990000000` | NOT_FOUND | `NO_MATCH` | Returns 404 and creates no outbound leg (REQ-F-6) |
+| 6 | `867551234567` (no `+`) | TRANSLATE | `MATCH_TRANSLATE` | Matches after number normalisation; equivalent to case 1 |
+| 7 | The number hits both block and translate (e.g. `+86168` block and `+8616` translate) | DECLINE | `MATCH_BLOCK` | **block takes priority over translate** (consistent with §1.2 REQ-F-7 acceptance) |
 
-说明：用例 1 的号码刻意避开 `+8675512`，以保证"命中 `+86755`"与用例 2"命中更长前缀"是两条互不重叠的断言。
+Note: the number in case 1 deliberately avoids `+8675512`, so that "hits `+86755`" and case 2's "hits the longer prefix" are two non-overlapping assertions.
 
-通用断言：`decide()` 为纯函数 —— 同输入必同输出；无 socket、无时钟读取、无全局状态（可由"注入的 received_at 不参与判决"与"连续两次调用结果相等"间接断言）。
+General assertion: `decide()` is a pure function — the same input must always give the same output; no sockets, no clock reads, no global state (indirectly assertable via "the injected received_at does not participate in the decision" and "two consecutive calls give equal results").
 
-### 5.2 StateStore 契约（marker: contract）
+### 5.2 StateStore contract (marker: contract)
 
-同一套用例对**两个实现**重放：`InMemoryStateStore` 与 `RedisStateStore`（Redis 用例在无 Redis 环境时 skip，但契约本身必须存在）。
+The same set of cases is replayed against **both implementations**: `InMemoryStateStore` and `RedisStateStore` (the Redis cases skip in an environment with no Redis, but the contract itself must exist).
 
-| # | 用例 | 断言 |
+| # | Case | Assertion |
 |---|---|---|
-| 1 | `get` 不存在的键 | 返回 `None`，不抛异常 |
-| 2 | `set(k, v, ttl)` 后 `get(k)` | 返回与 `v` 逐字节相等的 bytes |
-| 3 | 同键同值写两次 | 结果一致，无异常（**幂等**） |
-| 4 | `set(ttl=1)`，注入时钟推进超过 TTL | `get` 返回 `None`；实现**不得**在内部读系统时钟 |
-| 5 | `delete(k)` 后 `get(k)`；再 `delete(k)` | 第一次返回 `None`，第二次不抛异常 |
-| 6 | 键格式 | 形如 `as:{case}:{kind}:{id}` |
-| 7 | 写入顺序交换 | 最终值一致（幂等语义，承受 Redis 脑裂窗口重放） |
+| 1 | `get` a non-existent key | Returns `None`, raises no exception |
+| 2 | `get(k)` after `set(k, v, ttl)` | Returns bytes byte-identical to `v` |
+| 3 | Write the same key with the same value twice | Consistent result, no exception (**idempotent**) |
+| 4 | `set(ttl=1)`, inject a clock advance beyond the TTL | `get` returns `None`; the implementation **must not** read the system clock internally |
+| 5 | `get(k)` after `delete(k)`; then `delete(k)` again | The first returns `None`, the second raises no exception |
+| 6 | Key format | Of the form `as:{case}:{kind}:{id}` |
+| 7 | Swap the write order | Consistent final value (idempotent semantics, surviving replay across a Redis split-brain window) |
 
-### 5.3 feature 门控两态（marker: unit）
+### 5.3 The two states of feature gating (marker: unit)
 
-| # | 用例 | 断言 |
+| # | Case | Assertion |
 |---|---|---|
-| 1 | 未注册的开关名 | `is_enabled` 返回 `False`（**fail-closed**） |
-| 2 | 部署级默认态 | 返回 `False`（**默认关**） |
-| 3 | 部署级置为开 | 返回 `True` |
-| 4 | 运行态覆盖开 / 关 | 覆盖值优先于部署级 |
-| 5 | 同一 scope 重复求值 | 结果一致（**判定幂等**） |
-| 6 | 判定入口不依赖真实 Redis | 通过注入 `ToggleSource` 完成，测试无 socket |
+| 1 | Unregistered toggle name | `is_enabled` returns `False` (**fail-closed**) |
+| 2 | Deployment-level default state | Returns `False` (**off by default**) |
+| 3 | Set to on at deployment level | Returns `True` |
+| 4 | Runtime override on / off | The override value takes priority over the deployment level |
+| 5 | Repeated evaluation within the same scope | Consistent result (**the decision is idempotent**) |
+| 6 | The decision entry point does not depend on a real Redis | Done by injecting a `ToggleSource`; the test has no sockets |
 
-两态（开 / 关）都必须被覆盖（ADR-0020、REQ-G-1）。
+Both states (on / off) must be covered (ADR-0020, REQ-G-1).
 
-### 5.4 遥测不阻塞（marker: unit）
+### 5.4 Telemetry must not block (marker: unit)
 
-| # | 用例 | 断言 |
+| # | Case | Assertion |
 |---|---|---|
-| 1 | 呼叫路径调用 `emit()` | 不产生任何网络 IO（以 NoOp / 假 exporter 断言 socket 未被调用） |
-| 2 | 队列写满后继续 `emit()` | 不抛异常、不阻塞；`dropped` 计数自增 |
-| 3 | 默认 sink | 为 `NoOpSink`（未配置 exporter 时不报错） |
-| 4 | 导出线程 | 在独立线程消费队列，呼叫路径不等待导出完成 |
+| 1 | The call path calls `emit()` | Produces no network IO at all (assert via a NoOp / fake exporter that the socket was never called) |
+| 2 | Keep calling `emit()` after the queue is full | Raises no exception, does not block; the `dropped` counter increments |
+| 3 | Default sink | Is `NoOpSink` (no error when no exporter is configured) |
+| 4 | Export thread | Consumes the queue on an independent thread; the call path does not wait for the export to complete |
 
-### 5.5 进程壳 draining（marker: unit）
+### 5.5 Process-shell draining (marker: unit)
 
-| # | 用例 | 断言 |
+| # | Case | Assertion |
 |---|---|---|
-| 1 | `active_calls == 0` 时收到 SIGTERM | 停止接收新请求并退出 |
-| 2 | `active_calls > 0` 时收到 SIGTERM | **不退出**；新请求被拒；待归零后退出 |
-| 3 | 归零超时（可配上限） | 强制退出并记录；不得无限等待 |
+| 1 | SIGTERM received when `active_calls == 0` | Stops accepting new requests and exits |
+| 2 | SIGTERM received when `active_calls > 0` | **Does not exit**; new requests are rejected; exits once it reaches zero |
+| 3 | Zero not reached before the timeout (a configurable upper bound) | Forced exit and logged; must never wait indefinitely |
 
-### 5.6 与需求/设计的追溯
+### 5.6 Traceability to requirements / design
 
-| 本节 | 对应 REQ | 对应设计 |
+| This section | Corresponding REQ | Corresponding design |
 |---|---|---|
-| 5.1 | REQ-F-1、REQ-F-6、REQ-F-7 | `lld.md` §2、§3 |
-| 5.2 | REQ-NF-1、REQ-NF-2 | `lld.md` §4（ADR-0002、ADR-0007） |
-| 5.3 | REQ-G-1 | `lld.md` §5（ADR-0020） |
-| 5.4 | REQ-NF-13 | `lld.md` §6（ADR-0005） |
-| 5.5 | REQ-NF-4 | `lld.md` §7（ADR-0009） |
+| 5.1 | REQ-F-1, REQ-F-6, REQ-F-7 | `lld.md` §2, §3 |
+| 5.2 | REQ-NF-1, REQ-NF-2 | `lld.md` §4 (ADR-0002, ADR-0007) |
+| 5.3 | REQ-G-1 | `lld.md` §5 (ADR-0020) |
+| 5.4 | REQ-NF-13 | `lld.md` §6 (ADR-0005) |
+| 5.5 | REQ-NF-4 | `lld.md` §7 (ADR-0009) |
 

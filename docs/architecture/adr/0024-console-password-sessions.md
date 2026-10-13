@@ -17,9 +17,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - **Status**: accepted · maintainer signoff 2026-10-03 ([review record](../../reviews/adr-0024-console-password-sessions-review-2026-10-02.md))
 - **Date**: 2026-10-02
 - **Decides**: §0 ledger item 18 — propose role-based password authentication with persistent, revocable console sessions
-- **回应 REQ**: REQ-S-4, REQ-F-14
+- **Responds to REQ**: REQ-S-4, REQ-F-14
 
-## Context（背景）
+## Context
 
 - REQ-S-4 requires role-based authorization using a password or client certificate, authorization and audit for all control-console operations, and append-only audit logs.
 - ADR-0016 assigns console authentication and complete audit to M4 but does not select an authentication or session mechanism.
@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - The console shares a PostgreSQL governance store. Its application uses a shared PostgreSQL connection that must remain dedicated and request-serialized; mutating `search_path` is not an acceptable isolation mechanism; the delivered M4b-6a/6b slices follow that constraint.
 - M4b-6a (identity, password, session) and M4b-6b (append-only audit API/store) are **delivered as engineering slices** on branch `cur`. The 2026-10-03 implementation review recorded alignment with this ADR (104 passed in `test_auth` + `test_audit_store`; no P0 drift). Neither slice is REQ-S-4 or M4b acceptance. This ADR is **accepted** per the [review record](../../reviews/adr-0024-console-password-sessions-review-2026-10-02.md). See the [acceptance report](../../acceptance/report.md) for current scope and evidence.
 
-## Decision（决策）
+## Decision
 
 Adopt role plus password authentication for the control console per this ADR (accepted 2026-10-03). Acceptance does not authorize claiming REQ-S-4 or M4b acceptance.
 
@@ -49,15 +49,15 @@ Adopt role plus password authentication for the control console per this ADR (ac
 
 An audited API starts only when its shared PostgreSQL connection is already switched into the dedicated `NOLOGIN` runtime role. Startup verifies the effective `current_user`, role attributes and memberships, object ownership, audit privileges, and sequence properties; the migration/owner connection must never be used by the application. This runtime constraint does not claim REQ or M4b acceptance.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
 - The proposal uses the existing authorization policy and approval separation while establishing a revocable server-side session boundary; each request sees current account status and roles, and account changes revoke sessions transactionally.
 - Passwords and bearer tokens are not persisted in recoverable form; state-changing browser requests have a CSRF check.
 - Bootstrap has an explicit out-of-band first-admin path and does not expose an unauthenticated account-claim surface.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
 - This slice provides a local password-account lifecycle only. MFA, SSO, and client-certificate authentication are not included.
 - Rate limiting depends on deployment ingress and remains a security follow-up; this proposal does not claim application-level rate limiting.
@@ -66,7 +66,7 @@ An audited API starts only when its shared PostgreSQL connection is already swit
 - Password recovery, lockout policy, session listing, and other account lifecycle requirements are not selected here beyond the specified admin operations and password-change revocation.
 - No REQ-S-4 or M4b acceptance is claimed. Production HTTPS/trusted-proxy verification and M4b-8 browser evidence remain follow-up work.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
@@ -74,12 +74,12 @@ An audited API starts only when its shared PostgreSQL connection is already swit
 | Stateless signed session | Requires signing-key lifecycle and still lacks straightforward per-session revocation; the governance store is already the selected home for control-plane state. |
 | mTLS-only console authentication | REQ-S-4 permits client certificates, but this would couple operator identity to certificate provisioning and does not satisfy the requested local password-account path. Certificate authentication remains outside this slice. |
 
-## Evidence（证据）
+## Evidence
 
 - **Engineering evidence (not acceptance):** Auth/session implementation is in [`auth.py`](../../../services/config-service/src/as_config_service/auth.py), [`api.py`](../../../services/config-service/src/as_config_service/api.py), and [`bootstrap_admin.py`](../../../services/config-service/src/as_config_service/bootstrap_admin.py); tests are [`test_auth.py`](../../../services/config-service/tests/test_auth.py), [`test_postgres_auth_integration.py`](../../../services/config-service/tests/test_postgres_auth_integration.py), and [`test_postgres_auth_api_integration.py`](../../../services/config-service/tests/test_postgres_auth_api_integration.py). Durable audit implementation is in [`audit_store.py`](../../../services/config-service/src/as_config_service/audit_store.py) and [`api.py`](../../../services/config-service/src/as_config_service/api.py); tests are [`test_audit_store.py`](../../../services/config-service/tests/test_audit_store.py), [`test_postgres_audit_store_integration.py`](../../../services/config-service/tests/test_postgres_audit_store_integration.py), and [`test_api.py`](../../../services/config-service/tests/test_api.py). The [acceptance report](../../acceptance/report.md) records the current local gate and integration results.
 - **Evidence limits:** Verification is local on PostgreSQL 12.22 only; three publication DDL integration tests were skipped because `wal_level=replica` (they require `logical`). PostgreSQL 16 and remote gates were not tested. There is no production trusted-proxy evidence, application rate-limiting evidence, or REQ-S-4 acceptance. Engineering slices do not constitute REQ acceptance.
 
-## Related（相关）
+## Related
 
 - [ADR-0016 — In-boundary Security](0016-in-boundary-security.md)
 - [ADR-0006 — Configuration Governance](0006-config-governance.md)

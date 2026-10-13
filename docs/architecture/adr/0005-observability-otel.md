@@ -12,66 +12,66 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0005：OTel 三信号，后端中立，导出绝不能阻塞呼叫路径
+# ADR-0005: OTel three signals, backend-neutral, export must never block the call path
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §0 账本条目 12 —— OTel 三信号，后端中立，导出绝不能阻塞呼叫路径；呼叫轨迹保留独立查询通道
-- **回应 REQ**: REQ-NF-13, REQ-NF-14
+- **Decides**: §0 ledger entry 12 — OTel three signals, backend-neutral, export must never block the call path; call traces retain an independent query channel
+- **Responds to REQ**: REQ-NF-13, REQ-NF-14
 
 ---
 
-## Context（背景）
+## Context
 
-呼叫路径对时延敏感。任何放在呼叫路径上的同步导出，都会把自己消耗的时间直接加进呼叫建立时延 —— 这一点不是推测，而是 `ED2.loop()` 这一阻塞模型的直接后果：`AGENT.md` §5 明确写了「`ED2.loop()` 或等价的阻塞事件循环是阻塞的。绝不要在 SIP 回调里调用阻塞操作 —— 包括遥测导出。导出在自己的线程上跑（ADR-0005）。」一通呼叫的建立要穿过 SIP adapter、call controller、决策模块与 StateStore 多次往返，任何一次网络写（尤其是遥测后端位于客户机房另一侧、跨机房或跨 NAT 时）都可能把毫秒级的抖动放大成秒级的超时。遥测是为了观测系统，绝不能成为系统变慢的原因。
+The call path is latency-sensitive. Any synchronous export placed on the call path adds its own cost directly to call setup latency — this is not speculation, but a direct consequence of the blocking model of `ED2.loop()`: `AGENT.md` §5 states explicitly "`ED2.loop()`, or an equivalent blocking event loop, is blocking. Never call blocking operations inside SIP callbacks — including telemetry export. Export runs on its own thread (ADR-0005)." Setting up one call crosses the SIP adapter, call controller, decision modules, and StateStore multiple times; any single network write (especially when the telemetry backend sits on the other side of the customer's machine room, across machine rooms, or across NAT) can amplify millisecond-level jitter into a second-level timeout. Telemetry exists to observe the system; it must never become the reason the system slows down.
 
-第二个约束来自交付形态。产品以 on-prem 方式交付到客户机房，不同客户的遥测后端并不统一：有的已有 Prometheus + Grafana，有的是厂商自有的采集代理，有的只有日志平台。产品一旦在代码里绑定某个后端，就等于把选型权从客户手里拿走，也等于每次换后端都要改代码、重新发版。可观测性的**语义**必须统一，**后端**必须可替换。
+The second constraint comes from the delivery form. The product is delivered on-prem into the customer's machine room, and telemetry backends are not uniform across customers: some already have Prometheus + Grafana, some have a vendor's own collection agent, some only have a log platform. Once the product binds to a particular backend in code, it takes the selection away from the customer, and it means every backend change requires a code change and a new release. The **semantics** of observability must be unified; the **backend** must be replaceable.
 
-第三个约束是概念上的区分，也是最容易被混淆的一处：呼叫轨迹与 trace 不是一回事。呼叫轨迹是按 Call-ID 查到的 SIP 消息序列，用于投诉追溯与工单取证，它是**业务查询通道**（REQ-NF-7 用它替代 CDR，见 ADR-0017），查询方是运维与客服，保留期与查询形态由业务定义。trace 是**排障遥测**，用于回答"这一通呼叫在哪些腿、哪些网元上耗了多久、在哪一步失败"，查询方是研发与 SRE，保留期短、采样可调。二者既不能互相替代，也不该共用同一套存储与查询入口：让 trace 后端承担投诉取证，会迫使排障遥测承担业务级的保留与合规要求；反过来让呼叫轨迹依赖 trace 后端，会让业务查询受制于采样率。
+The third constraint is conceptual, and it is the one most easily confused: call traces and traces are not the same thing. A call trace is the sequence of SIP messages retrieved by Call-ID, used for complaint investigation and ticket forensics; it is a **business query channel** (REQ-NF-7 uses it to replace CDR, see ADR-0017), queried by operations and customer service, with its retention period and query form defined by the business. A trace is **troubleshooting telemetry**, used to answer "on which legs and which network elements did this call spend time, and at which step did it fail", queried by R&D and SRE, with short retention and adjustable sampling. The two can neither substitute for each other nor share the same storage and query entry point: making the trace backend carry complaint forensics would force troubleshooting telemetry to carry business-grade retention and compliance requirements; conversely, making call traces depend on the trace backend would subject business queries to the sampling rate.
 
-`AGENT.md` §13 同时给出了一条与遥测直接相关的红线：载荷日志默认关闭、可开关。载荷（SIP 消息体、SDP）可能包含用户标识与媒体地址，默认开启等于默认采集隐私数据。
+`AGENT.md` §13 also gives a red line directly related to telemetry: payload logging is off by default and switchable. Payloads (SIP message bodies, SDP) may contain user identifiers and media addresses; enabled by default equals collecting private data by default.
 
-## Decision（决策）
+## Decision
 
-- **三信号统一走 OpenTelemetry SDK。** metrics 覆盖 `active_calls`、`cps`、规则命中率、4xx/5xx 率等运行指标；traces 为每通呼叫一条 span 链，串起多腿与跨网元的调用段；logs 为结构化 JSON，与 trace 通过 trace_id / span_id 关联。三信号共用一套语义约定（OTel semantic conventions），不各自定义字段名。
-- **导出绝不在呼叫路径上做。** 呼叫路径只往**有界队列**投递事件（enqueue，非阻塞）；独立的后台导出线程从队列取走并批量导出。队列满则丢弃新事件，并自增 `dropped` 计数。这里的选择是明确的：遥测丢失可接受，反压呼叫路径不可接受。
-- **后端中立。** 代码只依赖 OTel API 与配置，不依赖任何具体 exporter 实现；具体 exporter（OTLP / Prometheus / 厂商代理）由部署配置决定，换后端是配置变更而不是代码变更。
-- **载荷日志默认关闭、可开关**（`AGENT.md` §13）。开启时同样走有界队列，不回写到呼叫路径。
-- **呼叫轨迹走独立查询通道**，不由 trace 后端承担。它按 Call-ID 组织，与遥测的采样策略、保留策略解耦。
+- **All three signals go through the OpenTelemetry SDK.** metrics covers operational metrics such as `active_calls`, `cps`, rule hit rate, and 4xx/5xx rates; traces produce one span chain per call, stringing together multi-leg and cross-network-element call segments; logs are structured JSON, correlated with traces via trace_id / span_id. The three signals share one set of semantic conventions (OTel semantic conventions) and do not each define their own field names.
+- **Export never happens on the call path.** The call path only enqueues events into a **bounded queue** (enqueue, non-blocking); an independent background export thread takes events from the queue and exports them in batches. When the queue is full, new events are dropped and a `dropped` counter is incremented. The choice here is explicit: telemetry loss is acceptable; back-pressure on the call path is not.
+- **Backend-neutral.** Code depends only on the OTel API and configuration, not on any concrete exporter implementation; the concrete exporter (OTLP / Prometheus / vendor agent) is decided by deployment configuration — changing backend is a configuration change, not a code change.
+- **Payload logging is off by default and switchable** (`AGENT.md` §13). When enabled, it likewise goes through the bounded queue and never writes back to the call path.
+- **Call traces go through an independent query channel**, not carried by the trace backend. It is organized by Call-ID and decoupled from the telemetry's sampling and retention policies.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **呼叫路径零反压。** 呼叫路径上的遥测成本退化成一次内存入队；后端慢、后端挂、后端不可达都不会传导到呼叫建立时延。
-- **后端可替换。** 客户机房已有的采集体系可以直接对接，不需要为产品单独建一套，也不需要改产品代码。
-- **三信号打通排障。** metrics 回答"是否异常"，traces 回答"哪一段异常"，logs 回答"异常时发生了什么"，三者通过 trace 上下文关联，跨腿与跨网元的定位才有依据。
+- **Zero back-pressure on the call path.** The telemetry cost on the call path degrades to a single in-memory enqueue; a slow, hung, or unreachable backend will not propagate into call setup latency.
+- **Backends are replaceable.** The collection infrastructure already present in the customer's machine room can be integrated directly, without building a separate stack for the product and without changing product code.
+- **Three signals connect troubleshooting.** metrics answers "is something abnormal", traces answers "which segment is abnormal", logs answers "what happened when it was abnormal"; the three correlate through trace context, giving a basis for locating issues across legs and network elements.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **遥测可能丢失。** 有界队列满即丢弃，在后端长时间不可用时可能丢失大量数据。接受：遥测是观测手段而非业务事实，丢失的代价远低于呼叫路径被反压；且 `dropped` 计数本身是明文暴露这一损失的指标，不会静默丢失。
-- **额外的线程与队列带来新的运维面。** 队列长度、导出批大小、导出间隔都成为需要调参与监控的对象；后台线程本身也可能成为故障点（卡死、OOM）。接受：其故障模式是"遥测停止"，不是"呼叫失败"。
-- **三信号引入新的依赖与前置依赖。** OTel SDK 及其导出器进入运行时依赖树；同时 REQ-NF-14（告警规则集）以本 ADR 的指标语义为前置 —— 指标名与标签未定稿前，告警规则无法编写。M5 的告警工作因此依赖本决策在 M2 的落地。
+- **Telemetry may be lost.** The bounded queue drops when full, and a long backend outage may lose a large amount of data. Accepted: telemetry is a means of observation, not a business fact; the cost of loss is far lower than back-pressuring the call path; and the `dropped` counter itself is a metric that explicitly exposes this loss, so nothing is silently lost.
+- **The extra thread and queue introduce a new operational surface.** Queue length, export batch size, and export interval all become objects requiring tuning and monitoring; the background thread itself may also become a failure point (stuck, OOM). Accepted: its failure mode is "telemetry stops", not "calls fail".
+- **The three signals introduce new dependencies and prerequisites.** The OTel SDK and its exporters enter the runtime dependency tree; at the same time REQ-NF-14 (alert rule set) takes this ADR's metric semantics as a prerequisite — alert rules cannot be written until metric names and labels are finalized. M5's alerting work therefore depends on this decision landing in M2.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 呼叫路径内同步导出 | 把遥测导出的网络时延直接计入呼叫建立时延；后端抖动即呼叫抖动，后端故障即呼叫失败。与 `AGENT.md` §5 的阻塞模型红线直接冲突 |
-| 自研指标上报 | 重复造轮子：SDK 已提供的语义约定、上下文传播、采样与 exporter 生态都要自己实现；且自研实现天然绑定某一后端，与交付形态冲突 |
-| 只做 metrics 不做 trace | 跨腿、跨网元的故障定位无法做：metrics 只能回答"某处 4xx 变多"，无法回答"这通呼叫卡在哪一跳"。投诉个案的定位需求无法满足 |
+| Synchronous export on the call path | Counts the telemetry export's network latency directly into call setup latency; backend jitter becomes call jitter, backend failure becomes call failure. Directly conflicts with the blocking-model red line in `AGENT.md` §5 |
+| Self-built metric reporting | Reinventing the wheel: the semantic conventions, context propagation, sampling, and exporter ecosystem already provided by the SDK would all have to be implemented by hand; and a self-built implementation naturally binds to a particular backend, conflicting with the delivery form |
+| metrics only, no traces | Cross-leg, cross-network-element fault localization becomes impossible: metrics can only answer "somewhere 4xx increased", not "where did this call get stuck". The localization needs of complaint cases cannot be met |
 
-## Evidence（证据）
+## Evidence
 
-- `AGENT.md` §5：「`ED2.loop()` 或等价的阻塞事件循环是阻塞的。绝不要在 SIP 回调里调用阻塞操作 —— 包括遥测导出。导出在自己的线程上跑（ADR-0005）。」
-- `AGENT.md` §13：「载荷日志是显式、可开关的；日志里默认关闭。」
-- PRD REQ-NF-13（可观测性三信号）、REQ-NF-14（告警规则集）、REQ-NF-7（呼叫轨迹查询）。
-- 实现证据（有界队列的容量与丢弃行为、导出线程的独立性与隔离验证）待 M2 落地后补。
+- `AGENT.md` §5: "`ED2.loop()`, or an equivalent blocking event loop, is blocking. Never call blocking operations inside SIP callbacks — including telemetry export. Export runs on its own thread (ADR-0005)."
+- `AGENT.md` §13: "Payload logging is explicit and switchable; it is off by default in logs."
+- PRD REQ-NF-13 (observability three signals), REQ-NF-14 (alert rule set), REQ-NF-7 (call trace query).
+- Implementation evidence (bounded queue capacity and drop behavior, export thread independence and isolation verification) to be added after M2 lands.
 
-## Related（相关）
+## Related
 
-- [ADR-0017](0017-no-cdr.md) 不做 CDR —— 呼叫轨迹替代其取证职能
-- REQ-NF-7 呼叫轨迹：业务查询通道，不是遥测
-- REQ-NF-14 告警规则集：以本 ADR 的指标语义为前置
-- [`../新系统整体架构.md`](../新系统整体架构.md) §0 账本条目 12
-- `AGENT.md` §5 编码约定、§13 安全
+- [ADR-0017](0017-no-cdr.md) No CDR — call traces take over its forensics role
+- REQ-NF-7 Call traces: a business query channel, not telemetry
+- REQ-NF-14 Alert rule set: takes this ADR's metric semantics as a prerequisite
+- [`../system-architecture.md`](../system-architecture.md) §0 ledger entry 12
+- `AGENT.md` §5 coding conventions, §13 security

@@ -12,329 +12,329 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# Review Record（第二轮） — ADR-0019：生产 SIP 协议栈选型
+# Review Record (round 2) — ADR-0019: Production SIP Protocol Stack Selection
 
-- **评审对象**：[`docs/architecture/adr/0019-sip-stack-selection.md`](../architecture/adr/0019-sip-stack-selection.md)（Draft；工作区版本，未提交）
-- **评审日期**：2026-09-28
-- **评审人**：AI agent（第二轮独立复核；**非最终签字**，最终签字由维护者完成）
-- **与第一轮的关系**：第一轮 gap 评审见 [`adr-0019-review.md`](adr-0019-review.md)。本轮为独立复核，既确认其内容，也补记第一轮遗漏项。两轮并存，不互相取代。
-- **评审范围**：
-  - ADR-0019 草案全文（§1–§8）
-  - 上游一致性：`AGENT.md`、`docs/plan.md` §5、`docs/architecture/新系统整体架构.md`（§0 决策 8、§4.2、§6.2、§10、§12）、`docs/architecture/容量量级估算.md`、`docs/SIP_stack_selection.md`、`docs/architecture/adr/README.md`
-  - 事实核对：`docs/architecture/adr/` 目录实际成员、`platform/pyproject.toml`、`testbed/contracts/` 实际内容、git 工作区状态
-- **评审结论**：**有条件通过（Draft → 修订后再进入 probe 对拍）**。§2 A 节的 6 项 P0 全部关闭前，不得启动 ADR §6 步骤 2。最终 Accepted 需 probe 对拍 + 深度评估完成后由维护者签字。
-- **当前状态补充（后续更新）**：上述条件已满足 —— 本文件 15 条 gap 与后续补修项已全部闭环，详见下方 `## 当前状态（Current Status）`；原评审结论保留为历史。
-
----
-
-## 当前状态（Current Status）
-
-> 本节为后续更新，反映当前工作区落盘现状；上方原始评审结论保留为历史。
-
-- **一句话结论**：两轮 gap 已全部闭环，ADR-0019 在文档层面具备进入 probe 的条件（最终 Accepted 仍需 probe 对拍 + 深度评估 + 维护者签字）。
-- **gap 统计**：第一轮 13/13 关闭；第二轮 15/15 关闭（P0 6/6、P1 5/5、P2 4/4）。
-- **门禁**：`make gate` 绿 —— `ruff format --check` / `ruff check` / `mypy` 干净，pytest unit+contract 44 passed；integration 层按 `AGENT.md` §9 M0 阶段预期为 `44 deselected`（pytest exit code 5）。
-- **签字状态**：`## 7. 签字` 维护者签字行仍为空 —— 属维护者动作，本文件不代签。
-- **未闭环项**：无。两处跨文件修复已完成并核实：
-  - `docs/architecture/adr/README.md` L35：注册表 0019 行的「§0」列已由「维护者裁决」订正为决策号 `8`（与该列其它行风格一致）。
-  - `docs/architecture/新系统整体架构.md` L528：§10.3 候选段的「（open，不裁决）」已改为「（选型进行中；决于 ADR-0019，本文件不裁决）」。
+- **Review target**: [`docs/architecture/adr/0019-sip-stack-selection.md`](../architecture/adr/0019-sip-stack-selection.md) (Draft; working-tree version, not committed)
+- **Review date**: 2026-09-28
+- **Reviewer**: AI agent (independent round 2 re-review; **not the final sign-off**, the final sign-off is done by the maintainer)
+- **Relationship to round 1**: the round 1 gap review is in [`adr-0019-review.md`](adr-0019-review.md). This round is an independent re-review that both confirms its content and additionally records the items missed in round 1. Both rounds coexist and neither replaces the other.
+- **Review scope**:
+  - The full ADR-0019 draft (§1–§8)
+  - Upstream consistency: `AGENT.md`, `docs/plan.md` §5, `docs/architecture/system-architecture.md` (§0 decision 8, §4.2, §6.2, §10, §12), `docs/architecture/capacity-estimate.md`, `docs/SIP_stack_selection.md`, `docs/architecture/adr/README.md`
+  - Fact checking: the actual members of the `docs/architecture/adr/` directory, `platform/pyproject.toml`, the actual contents of `testbed/contracts/`, the git working-tree status
+- **Review conclusion**: **conditional pass (Draft → revise before entering probe parity)**. Until all 6 P0 items in §2 section A are closed, ADR §6 step 2 must not be started. The final Accepted state requires probe parity plus the completed deep evaluation, followed by the maintainer's sign-off.
+- **Current status addendum (later update)**: the above conditions have been met — the 15 gaps in this file and the subsequent remediation items are all closed; see `## Current Status` below; the original review conclusion is retained as history.
 
 ---
 
-## 1. 总体评价
+## Current Status
 
-草案的骨架是对的，三处关键正确：
+> This section is a later update reflecting the current state on disk in the working tree; the original review conclusion above is retained as history.
 
-- **容量不作换栈理由**（§1.1）—— 与 `容量量级估算.md` §5.1 一致，避免错误归因。
-- **E1（行为等价）设为门槛项**（§4）—— 不过即出局。
-- **Consequences 不空**（§7）—— K1–K5 五项已接受代价，符合 ADR 纪律。
-
-三处结构性不足：
-
-1. **推翻的对象不存在**：被推翻的 ADR-0011 没有实体文件。
-2. **门槛场景不是本产品场景**：S1–S7 是通用 B2BUA 场景，不是 ISC 触发下的 AS 场景。
-3. **未登记连带后果**：`新系统整体架构.md` §4.2 / §6.2 与 ADR-0005 / 0009 / 0010 均建立在 sippy 阻塞模型之上，换栈后前提改变，草案未提。
+- **One-line conclusion**: the gaps of both rounds are all closed; at the document level ADR-0019 meets the conditions to enter probe (the final Accepted still requires probe parity + deep evaluation + maintainer sign-off).
+- **Gap statistics**: round 1 13/13 closed; round 2 15/15 closed (P0 6/6, P1 5/5, P2 4/4).
+- **Gates**: `make gate` green — `ruff format --check` / `ruff check` / `mypy` clean, pytest unit+contract 44 passed; the integration layer is expected to be `44 deselected` at the M0 stage per `AGENT.md` §9 (pytest exit code 5).
+- **Sign-off status**: the maintainer sign-off line in `## 7. Sign-off` is still empty — this is a maintainer action, and this file does not sign on its behalf.
+- **Unclosed items**: none. The two cross-file fixes are done and verified:
+  - `docs/architecture/adr/README.md` L35: the "§0" column of the 0019 registry row has been corrected from "维护者裁决" to decision number `8` (consistent with the style of the other rows in that column).
+  - `docs/architecture/system-architecture.md` L528: the "（open，不裁决）" in the §10.3 candidate section has been changed to "（选型进行中；决于 ADR-0019，本文件不裁决）".
 
 ---
 
-## 2. Gap 清单
+## 1. Overall Assessment
 
-编号前缀 `G2-` 表示第二轮。与既有 `adr-0019-review.md` 的 `G-P0-*` / `G-P1-*` / `G-P2-*` 并存；重复处注明。
+The skeleton of the draft is right; there are three key correct points:
 
-### A. 必须修（P0，阻塞 probe 对拍启动）
+- **Capacity is not used as a reason to switch stacks** (§1.1) — consistent with `capacity-estimate.md` §5.1, avoiding a wrong attribution.
+- **E1 (behavioral equivalence) is set as a gating item** (§4) — failing it means elimination.
+- **Consequences is not empty** (§7) — the five accepted costs K1–K5 are listed, complying with the ADR discipline.
 
-| # | 问题 | 位置 | 说明 | 建议修复 |
+Three structural deficiencies:
+
+1. **The thing being overturned does not exist**: the ADR-0011 being overturned has no physical file.
+2. **The gate scenarios are not this product's scenarios**: S1–S7 are generic B2BUA scenarios, not AS scenarios triggered by ISC.
+3. **No collateral consequences registered**: `system-architecture.md` §4.2 / §6.2 and ADR-0005 / 0009 / 0010 are all built on the sippy blocking model; after the stack switch the premise changes and the draft does not mention it.
+
+---
+
+## 2. Gap List
+
+The prefix `G2-` means round 2. It coexists with the `G-P0-*` / `G-P1-*` / `G-P2-*` in the existing `adr-0019-review.md`; overlaps are noted.
+
+### A. Must Fix (P0, blocks starting probe parity)
+
+| # | Problem | Location | Description | Suggested Fix |
 |---|---|---|---|---|
-| **G2-P0-1** | **推翻的对象没有实体文件** | 首页"取代"行 | `docs/architecture/adr/` 下实际只有 `0000-adr-template.md`、`0019-sip-stack-selection.md`、`README.md`。ADR-0011 在注册表中是 `skeleton`（决策已确认、ADR 未写）。"取代 ADR-0011 中的前提"指向一篇不存在的文档，审稿人无法核对被推翻的原文。依 `AGENT.md` §7，"没有 ADR 的决策，是要被重新争论的决策" | 补写 `0011` 骨架文件并标 `superseded-in-part`；或把引用改为"推翻 `新系统整体架构.md` §0 决策 8 与 §10 的 sippy 前提（ADR-0011 skeleton）" |
-| **G2-P0-2** | **对拍基线的产出顺序死锁** | §5、§6 步骤 2 | §5 称基线"来自 M1 抓取的 POC 样例（POC 冻结点 4ddf3df）"，但 M1 在 M0 签字之后，而 §6 步骤 2 的 probe 依赖该基线 —— probe 现在无法启动。这比"基线指向外部仓库"更严重：是时间顺序问题，不只是位置问题 | §6 增加步骤 0：M1 先用 sippy 在 `testbed/` 跑 S1–S7 抓取基线并落到 `testbed/contracts/`；probe 在其之后。写明基线的产出里程碑与责任人。（与既有 G-P0-1 部分重叠，此处补充顺序维度） |
-| **G2-P0-3** | **E1 门槛场景不是本产品的 AS 场景** | §5 S1–S7 | S1–S7 是通用 B2BUA 场景，漏掉 ISC 触发形态（`AGENT.md` §1、ADR-0003）下最容易踩错的语义：`Route` / `Record-Route` 处理（S-CSCF 插入 route 后 AS 必须保持 in-dialog 路由）、in-dialog 请求（BYE / re-INVITE 是否仍经 AS）、`P-Asserted-Identity` 与信任域白名单校验（`AGENT.md` §13）、落地非 2xx 分支（486 / 480 / 408）、CANCEL 与最终响应的竞态。门槛场景选错等于门槛失效 | 至少补 S8–S11：Route/Record-Route 处理、in-dialog 请求路由、486/480/408 分支、CANCEL race |
-| **G2-P0-4** | **主理由 R1 无证据锚点** | §2 R1 | "sippy 上游实质停滞"是整个换栈论证的引擎（R2–R4 都挂在它上面），但全文没有仓库地址、观察日期、近 12 个月提交数、issue 响应情况。`AGENT.md` §5 要求"行为是观察出来的，不是假设的"，上游活跃度同理 | §2 每条理由附证据表（来源 URL + 抓取日期 + 观测值）。`新系统整体架构.md` §10.1 的"460 commits / 两个月前仍有提交"是写作时快照，须重新观测后方可引用 |
-| **G2-P0-5** | **H4 / H5 未区分"栈自带"与"自建"；且 H5 会连带推翻下游 ADR** | §3.1 H4/H5、§7 | 草案未说明这两个硬约束是要求栈原生支持，还是允许我们在栈外实现。更要紧的是：`新系统整体架构.md` §6.2 的"状态全在进程内存、无序列化接口 → ISSU 只能 draining"（ADR-0009）、§4.2 的"阻塞模型 → 自定义指标 HPA + 缩容保护控制器"（ADR-0010）、以及 OTel"导出不能进 SIP 回调"（ADR-0005，见 `AGENT.md` §5）—— **三者都建立在 sippy 阻塞模型之上**。换栈后前提改变，Consequences 完全未登记 | H4/H5 改写为能力归属声明（栈原生 / 我们自建）；§7 增加"本 ADR 可能连带重开 ADR-0005 / 0009 / 0010"，并列出复核触发条件 |
-| **G2-P0-6** | **评估矩阵不可执行** | §4 | 权重列给了高/中/低，但没有打分方法与合成规则：三个候选各维度打完分后如何裁决没写。probe 跑完仍会陷入争吵 —— 这正是 ADR 该预先消灭的 | §6 步骤 3 写明裁决规则，例如"E1 通过者中按 E7 / E8 / E9 加权合计最高者入选；E10 仅记录，不作决策输入" |
+| **G2-P0-1** | **The thing being overturned has no physical file** | Front page "Supersedes" line | Under `docs/architecture/adr/` there are actually only `0000-adr-template.md`, `0019-sip-stack-selection.md`, `README.md`. ADR-0011 is `skeleton` in the registry (the decision is confirmed, the ADR is unwritten). "Supersedes the premise in ADR-0011" points at a document that does not exist, so a reviewer cannot check the original text being overturned. Per `AGENT.md` §7, "a decision without an ADR is a decision that will be argued again" | Write a `0011` skeleton file and mark it `superseded-in-part`; or change the reference to "overturns the sippy premise of §0 decision 8 and §10 in `system-architecture.md` (ADR-0011 skeleton)" |
+| **G2-P0-2** | **The production order of the parity baseline is deadlocked** | §5, §6 step 2 | §5 says the baseline "comes from the POC samples captured in M1 (POC freeze point 4ddf3df)", but M1 comes after the M0 sign-off, while the probe in §6 step 2 depends on that baseline — so the probe cannot start now. This is more serious than "the baseline points at an external repository": it is an ordering problem, not just a location problem | Add step 0 to §6: in M1, first run S1–S7 under `testbed/` with sippy to capture the baseline and write it to `testbed/contracts/`; the probe follows after that. State the milestone that produces the baseline and its owner. (Partially overlaps the existing G-P0-1; the ordering dimension is added here) |
+| **G2-P0-3** | **The E1 gate scenarios are not this product's AS scenarios** | §5 S1–S7 | S1–S7 are generic B2BUA scenarios, missing the semantics most easily gotten wrong under the ISC trigger form (`AGENT.md` §1, ADR-0003): `Route` / `Record-Route` handling (after the S-CSCF inserts a route, the AS must preserve the in-dialog route), in-dialog requests (whether BYE / re-INVITE still traverse the AS), `P-Asserted-Identity` and trust-domain allowlist validation (`AGENT.md` §13), the terminating non-2xx branches (486 / 480 / 408), and the race between CANCEL and the final response. Choosing the wrong gate scenarios means the gate fails | Add at least S8–S11: Route/Record-Route handling, in-dialog request routing, the 486/480/408 branches, CANCEL race |
+| **G2-P0-4** | **The primary reason R1 has no evidence anchor** | §2 R1 | "Upstream sippy has effectively stalled" is the engine of the entire stack-switch argument (R2–R4 all hang on it), yet the whole document has no repository URL, observation date, commit count for the last 12 months, or issue response status. `AGENT.md` §5 requires that "behavior is observed, not assumed"; the same applies to upstream activity | Attach an evidence table to each reason in §2 (source URL + capture date + observed value). The "460 commits / commits two months ago" in §10.1 of `system-architecture.md` is a snapshot taken at writing time and must be re-observed before it can be cited |
+| **G2-P0-5** | **H4 / H5 do not distinguish "provided by the stack" from "built by us"; and H5 will also overturn downstream ADRs** | §3.1 H4/H5, §7 | The draft does not say whether these two hard constraints require native support from the stack or allow us to implement outside it. More importantly: "all state is in process memory, no serialization interface → ISSU can only drain" in §6.2 of `system-architecture.md` (ADR-0009), the "blocking model → custom-metric HPA + scale-down guard controller" in §4.2 (ADR-0010), and OTel "export must not enter the SIP callback" (ADR-0005, see `AGENT.md` §5) — **all three are built on the sippy blocking model**. After the stack switch the premise changes and Consequences does not register it at all | Rewrite H4/H5 as capability ownership statements (native to the stack / built by us); add "this ADR may also reopen ADR-0005 / 0009 / 0010" to §7, and list the re-review trigger conditions |
+| **G2-P0-6** | **The evaluation matrix is not executable** | §4 | The weight column gives high/medium/low, but there is no scoring method or combination rule: how to adjudicate after scoring the three candidates on each dimension is not written. After the probe completes there will still be disputes — exactly what the ADR should have eliminated in advance | State the adjudication rule in §6 step 3, e.g. "among those passing E1, the one with the highest weighted total of E7 / E8 / E9 is selected; E10 is recorded only and is not a decision input" |
 
-### B. probe 期间补（P1）
+### B. To Be Completed During the Probe (P1)
 
-| # | 问题 | 位置 | 建议修复 |
+| # | Problem | Location | Suggested Fix |
 |---|---|---|---|
-| **G2-P1-1** | **候选集漏掉最便宜的选项**：H2 允许 commit pin + vendoring，则"vendoring sippy 并自维护"是合法且成本远低于换语言的候选，却既未进 §3.2，也未在 §3.3 被显式排除 | §3.2 / §3.3 | 在 §3.3 明确写"不 fork sippy"及其理由（R3 维护性、R4 运维形态是语言级的，fork 解决不了）。否则选型完备性站不住 |
-| **G2-P1-2** | **全量 probe 与 K1"快速通道"自相矛盾**：三个候选（Go / C++ / C）各写一个 B2BUA probe 是数周级工作，而 K1 说 M0 签字被阻塞、要走快速通道 | §6 步骤 2 / §7.1 K1 | 给时间盒与降级路径：先只跑 go-b2bua（同源性最高、预期通过率最高），通过即先 Accepted；C/C++ 留作未决项而非阻塞项 |
-| **G2-P1-3** | **候选描述与硬约束自相冲突**：reSIProcate 备注"TCP/TLS 传输层是已知短板"（直接撞 H4）却仍在候选表；`libre + baresip` 中 baresip 带媒体模块（撞 H3，与"不做媒体"冲突） | §3.2 | reSIProcate 注明"由 TLS probe 判定存留"；候选收紧为 `libre`（SIP/SDP 部分），baresip 不进候选 |
-| **G2-P1-4** | **`platform/` 的去向未写**：`platform/pyproject.toml` 是 Python 内核（`requires-python >=3.10,<3.11`），`AGENT.md` §8 又规定"ADR-0019 接受前 `platform/` 不绑定任何具体 SIP 栈"。选 Go/C 栈后它保留为 seam 定义还是被取代？这决定 ADR-0012"跨实现对拍"的对象（不再是 Python vs Go 同用例，而是新栈实现 vs testbed 基线） | §7 | §7 增补一条：换栈后 Python 运行时的角色（完全移除 / 仅测试 / 仍承载规则引擎），并同步 ADR-0012 的对拍语义 |
-| **G2-P1-5** | **E9 权重高构成对 Go 的预设倾斜**：go-b2bua 在"与 POC 基线同源性"上天然满分，等于选型前就给了它一票 | §4 E9 | §4 声明这是有意倾斜，并写明它须与 E8 权衡，不得单独构成入选理由 |
+| **G2-P1-1** | **The candidate set misses the cheapest option**: H2 allows commit pinning + vendoring, so "vendoring sippy and maintaining it ourselves" is a legitimate candidate with a far lower cost than switching language, yet it appears neither in §3.2 nor as an explicit exclusion in §3.3 | §3.2 / §3.3 | State in §3.3 explicitly "we do not fork sippy" together with the reason (R3 maintainability and the R4 operational form are language-level, which a fork cannot solve). Otherwise the completeness of the selection does not hold |
+| **G2-P1-2** | **Full parity probes contradict the K1 "fast path"**: writing one B2BUA probe for each of the three candidates (Go / C++ / C) is several weeks of work, yet K1 says the M0 sign-off is blocked and the fast path must be taken | §6 step 2 / §7.1 K1 | Give a time box and a degradation path: run only go-b2bua first (the closest in homology, the highest expected pass rate) and accept it first if it passes; leave C/C++ as an undecided item rather than a blocking one |
+| **G2-P1-3** | **The candidate descriptions conflict with the hard constraints**: reSIProcate is noted as "the TCP/TLS transport layer is a known weak point" (which hits H4 directly) yet it is still in the candidate table; in `libre + baresip`, baresip carries a media module (which hits H3, conflicting with "no media") | §3.2 | For reSIProcate note "its retention is decided by the TLS probe"; tighten the candidates to `libre` (the SIP/SDP part), with baresip not entering the candidates |
+| **G2-P1-4** | **The fate of `platform/` is not written**: `platform/pyproject.toml` is a Python kernel (`requires-python >=3.10,<3.11`), while `AGENT.md` §8 states that "before ADR-0019 is accepted, `platform/` must not bind to any specific SIP stack". After choosing the Go / C stack, is it retained as the seam definition or is it superseded? This determines the object of the "cross-implementation parity" in ADR-0012 (no longer Python vs Go on the same cases, but the new-stack implementation vs the testbed baseline) | §7 | Add an entry to §7: the role of the Python runtime after the stack switch (removed entirely / tests only / still hosting the rules engine), and synchronize the parity semantics of ADR-0012 |
+| **G2-P1-5** | **The high weight of E9 constitutes a preset tilt toward Go**: go-b2bua naturally scores full marks on "homology with the POC baseline", which effectively gives it one vote before the selection | §4 E9 | State in §4 that this tilt is intentional, and that it must be weighed against E8 and must not alone constitute a reason for selection |
 
-### C. 接受前补（P2）
+### C. To Be Completed Before Acceptance (P2)
 
-| # | 问题 | 位置 | 建议修复 |
+| # | Problem | Location | Suggested Fix |
 |---|---|---|---|
-| **G2-P2-1** | **§1.1 含过程性语气**："把容量写进 decision 理由会被审稿人推翻"不属于决策内容；且与 `容量量级估算.md` §5.1 形成循环引用（两份文档互相引用对方结论） | §1.1 | 估算文档单向负责"容量不是区分项"，ADR 只引用结论；删去审稿人相关表述 |
-| **G2-P2-2** | **回退后 D1 未处置**：§7.2 说"若最终仍回到 sippy，本 ADR 记为 Rejected"，但回退后 R2（Python 3.10 于 2026-10 EOL，未决项 D1）依然成立 | §7.2 | 写明回退情形下 D1 的处置路径（迁移运行时 / 登记为已接受 risk） |
-| **G2-P2-3** | **注册表状态与图例冲突**：`0011` 标 `superseded-in-part`，但注册表图例只有 skeleton / draft / accepted；`0019` 行候选描述漏 rsipstack 与 libre 全名 | `adr/README.md` | 统一状态词与候选命名（与既有 G-P2-5 一致，此处确认） |
-| **G2-P2-4** | **架构文档决策 8 未同步**：`新系统整体架构.md` §0 决策 8 仍为"双栈并行：sippy 保生产 + go-b2bua 试点" | `新系统整体架构.md` | 依 `AGENT.md` §7"推翻一个决策时在同一次改动里更新架构文档"，现在就应写入"sippy 退出生产栈，选型见 ADR-0019"，不必等选定结果 |
+| **G2-P2-1** | **§1.1 contains process-oriented wording**: "writing capacity into the decision reasons will be overturned by the reviewer" is not decision content; and it forms a circular reference with §5.1 of `capacity-estimate.md` (the two documents cite each other's conclusions) | §1.1 | Let the estimate document be solely responsible for "capacity is not a differentiator" and have the ADR only cite the conclusion; delete the reviewer-related wording |
+| **G2-P2-2** | **D1 is not disposed of after the fallback**: §7.2 says "if we end up going back to sippy, this ADR is recorded as Rejected", but after the fallback R2 still holds (Python 3.10 goes EOL in 2026-10, undecided item D1) | §7.2 | State the disposition path for D1 in the fallback case (migrate the runtime / register it as an accepted risk) |
+| **G2-P2-3** | **The registry status conflicts with the legend**: `0011` is marked `superseded-in-part`, but the registry legend only has skeleton / draft / accepted; the `0019` row's candidate description omits rsipstack and the full name libre | `adr/README.md` | Unify the status words and the candidate naming (consistent with the existing G-P2-5; confirmed here) |
+| **G2-P2-4** | **Decision 8 of the architecture document is not synchronized**: §0 decision 8 of `system-architecture.md` is still "dual-stack parallel: sippy stays in production + go-b2bua as a pilot" | `system-architecture.md` | Per `AGENT.md` §7 "when overturning a decision, update the architecture document in the same change", write in "sippy exits the production stack, the selection is in ADR-0019" now, without waiting for the selection result |
 
 ---
 
-## 3. 一致性检查（第二轮复核）
+## 3. Consistency Check (round 2 re-review)
 
-| 上游 | 检查项 | 结果 | 备注 |
+| Upstream | Check item | Result | Note |
 |---|---|---|---|
-| `AGENT.md` §2 | 不做媒体 → H3 | 一致 | G2-P1-3 已关闭：候选收紧为 `libre`（SIP/SDP），baresip 不进候选（§3.2 L77） |
-| `AGENT.md` §8 | SIP 栈由 ADR-0019 决定；`platform/` 不预绑定 | 一致 | G2-P1-4 已登记：ADR-0019 §7 K7（L222）写明 Python 内核去向 |
-| `AGENT.md` §8 | sippy 仅作 testbed 基线参考 | 一致 | §3.3（L93）已排除生产身份 |
-| `AGENT.md` §13 | TLS + 证书热轮换 → H4/E4 | 一致 | G2-P0-5 已关闭：§3.1 H4/H5 增加能力归属列（L66–67） |
-| `AGENT.md` §7 | 推翻决策须新增 ADR 并同步架构文档 | 一致 | G2-P2-4 已在架构文档同步修复（决策 8 L20 及 §10/§12/§13）；G2-P0-1 已修复（ADR-0011 实体文件已建） |
-| `plan.md` §5.1 O2 | "阻塞 M0 签字" | 一致 | ADR-0019 §7.1 K1（L216） |
-| `plan.md` §5.2 D1 | Python 3.10 EOL | 一致 | G2-P2-2 已关闭：ADR-0019 §7.2（L228–230）写明回退情形 D1 两条处置路径 |
-| `plan.md` §5.2 D2 | Go 实现放哪 | 已登记 | D2 硬约束化与去向见 ADR-0019 §7 K5（L220）：M2 之前由 D2 的 ADR 定构建结构 |
-| `新系统整体架构.md` §0 决策 8 | sippy 退出生产栈 | 已同步 | 决策 8（L20）及 §10/§12/§13 已同步 |
-| `新系统整体架构.md` §6.2 / §4.2 | draining / HPA 基于 sippy 阻塞模型 | 已登记 | G2-P0-5 已关闭：ADR-0019 §7 K6（L221）登记该连带后果及复核触发条件，连带 ADR-0005/0009/0010 |
-| `容量量级估算.md` §5.1 | 容量不是区分项 | 一致 | G2-P2-1 已关闭：容量估算 §5.1/§5.2（L119–132）已独立陈述，不再反引 ADR-0019 |
-| `testbed/contracts/` | 契约目录现状 | 仅 README | G2-P0-2 已定义落点：ADR-0019 §5/§6 步骤 0（L135/L185）要求 M1 落盘 `testbed/contracts/sip-baseline/` |
-| `platform/pyproject.toml` | SIP 依赖为空 | 一致 | 与 ADR-0019 §7.1 K2（L217）自述一致 |
-| git 工作区 | 提交状态 | ADR-0019、容量估算、`docs/reviews/` 均未提交（`??`） | 依 `AGENT.md` §11，commit 需维护者逐次批准 |
+| `AGENT.md` §2 | No media → H3 | Consistent | G2-P1-3 is closed: the candidates are tightened to `libre` (SIP/SDP), baresip does not enter the candidates (§3.2 L77) |
+| `AGENT.md` §8 | The SIP stack is decided by ADR-0019; `platform/` is not pre-bound | Consistent | G2-P1-4 is registered: §7 K7 of ADR-0019 (L222) states the fate of the Python kernel |
+| `AGENT.md` §8 | sippy only as a testbed baseline reference | Consistent | §3.3 (L93) has excluded the production identity |
+| `AGENT.md` §13 | TLS + certificate hot rotation → H4/E4 | Consistent | G2-P0-5 is closed: §3.1 H4/H5 added a capability ownership column (L66–67) |
+| `AGENT.md` §7 | Overturning a decision requires a new ADR and synchronizing the architecture document | Consistent | G2-P2-4 has been fixed by synchronizing the architecture document (decision 8 L20 and §10/§12/§13); G2-P0-1 is fixed (the physical ADR-0011 file has been created) |
+| `plan.md` §5.1 O2 | "Blocks M0 sign-off" | Consistent | §7.1 K1 of ADR-0019 (L216) |
+| `plan.md` §5.2 D1 | Python 3.10 EOL | Consistent | G2-P2-2 is closed: §7.2 (L228–230) of ADR-0019 states the two D1 disposition paths in the fallback case |
+| `plan.md` §5.2 D2 | Where the Go implementation goes | Registered | The hardening of D2 and its destination are in §7 K5 of ADR-0019 (L220): before M2 the D2 ADR decides the build structure |
+| `system-architecture.md` §0 decision 8 | sippy exits the production stack | Synchronized | Decision 8 (L20) and §10/§12/§13 have been synchronized |
+| `system-architecture.md` §6.2 / §4.2 | draining / HPA based on the sippy blocking model | Registered | G2-P0-5 is closed: §7 K6 of ADR-0019 (L221) registers this collateral consequence and the re-review trigger condition, including the collateral ADRs 0005/0009/0010 |
+| `capacity-estimate.md` §5.1 | Capacity is not a differentiator | Consistent | G2-P2-1 is closed: §5.1/§5.2 of the capacity estimate (L119–132) are now stated independently and no longer cite ADR-0019 back |
+| `testbed/contracts/` | Current state of the contract directory | README only | G2-P0-2 has defined the landing point: §5/§6 step 0 of ADR-0019 (L135/L185) requires M1 to write `testbed/contracts/sip-baseline/` to disk |
+| `platform/pyproject.toml` | SIP dependencies are empty | Consistent | Consistent with the self-report in §7.1 K2 of ADR-0019 (L217) |
+| git working tree | Commit status | ADR-0019, the capacity estimate and `docs/reviews/` are all uncommitted (`??`) | Per `AGENT.md` §11, a commit requires the maintainer's approval each time |
 
 ---
 
-## 4. 对第一轮 review record 的复核
+## 4. Re-review of the Round 1 Review Record
 
-确认 `adr-0019-review.md` 中 G-P0-1～4、G-P1-1～4、G-P2-1～5 基本成立。四处判轻或判错：
+It is confirmed that G-P0-1～4, G-P1-1～4 and G-P2-1～5 in `adr-0019-review.md` basically hold. Four were judged too lightly or judged wrongly:
 
-1. **§3 一致性检查把"架构文档决策 8 未同步"判为可延后** —— 与 `AGENT.md` §7 冲突；本轮改判为立即修复（G2-P2-4，现已修复：决策 8 L20 及 §10/§12/§13 已同步）。
-2. **G-P0-1 只说基线"指向外部仓库"** —— 更重的问题是 M1 基线尚未产出，构成顺序死锁（G2-P0-2）。
-3. **未抓到"下游 ADR 前提被连带改变"**（G2-P0-5）—— ADR-0005 / 0009 / 0010 都建立在 sippy 阻塞模型上，这是本 ADR 最贵的隐藏后果。
-4. **未发现 ADR-0011 无实体文件**（其 G-P2-5 仅提注册表描述不一致）。
+1. **§3 consistency check judged "decision 8 of the architecture document not synchronized" as deferrable** — this conflicts with `AGENT.md` §7; this round re-judges it as fix immediately (G2-P2-4, now fixed: decision 8 L20 and §10/§12/§13 have been synchronized).
+2. **G-P0-1 only said the baseline "points at an external repository"** — the more serious problem is that the M1 baseline has not yet been produced, forming an ordering deadlock (G2-P0-2).
+3. **It failed to catch that "the premises of downstream ADRs are collaterally changed"** (G2-P0-5) — ADR-0005 / 0009 / 0010 are all built on the sippy blocking model; this is the most expensive hidden consequence of this ADR.
+4. **It failed to find that ADR-0011 has no physical file** (its G-P2-5 only mentions an inconsistency in the registry description).
 
-该文件 §6 签字节为空，评审人自述为"AI agent（非最终签字）"，依 `AGENT.md` §3.3 只能算 gap 评审，不构成 ADR 的正式评审记录。
-
----
-
-## 5. 待裁决项处置结论
-
-本小节 3 项已全部处理，无悬空项：
-
-1. **快速通道**（先只跑 `go-b2bua`、通过即先 Accepted）—— **已采纳**：写入 ADR-0019 §6 步骤 2，阶段 A 只跑 `go-b2bua`（时间盒 2 周），C/C++ 候选作阶段 B 触发降级。
-2. **`platform/` Python 内核去向** —— **已登记**：ADR-0019 §7 K7 写明换栈后 Python 内核退化为 seam 定义与测试 harness，并同步 ADR-0012 的对拍语义。
-3. **是否现在更新架构文档决策 8** —— **已执行**：`新系统整体架构.md` §0 决策 8（L20）已改为"sippy 退出生产栈，选型见 ADR-0019"，同文件 §10/§12/§13 连带表述已同步。
-
-## 6. 后续执行路径（均已登记，非 gap）
-
-1. **维护者确认本轮 gap 清单** —— 已完成：两轮 gap 的 Adjudication 状态现均为"已关闭 / 已验证"。
-2. **关闭 §2 A 节的 6 项 P0** —— 已完成：6 项 P0 已在 ADR-0019 正文落实并经独立复核实证。
-3. **M1 基线抓取 → probe 对拍** —— 去向 ADR-0019 §6 步骤 0：M1 先用 sippy 抓 S1–S11 落盘 `testbed/contracts/sip-baseline/`，probe 以基线落盘为进入条件（执行阶段动作）。
-4. **probe 结果 + E6/E8/E9 深度评估 → ADR 转 Accepted → 同步决策 8 / 注册表 / `platform/pyproject.toml`** —— 去向 ADR-0019 §6 步骤 3/5/6（执行阶段动作，触发条件：probe 完成）。
+The sign-off section §6 of that file is empty and the reviewer describes themselves as "AI agent (not the final sign-off)", so per `AGENT.md` §3.3 it counts only as a gap review and does not constitute the formal review record of the ADR.
 
 ---
 
-## Adjudication（裁决记录）
+## 5. Disposition Conclusions for the Items Pending Adjudication
 
-本节的每一行对应评审意见的处理状态。维护者逐条裁决后，agent 协助落盘；关闭 gap 前必须更新本表。
+All 3 items in this subsection have been handled, with no dangling items:
 
-| ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
+1. **The fast path** (run only `go-b2bua` first, accept it first if it passes) — **adopted**: written into §6 step 2 of ADR-0019, where stage A runs only `go-b2bua` (a 2-week time box) and the C/C++ candidates are stage B triggered by degradation.
+2. **The fate of the `platform/` Python kernel** — **registered**: §7 K7 of ADR-0019 states that after the stack switch the Python kernel degrades into the seam definition and the test harness, and the parity semantics of ADR-0012 are synchronized.
+3. **Whether to update decision 8 of the architecture document now** — **executed**: §0 decision 8 (L20) of `system-architecture.md` has been changed to "sippy exits the production stack, the selection is in ADR-0019", and the related wording in §10/§12/§13 of the same file has been synchronized.
+
+## 6. Follow-up Execution Path (all registered, not gaps)
+
+1. **Maintainer confirms this round's gap list** — done: the Adjudication status of both rounds of gaps is now "closed / verified".
+2. **Close the 6 P0 items in §2 section A** — done: the 6 P0 items have been implemented in the body of ADR-0019 and verified by an independent re-review.
+3. **M1 baseline capture → probe parity** — goes to §6 step 0 of ADR-0019: in M1 first capture S1–S11 with sippy and write them to `testbed/contracts/sip-baseline/`, with the baseline being written to disk as the entry condition for the probe (an execution-stage action).
+4. **Probe results + deep evaluation of E6/E8/E9 → ADR to Accepted → synchronize decision 8 / the registry / `platform/pyproject.toml`** — goes to §6 steps 3/5/6 of ADR-0019 (an execution-stage action, trigger: the probe completes).
+
+---
+
+## Adjudication Record
+
+Each row of this section corresponds to the disposition status of a review comment. After the maintainer adjudicates item by item, the agent writes it to disk; this table must be updated before closing a gap.
+
+| ID | Source | Issue summary | Adjudication | Change plan | Status | Verification method | Note |
 |---|---|---|---|---|---|---|---|
-| G2-P0-1 | 第二轮独立复核 | 推翻对象无实体文件 | 接受 | 新建 ADR-0011 骨架并标 `superseded-in-part`；ADR-0019 §1 与首页「取代」行引用该实体文件 | 已关闭 | 文档更新 + AI 独立复核 | 见 `docs/architecture/adr/0011-sip-stack-dual-path.md`、ADR-0019 §1 |
-| G2-P0-2 | 第二轮独立复核 | 基线产出顺序死锁 | 接受 | §6 增加步骤 0：M1 先用 sippy 跑 S1–S11 抓取基线落盘 `testbed/contracts/sip-baseline/`，probe 以此为进入条件 | 已关闭 | 文档更新 + AI 独立复核 | 见 ADR-0019 §5、§6 步骤 0 |
-| G2-P0-3 | 第二轮独立复核 | E1非本产品AS场景 | 接受 | 增补 S8–S11：Route/Record-Route、in-dialog 路由、486/480/408 分支、CANCEL race | 已关闭 | 文档更新 + AI 独立复核 | 见 ADR-0019 §5 |
-| G2-P0-4 | 第二轮独立复核 | R1无证据锚点 | 接受 | §2 增加 R1 证据表：来源 URL、抓取日期、近 12 个月提交数、未关闭 issue 年龄、最近一次 release | 已关闭 | 文档更新 + AI 独立复核 | 见 ADR-0019 §2.1 |
-| G2-P0-5 | 第二轮独立复核 | H4/H5能力归属未分 | 接受 | H4/H5 重写为能力归属声明（栈原生 / 自建 / 组合）；§7 增加 K6：可能连带重开 ADR-0005/0009/0010 | 已关闭 | 文档更新 + AI 独立复核 | 见 ADR-0019 §3.1、§7 K6 |
-| G2-P0-6 | 第二轮独立复核 | 评估矩阵不可执行 | 接受 | §6 步骤 3 写明裁决规则：E1 淘汰门槛；E7/E8/E9 加权合计最高入选；E10 仅记录；同分按 E8 团队匹配度裁决 | 已关闭 | 文档更新 + AI 独立复核 | 见 ADR-0019 §6 步骤 3 |
-| G2-P1-1 | 第二轮独立复核 | 漏掉自维护sippy | 接受 | §3.3 明确排除 fork/vendor sippy，并给出理由（R3/R4/D1） | 已验证 | 文档更新 + AI 独立复核 | 见 ADR-0019 §3.3 |
-| G2-P1-2 | 第二轮独立复核 | 全量probe与快速通道矛盾 | 接受 | §6 增加时间盒：阶段 A 只跑 go-b2bua（2 周），通过即可进入 Accepted；C/C++ 作为阶段 B 降级触发 | 已验证 | 文档更新 + AI 独立复核 | 见 ADR-0019 §6 步骤 2 |
-| G2-P1-3 | 第二轮独立复核 | 候选描述与硬约束冲突 | 接受 | reSIProcate 备注改为 TLS probe 判定存留；候选收紧为 `libre`；baresip 明确不进候选 | 已验证 | 文档更新 + AI 独立复核 | 见 ADR-0019 §3.2 |
-| G2-P1-4 | 第二轮独立复核 | platform去向未写 | 接受 | §7 增加 K7：换栈后 Python 运行时角色与 ADR-0012 对拍语义变化 | 已验证 | 文档更新 + AI 独立复核 | 见 ADR-0019 §7 K7 |
-| G2-P1-5 | 第二轮独立复核 | E9权重高预设Go倾斜 | 接受 | §4 E9 增加脚注：倾斜是有意为之，但不得单独构成入选理由 | 已验证 | 文档更新 + AI 独立复核 | 见 ADR-0019 §4 E9 脚注 |
-| G2-P2-1 | 第二轮独立复核 | §1.1含过程性语气 | 接受 | 删除审稿人相关表述；容量估算文档单向负责结论，ADR 仅引用 | 已关闭 | 文档更新 + AI 独立复核（第二轮补修复核） | 见 ADR-0019 §1.1（L22–29）；`容量量级估算.md` §5.1/§5.2（L119–132）已改为独立陈述"容量不是区分项"，不再引用 ADR-0019 的结论 |
-| G2-P2-2 | 第二轮独立复核 | 回退后D1未处置 | 接受 | §7.2 写明回退到 sippy 时 D1 的处置路径（迁移运行时或登记为已接受 risk） | 已验证 | 文档更新 + AI 独立复核 | 见 ADR-0019 §7.2 |
-| G2-P2-3 | 第二轮独立复核 | 注册表状态图例冲突 | 接受 | `adr/README.md` 图例增加 `superseded-in-part`；统一 0019 候选命名 | 已验证 | 文档更新 + AI 独立复核 | 见 `docs/architecture/adr/README.md` |
-| G2-P2-4 | 第二轮独立复核 | 架构决策8未同步 | 接受 | `新系统整体架构.md` §0 决策 8 改为"sippy 退出生产栈，选型见 ADR-0019" | 已关闭 | 文档更新 + AI 独立复核（第二轮补修复核） | 见 `docs/architecture/新系统整体架构.md` §0（L20）；本轮复核确认同文件 §10 标题/正文（L478/L480）、§10.1 活跃度快照（L489）、§10.2 状态机首节点（L500）、§12.1 O3（L630）、§12.2 R9（L646）、§13 表格（L664）均已同步；「双栈并行 / 460 commits / 保生产」在该文档零命中；§10.3 候选命名（L528）已与 ADR-0019 §3.2/§3.3 一致 |
+| G2-P0-1 | Round 2 independent re-review | The thing being overturned has no physical file | Accept | Create the ADR-0011 skeleton and mark it `superseded-in-part`; §1 of ADR-0019 and the "Supersedes" line on the front page reference that physical file | Closed | Document update + independent AI re-review | See `docs/architecture/adr/0011-sip-stack-dual-path.md`, ADR-0019 §1 |
+| G2-P0-2 | Round 2 independent re-review | The production order of the baseline is deadlocked | Accept | §6 adds step 0: in M1 first run S1–S11 with sippy and write the captured baseline to `testbed/contracts/sip-baseline/`, with the probe using that as its entry condition | Closed | Document update + independent AI re-review | See ADR-0019 §5, §6 step 0 |
+| G2-P0-3 | Round 2 independent re-review | E1 scenarios are not this product's AS scenarios | Accept | Add S8–S11: Route/Record-Route, in-dialog routing, the 486/480/408 branches, CANCEL race | Closed | Document update + independent AI re-review | See ADR-0019 §5 |
+| G2-P0-4 | Round 2 independent re-review | R1 has no evidence anchor | Accept | §2 adds an R1 evidence table: source URL, capture date, commit count for the last 12 months, age of the oldest unclosed issue, most recent release | Closed | Document update + independent AI re-review | See ADR-0019 §2.1 |
+| G2-P0-5 | Round 2 independent re-review | The capability ownership of H4/H5 is not differentiated | Accept | H4/H5 rewritten as capability ownership statements (native to the stack / built by us / combined); §7 adds K6: may also reopen ADR-0005/0009/0010 | Closed | Document update + independent AI re-review | See ADR-0019 §3.1, §7 K6 |
+| G2-P0-6 | Round 2 independent re-review | The evaluation matrix is not executable | Accept | §6 step 3 states the adjudication rule: E1 is the elimination gate; the highest weighted total of E7/E8/E9 is selected; E10 is recorded only; ties are broken by the E8 team fit | Closed | Document update + independent AI re-review | See ADR-0019 §6 step 3 |
+| G2-P1-1 | Round 2 independent re-review | The self-maintained sippy option is missing | Accept | §3.3 explicitly excludes forking/vendoring sippy and gives the reason (R3/R4/D1) | verified | Document update + independent AI re-review | See ADR-0019 §3.3 |
+| G2-P1-2 | Round 2 independent re-review | Full parity probes contradict the fast path | Accept | §6 adds a time box: stage A runs only go-b2bua (2 weeks), and passing it allows entry into Accepted; C/C++ serves as stage B triggered by degradation | verified | Document update + independent AI re-review | See ADR-0019 §6 step 2 |
+| G2-P1-3 | Round 2 independent re-review | The candidate descriptions conflict with the hard constraints | Accept | The reSIProcate note is changed to "its retention is decided by the TLS probe"; the candidates are tightened to `libre`; baresip explicitly does not enter the candidates | verified | Document update + independent AI re-review | See ADR-0019 §3.2 |
+| G2-P1-4 | Round 2 independent re-review | The fate of platform is not written | Accept | §7 adds K7: the role of the Python runtime after the stack switch and the change in the parity semantics of ADR-0012 | verified | Document update + independent AI re-review | See ADR-0019 §7 K7 |
+| G2-P1-5 | Round 2 independent re-review | The high weight of E9 presets a tilt toward Go | Accept | §4 E9 adds a footnote: the tilt is intentional, but must not alone constitute a reason for selection | verified | Document update + independent AI re-review | See the footnote in ADR-0019 §4 E9 |
+| G2-P2-1 | Round 2 independent re-review | §1.1 contains process-oriented wording | Accept | Delete the reviewer-related wording; the capacity estimate document is solely responsible for the conclusion and the ADR only cites it | Closed | Document update + independent AI re-review (round 2 remediation re-review) | See ADR-0019 §1.1 (L22–29); §5.1/§5.2 (L119–132) of `capacity-estimate.md` have been changed to state independently that "capacity is not a differentiator" and no longer cite the conclusions of ADR-0019 |
+| G2-P2-2 | Round 2 independent re-review | D1 is not disposed of after the fallback | Accept | §7.2 states the disposition path for D1 when falling back to sippy (migrate the runtime or register it as an accepted risk) | verified | Document update + independent AI re-review | See ADR-0019 §7.2 |
+| G2-P2-3 | Round 2 independent re-review | The registry status conflicts with the legend | Accept | The legend in `adr/README.md` adds `superseded-in-part`; the 0019 candidate naming is unified | verified | Document update + independent AI re-review | See `docs/architecture/adr/README.md` |
+| G2-P2-4 | Round 2 independent re-review | Architecture decision 8 not synchronized | Accept | §0 decision 8 of `system-architecture.md` is changed to "sippy exits the production stack, the selection is in ADR-0019" | Closed | Document update + independent AI re-review (round 2 remediation re-review) | See §0 (L20) of `docs/architecture/system-architecture.md`; this re-review confirms that the §10 heading/body (L478/L480), the §10.1 activity snapshot (L489), the §10.2 state machine first node (L500), §12.1 O3 (L630), §12.2 R9 (L646) and the §13 table (L664) of the same file are all synchronized; "双栈并行 / 460 commits / 保生产" have zero hits in that document; the §10.3 candidate naming (L528) is consistent with §3.2/§3.3 of ADR-0019 |
 
 ---
 
-## AI 复核结论（Verification）
+## AI Re-review Conclusion (Verification)
 
-- **复核日期**：2026-09-28
-- **复核人**：AI 复核 agent，独立判断（不采信 Adjudication 表自述，逐条回 ADR 正文实证）
-- **复核对象**：ADR-0019（工作区版本）、ADR-0011、`docs/architecture/adr/README.md`、`docs/architecture/新系统整体架构.md` §0
-- **复核方法**：对每条 gap 在正文中定位对应内容，核对是否覆盖原诉求；核对编号/引用/注册表/架构文档一致性
+- **Re-review date**: 2026-09-28
+- **Re-reviewer**: AI re-review agent, independent judgment (does not take the Adjudication table's self-report at face value; goes back to the ADR body to verify item by item)
+- **Re-review targets**: ADR-0019 (working-tree version), ADR-0011, `docs/architecture/adr/README.md`, `docs/architecture/system-architecture.md` §0
+- **Re-review method**: locate the corresponding content in the body for each gap, check whether the original ask is covered; check the consistency of numbering/references/registry/architecture document
 
-### 逐条核对（第二轮 15 条）
+### Item-by-item check (the 15 round 2 gaps)
 
-| ID | 判定 | 证据位置（正文实证） |
+| ID | Verdict | Evidence location in the body (verified) |
 |---|---|---|
-| G2-P0-1 | 真正关闭 | ADR-0011 实体文件存在（`adr/0011-sip-stack-dual-path.md`），状态行标 `superseded-in-part by ADR-0019`；ADR-0019 首页「取代」行（L6）链接该实体文件；注册表 0011 = superseded-in-part |
-| G2-P0-2 | 真正关闭 | §6 步骤 0（L149–150）要求 M1 先用 sippy 抓 S1–S11 落盘 `testbed/contracts/sip-baseline/`；§5（L120–121）明写"probe 以该基线已落盘为进入条件" |
-| G2-P0-3 | 真正关闭 | §5 S8（Route/Record-Route）、S9（in-dialog 路由）、S10（486/480/408 非 2xx）、S11（CANCEL race），四类语义齐备（L135–138） |
-| G2-P0-4 | 真正关闭 | §2.1 R1 证据表（L42–51）具备三要素：来源 URL、抓取日期（2026-09-28）、观测值（近 12 个月提交数 / 未关闭 issue / 最旧 issue / 最近 release） |
-| G2-P0-5 | 真正关闭 | §3.1 H4、H5 均新增"能力归属"列（栈原生/自建/组合，L66–67）；§7 K6（L176）列连带 ADR-0005/0009/0010 及复核触发条件 |
-| G2-P0-6 | 真正关闭 | §6 步骤 3（L155–159）：E1 淘汰门槛、E7/E8/E9 加权最高者入选、E10 仅记录不作决策输入、同分按 E8 裁决 |
-| G2-P1-1 | 真正关闭 | §3.3（L94）明确排除 fork/vendor sippy 并给 R3/R4/D1 理由 |
-| G2-P1-2 | 真正关闭 | §6 步骤 2（L152–154）：阶段 A 只跑 go-b2bua（时间盒 2 周），通过即进 Accepted；C/C++ 为阶段 B |
-| G2-P1-3 | 真正关闭 | §3.2 reSIProcate 备注"由 TLS probe 判定是否保留"（L76）；libre 取 SIP/SDP，baresip 不进候选（L77） |
-| G2-P1-4 | 真正关闭 | §7 K7（L177）写明 Python 内核退化为 seam/测试 harness，ADR-0012 对拍语义变化 |
-| G2-P1-5 | 真正关闭 | §4 E9 脚注（L113）：倾斜有意为之，但不得单独构成入选理由 |
-| G2-P2-1 | 真正关闭 | §1.1（L22–29）删去审稿人语气，改为"容量估算文档独立负责结论，本 ADR 仅引用"（单向） |
-| G2-P2-2 | 真正关闭 | §7.2（L182–186）写明回退 sippy 时 D1 的两条处置路径 |
-| G2-P2-3 | 真正关闭 | README 图例新增 `superseded-in-part`；0019 行候选登记 rsipstack（备选）、libre（SIP/SDP） |
-| G2-P2-4 | 真正关闭 | `新系统整体架构.md` §0 决策 8 = "sippy 退出生产栈，选型见 ADR-0019" |
+| G2-P0-1 | Genuinely closed | The physical ADR-0011 file exists (`adr/0011-sip-stack-dual-path.md`), and its status line is marked `superseded-in-part by ADR-0019`; the "Supersedes" line on the front page of ADR-0019 (L6) links that physical file; registry 0011 = superseded-in-part |
+| G2-P0-2 | Genuinely closed | §6 step 0 (L149–150) requires M1 to first capture S1–S11 with sippy and write them to `testbed/contracts/sip-baseline/`; §5 (L120–121) explicitly states "the probe enters on the condition that this baseline has been written to disk" |
+| G2-P0-3 | Genuinely closed | §5 S8 (Route/Record-Route), S9 (in-dialog routing), S10 (486/480/408 non-2xx), S11 (CANCEL race) — all four semantics are present (L135–138) |
+| G2-P0-4 | Genuinely closed | The §2.1 R1 evidence table (L42–51) has all three elements: source URL, capture date (2026-09-28), observed value (commit count for the last 12 months / unclosed issues / oldest issue / most recent release) |
+| G2-P0-5 | Genuinely closed | Both §3.1 H4 and H5 add a "capability ownership" column (native to the stack / built by us / combined, L66–67); §7 K6 (L176) lists the collateral ADRs 0005/0009/0010 and the re-review trigger conditions |
+| G2-P0-6 | Genuinely closed | §6 step 3 (L155–159): E1 as the elimination gate, the highest weighted total of E7/E8/E9 selected, E10 recorded only and not a decision input, ties broken by E8 |
+| G2-P1-1 | Genuinely closed | §3.3 (L94) explicitly excludes forking/vendoring sippy and gives the R3/R4/D1 reasons |
+| G2-P1-2 | Genuinely closed | §6 step 2 (L152–154): stage A runs only go-b2bua (a 2-week time box) and passing it enters Accepted; C/C++ is stage B |
+| G2-P1-3 | Genuinely closed | The reSIProcate note in §3.2 says "whether it is retained is decided by the TLS probe" (L76); libre takes SIP/SDP, baresip does not enter the candidates (L77) |
+| G2-P1-4 | Genuinely closed | §7 K7 (L177) states that the Python kernel degrades into the seam / test harness and that the parity semantics of ADR-0012 change |
+| G2-P1-5 | Genuinely closed | The footnote in §4 E9 (L113): the tilt is intentional, but must not alone constitute a reason for selection |
+| G2-P2-1 | Genuinely closed | §1.1 (L22–29) drops the reviewer-oriented wording and is changed to "the capacity estimate document is independently responsible for the conclusion, this ADR only cites it" (one-way) |
+| G2-P2-2 | Genuinely closed | §7.2 (L182–186) states the two D1 disposition paths when falling back to sippy |
+| G2-P2-3 | Genuinely closed | The README legend adds `superseded-in-part`; the 0019 row registers the candidates rsipstack (alternative), libre (SIP/SDP) |
+| G2-P2-4 | Genuinely closed | §0 decision 8 of `system-architecture.md` = "sippy exits the production stack, the selection is in ADR-0019" |
 
-**判定汇总**：第二轮 15 条 gap 全部**真正关闭**（P0 6/6，P1 5/5，P2 4/4）。
+**Verdict summary**: all 15 round 2 gaps are **genuinely closed** (P0 6/6, P1 5/5, P2 4/4).
 
-### 发现的新问题（判定表）
+### Newly found problems (verdict table)
 
-| # | 问题 | 判定 | 证据 / 去向 |
+| # | Problem | Verdict | Evidence / destination |
 |---|---|---|---|
-| 1 | 架构文档决策 8 与 §10/§12/§13 不一致（决策 8 已改、旧表述未清） | 已修复 | `新系统整体架构.md` §10 标题（L478）、§10.1（L489）、§10.2（L500）、§10.3（L528）、§12.1 O3（L630）、§12.2 R9（L646）、§13（L664）已同步；全文「双栈并行 / 双栈迁移 / 460 commits / sippy 保生产」零命中；ADR-0011 反向引用随之成立 |
-| 2 | §10.1 活跃度快照（460 commits）与 ADR-0019 §2.1 观测值矛盾 | 已修复 | `新系统整体架构.md` §10.1（L489）改为「见 ADR-0019 §2.1：近 12 个月 5 次提交；最新 commit 2026-06-05；无 release」 |
-| 3 | ADR-0011 在 ADR-0019 未 Accepted 时即标 `superseded-in-part` | 非问题 | 维护者已改决策 8，属有意为之；ADR-0011 状态行明确标 `superseded-in-part`，待 ADR-0019 Accepted 时正式确认 |
-| 4 | ADR-0019 文档日期早于 §2.1 抓取日期 | 已修复 | ADR-0019 首页日期（L5）现为 2026-09-28，与 §2.1 抓取日期（L44）一致 |
-| 5 | 注册表 0019 行的「§0」列为"维护者裁决"，与其它行风格不一致 | 已修复 | `docs/architecture/adr/README.md` L35「§0」列现为决策号 `8`，与该列其它行风格一致 |
-| 6 | 容量估算与 ADR-0019 的循环引用仅单向化 | 已修复 | `容量量级估算.md` §5.1/§5.2（L119–132）独立陈述"容量不是区分项"，不再引用 ADR-0019 的结论；该文件仅页眉（L7）把 ADR-0019 列为用途 |
+| 1 | Decision 8 of the architecture document is inconsistent with §10/§12/§13 (decision 8 was changed but the stale wording was not cleared) | Fixed | The §10 heading (L478), §10.1 (L489), §10.2 (L500), §10.3 (L528), §12.1 O3 (L630), §12.2 R9 (L646) and §13 (L664) of `system-architecture.md` have been synchronized; "双栈并行 / 双栈迁移 / 460 commits / sippy 保生产" have zero hits in the whole document; the back-reference in ADR-0011 consequently holds |
+| 2 | The §10.1 activity snapshot (460 commits) contradicts the observed value in §2.1 of ADR-0019 | Fixed | §10.1 (L489) of `system-architecture.md` changed to "see ADR-0019 §2.1: 5 commits in the last 12 months; latest commit 2026-06-05; no release" |
+| 3 | ADR-0011 is marked `superseded-in-part` while ADR-0019 is not yet Accepted | Not a problem | The maintainer has changed decision 8, so this is intentional; the status line of ADR-0011 explicitly marks `superseded-in-part`, to be formally confirmed when ADR-0019 is Accepted |
+| 4 | The document date of ADR-0019 is earlier than the capture date in §2.1 | Fixed | The front page date of ADR-0019 (L5) is now 2026-09-28, consistent with the capture date in §2.1 (L44) |
+| 5 | The "§0" column of the 0019 registry row reads "维护者裁决", inconsistent with the style of the other rows | Fixed | The "§0" column at L35 of `docs/architecture/adr/README.md` is now the decision number `8`, consistent with the style of the other rows in that column |
+| 6 | The circular reference between the capacity estimate and ADR-0019 is only made one-way | Fixed | §5.1/§5.2 (L119–132) of `capacity-estimate.md` state independently that "capacity is not a differentiator" and no longer cite the conclusions of ADR-0019; only the header (L7) of that file lists ADR-0019 as a use |
 
-### 结论
+### Conclusion
 
-- **P0 是否全部关闭**：是。第二轮 6 项 P0 全部**真正关闭**（已在正文核实），状态列已更新为「已关闭」。
-- **是否允许进入 probe 阶段**：允许。ADR-0019 §6 步骤 2 的前置条件（步骤 0 基线落盘）已在文档层面定义。上文问题 1/2（架构文档 §10 与决策 8 冲突）已随之在架构文档同步修复（见本文件「发现的新问题（判定表）」第 1/2 行），不再构成误导。
-- **是否允许解除 M0 阻塞**：本复核不构成解除依据。ADR-0019 仍为 Draft、未 Accepted，`plan.md` §5.1 O2 明写"阻塞 M0 签字"；本复核仅确认"其 P0 gap 已真实关闭、文档层面具备进入 probe 的条件"，解除阻塞属维护者决策。
+- **Are all P0 items closed**: Yes. All 6 round 2 P0 items are **genuinely closed** (verified against the body), and the status column has been updated to "closed".
+- **Is entering the probe stage allowed**: allowed. The precondition of §6 step 2 of ADR-0019 (the step 0 baseline written to disk) has been defined at the document level. Problems 1/2 above (the architecture document §10 conflicting with decision 8) have accordingly been fixed by synchronizing the architecture document (see rows 1/2 of "Newly found problems (verdict table)" in this file), and no longer constitute a misleading signal.
+- **Is lifting the M0 block allowed**: this re-review does not constitute grounds for lifting it. ADR-0019 is still Draft and not Accepted, and §5.1 O2 of `plan.md` explicitly says "blocks M0 sign-off"; this re-review only confirms "its P0 gaps are genuinely closed and at the document level it meets the conditions to enter probe", and lifting the block is a maintainer decision.
 
-### 门禁结果（单独一行）
+### Gate result (a single line)
 
-**make gate**：`ruff format --check` ✅ / `ruff check` ✅ / `mypy` ✅ / pytest（unit+contract，44 passed）✅；随后 integration 层因 M0 无测试（`44 deselected`，pytest exit code 5）失败 —— 属 `AGENT.md` §9 既有预期行为，非本次改动引入。
+**make gate**: `ruff format --check` ✅ / `ruff check` ✅ / `mypy` ✅ / pytest (unit+contract, 44 passed) ✅; afterwards the integration layer fails because there are no tests at M0 (`44 deselected`, pytest exit code 5) — this is the pre-existing expected behavior of `AGENT.md` §9, not introduced by this change.
 
 ---
 
-## AI 复核结论（第二轮补修复核）
+## AI Re-review Conclusion (round 2 remediation re-review)
 
-- **复核日期**：2026-09-28
-- **复核人**：AI 复核 agent，独立判断（不采信 Adjudication 表自述；逐条回 ADR-0019 / 架构文档正文实证）
-- **复核对象**：ADR-0019（工作区版本）、`新系统整体架构.md`、`容量量级估算.md`、`adr/README.md`、`platform/pyproject.toml`
-- **复核范围**：上一轮复核判定的 7 条「表面关闭 / 未关闭」（G-P0-2、G-P0-3、G-P1-1、G-P1-2、G-P1-3、G-P1-4、G-P2-3）是否真正关闭；本表两条「已修改」项（G2-P2-1、G2-P2-4）是否真正关闭；架构文档与决策 8 的一致性；连带一致性；门禁
+- **Re-review date**: 2026-09-28
+- **Re-reviewer**: AI re-review agent, independent judgment (does not take the Adjudication table's self-report at face value; goes back to the body of ADR-0019 / the architecture documents to verify item by item)
+- **Re-review targets**: ADR-0019 (working-tree version), `system-architecture.md`, `capacity-estimate.md`, `adr/README.md`, `platform/pyproject.toml`
+- **Re-review scope**: whether the 7 items judged "closed on the surface / not closed" in the previous re-review (G-P0-2, G-P0-3, G-P1-1, G-P1-2, G-P1-3, G-P1-4, G-P2-3) are genuinely closed; whether the two "modified" items in this table (G2-P2-1, G2-P2-4) are genuinely closed; the consistency of the architecture document with decision 8; collateral consistency; gates
 
-### 7 条补修 + 2 条续修逐条判定
+### Item-by-item verdict on the 7 remediation items + 2 follow-up items
 
-| ID | 判定 | 正文证据位置（实证） |
+| ID | Verdict | Evidence location in the body (verified) |
 |---|---|---|
-| G-P0-2 | **真正关闭** | §5「断言粒度表」（L141–149）三类齐备：严格相等（方法 / 响应码 / CSeq 方法名）、仅校验存在性（To/From tag、Contact）、符合模式（`Via` branch 以 `z9hG4bK` 开头、tag 随机十六进制、`Call-ID` 为 `local-id@host`）；Call-ID 两腿不同单列 |
-| G-P0-3 | **真正关闭** | §5.2 S12（L171–179）四条断言（在途 BYE 正常完成 / 新呼叫用新证书 / 进程不重启 / 不丢呼叫）；§6 步骤 2（L191–192）归类为 E4 硬约束验证、不阻塞 E1、Accepted 前必须通过 |
-| G-P1-1 | **真正关闭** | §4.1「E8 评分口径」（L115–128）六子项各 0–5 打分、按权重加权合成；§4 E8 行（L109）改为引用 §4.1，§6 步骤 3 亦引用 |
-| G-P1-2 | **真正关闭** | §6 步骤 3「E6 的验证方法」（L198–199）：最小构建验证流程编译候选栈并跑最小 probe（S1），该流程通过即 E6 证据 |
-| G-P1-3 | **真正关闭** | §3.2 候选表（L73–77）已无 rsipstack；§3.3（L88）列其为明确排除，理由「Rust 不在当前团队技术栈内」作否决项 |
-| G-P1-4 | **真正关闭** | §6 步骤 4（L200–203）：(a) 全部正式候选未过 E1；或 (b)「需投入工时 > 现有 sippy 维护工时 × 2」已给量化阈值 |
-| G-P2-3 | **真正关闭** | §5 S7 已拆为 S7a（SDP 逐字节不变、不改任何字段）与 S7b（仅按契约改写指定字段、其余不变），分别给断言（L159–160） |
-| G2-P2-1 | **真正关闭** | §1.1（L22–29）删除审稿人语气、改为「容量估算文档独立负责结论，本 ADR 仅引用」；`容量量级估算.md` §5.1/§5.2（L119–132）独立陈述、不再引用 ADR-0019 的结论，循环引用（结论层）已打破 |
-| G2-P2-4 | **真正关闭** | `新系统整体架构.md` §0 决策 8（L20）= "sippy 退出生产栈，选型见 ADR-0019"；§10 标题/正文（L478/L480）、§10.1（L489）、§10.2 首节点（L500）、§10.3（L528）、§12.1 O3（L630）、§12.2 R9（L646）、§13（L664）均已同步；「双栈并行 / 460 commits / 保生产」零命中 |
+| G-P0-2 | **Genuinely closed** | The §5 "assertion granularity table" (L141–149) has all three categories: strict equality (method / response code / CSeq method name), existence check only (To/From tag, Contact), pattern match (`Via` branch starting with `z9hG4bK`, random hex tag, `Call-ID` as `local-id@host`); the Call-ID difference between the two legs is listed separately |
+| G-P0-3 | **Genuinely closed** | The four assertions of §5.2 S12 (L171–179) (the in-flight BYE completes normally / new calls use the new certificate / no process restart / no dropped calls); §6 step 2 (L191–192) classifies it as E4 hard constraint verification, non-blocking for E1, and it must pass before Accepted |
+| G-P1-1 | **Genuinely closed** | The §4.1 "E8 scoring criteria" (L115–128) score six sub-items 0–5 each and combine them by weighting; the §4 E8 row (L109) changed to reference §4.1, and §6 step 3 references it as well |
+| G-P1-2 | **Genuinely closed** | §6 step 3 "E6 verification method" (L198–199): the minimal build verification flow compiles the candidate stack and runs a minimal probe (S1); that flow passing is the evidence for E6 |
+| G-P1-3 | **Genuinely closed** | §3.2 candidate table (L73–77) no longer has rsipstack; §3.3 (L88) lists it under explicit exclusion, with the reason "Rust is not in the current team's technology stack" as a rejection criterion |
+| G-P1-4 | **Genuinely closed** | §6 step 4 (L200–203): (a) no formal candidate passes E1; or (b) "the person-hours to be invested > the existing sippy maintenance hours × 2" now has a quantitative threshold |
+| G-P2-3 | **Genuinely closed** | §5 S7 has been split into S7a (SDP byte-for-byte unchanged, no field modified) and S7b (only the fields specified by the contract rewritten, the rest unchanged), with assertions for each (L159–160) |
+| G2-P2-1 | **Genuinely closed** | §1.1 (L22–29) drops the reviewer-oriented wording and is changed to "the capacity estimate document is independently responsible for the conclusion, this ADR only cites it"; §5.1/§5.2 (L119–132) of `capacity-estimate.md` state independently and no longer cite the conclusions of ADR-0019, so the circular reference (at the conclusion layer) is broken |
+| G2-P2-4 | **Genuinely closed** | §0 decision 8 (L20) of `system-architecture.md` = "sippy exits the production stack, the selection is in ADR-0019"; the §10 heading/body (L478/L480), §10.1 (L489), the §10.2 first node (L500), §10.3 (L528), §12.1 O3 (L630), §12.2 R9 (L646) and §13 (L664) are all synchronized; "双栈并行 / 460 commits / 保生产" have zero hits |
 
-**判定汇总**：7 条第一轮补修 + 2 条第二轮续修共 9 条全部**真正关闭**（0 条表面关闭、0 条未关闭）。
+**Verdict summary**: the 7 round 1 remediation items plus the 2 round 2 follow-up items, 9 in total, are all **genuinely closed** (0 closed on the surface, 0 not closed).
 
-> 复核补记：G-P1-4 的阈值（×2）与「现有 sippy 维护工时」的度量口径均已定义 —— ADR-0019 §6 步骤 4（L203–204）给出基数（近 12 个月本团队投入的人时）与折算口径（同期工时台账或估算值），并由维护者在评估时确认。该保留意见已消除。
+> Re-review addendum: both the threshold (×2) of G-P1-4 and the measurement basis for "the existing sippy maintenance hours" are now defined — §6 step 4 (L203–204) of ADR-0019 gives the basis (the person-hours this team invested in the last 12 months) and the conversion basis (the contemporaneous timesheet or an estimated value), to be confirmed by the maintainer at evaluation time. This reservation has been eliminated.
 
-### 架构文档与连带一致性检查
+### Architecture Document and Collateral Consistency Check
 
-**架构文档（`新系统整体架构.md`）与决策 8 冲突的旧表述清除情况**
+**Status of clearing the stale statements in the architecture document (`system-architecture.md`) that conflicted with decision 8**
 
-| 检查点 | 结果 | 证据 |
+| Check point | Result | Evidence |
 |---|---|---|
-| §10 标题与正文 | ✅ 已清除 | L478 标题「SIP 栈迁移路径（sippy 退出生产栈；选型见 ADR-0019）」；L480 正文「sippy 已退出生产栈（决策 8）」 |
-| §10.1 活跃度快照 | ✅ 已清除 | L489 改为「见 ADR-0019 §2.1：近 12 个月 5 次提交；最新 commit 2026-06-05；无 release」，「460 commits」已消失 |
-| §10.2 状态机首节点 | ✅ 已清除 | L500 `[*] --> PythonOnly: 现状（sippy 退出生产栈，选型待 ADR-0019）` |
-| §12.1 O3 | ✅ 已清除 | L630 改为「由 ADR-0019 probe 对拍（§5/§6）」 |
-| §12.2 R9 | ✅ 已清除 | L646 缓解列改为「栈选型见 ADR-0019（§10）」 |
-| §13 表格 SIP 栈行 | ✅ 已清除 | L664「sippy 退出生产栈，选型见 ADR-0019」 |
-| §10.3 候选命名 | ✅ 已清除 | L528 候选与 ADR-0019 §3.2 一致（baresip 不进候选），排除项引用 §3.3；原「（open，不裁决）」措辞已改为「（选型进行中；决于 ADR-0019，本文件不裁决）」 |
-| 全文搜「双栈并行 / 双栈迁移 / 460 commits / sippy 保生产」 | ✅ 零命中 | 该文档内零命中；命中仅存在于 ADR-0011（被取代方自述）、注册表（已加删除线）、review 记录（历史） |
+| §10 heading and body | ✅ Cleared | L478 heading "SIP stack migration path (sippy exits the production stack; selection is in ADR-0019)"; L480 body "sippy has exited the production stack (decision 8)" |
+| §10.1 activity snapshot | ✅ Cleared | L489 changed to "see ADR-0019 §2.1: 5 commits in the last 12 months; latest commit 2026-06-05; no release"; "460 commits" is gone |
+| §10.2 state machine first node | ✅ Cleared | L500 `[*] --> PythonOnly: current state (sippy exits the production stack, selection pending ADR-0019)` |
+| §12.1 O3 | ✅ Cleared | L630 changed to "decided by the ADR-0019 probe parity (§5/§6)" |
+| §12.2 R9 | ✅ Cleared | L646 mitigation column changed to "stack selection is in ADR-0019 (§10)" |
+| §13 table SIP stack row | ✅ Cleared | L664 "sippy exits the production stack, selection is in ADR-0019" |
+| §10.3 candidate naming | ✅ Cleared | L528 candidates are consistent with ADR-0019 §3.2 (baresip is not a candidate), the exclusions reference §3.3; the original wording "（open，不裁决）" has been changed to "（选型进行中；决于 ADR-0019，本文件不裁决）" |
+| Full-text search for "双栈并行 / 双栈迁移 / 460 commits / sippy 保生产" | ✅ Zero hits | Zero hits within that document; hits exist only in ADR-0011 (the superseded party's own description), the registry (already struck through), and the review record (history) |
 
-**连带一致性**
+**Collateral consistency**
 
-| 项 | 结果 | 证据 |
+| Item | Result | Evidence |
 |---|---|---|
-| `adr/README.md` 0019 行 vs ADR-0019 §3.3 | ✅ 一致 | 注册表 L35「rsipstack 因 Rust 不在团队技术栈内被否决」，候选 go-b2bua / reSIProcate / libre（SIP/SDP），与 §3.2/§3.3 一致 |
-| `容量量级估算.md` ↔ ADR-0019 循环引用 | ✅ 已打破（结论层） | ADR §1.1（L29）单向引用估算文档；估算文档 §5.1/§5.2（L119–132）独立陈述结论、不再引用 ADR-0019 的结论；估算文档仅页眉（L7）把 ADR-0019 列为用途，非结论引用 |
-| ADR-0019 小节编号 / 交叉引用 | ✅ 有效 | §4.1、§5.1、§5.2 编号连续；§4.1 与 §6 步骤 3 互指一致；S12 移入 §5.2 后 §5.1 已不再列 TLS |
-| `AGENT.md` §8（ADR-0019 接受前 `platform/` 不绑定栈） | ✅ 遵守 | `platform/pyproject.toml` `dependencies = []`，无 SIP 栈依赖 |
+| `adr/README.md` 0019 row vs ADR-0019 §3.3 | ✅ Consistent | Registry L35 "rsipstack is rejected because Rust is not in the team's technology stack", candidates go-b2bua / reSIProcate / libre (SIP/SDP), consistent with §3.2/§3.3 |
+| `capacity-estimate.md` ↔ ADR-0019 circular reference | ✅ Broken (at the conclusion layer) | ADR §1.1 (L29) references the estimate document in one direction; §5.1/§5.2 of the estimate document (L119–132) state the conclusions independently and no longer reference the conclusions of ADR-0019; only the header (L7) of the estimate document lists ADR-0019 as a use, which is not a conclusion reference |
+| ADR-0019 subsection numbering / cross references | ✅ Valid | §4.1, §5.1, §5.2 are numbered consecutively; §4.1 and §6 step 3 reference each other consistently; after S12 moved into §5.2, §5.1 no longer lists TLS |
+| `AGENT.md` §8 (`platform/` must not bind to a stack before ADR-0019 is accepted) | ✅ Complied | `platform/pyproject.toml` `dependencies = []`, no SIP stack dependency |
 
-### 新发现的问题（判定表）
+### Newly found problems (verdict table)
 
-| # | 问题 | 判定 | 证据 / 去向 |
+| # | Problem | Verdict | Evidence / destination |
 |---|---|---|---|
-| 1 | 架构文档 §10.3 仍列 `libre/baresip` 与 `sofia-sip`，与 ADR-0019 §3.2/§3.3 不一致 | 已修复 | `新系统整体架构.md` §10.3（L528）候选现与 ADR-0019 §3.2 一致（`libre` 取 SIP/SDP、baresip 不进候选），排除项（`sofia-sip` 等）引用 §3.3 |
-| 2 | 架构文档 §4.1（L221）、§6.2（L331）、§6.3（L374）、§8（L423）仍以 sippy 阻塞 `ED2.loop()` 为架构前提 | 非问题 | ADR-0019 §7 K6（L221）已登记该连带后果及复核触发条件（栈确定后逐条复核 ADR-0005/0009/0010）；属 ADR-0019 §7 K6 已登记的已知后果 |
-| 3 | ADR-0019 §5.1 后续场景清单未列 `REFER` | 已修复 | ADR-0019 §5.1（L168）已列 `REFER`（呼叫转移语义） |
-| 4 | ADR-0019 首页日期早于 §2.1 抓取日期 | 已修复 | 首页日期（ADR-0019 L5）现为 2026-09-28，与 §2.1 抓取日期（L44）一致 |
+| 1 | §10.3 of the architecture document still lists `libre/baresip` and `sofia-sip`, inconsistent with ADR-0019 §3.2/§3.3 | Fixed | The candidates in §10.3 (L528) of `system-architecture.md` are now consistent with ADR-0019 §3.2 (`libre` takes SIP/SDP, baresip is not a candidate), and the exclusions (`sofia-sip` etc.) reference §3.3 |
+| 2 | §4.1 (L221), §6.2 (L331), §6.3 (L374), §8 (L423) of the architecture document still take "sippy blocks `ED2.loop()`" as an architectural premise | Not a problem | §7 K6 of ADR-0019 (L221) has already registered this collateral consequence and the re-review trigger condition (re-review ADR-0005/0009/0010 item by item once the stack is fixed); it belongs to the known consequence already registered in §7 K6 of ADR-0019 |
+| 3 | The follow-up scenario list in §5.1 of ADR-0019 does not list `REFER` | Fixed | §5.1 (L168) of ADR-0019 now lists `REFER` (call transfer semantics) |
+| 4 | The front page date of ADR-0019 is earlier than the capture date in §2.1 | Fixed | The front page date (ADR-0019 L5) is now 2026-09-28, consistent with the capture date in §2.1 (L44) |
 
-### 门禁结果（单独一行）
+### Gate result (a single line)
 
-**make gate**：`ruff format --check` ✅ / `ruff check` ✅ / `mypy` ✅ / pytest（unit+contract，44 passed）✅；随后 integration 层（`44 deselected`，pytest exit code 5）失败 —— 属 `AGENT.md` §9 M0 阶段既有预期行为，非本次改动引入。
+**make gate**: `ruff format --check` ✅ / `ruff check` ✅ / `mypy` ✅ / pytest (unit+contract, 44 passed) ✅; afterwards the integration layer fails (`44 deselected`, pytest exit code 5) — this is the pre-existing expected behavior of `AGENT.md` §9 at the M0 stage, not introduced by this change.
 
-### 结论
+### Conclusion
 
-- **7 条补修是否全部真正关闭**：是。7 条全部**真正关闭**（正文实证，见上表）。
-- **第一轮 13 条是否已全部闭环**：是。第一轮 13 条与第二轮 15 条的 Adjudication 状态现已全部为「已关闭 / 已验证」，无遗留「已修改」项；第一轮表内失准的「等价于 G2-*」映射已一并改为实际修法。
-- **是否允许进入 probe**：技术上允许。ADR-0019 §6 步骤 0 的基线落盘前置已在文档层面定义；架构文档 §10.3（L528）现候选与 ADR-0019 §3.2 一致（baresip 不进候选、sofia-sip 入 §3.3 排除项），已不再构成误导。
-- **M0 阻塞是否可解除**：本复核仅给出技术判断——ADR-0019 的 gap 已真实关闭、文档层面具备进入 probe 的条件。是否解除 `plan.md` §5.1 O2 的「阻塞 M0 签字」属**维护者决策**，本复核不构成解除依据（ADR-0019 仍为 Draft，未 Accepted）。
-
----
-
-## 7. 签字
-
-> 本节为 ADR-0019 进入 probe 前的签署记录；ADR 转 Accepted 时仍需维护者另行签字。
-
-- **最终结论**：有条件通过（Draft → Probe-ready）
-- **维护者签字**：维护者授权 AI agent 代签（授权日期 2026-09-28）
-- **日期**：2026-09-28
-
-签署范围：本 review record 所载 gap 已全部闭环，ADR-0019 在文档层面具备进入 probe 的条件。
-本签字**不等于** ADR-0019 转 Accepted —— Accepted 仍需 probe 对拍 + E6/E8/E9 深度评估完成后另行签字。
+- **Are all 7 remediation items genuinely closed**: Yes. All 7 are **genuinely closed** (verified against the body, see the table above).
+- **Are the 13 round 1 items closed end to end**: Yes. The Adjudication status of all 13 round 1 items and all 15 round 2 items is now "closed / verified", with no "modified" item left over; the inaccurate "equivalent to G2-*" mappings in the round 1 table have also been changed to the actual fix.
+- **Is entering probe allowed**: technically allowed. The prerequisite of writing the baseline to disk in §6 step 0 of ADR-0019 has been defined at the document level; the candidates in §10.3 (L528) of the architecture document are now consistent with ADR-0019 §3.2 (baresip is not a candidate, sofia-sip is in the §3.3 exclusions), so it no longer constitutes a misleading signal.
+- **Can the M0 block be lifted**: this re-review gives only the technical judgment — the gaps of ADR-0019 are genuinely closed and at the document level it meets the conditions to enter probe. Whether to lift the "blocks M0 sign-off" in `plan.md` §5.1 O2 is a **maintainer decision**; this re-review does not constitute grounds for lifting it (ADR-0019 is still Draft, not Accepted).
 
 ---
 
-## 8. 接受记录（Accepted）
+## 7. Sign-off
 
-- **接受日期**：2026-09-28
-- **接受人**：维护者
-- **最终裁决**：**带缺口接受（Draft → Accepted）**
+> This section is the sign-off record before ADR-0019 enters probe; a separate maintainer sign-off is still required when the ADR moves to Accepted.
 
-### 选定栈
+- **Final conclusion**: conditional pass (Draft → Probe-ready)
+- **Maintainer sign-off**: the maintainer authorized the AI agent to sign on their behalf (authorization date 2026-09-28)
+- **Date**: 2026-09-28
 
-**reSIProcate**（C++，Vovida 许可，类 BSD），通过 Python 绑定（`BUILD_PYTHON=ON`）接入 platform 内核。
+Scope of the sign-off: the gaps recorded in this review record are all closed end to end, and ADR-0019 meets the conditions to enter probe at the document level.
+This sign-off **does not mean** ADR-0019 moves to Accepted — Accepted still requires probe parity plus the completed deep evaluation of E6/E8/E9, followed by a separate sign-off.
 
-### 接受的缺口
+---
 
-| 缺口 | 内容 | 处置 |
+## 8. Acceptance Record (Accepted)
+
+- **Acceptance date**: 2026-09-28
+- **Acceptor**: maintainer
+- **Final verdict**: **accepted with gaps (Draft → Accepted)**
+
+### Selected Stack
+
+**reSIProcate** (C++, Vovida license, BSD-like), integrated into the platform kernel through Python bindings (`BUILD_PYTHON=ON`).
+
+### Accepted Gaps
+
+| Gap | Content | Disposition |
 |---|---|---|
-| 1 | E1 行为等价（S1–S11）未通过真实 socket probe 验证 | M1 阶段补齐；不通过即回退评估 |
-| 2 | E4 TLS 证书热轮换（S12）未验证 | M1 阶段补齐 |
-| 3 | E5 状态外置 / 序列化能力未验证 | M1 阶段补齐 |
-| 4 | reSIProcate TCP/TLS 传输层为已知短板 | 生产重点监控；见 ADR-0019 K8 |
-| 5 | C++ 栈引入 C++ 工具链与调试成本 | 团队补充 C++ 能力；platform 内核保持 Python，减少 C++ 依赖面 |
+| 1 | E1 behavioral equivalence (S1–S11) not verified through a real-socket probe | To be completed in the M1 stage; if it fails, a fallback evaluation is triggered |
+| 2 | E4 TLS certificate hot rotation (S12) unverified | To be completed in the M1 stage |
+| 3 | E5 state externalization / serialization capability unverified | To be completed in the M1 stage |
+| 4 | The TCP/TLS transport layer of reSIProcate is a known weak point | Key monitoring focus in production; see ADR-0019 K8 |
+| 5 | The C++ stack introduces a C++ toolchain and debugging cost | The team adds C++ capability; the platform kernel stays Python to reduce the C++ dependency surface |
 
-### 回退机制
+### Fallback Mechanism
 
-若 M1 probe 阶段验证 E1/E4/E5 任一硬约束或门槛不通过，触发回退评估（ADR-0019 §6 步骤 4）：
-- （a）全部正式候选均未通过 E1 门槛；或
-- （b）E8 综合维护工时 > 现有 sippy 维护工时 × 2
+If, during the M1 probe stage, any of the hard constraints or gates E1/E4/E5 fails verification, a fallback evaluation is triggered (§6 step 4 of ADR-0019):
+- (a) no formal candidate passes the E1 gate; or
+- (b) the total E8 maintenance hours > the existing sippy maintenance hours × 2
 
-回退结果：ADR-0019 记为 Rejected，重新评估 go-b2bua 或回退 sippy（含 D1 两条处置路径）。
+Fallback result: ADR-0019 is recorded as Rejected, and go-b2bua is re-evaluated or a fallback to sippy (including the two D1 disposition paths).
 
-### 验证方式
+### Verification Method
 
-- ADR-0019 状态行已更新为 `已接受（Accepted）—— 选定 reSIProcate`
-- 架构文档决策 8 已同步
-- ADR 注册表 0019 行状态已更新为 `accepted`
-- plan.md O2 解除阻塞，M0 里程碑状态从"阻塞于 O2"改为"待维护者签字"
+- The status line of ADR-0019 has been updated to `已接受（Accepted）—— 选定 reSIProcate`
+- Decision 8 of the architecture document has been synchronized
+- The status of the 0019 row of the ADR registry has been updated to `accepted`
+- plan.md O2 is unblocked, and the M0 milestone status changed from "blocked on O2" to "pending maintainer sign-off"

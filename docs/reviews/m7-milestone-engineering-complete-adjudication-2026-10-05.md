@@ -14,8 +14,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 # M7 milestone engineering complete adjudication (2026-10-05)
 
-> **Subject:** M7 **工程完成** — product SIP adapter, E1 S1–S4 contract replay, D9 FORWARD, D10 checkpoint shell, D11 SDP engineering tests  
-> **Not:** M7 maintainer sign-off, REQ-NF-1, or full E1 S1–S11 (**M8 验收**)
+> **Subject:** M7 **engineering complete** — product SIP adapter, E1 S1–S4 contract replay, D9 FORWARD, D10 checkpoint shell, D11 SDP engineering tests  
+> **Not:** M7 maintainer sign-off, REQ-NF-1, or full E1 S1–S11 (**M8 acceptance**)
 
 ## Verdict (updated: deny → accept engineering complete)
 

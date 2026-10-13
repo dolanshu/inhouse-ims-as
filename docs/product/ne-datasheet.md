@@ -12,288 +12,288 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# In-house IMS Application Server —— 网元档案（NE Datasheet）
+# In-house IMS Application Server — NE Datasheet
 
-> **状态块（阅读本文前先看这里）**
+> **Status block (read this first)**
 >
-> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。git repo 名：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`，`deploy/helm/Chart.yaml:2`）、镜像名（`registry.example.com/3rdparty-as`）、OTel 服务名**保持 `3rdparty-as` 不变**。
-> - **本文件归属**：`docs/product-packaging-plan.md` §1 第一批交付物 **1.3（网元档案 / NE Datasheet）**。按该计划 §3.2，本交付物属 **B 类**：容量数值部分被 O1 阻塞。
-> - **⚠️ 容量章节受 O1 阻塞**：**O1（容量目标）未裁决**（`docs/plan.md` §5.1 O1「维护者目标裁决仍 open」）。`AGENT.md` §2「M6 实测之前不发布任何容量数字」是硬约束。因此**本文全篇不含任何 CPS / CAPS / BHCA / 并发会话数 / 每千次呼叫资源 / 吞吐 / 时延（含毫秒）/ P95 / P99 / 容量百分比**，连"量级估计"也不写。§3 只交付**模型结构与测量方法学**（评审 G-P0-3、G-P1-3、G-P0-8 的落实）。
-> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
-> - **M6 dev-host 报告只能作为"方法学存在"的证据**：`docs/acceptance/m6-o1-measurement-report-2026-10-05.md` 明确标注受众为 "Maintainers / capacity research only"、**不是**公开 SLA。引用它时一律带「内部测量 / 非对外 / 非 SLA」限定，且**本文不引用其中任何测量值**（`AGENT.md` §2；评审 G-P0-2 / G-P0-8）。
-> - **testbed 边界与告警口径**：`testbed/` 是**研发资产，绝不做运行时依赖**（`AGENT.md` §4），ADR-0014 明确 v1 不把 testbed 作为交付物；其仿真结果（含 callload、M7.1 仿真平台、dev-host harness）**不得充当运营商 IOT 或现网容量证据**（`docs/product-packaging-plan.md` §0.3 第 8 条、§3.4）。告警与指标的**唯一权威契约**是 `deploy/alerts/as-alerts.yaml` 与 `deploy/alerts/README.md`，本文只引用、不另立口径。
-> - **术语纪律**：M8 发布候选（RC）产物就绪，**退出签字仍搁置** —— **RC 就绪 ≠ 通过**（`docs/plan.md` §0）。E1 / E4 / E5 **未验收**。O1 **仍未裁决**；O4 / D5 **取值已裁（G6，2026-10-10；实现未落）**；O5 / D3 **取值已裁（G7，2026-10-10；chart 仍单副本渲染，failover 实测行为无证据）**。
+> - **Product name**: `In-house IMS Application Server`, **formally adopted as the product / document description name** (G8-2; **not a trademark / not a brand claim**), first occurrence labeled 3GPP Third-Party AS role, hereafter abbreviated in-house AS (`docs/plan.md` §0 "product decision record" G8 row). git repo name: the maintainer has reported renaming it to `inhouse-ims-as` (G8-3; only the git repo name and remote URL; this repo performed no remote or local-path change); chart name (`3rdparty-as`, `deploy/helm/Chart.yaml:2`), image name (`registry.example.com/3rdparty-as`), and OTel service name **stay unchanged as `3rdparty-as`**.
+> - **Ownership of this document**: `docs/product-packaging-plan.md` §1 first-batch deliverable **1.3 (NE Datasheet)**. Per that plan §3.2, this deliverable is **Class B**: the capacity figures are blocked by O1.
+> - **⚠️ Capacity section blocked by O1**: **O1 (capacity target) not yet decided** (`docs/plan.md` §5.1 O1 "maintainer target decision still open"). `AGENT.md` §2 "no capacity number published before M6 measurement" is a hard constraint. Therefore **this document contains no CPS / CAPS / BHCA / concurrent-session count / per-thousand-call resource / throughput / latency (incl. milliseconds) / P95 / P99 / capacity percentage**, not even an "order-of-magnitude estimate". §3 delivers only **model structure and measurement methodology** (implementing review items G-P0-3, G-P1-3, G-P0-8).
+> - **B6 review status**: this document has left a review record alongside the B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (first review 2026-10-12) and §7 (closure re-review 2026-10-12); **conclusion pending maintainer confirmation**, and until confirmed it is not an external delivery or acceptance basis (`AGENT.md` §3.3).
+> - **The M6 dev-host report can only serve as evidence that "methodology exists"**: `docs/acceptance/m6-o1-measurement-report-2026-10-05.md` explicitly labels its audience as "Maintainers / capacity research only", **not** a public SLA. Always cite it with the qualifier "internal measurement / not external / not SLA", and **this document cites none of its measured values** (`AGENT.md` §2; review G-P0-2 / G-P0-8).
+> - **testbed boundary and alert criteria**: `testbed/` is an **R&D asset, never a runtime dependency** (`AGENT.md` §4), and ADR-0014 explicitly excludes testbed from v1 deliverables; its simulation results (incl. callload, M7.1 simulation platform, dev-host harness) **must not stand in for operator IOT or live-network capacity evidence** (`docs/product-packaging-plan.md` §0.3 item 8, §3.4). The **sole authoritative contract** for alerts and metrics is `deploy/alerts/as-alerts.yaml` and `deploy/alerts/README.md`; this document only cites, and does not establish a separate set of criteria.
+> - **Terminology discipline**: the M8 release-candidate (RC) artifact is ready, but **exit sign-off is still pending** — **RC ready ≠ passed** (`docs/plan.md` §0). E1 / E4 / E5 **not accepted**. O1 **still undecided**; O4 / D5 **values decided (G6, 2026-10-10; implementation not landed)**; O5 / D3 **values decided (G7, 2026-10-10; chart still renders single-replica, no failover measured behavior evidence)**.
 
-> **注记（2026-10-13 追加）**：上一段中的「O1 仍未裁决」与本文档其余 stale 表述（`0.0.0-skeleton` 等）在事实层面已过期 —— O1 的内部工程目标值已落（对外承诺值仍不填）、chart 已首次同步到 `0.2.0`；处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+> **Note (appended 2026-10-13)**: the "O1 still undecided" in the paragraph above, together with other stale statements in this document (`0.0.0-skeleton`, etc.), is factually outdated — the O1 internal engineering target value has landed (external commitment value still unfilled), and the chart has been synced to `0.2.0` for the first time; disposition (original text preserved + appended note) is in [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1, pending maintainer decision on whether to sync.
 
 ---
 
-## 1. 网元概览
+## 1. NE overview
 
-| 维度 | 内容 |
+| Dimension | Content |
 |---|---|
-| 网元类型 | 运营商 IMS 网络**之外**的第三方 Application Server（3GPP Third-Party AS role），由 S-CSCF 按 HSS 侧 iFC 签约触发 ISC，经运营商 S-SBC 透明桥接接入（`AGENT.md` §1；ADR-0003 accepted） |
-| 接入语义 | **仅 ISC 一种**。iFC 触发逻辑在 S-CSCF / HSS 侧，不在我方交付边界内（评审 G-P0-5） |
-| 业务面 | 只做**信令**：SIP 消息处理与业务判决，头域与 SDP 原样透传。业务用例可插拔（`apps/translation`、`apps/anti-fraud`） |
-| 部署形态 | **单租户、on-premises**：一个 namespace 承载一套完整系统（含各自的 Redis / PostgreSQL / AS Pod 组），数据不出客户机房（REQ-NF-9；ADR-0026 Option E） |
-| 交付版本 | **一次交付一个系统**：产品 release 版本只看仓库根 `./VERSION`（`AGENT.md` §8；ADR-0018 accepted）。**已知缺口**：`deploy/helm/Chart.yaml:5-6` 的 `version: 0.0.0-skeleton` / `appVersion: "0.0.0"` 仍是骨架值，**与 `./VERSION` 不同步** |
-| 生产形态 | **Helm-only**：`Helm` + 标准 Deployment / ConfigMap / Secret；**不写 Operator（CRD）**（ADR-0013 accepted；`deploy/compose/` 仅 dev） |
-| 不做什么 | 不做媒体、不做 CDR、不做 LI、不做 Diameter Sh、不做计费、不做多租户、配置不走 GitOps、不写 Operator（`AGENT.md` §2；一句话版本见 [`one-pager.md`](one-pager.md) §2，**不在此重复造口径**） |
-| 状态 | M8 RC 产物就绪，**退出签字搁置**；E1（reSIProcate 生产路径行为）/ E4（TLS 热轮换）/ E5（状态外置与恢复）**未验收**；e2e：`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open |
+| NE type | Third-party Application Server **outside** the operator IMS network (3GPP Third-Party AS role), triggered by S-CSCF per HSS-side iFC subscription over ISC, accessed via the operator S-SBC transparent bridge (`AGENT.md` §1; ADR-0003 accepted) |
+| Access semantics | **ISC only.** iFC trigger logic is on the S-CSCF / HSS side, not within our delivery boundary (review G-P0-5) |
+| Service plane | **Signaling only**: SIP message processing and business decision, headers and SDP passed through verbatim. Business use cases are pluggable (`apps/translation`, `apps/anti-fraud`) |
+| Deployment form | **Single-tenant, on-premises**: one namespace carries one complete system (incl. its own Redis / PostgreSQL / AS Pod group), data does not leave the customer machine room (REQ-NF-9; ADR-0026 Option E) |
+| Delivery version | **One system delivered per release**: the product release version reads only the repo-root `./VERSION` (`AGENT.md` §8; ADR-0018 accepted). **Known gap**: `deploy/helm/Chart.yaml:5-6`'s `version: 0.0.0-skeleton` / `appVersion: "0.0.0"` are still skeleton values, **out of sync with `./VERSION`** |
+| Production form | **Helm-only**: `Helm` + standard Deployment / ConfigMap / Secret; **no Operator (CRD)** (ADR-0013 accepted; `deploy/compose/` is dev-only) |
+| What it does not do | No media, no CDR, no LI, no Diameter Sh, no billing, no multi-tenancy, no GitOps config delivery, no Operator (`AGENT.md` §2; one-line version in [`one-pager.md`](one-pager.md) §2, **not re-stating a criterion here**) |
+| Status | M8 RC artifact ready, **exit sign-off pending**; E1 (reSIProcate production-path behavior) / E4 (TLS hot rotation) / E5 (state externalization and recovery) **not accepted**; e2e: `pytest -m e2e` **8 stable passes** (fails, does not skip, when native missing), REQ-F-1 = automated subset covered / full text still open |
 
-**产品定位一句话**：多业务承载平台 —— 新增业务只需"加一个 app + 一条配置变更单"，不需要改动 IMS 核心网（`one-pager.md` §1）。
+**One-line product positioning**: a multi-business carrier platform — adding a business only needs "add one app + one change order", no change to the IMS core network (`one-pager.md` §1).
 
 ---
 
-## 2. 接口清单
+## 2. Interface list
 
-| 接口 | 方向 | 协议 / 端口 | 用途 | 必需性 | 备注 |
+| Interface | Direction | Protocol / port | Purpose | Required | Notes |
 |---|---|---|---|---|---|
-| SIP trunk（入腿 / 出腿信令） | 双向 | SIP over UDP `5060`、SIP over TCP `5060` | 承载 ISC 触发信令与业务判决 | **必需** | 端口是**协议常量**，不是容量指标（`deploy/helm/values.yaml:148-153` 原文即如此注明）。TCP 监听需 `AS_SIP_ENABLE_TCP` 开启，默认不监听 |
-| SIP trunk over TLS | 双向 | SIP over TLS `5061` | 与 S-SBC 的端到端 TLS（mTLS） | **必需**（默认 `tls.enabled: true`） | `tls.enabled=true` 且 `tls.secretName` 为空 → **渲染期 fail-closed**（`deploy/helm/templates/deployment.yaml:11-13`）。证书轮换是配置热更新，不重启进程（ADR-0016） |
-| AS 内部 API | 入向 | HTTP `8000`（ClusterIP） | config-service 同时提供控制台 `/` 与 `/internal/v1` | 可选（config-service **默认关闭**） | `services.configService.enabled: false`（`values.yaml:115`）；无独立 console workload |
-| 健康与指标端点 | 出向（供抓取） | HTTP `8080`：`/health/live`、`/health/ready`、`/metrics` | K8s 探针 + Prometheus 文本格式指标 | **必需** | 端口来自 Helm `health.port`（`values.yaml:281-282`）→ ConfigMap `AS_HEALTH_PORT`（`configmap.yaml:58`）→ `HealthServerConfig.port`（`platform/src/as_platform/runtime/health.py:23-24`） |
-| Redis（运行态） | 双向 | Redis 协议，chart 默认 `6379`（`stateStores.redis.port`） | 会话状态 / dialog 状态 / 反诈速率窗口 | **必需**（运行态无状态化前提） | 探针口径见 §8 注记；Redis HA 拓扑**已裁（G7 / D3）**：primary/replica + Sentinel（沿用 ADR-0008 拓扑，不选 Redis Cluster）；chart 当前仍单副本渲染，Sentinel 接线**实现未落** |
-| PostgreSQL（治理态） | 双向 | PostgreSQL，chart 默认 `5432`（`postgres.port`） | 规则版本、变更单、审批、审计；schema `as_config` / `console_audit` | **必需**（控制面） | 三角色：`owner` / `web` / `runtime`（`state-postgres.yaml:18-22`）；`runtime` 为 `NOLOGIN` 最小权限 |
-| **Diameter Sh（TS 29.328 / 29.329）** | — | — | — | **N/A** | **理由**：AS 的业务数据来自自有数据面（规则集、号码翻译表、反诈限额），不与 HSS 交互，故不做 Diameter Sh（`AGENT.md` §2 非目标）。本文不含任何 Sh 相关面板或告警（评审 G-P0-4 / G-P2-3） |
-| **计费 / CDR（TS 32.260 / 32.299）** | — | — | — | **N/A** | **理由**：不采集、不投递、不归档、不批价（ADR-0017 accepted）。以按 **Call-ID** 的呼叫轨迹替代话单，用于投诉追溯与反诈举证 |
-| **媒体 / RTP** | — | — | — | **N/A** | **理由**：不做媒体：无 RTP、无转码、无 DTMF、无 MRF、无媒体锚定；只保留一个 seam 并写明触发条件（ADR-0004）。网外做媒体中继会形成三角路由并引入语音合规问题 |
+| SIP trunk (inbound / outbound signaling) | Bidirectional | SIP over UDP `5060`, SIP over TCP `5060` | Carry ISC trigger signaling and business decision | **Required** | Port is a **protocol constant**, not a capacity metric (as noted verbatim in `deploy/helm/values.yaml:148-153`). TCP listener requires `AS_SIP_ENABLE_TCP`, not listening by default |
+| SIP trunk over TLS | Bidirectional | SIP over TLS `5061` | End-to-end TLS (mTLS) with S-SBC | **Required** (default `tls.enabled: true`) | `tls.enabled=true` with empty `tls.secretName` → **fail-closed at render** (`deploy/helm/templates/deployment.yaml:11-13`). Certificate rotation is a config hot-reload, no process restart (ADR-0016) |
+| AS internal API | Inbound | HTTP `8000` (ClusterIP) | config-service serves both the console `/` and `/internal/v1` | Optional (config-service **off by default**) | `services.configService.enabled: false` (`values.yaml:115`); no separate console workload |
+| Health and metrics endpoint | Outbound (for scraping) | HTTP `8080`: `/health/live`, `/health/ready`, `/metrics` | K8s probes + Prometheus text-format metrics | **Required** | Port comes from Helm `health.port` (`values.yaml:281-282`) → ConfigMap `AS_HEALTH_PORT` (`configmap.yaml:58`) → `HealthServerConfig.port` (`platform/src/as_platform/runtime/health.py:23-24`) |
+| Redis (runtime) | Bidirectional | Redis protocol, chart default `6379` (`stateStores.redis.port`) | Session state / dialog state / anti-fraud rate window | **Required** (premise of stateless runtime) | Probe criterion in the §8 note; Redis HA topology **decided (G7 / D3)**: primary/replica + Sentinel (following ADR-0008 topology, not Redis Cluster); chart still renders single-replica, Sentinel wiring **implementation not landed** |
+| PostgreSQL (governance) | Bidirectional | PostgreSQL, chart default `5432` (`postgres.port`) | Rule versions, change orders, approval, audit; schema `as_config` / `console_audit` | **Required** (control plane) | Three roles: `owner` / `web` / `runtime` (`state-postgres.yaml:18-22`); `runtime` is `NOLOGIN` least-privilege |
+| **Diameter Sh (TS 29.328 / 29.329)** | — | — | — | **N/A** | **Reason**: the AS's business data comes from its own data plane (rule set, number-translation table, anti-fraud limits), it does not interact with HSS, hence no Diameter Sh (`AGENT.md` §2 non-goal). This document contains no Sh-related panel or alert (review G-P0-4 / G-P2-3) |
+| **Billing / CDR (TS 32.260 / 32.299)** | — | — | — | **N/A** | **Reason**: not collected, not delivered, not archived, not rated (ADR-0017 accepted). Call traces keyed by Call-ID (ADR-0017) replace the CDR, for complaint tracing and anti-fraud evidence |
+| **Media / RTP** | — | — | — | **N/A** | **Reason**: no media: no RTP, no transcoding, no DTMF, no MRF, no media anchoring; only one seam is kept with its trigger conditions written down (ADR-0004). Off-net media relay would form a triangular route and raise voice-compliance issues |
 
 ---
 
-## 3. 容量模型与测量方法学
+## 3. Capacity model and measurement methodology
 
-> **本节受 O1 阻塞（`docs/plan.md` §5.1 O1；`AGENT.md` §2；评审 G-P0-3 / G-P1-3 / G-P0-8）。**
-> 本节交付的是**模型结构**（变量与关系）与**测量方法学**，**不含任何取值**。任何数值都不得在 O1 裁决前写入本文。
+> **This section is blocked by O1 (`docs/plan.md` §5.1 O1; `AGENT.md` §2; review G-P0-3 / G-P1-3 / G-P0-8).**
+> This section delivers **model structure** (variables and relationships) and **measurement methodology**, **no values**. No number may be written into this document before O1 is decided.
 
-### 3.1 为什么现在不填数值
+### 3.1 Why no values now
 
-| # | 理由 | 依据 |
+| # | Reason | Basis |
 |---|---|---|
-| 1 | **O1 未裁决**：容量目标（CPS、并发会话、建立时延预算）的维护者裁决仍 open；阻塞 M7 集成容量验收与 HPA 阈值 | `docs/plan.md` §5.1 O1 |
-| 2 | **硬规则**：「M6 实测之前不发布任何容量数字」；`performance` 层**只用真实 socket，绝不要靠驱动回调来测 —— 那测的是业务逻辑，不是系统** | `AGENT.md` §2、§6；ADR-0014 |
-| 3 | 评审已两次裁决：容量章节写「受 O1 阻塞」（G-P0-3、G-P1-3）；性能基准报告当前阶段**只交付方法学**，不出现任何吞吐 / 并发 / 时延数值（G-P0-8） | `docs/reviews/product-packaging-plan-review-2026-10-09.md` |
-| 4 | Helm chart 的容量承载键**全部留空**：`useCases[].resources`、`autoscaling.*`、`podDisruptionBudget.minAvailable` 为空时模板**拒绝渲染**该资源，而不是回落到猜的数字 | `deploy/helm/README.md` §"Keys left empty on purpose"；`deploy/helm/values.yaml:61-66` |
-| 5 | 现有 dev-host 报告是**内部测量**，其局限自述为「不得外推」（loopback UDP、无 TLS、无多副本 K8s、对端是 accept-all fixture、零 hold 负载模型），且明确「不是产品容量保证」 | `docs/acceptance/m6-o1-measurement-report-2026-10-05.md` §"Limits (do not extrapolate)" |
+| 1 | **O1 undecided**: the maintainer decision on the capacity target (CPS, concurrent sessions, setup-latency budget) is still open; blocks M7 integration capacity acceptance and HPA thresholds | `docs/plan.md` §5.1 O1 |
+| 2 | **Hard rule**: "no capacity number published before M6 measurement"; the `performance` layer **uses only real sockets, never drives callbacks to test — that tests business logic, not the system** | `AGENT.md` §2, §6; ADR-0014 |
+| 3 | Reviews have twice decided: the capacity section writes "blocked by O1" (G-P0-3, G-P1-3); the performance-baseline report at this stage **delivers only methodology**, with no throughput / concurrency / latency numbers (G-P0-8) | `docs/reviews/product-packaging-plan-review-2026-10-09.md` |
+| 4 | The chart's capacity-bearing keys are **all left empty**: if `useCases[].resources`, `autoscaling.*`, `podDisruptionBudget.minAvailable` are empty, the template **refuses to render** that resource rather than falling back to guessed numbers | `deploy/helm/README.md` §"Keys left empty on purpose"; `deploy/helm/values.yaml:61-66` |
+| 5 | The existing dev-host report is an **internal measurement**, whose limitations self-describe as "do not extrapolate" (loopback UDP, no TLS, no multi-replica K8s, accept-all fixture peer, zero-hold load model), and explicitly "not a product capacity guarantee" | `docs/acceptance/m6-o1-measurement-report-2026-10-05.md` §"Limits (do not extrapolate)" |
 
-**填值的准入条件（三条同时满足）**：① 维护者对 O1 作出目标裁决并落入 `docs/plan.md` 决策行 + review record；② 在**真实 socket**、有业务判决路径的 harness 上完成 M6 实测；③ 维护者裁决把测量结果转为可对外口径。届时**另出内部评审版性能基准报告**（交付物 4.1，仍为内部文档），并在本节回填。
+**Admission conditions for filling values (all three simultaneously)**: ① the maintainer decides the O1 target and lands it in the `docs/plan.md` decision row + review record; ② M6 measurement is completed on a harness with **real sockets** and a business-decision path; ③ the maintainer decides to convert the measurement result into an externally statable criterion. At that point a **separate internal-review performance-baseline report** is produced (deliverable 4.1, still an internal document), and back-filled into this section.
 
-### 3.2 容量模型结构（只给变量与关系，不给取值）
+### 3.2 Capacity model structure (variables and relationships only, no values)
 
-**到达侧（Offer）**
+**Arrival side (Offer)**
 
-- 变量：呼叫到达过程（是否 Poisson / 突发 / 浪涌）、忙时假设（**待定**）、每用例业务比例（translation / anti-fraud）、号段分布。
-- 关系：到达过程 → 每用例到达率；业务比例把总到达分配到各引擎进程。
-- **待定项**：忙时假设与业务比例必须来自客户话务模型，**不得由本文假设**。
+- Variables: call-arrival process (Poisson / burst / surge), busy-hour assumption (**pending**), per-use-case business ratio (translation / anti-fraud), number-range distribution.
+- Relationship: arrival process → per-use-case arrival rate; business ratio distributes total arrival across engine processes.
+- **Pending items**: the busy-hour assumption and business ratio must come from the customer's traffic model; **this document must not assume them**.
 
-**处理侧（Processing）**
+**Processing side**
 
-- 入腿 INVITE 处理：transport 收包 → 对端准入（白名单 / 证书指纹，ADR-0016）→ 消息解析 → `decide()`。
-- 出腿 INVITE 处理：按判决结果改写 Request-URI（`AS_SIP_NEXT_HOP`），TLS 场景改写 Contact。
-- 状态存储读写：会话 / dialog 状态与反诈速率窗口全部在 Redis（ADR-0002 / ADR-0007）；checkpoint 提交见 ADR-0023（**proposed，未通过**，不据其作结论）。
-- 判决判定：`decide()` 是**纯函数**（无 socket、无时钟、无全局状态），其开销与 I/O 解耦 → 是相对比较的天然基线（`AGENT.md` §5）。
+- Inbound INVITE processing: transport receives packet → peer admission (allowlist / cert fingerprint, ADR-0016) → message parse → `decide()`.
+- Outbound INVITE processing: rewrite Request-URI per decision (`AS_SIP_NEXT_HOP`), rewrite Contact in TLS scenarios.
+- State-store read/write: session / dialog state and anti-fraud rate window all in Redis (ADR-0002 / ADR-0007); checkpoint commit see ADR-0023 (**proposed, not passed**, not used as a conclusion).
+- Decision judgment: `decide()` is a **pure function** (no socket, no clock, no global state), its cost decoupled from I/O → the natural baseline for relative comparison (`AGENT.md` §5).
 
-**资源映射（Resource mapping）**
+**Resource mapping**
 
-- 变量：CPU、内存、连接与文件描述符、Redis 连接池、Pod 副本数、每 Pod 独立伸缩。
-- 关系：每单位到达 → 每单位判决 + 每单位状态存储往返 + 每单位序列化 → 映射到上述资源；副本数是唯一横向维度（**每进程独立伸缩**）。
-- **注意**：本映射的**系数**属容量结论，同样受 O1 阻塞。
+- Variables: CPU, memory, connections and file descriptors, Redis connection pool, Pod replica count, independent scaling per Pod.
+- Relationship: per unit of arrival → per unit of decision + per unit of state-store round trip + per unit of serialization → mapped onto the above resources; replica count is the only horizontal dimension (**each process scales independently**).
+- **Note**: the **coefficients** of this mapping are capacity conclusions, also blocked by O1.
 
-**伸缩边界（Scaling boundary）**
+**Scaling boundary**
 
-- 一用例一进程 → 每个引擎**独立扩缩容、独立故障域、独立灰度单元**（ADR-0002 accepted）。
-- 每进程独立伸缩：chart 对 `useCases[]` 逐条渲染 Deployment / Service（`deploy/helm/templates/deployment.yaml`、`service.yaml`）。
-- 会话亲和**双保险**：LB 层 `sessionAffinity: ClientIP`（`service.yaml:30`）+ 应用层 Redis 会话表兜底；任一半单独都不足够。
-- 缩容**不走标准 CPU / 内存 HPA**：SIP 栈是阻塞事件循环，CPU 与真实 SIP 负载相关性差，且聚合指标**看不见活跃会话** → 必须有缩容保护控制器（ADR-0010 accepted；`docs/architecture/新系统整体架构.md` §6.3）。
-- 缩容守卫判据：`active_calls` 逐实例判定，保护阈值默认 `0` —— 这是**状态条件**（"这个实例上还有没有呼叫"），不是容量阈值（`platform/src/as_platform/ops/downscale_guard.py:72-88`）。
+- One use case one process → each engine has **independent scale, independent failure domain, independent canary unit** (ADR-0002 accepted).
+- Per-process independent scaling: the chart renders a Deployment / Service per `useCases[]` entry (`deploy/helm/templates/deployment.yaml`, `service.yaml`).
+- Session affinity **two-layer safety net**: LB-layer `sessionAffinity: ClientIP` (`service.yaml:30`) + application-layer Redis session table as backstop; either half alone is insufficient.
+- Scale-down **does not use standard CPU / memory HPA**: the SIP stack is a blocking event loop, and CPU correlates poorly with real SIP load, and aggregate metrics **cannot see active sessions** → a downscale-guard controller is mandatory (ADR-0010 accepted; `docs/architecture/system-architecture.md` §6.3).
+- Downscale-guard criterion: `active_calls` judged per instance, protection threshold defaults to `0` — this is a **state condition** ("does this instance still have calls"), not a capacity threshold (`platform/src/as_platform/ops/downscale_guard.py:72-88`).
 
-### 3.3 瓶颈点候选（给成因与观测手段，不给阈值）
+### 3.3 Bottleneck candidates (causes and observation means, no thresholds)
 
-| # | 候选瓶颈 | 成因 | 观测手段（当前可得） |
+| # | Candidate bottleneck | Cause | Observation means (currently available) |
 |---|---|---|---|
-| 1 | **DUM 阻塞事件循环** | `ED2.loop()` 或等价的阻塞事件循环不可阻塞；绝不能在 SIP 回调里做阻塞操作（含遥测导出，ADR-0005） | 进程 CPU 占用与在途呼叫的**相对**变化；`as_active_calls` 分布（需先补抓取接线，见 §5） |
-| 2 | **状态存储往返** | 会话 / dialog / 速率窗口在 Redis；判决前的读与 checkpoint 的写都在关键路径上 | `as_state_store_available`（可达性，非时延）；Redis 侧连接与延迟指标（**外部依赖，chart 不采集**） |
-| 3 | **checkpoint 序列化** | 恢复所需的最小呼叫状态需序列化；ADR-0023 **未通过**，语义仍在变动 | 当前**无**对应指标；只能靠 §3.4 的对照测量 |
-| 4 | **缩容 / draining 时的在途呼叫收敛** | ISSU = draining：摘流 → 等 `active_calls` 归零 → 退出（ADR-0009）；收敛速度取决于呼叫时长分布 | `as_downscale_removable`（`1` = 允许摘除）；`as_active_calls` |
-| 5 | **reSIProcate 传输层已知短板** | TCP / TLS 传输层在 SIP 栈侧存在已知缺口，ADR-0019 **已接受**该缺口 | 只能通过对照测量暴露（§3.4）；当前无传输层指标 |
-| 6 | **遥测导出挤占呼叫路径** | 队列满即丢弃；丢遥测可接受，对呼叫建链施加背压不可接受（ADR-0005） | `as_telemetry_dropped_total`（当前无生产数据生产者，见 §6） |
+| 1 | **DUM blocking event loop** | `ED2.loop()` or an equivalent blocking event loop must not block; never do a blocking operation inside a SIP callback (incl. telemetry export, ADR-0005) | Relative change of process CPU usage vs. in-flight calls; `as_active_calls` distribution (requires the scrape wiring first, see §5) |
+| 2 | **State-store round trip** | Session / dialog / rate window in Redis; the read before decision and the write of checkpoint are both on the critical path | `as_state_store_available` (reachability, not latency); Redis-side connection and latency metrics (**external dependency, not collected by chart**) |
+| 3 | **checkpoint serialization** | The minimal call state needed for recovery must be serialized; ADR-0023 **not passed**, semantics still shifting | Currently **no** corresponding metric; only contrastive measurement per §3.4 |
+| 4 | **In-flight call convergence during downscale / draining** | ISSU = draining: stop traffic → wait for `active_calls` to zero → exit (ADR-0009); convergence speed depends on call-duration distribution | `as_downscale_removable` (`1` = removable allowed); `as_active_calls` |
+| 5 | **reSIProcate transport-layer known gaps** | The TCP / TLS transport layer has known gaps on the SIP-stack side; ADR-0019 **accepted** those gaps | Only exposed via contrastive measurement (§3.4); currently no transport-layer metric |
+| 6 | **Telemetry export crowding the call path** | Drop on full queue; dropping telemetry is acceptable, applying backpressure to call setup is not (ADR-0005) | `as_telemetry_dropped_total` (currently no production-data producer, see §6) |
 
-> **本表不含阈值。** 上表每一项在 O1 裁决前都**不得**配任何数值门限。
+> **This table contains no thresholds.** Each item above must **not** carry any numeric threshold before O1 is decided.
 
-### 3.4 测量方法学
+### 3.4 Measurement methodology
 
-**环境记录项（每次测量必录）**
+**Environment record items (required every measurement)**
 
-| 记录项 | 说明 |
+| Record item | Description |
 |---|---|
-| 主机与 OS | 记录 CPU 型号、内存、磁盘、是否共享宿主 |
-| 容器 / 集群形态 | Pod 数、副本数、requests/limits、是否启用 HPA / PDB |
-| SIP 栈 | reSIProcate 版本与构建标识（生产栈方向，ADR-0019 accepted） |
-| 传输 | UDP / TCP / TLS；是否启用 mTLS 与对端白名单 |
-| 状态存储 | Redis 版本、是否 Sentinel、持久化与淘汰策略；PostgreSQL 版本与 schema |
-| 配置 | 规则集规模、变更单版本号（`CONFIG_VERSION`）、灰度粒度（ADR-0021） |
-| 遥测 | `OTEL_EXPORTER_OTLP_ENDPOINT` 是否配置、队列是否丢弃 |
-| 时间 | 测量日期、持续时长、注入起止时刻 |
+| Host and OS | CPU model, memory, disk, whether shared host |
+| Container / cluster form | Pod count, replica count, requests/limits, whether HPA / PDB enabled |
+| SIP stack | reSIProcate version and build identifier (production stack direction, ADR-0019 accepted) |
+| Transport | UDP / TCP / TLS; whether mTLS and peer allowlist enabled |
+| State store | Redis version, whether Sentinel, persistence and eviction policy; PostgreSQL version and schema |
+| Configuration | Rule-set size, change-order version number (`CONFIG_VERSION`), canary granularity (ADR-0021) |
+| Telemetry | Whether `OTEL_EXPORTER_OTLP_ENDPOINT` is configured, whether queue drops |
+| Time | Measurement date, duration, injection start/end timestamps |
 
-**流量模型定义**
+**Traffic-model definition**
 
-- 到达过程与忙时假设必须**显式写出来**并随报告存档；未写清楚就不算可复现。
-- 每用例业务比例、号段分布、hold 分布、BYE 完成行为必须写清楚。**零 hold 的负载模型不建模 in-dialog 并发，也不建模负载下的 BYE 完成**（M6 dev-host 报告自述的已知局限）。
+- The arrival process and busy-hour assumption must be **explicitly written down** and archived with the report; if not written clearly it is not reproducible.
+- Per-use-case business ratio, number-range distribution, hold distribution, and BYE-completion behavior must be written clearly. **A zero-hold load model does not model in-dialog concurrency, nor BYE completion under load** (a known limitation self-described in the M6 dev-host report).
 
-**指标定义口径**
+**Metric-definition criterion**
 
-- 指标名与语义以 `platform/src/as_platform/telemetry/metrics.py` 为唯一权威；`deploy/alerts/README.md` 是告警侧的契约。
-- **当前没有 histogram、没有时延 / 吞吐类指标**（见 §5）。因此本轮测量若要产出时延类结论，必须先补指标定义与埋点，**并走文档链**（requirement → ADR → 设计 → 验收 → review record），不得在测量脚本里临时算一个数就写进报告。
-- 采集通路是进程的 `/metrics` 端点（Prometheus 文本格式）。
+- The metric name and semantics take `platform/src/as_platform/telemetry/metrics.py` as the sole authority; `deploy/alerts/README.md` is the alert-side contract.
+- **There is currently no histogram, no latency / throughput metric** (see §5). Therefore, if this round of measurement wants to produce a latency conclusion, it must first add the metric definition and instrumentation, **and walk the document chain** (requirement → ADR → design → acceptance → review record) — it must not compute a number ad hoc in the measurement script and write it into the report.
+- The collection path is the process's `/metrics` endpoint (Prometheus text format).
 
-**重复次数与置信度**
+**Repeat count and confidence**
 
-- 同一场景**重复多次**并报告离散度；单次结果只能作为方法学演示，**不得作为容量结论**。
-- 报告必须同时给出**饱和点是否被观测到**；未观测到饱和点时，结论只能是"在所测范围内未见饱和"，**不得外推**。
+- Repeat the same scenario multiple times and report dispersion; a single result is only a methodology demonstration, **must not be a capacity conclusion**.
+- The report must also state **whether the saturation point was observed**; if not observed, the conclusion can only be "no saturation seen within the tested range", **must not extrapolate**.
 
-**证据留存路径**
+**Evidence retention path**
 
-- 证据包落在 `docs/acceptance/artifacts/`；报告落 `docs/acceptance/`，并按 `AGENT.md` §3.2 补 review record。
-- testbed / harness 的输出属于研发资产（ADR-0014）。
+- The evidence package lands in `docs/acceptance/artifacts/`; the report lands in `docs/acceptance/`, and the review record per `AGENT.md` §3.2 is added.
+- testbed / harness output is an R&D asset (ADR-0014).
 
-**两条不可协商的原则**
+**Two non-negotiable principles**
 
-1. **只用真实 socket**：容量层**禁止**用驱动回调测 —— 那样测的是业务逻辑，不是系统（`AGENT.md` §6；ADR-0014）。harness 在 `testbed/load/`。
-2. **`performance` 层当前对端是 accept-all harness，不是业务判决路径**：`docs/acceptance/test-plan.md` L21 明确"M6 产品 runtime 压测对端是 `load_uas_runtime.py`（**accept-all harness**），不是业务判决路径"；L23 进一步指出 `accept_all_invites` **不是** ims-sim，也**不是**生产路径。因此当前 harness 的读数**不能**代表判决路径 + Redis + 规则的真实开销。
+1. **Only real sockets**: the capacity layer **forbids** testing via driven callbacks — that tests business logic, not the system (`AGENT.md` §6; ADR-0014). The harness is in `testbed/load/`.
+2. **The `performance` layer's current peer is an accept-all harness, not the business-decision path**: `docs/acceptance/test-plan.md` L21 states explicitly "the M6 product-runtime load test peer is `load_uas_runtime.py` (**accept-all harness**), not the business-decision path"; L23 further notes `accept_all_invites` is **not** ims-sim, nor a production path. Therefore the current harness's readings **cannot** represent the real cost of the decision path + Redis + rules.
 
-### 3.5 裁决前禁止事项清单
+### 3.5 Pre-decision prohibited-list
 
-| # | 禁止 | 依据 |
+| # | Prohibited | Basis |
 |---|---|---|
-| 1 | 本文及任何对外材料出现 CPS / CAPS / BHCA / 并发会话数 / 每千次呼叫资源 / 吞吐 / 时延（含毫秒）/ P95 / P99 / 容量百分比 | `AGENT.md` §2 |
-| 2 | 把 M6 dev-host 报告中的任何测量值当作结论或对外指标引用（只能引其**方法学小节标题**作为"方法学已存在"的证据） | `AGENT.md` §2；评审 G-P0-2 / G-P0-8 |
-| 3 | 把 testbed 仿真结果当作运营商 IOT 或现网容量证据 | ADR-0014；`docs/product-packaging-plan.md` §0.3 第 8 条 |
-| 4 | 在告警规则里加容量阈值 / 容量类告警组（新建 `as.capacity` 组一律 defer 到 O1 裁决后） | `deploy/alerts/README.md` §"Why there is no capacity alert" |
-| 5 | 在 Helm values 里回填 `useCases[].resources` / `autoscaling.*` / `podDisruptionBudget.minAvailable` 的猜测值（模板会 fail，**这是设计意图，不要绕**） | `deploy/helm/README.md` |
-| 6 | 把架构文档里的示意数字（如 §4.1 图中的 `active_calls=` 读数）当作测量结果引用 | `docs/architecture/新系统整体架构.md` §4.1 |
+| 1 | This document or any external material contains CPS / CAPS / BHCA / concurrent-session count / per-thousand-call resource / throughput / latency (incl. milliseconds) / P95 / P99 / capacity percentage | `AGENT.md` §2 |
+| 2 | Citing any measured value from the M6 dev-host report as a conclusion or external metric (may only cite its **methodology subsection title** as evidence that "methodology exists") | `AGENT.md` §2; review G-P0-2 / G-P0-8 |
+| 3 | Treating testbed simulation results as operator IOT or live-network capacity evidence | ADR-0014; `docs/product-packaging-plan.md` §0.3 item 8 |
+| 4 | Adding capacity thresholds / capacity alert groups in alert rules (creating a new `as.capacity` group is uniformly deferred until after O1 is decided) | `deploy/alerts/README.md` §"Why there is no capacity alert" |
+| 5 | Back-filling guessed values for `useCases[].resources` / `autoscaling.*` / `podDisruptionBudget.minAvailable` in Helm values (the template will fail — this is by design, do not work around it) | `deploy/helm/README.md` |
+| 6 | Citing illustrative numbers in architecture docs (e.g., the `active_calls=` reading in §4.1 chart) as measurement results | `docs/architecture/system-architecture.md` §4.1 |
 
-### 3.6 何时可填
+### 3.6 When values can be filled
 
-| 前置 | 状态 |
+| Prerequisite | Status |
 |---|---|
-| O1 目标裁决（维护者 + 决策行 + review record） | **未裁决** |
-| M6 真实 socket 实测（业务判决路径 + Redis + 规则，含饱和点观测） | **未完成**；现有批次为 dev-host 内部测量、无饱和点 |
-| 维护者裁决"哪些可对外、哪些仅内部" | 未进行 |
+| O1 target decided (maintainer + decision row + review record) | **Undecided** |
+| M6 real-socket measurement (business-decision path + Redis + rules, incl. saturation-point observation) | **Not completed**; current batches are dev-host internal measurements with no saturation point |
+| Maintainer decides "which are external, which internal-only" | Not done |
 
-三条闭合后：把模型**取值**填入 §3.2、把饱和点与置信度填入 §3.4，并**另出内部评审版性能基准报告**（交付物 4.1）。本节的结构与纪律不因填值而放宽。
+Once all three close: fill the model **values** into §3.2, fill the saturation point and confidence into §3.4, and **produce a separate internal-review performance-baseline report** (deliverable 4.1). The structure and discipline of this section are not relaxed by filling values.
 
 ---
 
-## 4. 业务引擎容量参考
+## 4. Business-engine capacity reference
 
-**平台维度的事实**（不含任何数值）：
+**Platform-dimension facts (no values):**
 
-| 事实 | 依据 |
+| Fact | Basis |
 |---|---|
-| 一个业务用例 = 一个进程 = 一个 Deployment = 一个 Service；模板对 `useCases[]` 逐条渲染 | ADR-0002 accepted；`deploy/helm/templates/deployment.yaml`、`service.yaml` |
-| 每个引擎**可独立扩缩容**（各自的副本数、HPA、PDB）、**独立故障域**、**独立灰度单元** | ADR-0002 accepted；`AGENT.md` §4 |
-| 内核**绝不能** import 应用 / 服务 / testbed；一个 app 绝不能 import 另一个 app —— 由 `platform/tests/test_library_independence.py` 与 `tests/test_workspace_layout.py` 强制 | `AGENT.md` §4 |
-| 业务判决是**纯函数**（无 socket、无时钟、无全局状态），因此 `translation` 与 `anti-fraud` 的**相对**开销可在同一测量方法下比较（见下） | `AGENT.md` §5 |
+| One business use case = one process = one Deployment = one Service; the template renders per `useCases[]` entry | ADR-0002 accepted; `deploy/helm/templates/deployment.yaml`, `service.yaml` |
+| Each engine can **scale independently** (its own replica count, HPA, PDB), has an **independent failure domain**, and is an **independent canary unit** | ADR-0002 accepted; `AGENT.md` §4 |
+| The kernel **must never** import an application / service / testbed; one app must never import another app — enforced by `platform/tests/test_library_independence.py` and `tests/test_workspace_layout.py` | `AGENT.md` §4 |
+| Business decision is a **pure function** (no socket, no clock, no global state), so the **relative** cost of `translation` vs `anti-fraud` is comparable under the same measurement method (see below) | `AGENT.md` §5 |
 
-**如何做相对比较（方法，不给数值）**
+**How to do relative comparison (method, no values)**
 
-1. 固定同一测量方法（同一 harness、同一流量模型定义、同一环境记录项，见 §3.4）。
-2. 固定单位资源口径：比较"**单位资源下的判决路径开销**"，而不是绝对吞吐。资源口径必须显式写出来，且只能来自 O1 裁决后的资源规格（当前 `useCases[].resources` 为空）。
-3. 一次只改一个引擎（换判决模块），其余条件不动。
-4. **对照口径必须包含业务判决路径**：当前 accept-all harness 会旁路 `decide()`，因此**不能**用它得出引擎开销结论 —— 只能用于栈 / SDP 层探针。
-5. 报告只给**相对次序与相对差异**，不给绝对取值。
+1. Fix the same measurement method (same harness, same traffic-model definition, same environment record items, see §3.4).
+2. Fix the per-resource criterion: compare "**decision-path cost per unit resource**", not absolute throughput. The resource criterion must be written explicitly, and can only come from the resource spec after the O1 decision (currently `useCases[].resources` is empty).
+3. Change only one engine at a time (swap the decision module), keep everything else unchanged.
+4. The contrast criterion must include the business-decision path: the current accept-all harness bypasses `decide()`, so it **cannot** yield engine-cost conclusions — it is only usable for stack / SDP-layer probes.
+5. The report gives only **relative order and relative difference**, no absolute values.
 
-**两个引擎的资源特征差异（定性）**
+**Qualitative resource-character differences between the two engines**
 
-| 引擎 | 判决特征 | 资源特征（定性） | 依据 |
+| Engine | Decision character | Resource character (qualitative) | Basis |
 |---|---|---|---|
-| `translation`（号码翻译） | 纯判决 + 出腿路由：命中规则后改写 Request-URI（`host`/`port` 取自 `AS_SIP_NEXT_HOP`），TLS 场景改写 Contact | 计算侧主要是规则匹配与字符串处理；**每次判决都要产生出腿信令**，因此信令面（栈序列化 / 传输）成本占比高于纯拒绝型引擎 | `apps/translation/src/as_translation/outbound.py`；ADR-0002 |
-| `anti-fraud`（反诈） | 速率窗口计数 + 超限拒绝（`603 Decline`）：决策函数接收调用方注入的只读 counters | 计算侧主要是窗口计数与阈值判定；但**依赖运行态速率窗口状态**（在 Redis），因此状态存储往返占比高于纯翻译引擎 | `apps/anti-fraud/src/as_anti_fraud/decision.py`；ADR-0007 |
+| `translation` (number translation) | Pure decision + outbound routing: after a rule hits, rewrite Request-URI (`host`/`port` from `AS_SIP_NEXT_HOP`), rewrite Contact in TLS scenarios | Compute side is mainly rule matching and string processing; **every decision produces outbound signaling**, so the signaling-plane (stack serialization / transport) cost share is higher than a pure-reject engine | `apps/translation/src/as_translation/outbound.py`; ADR-0002 |
+| `anti-fraud` | Rate-window counting + over-limit reject (`603 Decline`): the decision function receives caller-injected read-only counters | Compute side is mainly window counting and threshold judgment; but **depends on the runtime rate-window state** (in Redis), so the state-store round-trip share is higher than a pure-translation engine | `apps/anti-fraud/src/as_anti_fraud/decision.py`; ADR-0007 |
 
-> 两条都只是**定性差异**，用于解释为什么不能把两个引擎当成同质负载；**不给任何相对倍数或占比**。
+> Both are only **qualitative differences**, used to explain why the two engines cannot be treated as homogeneous load; **no relative multiple or percentage is given**.
 
 ---
 
-## 5. KPI 定义与门限
+## 5. KPI definitions and thresholds
 
-指标名与语义以 `platform/src/as_platform/telemetry/metrics.py` 为唯一权威；采集通路是进程的 `/metrics` 端点（`HealthServer`，需 `AS_HEALTH_PORT`）。**门限类型只允许三种：比率 / 相对变化 / 状态条件。**
+The metric name and semantics take `platform/src/as_platform/telemetry/metrics.py` as the sole authority; the collection path is the process's `/metrics` endpoint (`HealthServer`, requires `AS_HEALTH_PORT`). **Only three threshold types are allowed: ratio / relative change / state condition.**
 
-| KPI | 定义 | 指标来源（含 label） | 门限类型 | 当前状态 |
+| KPI | Definition | Metric source (incl. label) | Threshold type | Current status |
 |---|---|---|---|---|
-| 在途呼叫数 | 单实例当前承载的在途呼叫数 | `as_active_calls{use_case,pod}` | 相对变化（供 `ASActiveCallsSurge` 用；不作绝对上限） | 生产路径**有**生产者（`__main__.py:117`；dialog 事件在 `runtime/sip_stack_service.py:285,289`），但未设 `AS_M5_SIMULATED_ACTIVE_CALLS` 时依赖 SIP 运行时是否构建；E1 未验收 → **尚无生产环境证据** |
-| 缩容可摘除标志 | `1` = 允许摘除；`0` = 受保护或 draining 中 | `as_downscale_removable{use_case,pod}` | 状态条件 | 生产路径**已接线**（`__main__.py:118-124`，按 guard 配置与 draining 状态周期性写入）。无阈值、无目标值 |
-| 状态存储可用性 | `1` = Redis 可达（`PING`），`0` = 不可达 | `as_state_store_available{use_case}` | 状态条件 | 生产路径**已接线但有条件**：仅当 `REDIS_URL` 非空时才探测（`__main__.py:125-130`；`runtime/state_probe.py:6-27`）。未设置时该序列**不存在**（不是 0） |
-| SIP 响应计数 | 按 `use_case` / `status_class` / `status_code` 计数的 SIP 响应 | `as_sip_responses_total{use_case,status_class,status_code}` | 比率（供 `ASHighErrorRatio` 用） | 生产路径**暂无数据生产者**：唯一产品侧写入点是进程启动时的一次性探针 `AS_M5_PROBE_SIP_STATUS`（`__main__.py:88-97`，生产 on-prem 不设）；`record_terminal_decision_response` **只有测试调用方**。故依赖它的告警当前不会触发 |
-| 规则命中计数 | 每条规则做出判决的次数 | `as_rule_hits_total{rule}` | 无（**未纳入告警契约**） | 定义与写入接口已存在（`metrics.py:254-260`），但生产路径**无调用方**；不在 `deploy/alerts/README.md` 指标契约表内 |
-| 遥测丢弃计数 | 有界队列丢弃的遥测事件数 | `as_telemetry_dropped_total{use_case}` | 状态条件（窗口内计数） | 仅当 `OTEL_EXPORTER_OTLP_ENDPOINT` 非空时才启用有界队列（`__main__.py:193-196`；chart 默认 `telemetry.otlpEndpoint: null`）；未配置时 sink 为 `NoOpSink`，该计数不产生。且队列的 exporter 默认 `NoOpExporter`（`telemetry/__init__.py:129`）→ **真实 OTLP 后端接线仍未完成** |
+| In-flight call count | Current in-flight call count carried by a single instance | `as_active_calls{use_case,pod}` | Relative change (for `ASActiveCallsSurge`; not an absolute ceiling) | Production path **has** a producer (`__main__.py:117`; dialog events in `runtime/sip_stack_service.py:285,289`), but depends on whether the SIP runtime is built when `AS_M5_SIMULATED_ACTIVE_CALLS` is unset; E1 not accepted → **no production-environment evidence yet** |
+| Downscale-removable flag | `1` = removable allowed; `0` = protected or draining | `as_downscale_removable{use_case,pod}` | State condition | Production path **wired** (`__main__.py:118-124`, written periodically per guard config and draining status). No threshold, no target value |
+| State-store availability | `1` = Redis reachable (`PING`), `0` = unreachable | `as_state_store_available{use_case}` | State condition | Production path **wired but conditional**: only probes when `REDIS_URL` is non-empty (`__main__.py:125-130`; `runtime/state_probe.py:6-27`). When unset, the series **does not exist** (not 0) |
+| SIP response count | SIP responses counted by `use_case` / `status_class` / `status_code` | `as_sip_responses_total{use_case,status_class,status_code}` | Ratio (for `ASHighErrorRatio`) | Production path **has no data producer yet**: the only product-side write point is the one-shot startup probe `AS_M5_PROBE_SIP_STATUS` (`__main__.py:88-97`, not set in on-prem production); `record_terminal_decision_response` **has only test callers**. Hence the alert depending on it will not fire now |
+| Rule-hit count | Number of times each rule made a decision | `as_rule_hits_total{rule}` | None (not in the alert contract) | Definition and write interface exist (`metrics.py:254-260`), but production path has **no caller**; not in `deploy/alerts/README.md`'s metric-contract table |
+| Telemetry-drop count | Telemetry events dropped by the bounded queue | `as_telemetry_dropped_total{use_case}` | State condition (count within window) | Only enables the bounded queue when `OTEL_EXPORTER_OTLP_ENDPOINT` is non-empty (`__main__.py:193-196`; chart default `telemetry.otlpEndpoint: null`); when unset the sink is `NoOpSink`, this count is not produced. And the queue's exporter defaults to `NoOpExporter` (`telemetry/__init__.py:129`) → **real OTLP backend wiring still incomplete** |
 
-> **⚠️ 当前没有任何时延类 KPI，也没有吞吐 / CPS 类 KPI。** `MetricKind` 只有 `COUNTER` 与 `GAUGE`（`metrics.py:49-53`），**没有 histogram 类型**，指标注册表里也不存在任何时延或吞吐序列。因此本文**不列时延 KPI，也不列任何容量 KPI** —— 需要时延口径必须先补指标定义并走文档链（§3.4）。
+> **⚠️ There is currently no latency KPI and no throughput / CPS KPI.** `MetricKind` has only `COUNTER` and `GAUGE` (`metrics.py:49-53`), **no histogram type**, and no latency or throughput series exist in the metric registry. Therefore this document **lists no latency KPI and no capacity KPI** — a latency criterion requires first adding the metric definition and walking the document chain (§3.4).
 
-> **⚠️ 抓取接线当前缺失（自核实）**：chart 的 Pod 模板**没有** `prometheus.io/scrape` 注解，chart 里**没有** ServiceMonitor / PodMonitor 模板（`deploy/helm/templates/` 全目录 grep 无命中）。也就是说 `/metrics` 端点存在且渲染出容器端口 `health-http`，但**没有任何采集器被 chart 接线到它** —— 在标准部署中，上表所有 `as_*` 序列 Prometheus 都收不到。补齐抓取接线（ServiceMonitor 或注解二选一）是 O1 裁决后的必要动作之一。
+> **⚠️ Scrape wiring currently missing (self-verified)**: the chart's Pod template has **no** `prometheus.io/scrape` annotation, and the chart has **no** ServiceMonitor / PodMonitor template (a full-directory grep of `deploy/helm/templates/` finds no hits). That is, the `/metrics` endpoint exists and renders the container port `health-http`, but **no collector is wired to it by the chart** — in a standard deployment, Prometheus receives none of the `as_*` series above. Closing the scrape wiring (ServiceMonitor or annotation, pick one) is one of the necessary actions after O1 is decided.
 
 ---
 
-## 6. 告警清单
+## 6. Alert list
 
-唯一权威来源：`deploy/alerts/as-alerts.yaml`（REQ-NF-14），加载与校验方式见 `deploy/alerts/README.md`。下表逐条覆盖该文件的**全部 10 条规则、3 个组**（`as.call-path` 5 条 + `as.runtime` 3 条 + `as.platform` 2 条）；逐条的首查动作、升级路径与证据要求见 [`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md) §2（已落盘，与本表口径一致）。
+Sole authoritative source: `deploy/alerts/as-alerts.yaml` (REQ-NF-14); load and validation method in `deploy/alerts/README.md`. The table below covers **all 10 rules, 3 groups** of that file (`as.call-path` 5 + `as.runtime` 3 + `as.platform` 2); per-alert first-check action, escalation path, and evidence requirements are in [`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md) §2 (landed, consistent with this table's criteria).
 
-| 告警 | 组 | 触发条件摘要 | severity / component | 当前可触发性 | 处置手册入口 |
+| Alert | Group | Trigger-condition summary | severity / component | Current triggerability | Playbook entry |
 |---|---|---|---|---|---|
-| `ASHighErrorRatio` | `as.call-path` | 5xx 与非 487 的 4xx 占全部 SIP 响应之比 > 1%，持续 10m | `warning` / `signalling` | **不可触发**：依赖 `as_sip_responses_total`，生产路径无数据生产者（§5）。阈值是**比率，不是容量指标** | [`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md) §2 #1 |
-| `ASTelemetryDropped` | `as.call-path` | `as_telemetry_dropped_total` 在 15m 窗口内增量 ≥ 50，持续 15m | `warning` / `observability` | **不可触发**：仅在配置了 `OTEL_EXPORTER_OTLP_ENDPOINT` 时该计数才产生（chart 默认 null）；且 exporter 当前为 `NoOpExporter`，队列难以填满。阈值是**窗口内事件计数，不是容量指标** | 同上 §2 #2 |
-| `ASRestartLoop` | `as.call-path` | 单 Pod 容器重启次数 > 3 次 / 1 分钟 | `critical` / `runtime` | **可触发**（`as_*` 系列中唯一无配置前置条件的一条）：数据源是外部 **kube-state-metrics** 的 `kube_pod_container_status_restarts_total`，只依赖集群装了 kube-state-metrics。阈值是**固定窗口内的重启计数（存活信号），不是容量指标** | 同上 §2 #3 |
-| `ASCallStateStoreUnavailable` | `as.call-path` | `min by (use_case) (as_state_store_available) == 0`，持续 2m | `critical` / `state` | **可触发（前提：`REDIS_URL` 已配置）**：metrics 循环在 `REDIS_URL` 非空时真实 PING Redis 并写序列（`__main__.py:125-130`）。若 `REDIS_URL` 为空则序列不存在，规则永不触发（**不是 0**）。阈值是**可达性状态条件，不是容量指标** | 同上 §2 #4 |
-| `ASActiveCallsSurge` | `as.call-path` | 每用例当前 `as_active_calls` > 其自身 30m 滑动平均的 1.3 倍，持续 10m | `warning` / `signalling` | **序列总是产生**（`__main__.py:117` 无条件写），但取值依赖 SIP 运行时的 dialog 事件；未启用该运行时或计数恒为 0 时不会触发。另见 §5 的**抓取接线缺失**。阈值是**相对变化，构造上不含绝对呼叫数，不是容量指标** | 同上 §2 #5 |
-| `ASPodNotReady` | `as.runtime` | 该 Pod 的 `Ready` 条件为 0，持续 5m；就绪 = 进程在拒新工作（`/health/ready` 503 表示正在 draining，ADR-0009） | `critical` / `runtime` | **可触发（前提：集群装了 kube-state-metrics）**：只看 AS namespace 内的 Pod，**不区分组件**，用 `pod` 名区分。阈值是**二元就绪状态，不是容量指标**；正常滚动中的 Pod 也会命中，升级前先看 `/health/ready` | 同上 §2 #6 |
-| `ASDeploymentReplicasUnavailable` | `as.runtime` | 同一 Deployment 的可用副本数 < 期望副本数，持续 10m | `warning` / `runtime` | **可触发（前提：KSM）**：选择器按 namespace 限定，也覆盖内建 `state-redis` 与 `config-service` 两个 Deployment。阈值是**副本可用性状态，不是容量指标**，且**故意不说明系统该有几个副本**（那是 O1 / M6） | 同上 §2 #7 |
-| `ASDownscaleBlocked` | `as.runtime` | 同一 `pod` / `use_case` 上 `as_downscale_removable == 0` **且** `as_active_calls == 0`，持续 30m。ADR-0010 的 guard 只有两个拦截理由（有在途呼叫 / 已在 draining），两者都排除后只剩 draining 卡住 | `warning` / `runtime` | **序列总是产出**（metrics 循环无条件写，不依赖 OTLP），但取值依赖真实 SIP dialog 活动 —— 无流量时不触发。另见 §5 的**抓取接线缺失**。阈值是**二元 guard 状态 + 零计数，不是容量指标** | 同上 §2 #8 |
-| `ASStatefulSetUnavailable` | `as.platform` | 某 StatefulSet 的 ready 副本数 < 期望副本数，持续 5m；chart 内即治理库 PostgreSQL（ADR-0008），持有配置版本、变更单与 append-only 审计 | `critical` / `state` | **可触发（前提：KSM）**：内建 PG 是**单副本、非 HA**（HA 由客户拥有）；Redis HA 拓扑已裁（G7 / D3：primary/replica + Sentinel）但 **chart 仍单副本渲染、failover 实测行为无证据** —— 单副本是设计事实，**不是**容量结论 | 同上 §2 #9 |
-| `ASServiceEndpointsAbsent` | `as.platform` | 某 Service 的可用 endpoint 地址数为 0，持续 5m → selector 匹配不到任何 Ready Pod；chart 内覆盖 `state-redis` 与 `config-service` 两个 Service | `warning` / `state` | **可触发（前提：KSM）**：与 `ASCallStateStoreUnavailable` 是**不同**失效模式 —— 本条是「Service 根本没有后端」，那条是「AS 连不上 Redis」。阈值是**路由状态，不是容量指标** | 同上 §2 #10 |
+| `ASHighErrorRatio` | `as.call-path` | Ratio of 5xx and 4xx-except-487 to all SIP responses > 1%, for 10m | `warning` / `signalling` | **Cannot fire**: depends on `as_sip_responses_total`, production path has no data producer (§5). Threshold is a **ratio, not a capacity metric** | [`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md) §2 #1 |
+| `ASTelemetryDropped` | `as.call-path` | `as_telemetry_dropped_total` increment ≥ 50 within 15m window, for 15m | `warning` / `observability` | **Cannot fire**: the count is only produced when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured (chart default null); and the exporter is currently `NoOpExporter`, the queue rarely fills. Threshold is **event count within a window, not a capacity metric** | same §2 #2 |
+| `ASRestartLoop` | `as.call-path` | Single-Pod container restart count > 3 / 1 minute | `critical` / `runtime` | **Can fire** (the only `as_*` rule with no config prerequisite): data source is external **kube-state-metrics**' `kube_pod_container_status_restarts_total`, only depends on the cluster having kube-state-metrics. Threshold is **restart count within a fixed window (liveness signal), not a capacity metric** | same §2 #3 |
+| `ASCallStateStoreUnavailable` | `as.call-path` | `min by (use_case) (as_state_store_available) == 0`, for 2m | `critical` / `state` | **Can fire (prereq: `REDIS_URL` configured)**: the metrics loop really PINGs Redis and writes the series when `REDIS_URL` is non-empty (`__main__.py:125-130`). If `REDIS_URL` is empty the series does not exist, rule never fires (**not 0**). Threshold is a **reachability state condition, not a capacity metric** | same §2 #4 |
+| `ASActiveCallsSurge` | `as.call-path` | Per use case current `as_active_calls` > 1.3× its own 30m sliding average, for 10m | `warning` / `signalling` | **Series always produced** (`__main__.py:117` written unconditionally), but the value depends on SIP-runtime dialog events; will not fire when the runtime is disabled or the count is stuck at 0. Also see §5's **missing scrape wiring**. Threshold is a **relative change, by construction contains no absolute call count, not a capacity metric** | same §2 #5 |
+| `ASPodNotReady` | `as.runtime` | That Pod's `Ready` condition is 0, for 5m; ready = process refusing new work (`/health/ready` 503 means draining, ADR-0009) | `critical` / `runtime` | **Can fire (prereq: cluster has kube-state-metrics)**: only looks at Pods in the AS namespace, **does not distinguish components**, uses the `pod` name. Threshold is a **binary ready state, not a capacity metric**; a Pod legitimately mid-roll also hits it, check `/health/ready` before escalating | same §2 #6 |
+| `ASDeploymentReplicasUnavailable` | `as.runtime` | Available replicas < desired replicas for the same Deployment, for 10m | `warning` / `runtime` | **Can fire (prereq: KSM)**: selector scoped by namespace, also covers the bundled `state-redis` and `config-service` Deployments. Threshold is **replica-availability state, not a capacity metric**, and **deliberately does not state how many replicas the system should have** (that is O1 / M6) | same §2 #7 |
+| `ASDownscaleBlocked` | `as.runtime` | `as_downscale_removable == 0` **and** `as_active_calls == 0` on the same `pod` / `use_case`, for 30m. ADR-0010's guard blocks removal for exactly two reasons (in-flight calls / already draining); with both excluded, only a stuck drain remains | `warning` / `runtime` | **Series always produced** (metrics loop writes unconditionally, no OTLP dependency), but the value depends on real SIP dialog activity — no traffic, no fire. Also see §5's **missing scrape wiring**. Threshold is a **binary guard state + zero count, not a capacity metric** | same §2 #8 |
+| `ASStatefulSetUnavailable` | `as.platform` | A StatefulSet's ready replicas < desired replicas, for 5m; in this chart that is the governance PostgreSQL (ADR-0008), holding config versions, change orders, append-only audit | `critical` / `state` | **Can fire (prereq: KSM)**: the bundled PG is **single-replica, non-HA** (HA owned by the customer); Redis HA topology decided (G7 / D3: primary/replica + Sentinel) but **chart still renders single-replica, no failover measured behavior evidence** — single-replica is a design fact, **not** a capacity conclusion | same §2 #9 |
+| `ASServiceEndpointsAbsent` | `as.platform` | A Service's available endpoint address count is 0, for 5m → selector matches no Ready Pod; in this chart covers the `state-redis` and `config-service` Services | `warning` / `state` | **Can fire (prereq: KSM)**: a **different** failure mode from `ASCallStateStoreUnavailable` (which reports "AS cannot reach Redis"); this one reports "the Service has no backend at all". Threshold is a **routing state, not a capacity metric** | same §2 #10 |
 
-**容量类告警：defer。** `as-alerts.yaml` **当前没有任何 CPS 上限或并发上限告警**，且这是刻意设计（文件头 L8-13；`deploy/alerts/README.md` §"Why there is no capacity alert"）。容量类告警在 **O1 裁决后**新建独立组（建议 `as.capacity`），从实测结果取值，**不得在此之前凭直觉写一个**。在此之前，异常负载用 `ASActiveCallsSurge` 与 M6 harness 排查，而不是用一个提前编造的数。
+**Capacity alerts: deferred.** `as-alerts.yaml` currently has **no CPS ceiling or concurrency-ceiling alert**, and this is by design (file header L8-13; `deploy/alerts/README.md` §"Why there is no capacity alert"). Capacity alerts are added **after O1 is decided** as a new independent group (suggested `as.capacity`), taking values **from** the measurement — **do not write one on intuition beforehand**. Until then, an unexplained load problem is investigated with `ASActiveCallsSurge` and the M6 harness, not with a number invented in advance.
 
 ---
 
-## 7. 依赖关系图
+## 7. Dependency graph
 
 ```mermaid
 graph LR
-    subgraph IMS["运营商 IMS 核心网 · 非我方交付"]
-        SCSCF["S-CSCF · 按 iFC 触发 ISC"]
-        HSS["HSS · iFC 签约"]
-        SSBC["S-SBC · 透明桥接 · 拓扑隐藏"]
+    subgraph IMS["Operator IMS core network · not our deliverable"]
+        SCSCF["S-CSCF · triggers ISC per iFC"]
+        HSS["HSS · iFC subscription"]
+        SSBC["S-SBC · transparent bridge · topology hiding"]
     end
 
-    subgraph NS["单租户 namespace · 一套完整系统"]
-        subgraph SIG["信令面 · 一用例一进程"]
-            TR["translation 引擎 Pod"]
-            AF["anti-fraud 引擎 Pod"]
+    subgraph NS["Single-tenant namespace · one complete system"]
+        subgraph SIG["Signaling plane · one process per use case"]
+            TR["translation engine Pod"]
+            AF["anti-fraud engine Pod"]
         end
-        REDIS[("Redis · 运行态<br/>必需 · 单副本")]
-        PG[("PostgreSQL · 治理态<br/>必需 · 单副本")]
-        CFG["config-service<br/>AS 内部 API + 控制台<br/>默认关闭"]
-        NGINX["ingress-nginx<br/>仅控制台 ingress 可选"]
+        REDIS[("Redis · runtime<br/>required · single replica")]
+        PG[("PostgreSQL · governance<br/>required · single replica")]
+        CFG["config-service<br/>AS internal API + console<br/>off by default"]
+        NGINX["ingress-nginx<br/>only console ingress optional"]
     end
 
-    PROM["Prometheus / OTLP collector<br/>可选 · 部署侧提供"]
-    KSM["kube-state-metrics<br/>外部 · 集群提供"]
+    PROM["Prometheus / OTLP collector<br/>optional · provided by deploy side"]
+    KSM["kube-state-metrics<br/>external · provided by cluster"]
 
-    SCSCF -->|"ISC 触发"| SSBC
-    HSS -.->|"iFC 签约"| SCSCF
-    SSBC ==>|"必需 · SIP trunk UDP/TCP 5060 · TLS 5061<br/>mTLS + 对端白名单"| TR
+    SCSCF -->|"ISC trigger"| SSBC
+    HSS -.->|"iFC subscription"| SCSCF
+    SSBC ==>|"required · SIP trunk UDP/TCP 5060 · TLS 5061<br/>mTLS + peer allowlist"| TR
     SSBC ==> AF
 
-    TR -->|"必需 · HA 已裁 O5/D3（G7）· 实现未落"| REDIS
-    AF -->|"必需 · HA 已裁 O5/D3（G7）· 实现未落"| REDIS
-    TR -.->|"checkpoint / 治理读"| PG
+    TR -->|"required · HA decided O5/D3 (G7) · impl not landed"| REDIS
+    AF -->|"required · HA decided O5/D3 (G7) · impl not landed"| REDIS
+    TR -.->|"checkpoint / governance read"| PG
     AF -.-> PG
-    CFG -->|"必需 · 规则版本与审计 · HA 已裁 O5（G7）· 实现未落"| PG
-    NGINX -->|"可选"| CFG
+    CFG -->|"required · rule version and audit · HA decided O5 (G7) · impl not landed"| PG
+    NGINX -->|"optional"| CFG
 
-    TR -.->|"指标 /metrics :8080 · 抓取接线缺失"| PROM
+    TR -.->|"metrics /metrics :8080 · scrape wiring missing"| PROM
     AF -.-> PROM
     CFG -.-> PROM
-    KSM -->|"ASRestartLoop 唯一数据源"| PROM
+    KSM -->|"ASRestartLoop sole data source"| PROM
 
     style TR fill:#e8f0fe,stroke:#1a73e8
     style AF fill:#e8f0fe,stroke:#1a73e8
@@ -305,94 +305,94 @@ graph LR
     style KSM fill:#f1f3f4,stroke:#5f6368
 ```
 
-**必需性说明（逐条）**
+**Requirement explanation (per item)**
 
-| 依赖 | 必需性 | 备注 |
+| Dependency | Required | Notes |
 |---|---|---|
-| S-SBC（trunk 对端） | **必需** | 运营商网元，我方只做对端准入校验（白名单 + mTLS，ADR-0016）。trunk 不可信 |
-| Redis（运行态） | **必需** | 会话 / dialog / 速率窗口；chart 内建的是**单副本**，**不是 HA**；Sentinel / HA 拓扑**已裁（G7 / D3：primary/replica + Sentinel，不选 Cluster）**，接线**实现未落** |
-| PostgreSQL（治理态） | **必需**（控制面） | chart 内建的是**单副本**，**不是 HA**；流复制 / 备份 / PITR 属架构要求，落地受真实集群阻塞 |
-| ingress-nginx → config-service → 控制台 | **可选** | config-service 默认关闭；`config-service-ingress.yaml` **只支持 ingress-nginx**（`className` 非 `nginx` 时渲染失败），且强制 HTTPS 重定向；7.2d 真实集群证据仍 blocked |
-| Prometheus / OTLP collector | **可选**（部署侧） | chart 不含 ServiceMonitor / PodMonitor，也无 scrape 注解 → **抓取接线缺失**（§5）。OTLP exporter 当前为 `NoOp`，队列存在但不落地 |
-| K8s / Helm | **必需** | Helm 是生产唯一形态（ADR-0013） |
-| **跨站点容灾** | **已裁（G7）** | O5 基线：**站点内 N+1 + 跨站 1+1 warm standby**（ADR-0008 拓扑；**不承诺机架 / AZ 级容错**，RPO / RTO 数值**仍未裁**）；chart 当前仍单副本渲染，failover 实测行为无证据。跨站点流量分担由运营商网元配置决定，不在我方交付范围 |
+| S-SBC (trunk peer) | **Required** | Operator network element; we only do peer-admission validation (allowlist + mTLS, ADR-0016). Trunk is not trusted |
+| Redis (runtime) | **Required** | Session / dialog / rate window; the chart's bundled one is **single-replica**, **not HA**; Sentinel / HA topology **decided (G7 / D3: primary/replica + Sentinel, not Cluster)**, wiring **implementation not landed** |
+| PostgreSQL (governance) | **Required** (control plane) | The chart's bundled one is **single-replica**, **not HA**; streaming replication / backup / PITR are architecture requirements, landing blocked by a real cluster |
+| ingress-nginx → config-service → console | **Optional** | config-service off by default; `config-service-ingress.yaml` supports **only ingress-nginx** (renders failed when `className` is not `nginx`), and forces HTTPS redirect; 7.2d real-cluster evidence still blocked |
+| Prometheus / OTLP collector | **Optional** (deploy side) | Chart has no ServiceMonitor / PodMonitor, nor scrape annotation → **scrape wiring missing** (§5). OTLP exporter currently `NoOp`, queue exists but does not land |
+| K8s / Helm | **Required** | Helm is the only production form (ADR-0013) |
+| **Cross-site DR** | **Decided (G7)** | O5 baseline: **in-site N+1 + cross-site 1+1 warm standby** (ADR-0008 topology; **no rack / AZ-level fault-tolerance commitment**, RPO / RTO values **still undecided**); chart still renders single-replica, no failover measured behavior evidence. Cross-site traffic sharing is decided by operator network-element config, outside our delivery scope |
 
 ---
 
-## 8. 资源规格与部署形态
+## 8. Resource spec and deployment form
 
-**权威来源**：`deploy/helm/values.yaml` 与 `deploy/helm/README.md`。本文不复述 values 全量参数，只给网元档案视角的规格要点与**已知缺口**。
+**Authoritative source**: `deploy/helm/values.yaml` and `deploy/helm/README.md`. This document does not repeat the full values parameters, only the spec highlights and **known gaps** from the NE-datasheet perspective.
 
-| 项 | 当前状态 | 依据 |
+| Item | Current status | Basis |
 |---|---|---|
-| chart name / 类型 | `3rdparty-as`，`apiVersion: v2`，`type: application` | `deploy/helm/Chart.yaml:1-6` |
-| 镜像 | `registry.example.com/3rdparty-as`，`tag` 为空 → 回落到 `Chart.appVersion`；`pullPolicy: IfNotPresent`。**没有公开 registry**，安装时须设客户内网 registry | `values.yaml:76-82`；`_helpers.tpl` 的 `as.image` |
-| 版本 | `./VERSION` 是产品 release **唯一源头**；**`Chart.yaml` 的 `version` / `appVersion` 仍是骨架值，与 `./VERSION` 不同步** —— **已知缺口**。**2026-10-12 追加（G4 / A6）**：一致性同步已落地为 `scripts/sync-chart-version.sh`（默认 `--check` 只读，drift 即 exit 1；`--apply` 才写入）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效） | `AGENT.md` §8；ADR-0018；`Chart.yaml:5-6` |
-| `useCases` | `translation` / `anti-fraud` 各一条，`enabled: true`；`enabled: false` 渲染 nothing | `values.yaml:84-107` |
-| **资源规格** | **`useCases[].resources` 默认全空（`{}`），chart 不渲染 requests/limits** → **没有推荐资源规格**。这是刻意留空：sizing 与 O1 同源，模板宁可不渲染也不回落猜测值 | `values.yaml:97-103`；`deploy/helm/README.md` §"Keys left empty on purpose" |
-| 副本数 | `useCases[].replicaCount: null` → Deployment 渲染 `replicas: 1` 作**渲染回落**，**不是容量结论** | `values.yaml:92-96`；`deployment.yaml:31-36` |
-| HPA | `autoscaling.enabled: false` → **默认不渲染任何 HPA**；启用后缺 `minReplicas`/`maxReplicas` 直接 fail；所有目标阈值留空待 O1 | `values.yaml:261-270`；`hpa.yaml` |
-| PDB | `podDisruptionBudget.minAvailable: null` → **不渲染 PDB**（可用性下限是没人做过的决策） | `values.yaml:305-309` |
-| 缩容守卫 | `downscaleGuard.enabled: true`，`protectWhenActiveCallsAbove: 0` —— **状态条件**（"还有没有呼叫"），不是容量阈值 | `values.yaml:272-278`；ADR-0010 |
-| draining | `preStopSleepSeconds: 5`、`terminationGracePeriodSeconds: 300` —— **这是配置默认值（超时窗口），不是容量或性能承诺** | `values.yaml:238-252`；ADR-0009 |
-| 健康 / 指标 | `health.port: 8080`；探针路径 `/health/live`、`/health/ready`；readiness 在 draining 期间返回 503 | `values.yaml:280-303`；`runtime/health.py:56-74` |
-| Service | 每用例一个 ClusterIP，`sessionAffinity: ClientIP`（`timeoutSeconds: 3600`，粘性超时，与容量无关） | `values.yaml:161`；`service.yaml:30-35` |
-| **fail-closed 项** | ① `tls.enabled: true` 且 `tls.secretName` 为空 → **渲染失败**；② `sip.peerAllowlist` 为空且未设 `allowEmptyAllowlistForTest` → **渲染失败**。两项都是安全控制，不是可用性开关 | `deployment.yaml:11-16`；ADR-0016 |
-| 集群内状态存储 | `stateStores.enabled: false`（默认保持 AS-only 渲染）；启用后渲染集群内 PostgreSQL / Redis + NetworkPolicy；`bootstrapDevCredentials` **仅 kind/dev** | `values.yaml:167-200`；ADR-0026 accepted |
-| config-service | **默认关闭**；启用需外部 Secret（`AS_CONFIG_DSN`、审计 HMAC key）与预置 `NOLOGIN` runtime 角色；chart **不创建也不填充** 该 Secret | `values.yaml:109-136`；`deploy/helm/README.md` |
-| K8s 最低版本 | `kubeVersion` 已定为 `>=1.23.0-0`（2026-10-12 裁，G4 / A6：由 chart 实际 API 反推 —— autoscaling/v2 HPA 与 Job TTL 均 K8s 1.23 GA），**尚未写入 `Chart.yaml`**；preflight.sh 推导下限 1.23 与之一致。chart 当前仍无 `kubeVersion` 声明（已知缺口，待维护者写入） | `deploy/helm/Chart.yaml`（全文）；`../delivery/preflight.sh` |
-| Prometheus 抓取 | **无 `prometheus.io/scrape` 注解，无 ServiceMonitor / PodMonitor**（已知缺口，见 §5） | `deploy/helm/templates/`（grep 无命中） |
-| 备份 / 恢复、e2e | **chart 无备份 Job**（`stateStores.migrateJob` 是一次性 schema 迁移 Job，**不是备份**）；`pytest -m e2e` **8 条稳定通过**（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open，完整呼叫 + 控制台端到端路径未落地 | `values.yaml:192-200`；`test-plan.md` L20 |
-| 未验收项 | E1（reSIProcate 生产路径行为）、E4（TLS 证书热轮换）、E5（状态外置与恢复）**均未验收** | `docs/plan.md` §5.1 O2/O3 |
+| chart name / type | `3rdparty-as`, `apiVersion: v2`, `type: application` | `deploy/helm/Chart.yaml:1-6` |
+| Image | `registry.example.com/3rdparty-as`, empty `tag` → falls back to `Chart.appVersion`; `pullPolicy: IfNotPresent`. **No public registry**, must set the customer internal registry at install | `values.yaml:76-82`; `_helpers.tpl`'s `as.image` |
+| Version | `./VERSION` is the **sole source** of the product release; **`Chart.yaml`'s `version` / `appVersion` are still skeleton values, out of sync with `./VERSION`** — **known gap**. **Appended 2026-10-12 (G4 / A6)**: consistency sync has landed as `scripts/sync-chart-version.sh` (default `--check` read-only, drift → exit 1; `--apply` to write); **the timing and value of the first `--apply` is left to the maintainer** (G4 "do not modify `VERSION` and `Chart.yaml` now" still holds) | `AGENT.md` §8; ADR-0018; `Chart.yaml:5-6` |
+| `useCases` | `translation` / `anti-fraud` one each, `enabled: true`; `enabled: false` renders nothing | `values.yaml:84-107` |
+| **Resource spec** | **`useCases[].resources` default all empty (`{}`), chart does not render requests/limits** → **no recommended resource spec**. This is deliberately empty: sizing shares the same source as O1, the template would rather not render than fall back to guessed values | `values.yaml:97-103`; `deploy/helm/README.md` §"Keys left empty on purpose" |
+| Replica count | `useCases[].replicaCount: null` → Deployment renders `replicas: 1` as a **render fallback**, **not a capacity conclusion** | `values.yaml:92-96`; `deployment.yaml:31-36` |
+| HPA | `autoscaling.enabled: false` → **no HPA rendered by default**; enabling without `minReplicas`/`maxReplicas` fails outright; all target thresholds empty pending O1 | `values.yaml:261-270`; `hpa.yaml` |
+| PDB | `podDisruptionBudget.minAvailable: null` → **PDB not rendered** (the availability floor is a decision no one has made) | `values.yaml:305-309` |
+| Downscale guard | `downscaleGuard.enabled: true`, `protectWhenActiveCallsAbove: 0` — a **state condition** ("are there still calls"), not a capacity threshold | `values.yaml:272-278`; ADR-0010 |
+| draining | `preStopSleepSeconds: 5`, `terminationGracePeriodSeconds: 300` — these are **config defaults (timeout windows), not capacity or performance promises** | `values.yaml:238-252`; ADR-0009 |
+| Health / metrics | `health.port: 8080`; probe paths `/health/live`, `/health/ready`; readiness returns 503 during draining | `values.yaml:280-303`; `runtime/health.py:56-74` |
+| Service | One ClusterIP per use case, `sessionAffinity: ClientIP` (`timeoutSeconds: 3600`, sticky timeout, unrelated to capacity) | `values.yaml:161`; `service.yaml:30-35` |
+| **fail-closed items** | ① `tls.enabled: true` with empty `tls.secretName` → **render fails**; ② `sip.peerAllowlist` empty and `allowEmptyAllowlistForTest` unset → **render fails**. Both are security controls, not availability switches | `deployment.yaml:11-16`; ADR-0016 |
+| In-cluster state store | `stateStores.enabled: false` (keeps AS-only render by default); enabling renders in-cluster PostgreSQL / Redis + NetworkPolicy; `bootstrapDevCredentials` is **kind/dev only** | `values.yaml:167-200`; ADR-0026 accepted |
+| config-service | **Off by default**; enabling needs an external Secret (`AS_CONFIG_DSN`, audit HMAC key) and a pre-provisioned `NOLOGIN` runtime role; the chart **does not create or populate** that Secret | `values.yaml:109-136`; `deploy/helm/README.md` |
+| K8s minimum version | `kubeVersion` has been set to `>=1.23.0-0` (decided 2026-10-12, G4 / A6: reverse-derived from the chart's actual APIs — autoscaling/v2 HPA and Job TTL are both K8s 1.23 GA), **not yet written into `Chart.yaml`**; preflight.sh derives the 1.23 floor consistently. The chart still has no `kubeVersion` declaration (known gap, pending maintainer) | `deploy/helm/Chart.yaml` (full text); `../delivery/preflight.sh` |
+| Prometheus scrape | **No `prometheus.io/scrape` annotation, no ServiceMonitor / PodMonitor** (known gap, see §5) | `deploy/helm/templates/` (grep no hits) |
+| Backup / restore, e2e | **Chart has no backup Job** (`stateStores.migrateJob` is a one-shot schema-migration Job, **not a backup**); `pytest -m e2e` **8 stable passes** (fails, does not skip, when native missing), REQ-F-1 = automated subset covered / full text still open, the full call + console end-to-end path not landed | `values.yaml:192-200`; `test-plan.md` L20 |
+| Unaccepted items | E1 (reSIProcate production-path behavior), E4 (TLS cert hot rotation), E5 (state externalization and recovery) **all not accepted** | `docs/plan.md` §5.1 O2/O3 |
 
-**注记 —— Redis 探针的环境变量口径差异（自核实）**：状态存储读取 `AS_REDIS_URL`，未设时回落到 chart 的 `REDIS_URL`（`platform/src/as_platform/state/redis_store.py:263-282`）；而**可用性探针只读 `REDIS_URL`**（`__main__.py:125`），chart 也只写 `REDIS_URL`（`configmap.yaml:43-46`）。因此若只通过 `runtime.extraEnv` 设置 `AS_REDIS_URL`，状态存储能连上，但 `as_state_store_available` 序列**不会产生** → `ASCallStateStoreUnavailable` 永不触发。交付时应统一走 `REDIS_URL`。
+**Note — Redis probe env-var criterion discrepancy (self-verified)**: the state store reads `AS_REDIS_URL`, falling back to the chart's `REDIS_URL` when unset (`platform/src/as_platform/state/redis_store.py:263-282`); but **the availability probe reads only `REDIS_URL`** (`__main__.py:125`), and the chart only writes `REDIS_URL` (`configmap.yaml:43-46`). Therefore, if `AS_REDIS_URL` is set only via `runtime.extraEnv`, the state store can connect, but the `as_state_store_available` series **will not be produced** → `ASCallStateStoreUnavailable` never fires. At delivery, use `REDIS_URL` uniformly.
 
 ---
 
-## 9. 生命周期与升级
+## 9. Lifecycle and upgrade
 
-| 项 | 内容 |
+| Item | Content |
 |---|---|
-| 版本来源 | `./VERSION` 是产品 release 的**唯一源头**；`<member>/pyproject.toml` 携带各组件自己的接口版本；**任何成员都不得拥有 `VERSION` 文件**；由 `tests/test_version_consistency.py` 守卫（`AGENT.md` §8；ADR-0018 accepted）。**已知缺口**：`Chart.yaml` 的 `version` / `appVersion` 未同步。**2026-10-12 追加（G4 / A6）**：同步脚本 `scripts/sync-chart-version.sh` 已就绪（默认 `--check` 只读、drift 即 exit 1；`--apply` 才写入）；首次 `--apply` 时机与取值待维护者决定 |
-| 生命周期与 EOL 策略 | 见 [`version-lifecycle.md`](version-lifecycle.md)（**已落盘**，对应交付物 3.5；REQ-NF-16 与 ADR-0027 已新增并 accepted，但 §7 的 **API / 接口版本兼容策略（交付物 4.3）仍是待决策**，不得写为已定承诺） |
-| **ISSU 语义** | **ISSU = draining，不是在途状态迁移**（ADR-0009 accepted）：① 停止接收新请求（摘流）；② 存量呼叫继续在原进程上跑完；③ `active_calls` 归零后退出。会话 / dialog / 速率窗口状态在 Redis，因此"不迁移状态"成立；但"不迁移状态"**不等于**"可以立刻杀进程" —— 进程上仍有在途呼叫，其事务机、定时器与 socket 都在本进程。**缩容走同一条路径**：控制器选出实例 → 摘流 → 等归零 → 删除，不强杀（ADR-0010） |
-| **升级纪律** | **AS 镜像**：走 `helm upgrade`，配置与证书热更新不重启进程（证书轮换是热更新，ADR-0016）；ConfigMap 变更通过 `checksum/config` 注解触发 Pod 滚动（`deployment.yaml:44-46`）。**PostgreSQL / Redis**：属有状态组件，升级走**维护窗口**，不随 AS 镜像一起滚；`stateStores.migrateJob` 只做一次性 schema 迁移，迁移用 owner DSN、运行时启动**不做** DDL / 迁移 / 授权 |
-| 状态迁移边界 | 不做在途呼叫状态迁移；跨站点不做双活（ADR-0008：站点内 N+1 零单点 + 跨站点 1+1 温备） |
+| Version source | `./VERSION` is the **sole source** of the product release; `<member>/pyproject.toml` carries each component's own interface version; **no member may own a `VERSION` file**; guarded by `tests/test_version_consistency.py` (`AGENT.md` §8; ADR-0018 accepted). **Known gap**: `Chart.yaml`'s `version` / `appVersion` not synced. **Appended 2026-10-12 (G4 / A6)**: the sync script `scripts/sync-chart-version.sh` is ready (default `--check` read-only, drift → exit 1; `--apply` to write); timing and value of the first `--apply` pending maintainer |
+| Lifecycle and EOL policy | See [`version-lifecycle.md`](version-lifecycle.md) (**landed**, deliverable 3.5; REQ-NF-16 and ADR-0027 added and accepted, but the **API / interface-version compatibility policy (deliverable 4.3) is still a pending decision**, must not be written as an already-decided promise) |
+| **ISSU semantics** | **ISSU = draining, not in-flight state migration** (ADR-0009 accepted): ① stop accepting new requests (stop traffic); ② existing calls continue on the original process; ③ exit after `active_calls` reaches zero. Session / dialog / rate-window state is in Redis, so "no state migration" holds; but "no state migration" **does not equal** "can kill the process immediately" — the process still carries in-flight calls, whose transaction machine, timers, and sockets are all in this process. **Scale-down takes the same path**: controller picks an instance → stops traffic → waits for zero → deletes, no forced kill (ADR-0010) |
+| **Upgrade discipline** | **AS image**: via `helm upgrade`; config and cert hot-reload do not restart the process (cert rotation is hot-reload, ADR-0016); ConfigMap changes trigger Pod rollout via the `checksum/config` annotation (`deployment.yaml:44-46`). **PostgreSQL / Redis**: stateful components, upgraded in a **maintenance window**, not rolled with the AS image; `stateStores.migrateJob` only does a one-shot schema migration, using the owner DSN, with no DDL / migration / grant at runtime startup |
+| State-migration boundary | No in-flight call-state migration; no active-active across sites (ADR-0008: in-site N+1 zero-single-point + cross-site 1+1 warm standby) |
 
 ---
 
-## 10. 已知限制与未决清单
+## 10. Known limitations and open-items list
 
-| 项 | 状态 | 阻塞源 | 影响 |
+| Item | Status | Blocking source | Impact |
 |---|---|---|---|
-| O1 容量目标（**本文 §3 的取值**） | **未裁决** | 维护者目标裁决 open（`docs/plan.md` §5.1） | 本文无任何容量数字；HPA / 资源规格 / PDB / 容量类告警全部 defer |
-| E1 reSIProcate 生产路径行为 | **未验收** | O2 / O3；14 条 B2BUA 全文回放推迟 | 容量结论与信令行为都缺生产证据 |
-| E4 TLS 证书热轮换 | **未验收** | 运营商 PKI 无实验室证据（REQ-S-2/S-3） | TLS 相关能力无 lab 证据 |
-| E5 状态外置与恢复 | **未验收** | REQ-NF-1 签收仍归 M8；默认 DUM 的 UAS 重启回 481 | checkpoint / 恢复路径只有工程切片证据 |
-| O4 呼叫轨迹保留期 | **已裁（G6）**：默认 10 天、部署可配；**实现未落** | 客户合规要求（取值已落 `docs/plan.md` §0 决策记录） | 轨迹存储 / 查询 / 删除能力当前不存在，不得表述为「系统已按 10 天清理」（影响 PDPO 与备份策略） |
-| D5 呼叫轨迹存储选型 | **已裁（G6）**：in-cluster PostgreSQL；**实现未落** | 与 O4 相关（取值已裁） | 存储落地随轨迹存储能力实现 |
-| O5 容灾等级 | **已裁（G7）**：站点内 N+1 + 跨站 1+1 warm standby；**不承诺机架 / AZ 级容错**；RPO / RTO 数值未裁 | 客户 SLA（取值已裁） | chart 仍单副本渲染，failover 实测行为无证据；Redis / PG HA 落地依赖实现 |
-| D3 Redis Sentinel 接线与脑裂窗口幂等 | 客户端接线**已解决**；HA 拓扑**已裁（G7 / D3）**：primary/replica + Sentinel（沿用 ADR-0008，不选 Cluster）；**实现未落** | O5（取值已裁） | `redis.sentinel.masters` / `.addresses` 故意留空 |
-| D1 Python 3.10 EOL | **未决** | 2026-10 到达生命周期终点 | 该日期之后的任何交付需先验证迁移或登记为已接受风险 |
-| D6 testbed 是否在 v1 支持客户验收测试 | **未决**（推迟到 v1.1） | M8 | 客户验收测试能力不在 v1 |
-| **无推荐资源规格** | 缺口 | 与 O1 同源 | `useCases[].resources` 全空；chart 不渲染 requests/limits |
-| **无 K8s 最低版本契约** | 缺口 | chart 无 `kubeVersion` | 交付前需自行确认集群版本 |
-| **抓取接线缺失** | 缺口 | 无 scrape 注解、无 ServiceMonitor / PodMonitor | 所有 `as_*` 序列在标准部署中不会被 Prometheus 采集 → 全部 `as.*` 规则事实上不可触发 |
-| **OTLP exporter 为 NoOp** | 缺口 | 队列存在但 exporter 不落地 | 遥测只进内存队列，不进后端；`as_telemetry_dropped_total` 也难以产生 |
-| **版本不同步** | 缺口 | `Chart.yaml` 骨架值 ≠ `./VERSION` | 交付物版本口径需修正 |
-| **无备份 Job**、**e2e 覆盖不完整** | 缺口 | chart 未提供备份；`pytest -m e2e` 8 条稳定通过（缺 native 时 fail 不 skip），REQ-F-1 = 自动化子集已覆盖 / 全文仍 open | 备份恢复方案（交付物 2.5）另需真实集群演练；完整呼叫 + 控制台端到端路径无自动化证据 |
-| ADR-0023（Redis checkpoint）、ADR-0025（托管规则运行时 bundle） | **未通过（draft）** | ADR 注册表 | 本文不据其设计作容量或恢复结论 |
+| O1 capacity target (the **values** of §3 of this doc) | **Undecided** | Maintainer target decision open (`docs/plan.md` §5.1) | This doc has no capacity numbers; HPA / resource spec / PDB / capacity alerts all deferred |
+| E1 reSIProcate production-path behavior | **Not accepted** | O2 / O3; 14 B2BUA full-replay entries deferred | Both capacity conclusions and signaling behavior lack production evidence |
+| E4 TLS cert hot rotation | **Not accepted** | Operator PKI has no lab evidence (REQ-S-2/S-3) | No lab evidence for TLS-related capability |
+| E5 state externalization and recovery | **Not accepted** | REQ-NF-1 sign-off still in M8; default DUM UAS restart returns 481 | Checkpoint / recovery path has only engineering-slice evidence |
+| O4 call-trace retention period | **Decided (G6)**: default 10 days, deployment-configurable; **implementation not landed** | Customer compliance requirement (value landed `docs/plan.md` §0 decision record) | Trace storage / query / deletion capability does not exist yet; must not be described as "system already purges at 10 days" (affects PDPO and backup policy) |
+| D5 call-trace storage selection | **Decided (G6)**: in-cluster PostgreSQL; **implementation not landed** | Related to O4 (value decided) | Storage landing follows the trace-storage capability implementation |
+| O5 DR tier | **Decided (G7)**: in-site N+1 + cross-site 1+1 warm standby; **no rack / AZ-level fault-tolerance promise**; RPO / RTO values undecided | Customer SLA (value decided) | Chart still renders single-replica, no failover measured behavior evidence; Redis / PG HA landing depends on implementation |
+| D3 Redis Sentinel wiring and split-brain-window idempotency | Client wiring **resolved**; HA topology **decided (G7 / D3)**: primary/replica + Sentinel (following ADR-0008, not Cluster); **implementation not landed** | O5 (value decided) | `redis.sentinel.masters` / `.addresses` deliberately left empty |
+| D1 Python 3.10 EOL | **Open** | Reaches end of life October 2026 | Any delivery after that date must first verify migration or register it as an accepted risk |
+| D6 whether testbed supports customer acceptance testing in v1 | **Open** (deferred to v1.1) | M8 | Customer acceptance-test capability not in v1 |
+| **No recommended resource spec** | Gap | Same source as O1 | `useCases[].resources` all empty; chart does not render requests/limits |
+| **No K8s minimum-version contract** | Gap | Chart has no `kubeVersion` | Customer must confirm cluster version before delivery |
+| **Scrape wiring missing** | Gap | No scrape annotation, no ServiceMonitor / PodMonitor | All `as_*` series not collected by Prometheus in a standard deployment → all `as.*` rules effectively cannot fire |
+| **OTLP exporter is NoOp** | Gap | Queue exists but exporter does not land | Telemetry only enters the in-memory queue, not the backend; `as_telemetry_dropped_total` rarely produced |
+| **Version out of sync** | Gap | `Chart.yaml` skeleton values ≠ `./VERSION` | Deliverable version criterion needs correction |
+| **No backup Job**, **e2e coverage incomplete** | Gap | Chart provides no backup; `pytest -m e2e` 8 stable passes (fails not skips when native missing), REQ-F-1 = automated subset covered / full text still open | Backup/restore plan (deliverable 2.5) additionally needs a real-cluster drill; full call + console end-to-end path has no automation evidence |
+| ADR-0023 (Redis checkpoint), ADR-0025 (managed rule-runtime bundle) | **Not passed (draft)** | ADR registry | This doc draws no capacity or recovery conclusion from their design |
 
 ---
 
-## 11. 追溯
+## 11. Traceability
 
-| 项 | 内容 |
+| Item | Content |
 |---|---|
-| 对应交付物 | `docs/product-packaging-plan.md` §1 第一批 **1.3（网元档案 / NE Datasheet）**。按 §3.2 属 **B 类**：容量数值受 O1 阻塞。工程事实约束见该计划 §0.3（尤其第 5 条 O1、第 8 条 testbed 边界） |
-| 已落实的评审意见 | **G-P0-3** —— 容量章节写「受 O1 阻塞」，全文零容量数字（§3.1、§3.5）；**G-P1-3** —— 缺口与阻塞在 §1 状态块、§3 与 §10 中显式登记；**G-P0-8** —— 性能基准报告当前阶段只交付**方法学**（§3.4），不出数值；**G-P0-2** —— M6 dev-host 报告仅作「方法学存在」的证据，带「内部测量 / 非对外 / 非 SLA」限定，不引数字；**G-P2-3** —— **不做 Diameter Sh**：§2 标 N/A 并给理由，本文不含任何 Sh 相关面板或告警；**G-P0-4** —— 告警与看板口径中无 Sh；**G-P1-2** —— 如实标注 e2e=0 与 `performance` 层对端为 accept-all harness |
-| 引用的 REQ | `REQ-NF-1`（进程重启不丢会话）、`REQ-NF-2`（单进程状态有界）、`REQ-NF-3`（可水平扩展 / 安全缩容）、`REQ-NF-4`（ISSU）、`REQ-NF-5`（S-SBC 透明桥接）、`REQ-NF-9`（单租户 on-premises）、`REQ-NF-14`（告警规则集）、`REQ-NF-15`（testbed 与性能）、`REQ-NF-16`（版本生命周期与 EOL）。定义见 `docs/requirements/` |
-| 引用的 ADR | ADR-0002（一用例一进程 / 状态外置，accepted）、ADR-0003（S-SBC 透明桥接单一 ISC，accepted）、ADR-0004（媒体 seam，accepted）、ADR-0005（OTel 可观测性，accepted）、ADR-0006（配置治理，accepted）、ADR-0007（数据面 split，accepted）、ADR-0008（冗余 / 跨站点 1+1 温备，accepted）、ADR-0009（ISSU = draining，accepted）、ADR-0010（自定义指标 HPA + 缩容保护控制器，accepted）、ADR-0013（Helm-only，accepted）、ADR-0014（三层 testbed；容量只用真实 socket，accepted）、ADR-0016（边界内安全，accepted）、ADR-0017（不做 CDR，accepted）、ADR-0018（版本号语义，accepted）、ADR-0019（SIP 栈选型，accepted）、ADR-0021（运行态覆盖粒度，accepted）、ADR-0026（集群内状态存储，accepted）。**ADR-0023（Redis checkpoint，proposed）与 ADR-0025（托管规则运行时 bundle，draft）尚未通过**，本文不据其作结论 |
-| 关键代码依据 | 指标定义 `platform/src/as_platform/telemetry/metrics.py:34-39`；`/metrics` 与探针端点 `platform/src/as_platform/runtime/health.py:56-74`；缩容守卫 `platform/src/as_platform/ops/downscale_guard.py:72-139`；指标循环与 Redis 探针 `platform/src/as_platform/__main__.py:88-142`；Helm `deploy/helm/{values.yaml,Chart.yaml,README.md,templates/*}`；告警 `deploy/alerts/{as-alerts.yaml,README.md}` |
-| 同批交付物 | [`one-pager.md`](one-pager.md)（1.1）、[`compliance-matrix.md`](compliance-matrix.md)（1.2）、[`responsibility-matrix.md`](responsibility-matrix.md)（3.3）、[`version-lifecycle.md`](version-lifecycle.md)（3.5）、[`security-privacy.md`](security-privacy.md)（3.4）及 `docs/operations/`、`docs/delivery/` 目录**均已落盘**。**本文的跨目录互链**：[`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md)（§2 逐条对应本文 §6）、[`../operations/runbook-l1.md`](../operations/runbook-l1.md)（§2 与本文 §6 同源）、[`version-lifecycle.md`](version-lifecycle.md)（§9 生命周期行） |
-| 状态纪律 | 本文只登记**事实与证据状态**，不构成验收结论。M8 退出签字仍搁置（**RC 就绪 ≠ 通过**）；E1 / E4 / E5 未验收；O1 **未裁**，O4 / D5 **已裁（G6，实现未落）**，O5 / D3 **已裁（G7，chart 仍单副本）**；e2e：`pytest -m e2e` **8 条稳定通过**，REQ-F-1 = 自动化子集已覆盖 / 全文仍 open；testbed 是研发资产。**B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3） |
+| Corresponding deliverable | `docs/product-packaging-plan.md` §1 first batch **1.3 (NE Datasheet)**. Per §3.2 it is **Class B**: capacity figures blocked by O1. Engineering-fact constraints see that plan §0.3 (esp. item 5 O1, item 8 testbed boundary) |
+| Implemented review comments | **G-P0-3** — capacity section writes "blocked by O1", zero capacity numbers in full text (§3.1, §3.5); **G-P1-3** — gaps and blockers explicitly registered in §1 status block, §3 and §10; **G-P0-8** — performance-baseline report delivers only **methodology** at this stage (§3.4), no numbers; **G-P0-2** — M6 dev-host report only as evidence that "methodology exists", with "internal measurement / not external / not SLA" qualifier, no numbers cited; **G-P2-3** — **no Diameter Sh**: §2 marks N/A with reason, this doc contains no Sh-related panel or alert; **G-P0-4** — no Sh / no billing in the alert and dashboard criteria; **G-P1-2** — honestly marks e2e=0 and `performance` layer peer as accept-all harness |
+| REQ cited | `REQ-NF-1` (process restart loses no session), `REQ-NF-2` (single-process state bounded), `REQ-NF-3` (horizontally scalable / safe scale-down), `REQ-NF-4` (ISSU), `REQ-NF-5` (S-SBC transparent bridge), `REQ-NF-9` (single-tenant on-premises), `REQ-NF-14` (alert rule set), `REQ-NF-15` (testbed and performance), `REQ-NF-16` (version lifecycle and EOL). Definitions in `docs/requirements/` |
+| ADR cited | ADR-0002 (one process per use case / state externalized, accepted), ADR-0003 (S-SBC transparent bridge single ISC, accepted), ADR-0004 (media seam, accepted), ADR-0005 (OTel observability, accepted), ADR-0006 (config governance, accepted), ADR-0007 (data-plane split, accepted), ADR-0008 (redundancy / cross-site 1+1 warm standby, accepted), ADR-0009 (ISSU = draining, accepted), ADR-0010 (custom-metric HPA + downscale-guard controller, accepted), ADR-0013 (Helm-only, accepted), ADR-0014 (three-layer testbed; capacity uses only real sockets, accepted), ADR-0016 (in-boundary security, accepted), ADR-0017 (no CDR, accepted), ADR-0018 (version-number semantics, accepted), ADR-0019 (SIP stack selection, accepted), ADR-0021 (runtime override granularity, accepted), ADR-0026 (in-cluster state store, accepted). **ADR-0023 (Redis checkpoint, proposed) and ADR-0025 (managed rule-runtime bundle, draft) are not yet passed**, this doc draws no conclusion from them |
+| Key code basis | Metric definitions `platform/src/as_platform/telemetry/metrics.py:34-39`; `/metrics` and probe endpoints `platform/src/as_platform/runtime/health.py:56-74`; downscale guard `platform/src/as_platform/ops/downscale_guard.py:72-139`; metrics loop and Redis probe `platform/src/as_platform/__main__.py:88-142`; Helm `deploy/helm/{values.yaml,Chart.yaml,README.md,templates/*}`; alerts `deploy/alerts/{as-alerts.yaml,README.md}` |
+| Same-batch deliverables | [`one-pager.md`](one-pager.md) (1.1), [`compliance-matrix.md`](compliance-matrix.md) (1.2), [`responsibility-matrix.md`](responsibility-matrix.md) (3.3), [`version-lifecycle.md`](version-lifecycle.md) (3.5), [`security-privacy.md`](security-privacy.md) (3.4) and `docs/operations/`, `docs/delivery/` directories **all landed**. **This doc's cross-directory links**: [`../operations/alert-response-matrix.md`](../operations/alert-response-matrix.md) (§2 maps one-to-one to this doc §6), [`../operations/runbook-l1.md`](../operations/runbook-l1.md) (§2 shares the same source as this doc §6), [`version-lifecycle.md`](version-lifecycle.md) (§9 lifecycle row) |
+| Status discipline | This doc only registers **facts and evidence status**, and constitutes no acceptance conclusion. M8 exit sign-off still pending (**RC ready ≠ passed**); E1 / E4 / E5 not accepted; O1 **undecided**, O4 / D5 **decided (G6, implementation not landed)**, O5 / D3 **decided (G7, chart still single-replica)**; e2e: `pytest -m e2e` **8 stable passes**, REQ-F-1 = automated subset covered / full text still open; testbed is an R&D asset. **B6 review status**: this document has left a review record alongside the B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (first review 2026-10-12) and §7 (closure re-review 2026-10-12); **conclusion pending maintainer confirmation**, and until confirmed it is not an external delivery or acceptance basis (`AGENT.md` §3.3) |

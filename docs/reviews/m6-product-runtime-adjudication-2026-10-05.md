@@ -27,7 +27,7 @@ Engineering adjudication of the M6 **product-path** real-socket smoke (and optio
 | `m6-product-runtime-micro-measure.sh` (3s, cps 2) | **Accept** (optional precursor; not O1) |
 | **M6 milestone exit** | **Deny** — M2 exit still gates milestone credit |
 | **O1 publication** | **Deny** — formal capacity numbers remain **open** |
-| **D8** (testbed/容量 REQ trace) | **Open** |
+| **D8** (testbed/capacity REQ trace) | **Open** |
 
 ## Milestone status
 

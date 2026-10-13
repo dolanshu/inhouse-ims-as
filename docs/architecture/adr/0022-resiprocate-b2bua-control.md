@@ -18,9 +18,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - **Date**: 2026-09-30
 - **Amended**: 2026-10-05 — M2 product ingress/runtime (`ResipRuntimeListener`, ingress gate, `decide()` on the product UDP/TLS path) exists; **product `CallController` implementation begins in the M7 engineering slice** (`platform/src/as_platform/sip/call_controller.py`). Acceptance does **not** close D10, REQ-NF-1, D9 adapter API selection, or full E1.
 - **Decides**: §0 ledger item 8 — use reSIProcate `SipStack` for transport and transaction processing, DUM above it for UA dialog/`InviteSession` and session-level behavior, and add a product `CallController` above DUM for cross-leg B2BUA business control.
-- **回应 REQ**: REQ-F-1–REQ-F-5, REQ-F-8–REQ-F-11, REQ-NF-1–REQ-NF-4
+- **Responds to REQ**: REQ-F-1–REQ-F-5, REQ-F-8–REQ-F-11, REQ-NF-1–REQ-NF-4
 
-## Context（背景）
+## Context
 
 ADR-0019 accepted reSIProcate C++ as the production SIP stack. That choice remains in force. A SIP stack is not, by itself, the product's complete B2BUA call-control policy: the product must correlate an inbound UAS leg and an independent outbound UAC leg, make application decisions, and coordinate their business lifecycle.
 
@@ -36,7 +36,7 @@ D10 recovery probes are asymmetric. A two-process UAC `DialogSetId` recreation h
 
 Bounded D11 native DUM wire comparisons passed for 143- and 233-byte valid offers, the 230-byte S1 offer, and one distinct 238-byte answer. The distinct answer was byte-identical across the tested legs and differed from the offer. This limited sample is feasibility evidence only, not full product-path or REQ-F-4 acceptance.
 
-## Decision（决策）
+## Decision
 
 Use reSIProcate's `SipStack` and DUM as the SIP protocol and UA/session layers, respectively, and add a dedicated logical product `CallController` above DUM. `SipStack` owns transports, transaction processing, transaction timers, and the process loop. DUM is a `TransactionUser`/UA layer that uses `SipStack` and owns dialog, `InviteSession`, and session-level behavior, including its supported session timers. The controller must not duplicate stack transactions, retransmission, or timers.
 
@@ -46,15 +46,15 @@ The product language decision remains Python; this ADR does not migrate business
 
 ADR-0019's production stack selection is unaffected. This ADR does not authorize code start, declare K2 released, or authorize K2/release acceptance.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
 - Separates SIP protocol machinery from product cross-leg decisions and makes the B2BUA control responsibilities reviewable.
 - Reuses the existing Python decision modules without moving product business policy into DUM callbacks.
 - Keeps transaction retransmission and timer correctness in the SIP stack rather than duplicating it in product code.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
 - The native bridge and DUM→Python feasibility path have exploratory evidence, but no production bridge API, product adapter, or complete E1 implementation is established. Product integration remains blocked pending maintainer review and authorization.
 - The controller's recoverable business context, `SipStack` transaction runtime, and DUM dialog/session runtime have different ownership and persistence properties. A narrow UAC recreation hook is not UAS or transaction recovery; the default-DUM UAS restart test returns 481. REQ-NF-1 remains a hard acceptance requirement; D10/E5 is not passed / unresolved and blocks acceptance.
@@ -62,7 +62,7 @@ ADR-0019's production stack selection is unaffected. This ADR does not authorize
 - Native S1/S4 smoke evidence does not establish product E1, E4, or requirement acceptance. The TLS S1 failure and missing `resip` module remain open evidence gaps.
 - The logical `CallController` design does not imply that its implementation exists or that K2 may start.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
@@ -70,7 +70,7 @@ ADR-0019's production stack selection is unaffected. This ADR does not authorize
 | Put transaction timers and retransmission in `CallController` | Duplicates stack-owned SIP behavior and creates competing protocol state machines. |
 | Select the Python/C++ bridge in this ADR | Build/source evidence establishes that the assumed general Python binding is absent, but does not yet compare viable integration approaches sufficiently. The spike is a blocking prerequisite. |
 
-## Evidence（证据）
+## Evidence
 
 - Upstream tag `1.14.0`, commit `632e215c2ca9aee5416bfe1808851ea6fa380044`; source inspection confirmed `BUILD_PYTHON=ON` does not build a general DUM Python module.
 - E1 Python harness with explicit port: `import resip` failed and exited 2.
@@ -84,10 +84,10 @@ ADR-0019's production stack selection is unaffected. This ADR does not authorize
 - Source inspection of reSIProcate layering and DUM cancellation semantics: `DialogUsageManager` is a `TransactionUser`, is constructed with and holds a `SipStack&`, and exposes `getSipStack()`; `SipStack` owns transports, transaction processing, timers, and its process loop. DUM provides UA/dialog/`InviteSession` and session-level behavior over that stack. `ServerInviteSession` has no `cancel()` method and `InviteSessionHandler` has no `onCancel` virtual. For an inbound initial UAS INVITE CANCEL, DUM sends 200 to CANCEL and 487 to INVITE on that leg and reports `onTerminated(... RemoteCancel ...)`; the product controller must still coordinate the opposite UAC leg and race/cleanup semantics. `InviteSession::end()` means BYE, including the early-state `ClientInviteSession::end()` path in this version; selecting a cancellation API is contingent on the D9 adapter spike and race tests. DUM has RFC session-timer support; transaction timers/retransmissions belong to `SipStack`. `makeInviteSession(...)` returns a message to send; handles are delivered through DUM callbacks. These facts inform responsibility boundaries and do not prescribe a product API.
 - Bounded native DUM wire comparisons now show byte identity for three tested offer forms (230/143/233 bytes) and one distinct 238-byte answer. This does not cover the complete product adapter, broad boundary corpus, or all required routes; REQ-F-4 remains unaccepted until that evidence is reviewed.
 
-## Related（相关）
+## Related
 
 - [ADR-0019](0019-sip-stack-selection.md) — accepted production stack selection; unchanged.
 - [ADR-0002](0002-per-usecase-process-state-redis.md) — process/state model; recovery contradiction remains open.
-- [`../新系统整体架构.md`](../新系统整体架构.md) §0 and §10.
+- [`../system-architecture.md`](../system-architecture.md) §0 and §10.
 - [`../../requirements/prd.md`](../../requirements/prd.md) — referenced functional and non-functional requirements.
 - [`../../plan.md`](../../plan.md) §5 — integration and recovery blockers.

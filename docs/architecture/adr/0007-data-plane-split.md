@@ -12,66 +12,66 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0007：数据面拆分 —— Redis 存运行态，PostgreSQL 存治理态
+# ADR-0007: Data-plane split — Redis holds runtime state, PostgreSQL holds governance state
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §0 账本条目 14 —— 数据面拆分：Redis 存运行态，PostgreSQL 存治理态
-- **回应 REQ**: REQ-NF-1, REQ-NF-2, REQ-NF-10
+- **Decides**: §0 ledger entry 14 — data-plane split: Redis holds runtime state, PostgreSQL holds governance state
+- **Responds to REQ**: REQ-NF-1, REQ-NF-2, REQ-NF-10
 
 ---
 
-## Context（背景）
+## Context
 
-系统里有两类性质完全不同的状态，它们的读写模式、持久化要求与失败代价都相反。
+The system contains two classes of state with completely different natures; their read/write patterns, persistence requirements, and failure costs are all opposite.
 
-**运行态**：会话状态、对话状态、反诈速率窗口、信誉衰减。特征是高并发读写（每通呼叫的每一跳都要读写多次）、进程重启后必须存活、可以容忍极少量丢失 —— 丢一份速率窗口的代价是一次判决不准或一次呼叫失败，可以被运营商网络自身的重试与容错吸收。
+**Runtime state**: session state, dialog state, anti-fraud rate windows, reputation decay. Its characteristics are high-concurrency reads/writes (every hop of every call reads and writes many times), it must survive process restarts, and it can tolerate extremely small losses — the cost of losing one rate window is one inaccurate decision or one failed call, which can be absorbed by the operator network's own retries and fault tolerance.
 
-**治理态**：规则版本、变更单、审批记录、审计日志。特征是低并发（改配置的频率远低于呼叫频率）、必须持久、必须可审计与可回滚 —— 一条规则"什么时候、由谁、从什么改成什么、依据哪个变更单"，是要能在事发后逐字复现的。ADR-0006 把它确立为 PostgreSQL 版本库 + 变更单状态机，而不是 GitOps。
+**Governance state**: rule versions, change orders, approval records, audit logs. Its characteristics are low concurrency (configuration changes are far less frequent than calls), it must be persistent, and it must be auditable and rollback-able — "when, by whom, from what to what, under which change order" for a rule must be reproducible verbatim after an incident. ADR-0006 establishes it as a PostgreSQL version store + change-order state machine, not GitOps.
 
-把它们放进同一个存储，必然要在其中一侧做妥协：用同一个库承载两类数据，要么为运行态牺牲时延与连接数，要么为治理态牺牲审计与回滚能力。ADR-0002 已经否决了"用 PostgreSQL 存会话状态"这一方向 —— 每次 INVITE 需要读写多条会话、速率、信誉记录，PostgreSQL 不是为这种高并发会话读写设计的，延迟不可接受。这一裁决实际上已经把运行态推向了 Redis；本 ADR 要确定的是治理态的归属，以及两份存储之间的边界如何划定。
+Putting them into the same store necessarily requires compromise on one side: using one database to carry both classes of data means either sacrificing latency and connection count for runtime state, or sacrificing audit and rollback capability for governance state. ADR-0002 has already rejected the direction of "using PostgreSQL to store session state" — each INVITE requires reading and writing multiple session, rate, and reputation records, and PostgreSQL is not designed for this kind of high-concurrency session read/write; the latency is unacceptable. This decision has in effect already pushed runtime state toward Redis; what this ADR must determine is the ownership of governance state, and how the boundary between the two stores is drawn.
 
-未决项 O5（容灾等级 N+1 还是 N+M）与 D3（Redis 接线与脑裂窗口下的幂等）直接影响这里的容错设计，本 ADR 在它们定稿前先把写入语义定死。
+Open item O5 (disaster-recovery level N+1 or N+M) and D3 (Redis wiring and idempotence under the split-brain window) directly affect the fault-tolerance design here; this ADR fixes the write semantics first, before they are finalized.
 
-## Decision（决策）
+## Decision
 
-- **Redis（+ Sentinel）持有运行态。** 按 ADR-0002 确立的 `StateStore` seam 接入（生产实现 `RedisStateStore`），所有运行态键**必须带 TTL**，键命名空间统一为 `as:{case}:{kind}:{id}`。TTL 是硬要求：没有 TTL 的运行态键就是事实上的治理态数据，是误用。
-- **PostgreSQL 持有治理态。** 规则版本是**不可变行**（新版本追加，旧版本不改），变更单走状态机（草稿 → 审批 → 灰度 → 生效 / 回滚），所有变更留全量审计。这与 ADR-0006 是同一套机制，本 ADR 不重复定义。
-- **两者不互为主备、不做跨存储事务。** 不存在"双写一致性"问题，因为没有任何一份数据需要同时落在两处：一份数据要么属于运行态，要么属于治理态，归属由它的性质决定，不由便利性决定。因此不需要分布式事务、不需要 CDC 同步、不需要补偿。
-- **运行态写入必须幂等。** 同一 Call-ID 的重复写入必须产生一致结果，以承受 Redis 脑裂窗口（风险 R5、未决 D3）下的重复执行。判决层面的幂等要求与 ADR-0002 一致：脑裂窗口内速率窗口可能重复计数，幂等是唯一可接受的缓解手段。
-- **备份策略分离。** PostgreSQL 需要备份与保留策略（治理态不可丢、不可被恢复抹掉审计链）；Redis **不备份** —— 它的丢失等价于呼叫失败，而这一代价是可接受的，为它做备份不会降低这个代价的量级。
+- **Redis (+ Sentinel) holds runtime state.** Accessed via the `StateStore` seam established by ADR-0002 (production implementation `RedisStateStore`); all runtime-state keys **must carry a TTL**, with the key namespace unified as `as:{case}:{kind}:{id}`. TTL is a hard requirement: a runtime-state key without a TTL is de facto governance-state data, and a misuse.
+- **PostgreSQL holds governance state.** Rule versions are **immutable rows** (new versions appended, old versions unchanged), change orders go through the state machine (draft → approval → canary → applied / rollback), and all changes leave a full audit trail. This is the same mechanism as ADR-0006; this ADR does not redefine it.
+- **The two are not mutual failovers and do no cross-store transactions.** There is no "dual-write consistency" problem, because no piece of data needs to land in both places: a piece of data belongs either to runtime state or to governance state, determined by its nature, not by convenience. Therefore no distributed transactions, no CDC synchronization, and no compensation are needed.
+- **Runtime-state writes must be idempotent.** Repeated writes for the same Call-ID must produce consistent results, to tolerate repeated execution under the Redis split-brain window (risk R5, open item D3). The idempotence requirement at the decision level is consistent with ADR-0002: within the split-brain window, rate windows may be double-counted, and idempotence is the only acceptable mitigation.
+- **Backup strategies are separated.** PostgreSQL needs a backup and retention policy (governance state cannot be lost, and the audit chain cannot be erased by recovery); Redis is **not backed up** — its loss is equivalent to call failure, a cost that is acceptable, and backing it up would not reduce the magnitude of that cost.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **两侧各自选型最优。** 运行态拿到内存级读写时延与 TTL 原语，治理态拿到事务、不可变版本与审计链；不必为对方妥协。
-- **故障域清晰。** Redis 故障 → 新建呼叫受影响（无状态可写），但治理面仍可操作（可以改配置、可以回滚、可以查审计）；PostgreSQL 故障 → 不能改配置，但存量呼叫继续跑（运行态不依赖 PG）。两种降级模式各自可描述、可演练，不需要在故障时刻再做判断。
+- **Each side gets the optimal selection.** Runtime state gets memory-level read/write latency and the TTL primitive; governance state gets transactions, immutable versions, and the audit chain; neither has to compromise for the other.
+- **Clear failure domains.** Redis failure → new calls are affected (no state to write), but the governance plane remains operable (configuration can be changed, rolled back, and audited); PostgreSQL failure → configuration cannot be changed, but existing calls keep running (runtime state does not depend on PG). Both degradation modes are describable and drillable, without needing to make judgments at failure time.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **两套存储、两套运维与监控。** 容量规划、备份、升级、告警都要做两遍，运维面翻倍。接受：这套成本对应的是两类数据本来就不同的要求，合并存储只会把成本换成更大的妥协。
-- **Redis 成为新的 SPoF（风险 R5）。** 所有运行态的唯一持有者，其可用性直接等价于会话状态可用性。由 Sentinel 拓扑（1 主 + 2 从 + 3 哨兵）与写入幂等共同缓解 —— 前者缩短不可用窗口，后者保证窗口内的重复执行不改变结果。彻底消除 SPoF 要等未决项 O5 定稿。
-- **治理态与运行态存在版本漂移。** 规则版本在 PG 里推进，但各副本实际加载的版本在 Redis 或进程内存里，二者不会瞬时一致。缓解手段是灰度分发与版本上报（ADR-0006），而不是强一致。
+- **Two stores, two sets of operations and monitoring.** Capacity planning, backup, upgrade, and alerting all have to be done twice; the operational surface doubles. Accepted: this cost corresponds to the genuinely different requirements of the two data classes; merging the stores would only trade the cost for a bigger compromise.
+- **Redis becomes a new SPoF (risk R5).** The sole holder of all runtime state; its availability is directly equivalent to session-state availability. Mitigated jointly by the Sentinel topology (1 primary + 2 replicas + 3 sentinels) and write idempotence — the former shortens the unavailability window, the latter guarantees repeated execution within the window does not change results. Completely eliminating the SPoF awaits the finalization of open item O5.
+- **Governance state and runtime state exhibit version drift.** Rule versions advance in PG, but the versions actually loaded by each replica live in Redis or process memory, and the two are never instantaneously consistent. The mitigation is canary distribution and version reporting (ADR-0006), not strong consistency.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 全部放 Redis | 治理态不可审计、不可回滚：Redis 没有事务性版本与审计链，规则变更无法回答"谁在什么时候改了什么"，也无法在事故后回到上一版本 |
-| 全部放 PostgreSQL | 见 ADR-0002：会话/速率/信誉的高并发读写时延不可接受，每次 INVITE 的多条读写会把事务语义的开销直接压到呼叫路径上 |
-| 单一存储 + 分区 | 两类数据的可用性与保留要求从根本上冲突：运行态要低时延、要 TTL 自动回收；治理态要持久、要永不自动删除。同库分区只解决隔离，不解决要求冲突 |
+| All in Redis | Governance state is not auditable or rollback-able: Redis has no transactional versions or audit chain, and rule changes cannot answer "who changed what, when", nor return to the previous version after an incident |
+| All in PostgreSQL | See ADR-0002: the high-concurrency read/write latency of sessions/rates/reputation is unacceptable, and the multiple reads/writes per INVITE would press the cost of transactional semantics directly onto the call path |
+| Single store + partitioning | The availability and retention requirements of the two data classes conflict fundamentally: runtime state wants low latency and TTL auto-reclamation; governance state wants persistence and never auto-deletes. Same-store partitioning solves isolation, not the requirements conflict |
 
-## Evidence（证据）
+## Evidence
 
-- ADR-0002 已裁决状态外置与 `StateStore` seam，并明确否决 PostgreSQL 存会话状态。
-- [`../新系统整体架构.md`](../新系统整体架构.md) §4.1 进程与副本模型确立了无状态化前提与状态外置的方向。
-- 未决项 O5（容灾等级 N+1 vs N+M）、D3（Redis 接线与脑裂幂等）—— 本 ADR 的容错设计依赖二者定稿。
+- ADR-0002 has already decided on state externalization and the `StateStore` seam, and explicitly rejected PostgreSQL for session state.
+- [`../system-architecture.md`](../system-architecture.md) §4.1 process and replica model establishes the statelessization premise and the direction of state externalization.
+- Open item O5 (disaster-recovery level N+1 vs N+M), D3 (Redis wiring and split-brain idempotence) — this ADR's fault-tolerance design depends on both being finalized.
 
-## Related（相关）
+## Related
 
-- [ADR-0002](0002-per-usecase-process-state-redis.md) 运行时模型与 `StateStore` seam
-- [ADR-0006](0006-config-governance.md) 配置治理：PostgreSQL 版本库 + 变更单状态机
-- ADR-0009（skeleton，未落地） ISSU 是 draining，不是状态迁移
-- [ADR-0010](0010-autoscaling-hpa-downscale-guard.md) 扩缩容 HPA + 缩容保护
-- 风险 R5（Redis 单点）、未决项 O5（容灾等级）、D3（Redis 接线与脑裂幂等）
+- [ADR-0002](0002-per-usecase-process-state-redis.md) Runtime model and the `StateStore` seam
+- [ADR-0006](0006-config-governance.md) Configuration governance: PostgreSQL version store + change-order state machine
+- ADR-0009 (skeleton, not landed) ISSU is draining, not state migration
+- [ADR-0010](0010-autoscaling-hpa-downscale-guard.md) Autoscaling HPA + downscale guard
+- Risk R5 (Redis single point), open items O5 (disaster-recovery level), D3 (Redis wiring and split-brain idempotence)

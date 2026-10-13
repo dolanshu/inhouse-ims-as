@@ -12,181 +12,181 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# E2E 测试计划（草案，待维护者 review）
+# E2E Test Plan (Draft, Pending Maintainer Review)
 
-**日期**：2026-10-09  
-**状态**：计划，**未实现**。`pytest -m e2e` 当前 **0 条**。  
+**Date**: 2026-10-09  
+**Status**: plan, **not implemented**. `pytest -m e2e` currently has **0** tests.  
 
-> **状态更正（2026-10-11 追加；上一行原文保留不改）**：**Wave 1 已落地**。
-> 新建 `testbed/e2e/test_sip_first_edition.py`（A4-1 裁决：独立新文件，不动
-> `testbed/simulators/tests/test_product_path.py` 的 `integration` 标记）；
-> `uv run pytest -m e2e -q` 由 **0 条**变为 **5 条**，连续 3 次全绿
-> （`(已验证, docs/acceptance/artifacts/m5/2026-10-11/PASS-e2e-2026-10-11.txt, 2026-10-11)`）。
-> **Wave 2 及以后仍未实现**（14 条 header 对拍、控制面、kind 均未在本次范围）。
-> 执行记录：[`../handoff/2026-10-11-w0-native-and-e2e-execution-record.md`](../handoff/2026-10-11-w0-native-and-e2e-execution-record.md) §7。
-> **仍未签收任何 REQ**，见本文 §8。
+> **Status correction (added 2026-10-11; the original text of the previous line is preserved unchanged)**: **Wave 1 has landed.**
+> Created `testbed/e2e/test_sip_first_edition.py` (A4-1 adjudication: a separate new file, without touching
+> `testbed/simulators/tests/test_product_path.py`'s `integration` marker);
+> `uv run pytest -m e2e -q` went from **0** tests to **5**, all green 3 times consecutively
+> (`(verified, docs/acceptance/artifacts/m5/2026-10-11/PASS-e2e-2026-10-11.txt, 2026-10-11)`).
+> **Wave 2 and beyond are still not implemented** (14-message header differential comparison, control plane, and kind are all out of this round's scope).
+> Execution record: [`../handoff/2026-10-11-w0-native-and-e2e-execution-record.md`](../handoff/2026-10-11-w0-native-and-e2e-execution-record.md) §7.
+> **No REQ has been signed off yet**, see §8 of this document.
 >
-> **再更正（2026-10-12 追加；上一段与本节原文一律保留不改）：Wave 2 亦已落地。**
-> 维护者 2026-10-12 授权启动 A4 下一批次（Wave 2 的启动前提「Wave 1 完成后启动」已于 2026-10-11 满足）。
-> 新建 `testbed/e2e/test_s1_replay_contract.py`（3 条）：入腿与出腿的**归一化**序列对拍、
-> **C_in ≠ C_out**（REQ-F-2 子集）、**SDP offer 逐字节恒等**（REQ-F-4，本次纳入、未单列 follow-up）。
-> `uv run pytest -m e2e -q` → **8 passed**（Wave 1 的 5 条 + Wave 2 的 3 条）；
-> 缺 native 时 **8 failed / 0 skipped**。
-> **仍 open**：14 条消息的**逐条 header 对拍**——Wave 2 的定义本身即归一化骨架对拍，不含该子集；
-> `test-plan.md` REQ-F-1 的 `- [ ]` **一项未打勾**，状态为「自动化子集已覆盖 / 全文仍 open」。
-> 执行记录 [`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md) §5；
-> 回写见 [`../acceptance/2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md) §6。
-**关联**：[`test-plan.md`](test-plan.md) 自动化分层；[`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md)（harness / native 门禁）；[`../handoff/pre-m8-demo-review-plan.md`](../handoff/pre-m8-demo-review-plan.md)（kind `as-m71`）。
+> **Further correction (added 2026-10-12; the original text of the previous paragraph and this section is preserved unchanged): Wave 2 has also landed.**
+> On 2026-10-12 the maintainer authorized starting the A4 next batch (Wave 2's start prerequisite "start after Wave 1 completes" was met on 2026-10-11).
+> Created `testbed/e2e/test_s1_replay_contract.py` (3 tests): **normalized** sequence differential comparison of the inbound and outgoing legs,
+> **C_in ≠ C_out** (REQ-F-2 subset), and **byte-identical SDP offer** (REQ-F-4, included this round, no separate follow-up).
+> `uv run pytest -m e2e -q` → **8 passed** (Wave 1's 5 + Wave 2's 3);
+> without native, **8 failed / 0 skipped**.
+> **Still open**: the **per-message header differential comparison** of the 14 messages — Wave 2's definition itself is the normalized skeleton differential comparison, which does not include this subset;
+> `test-plan.md` REQ-F-1's `- [ ]` **not a single item is ticked**, with the status "automated subset covered / full text still open".
+> Execution record [`../handoff/2026-10-12-o1-and-native-reproducibility.md`](../handoff/2026-10-12-o1-and-native-reproducibility.md) §5;
+> write-back see [`../acceptance/2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md) §6.
+**Related**: [`test-plan.md`](test-plan.md) automation layering; [`../handoff/2026-10-09-sip-native-testing-plan.md`](../handoff/2026-10-09-sip-native-testing-plan.md) (harness / native gating); [`../handoff/pre-m8-demo-review-plan.md`](../handoff/pre-m8-demo-review-plan.md) (kind `as-m71`).
 
 ---
 
-## 1. 定义（本仓库里的 e2e）
+## 1. Definition (e2e in this repo)
 
-**E2E** = 一次自动化里同时满足：
+**E2E** = one automation that simultaneously satisfies:
 
-1. **产品 SIP 栈**是 `_resip_runtime`（reSIProcate），不是纯 Python 拼包、也不是只解析日志。  
-2. **判决走生产缝**：`decide()` / 已激活规则或等价 `RuleSet` + 出腿 hook；**禁止** `accept_all_invites`（及 `early_cancel_harness`）作为被测 AS 的默认模式。  
-3. **路径跨过网元边界**：至少「呼叫源 →（仿真或真实）S-CSCF/S-SBC → AS → 对端 UAS」，并断言 **终态**（结果码、必要时出腿用户号、BYE 不挂死）。  
-4. 标记 **`@pytest.mark.e2e`**，由 `make test-e2e` / 门禁层③ 收集；与 `unit` / `contract` / `integration` 分开，避免 `make gate` 被拉长。
+1. The **product SIP stack** is `_resip_runtime` (reSIProcate), not pure Python packet assembly, nor log parsing only.  
+2. **The decision goes through the production seam**: `decide()` / activated rules or an equivalent `RuleSet` + outgoing leg hook; **`accept_all_invites` (and `early_cancel_harness`) is prohibited** as the default mode of the AS under test.  
+3. **The path crosses the network element boundary**: at least "call source → (simulated or real) S-CSCF/S-SBC → AS → peer UAS", and asserts the **terminal state** (result code, outgoing leg user number when necessary, BYE not hanging).  
+4. Marked **`@pytest.mark.e2e`**, collected by `make test-e2e` / gate layer ③; separated from `unit` / `contract` / `integration`, to avoid lengthening `make gate`.
 
-**不是 e2e：**
+**Not e2e:**
 
-| 现有东西 | 为什么不算 |
+| Existing thing | Why it does not count |
 |----------|------------|
-| E1 S1 `accept_all_invites` | harness：真栈但旁路 `decide()`，只覆盖 100/180/200 |
-| E1 S2/S3 单 socket | 真栈 + `decide()`，但无仿真 S-SBC、无完整 14 消息、无控制台 |
-| M6 `as_load` → `load_uas_runtime` | 对端是 accept-all UAS，测容量不测业务 |
-| `test_derived_baseline.py` | 对契约 **文件** 做断言，不打产品进程 |
-| kind demo 脚本 | 证据层；可 **复用** 步骤，但在升格为 pytest e2e 之前不算本计划「已落地」 |
+| E1 S1 `accept_all_invites` | Harness: real stack but bypasses `decide()`, covering only 100/180/200 |
+| E1 S2/S3 single socket | Real stack + `decide()`, but no simulated S-SBC, no complete 14 messages, no console |
+| M6 `as_load` → `load_uas_runtime` | The peer is an accept-all UAS, testing capacity not business |
+| `test_derived_baseline.py` | Asserts against the contract **file**, not against the product process |
+| kind demo scripts | Evidence layer; steps can be **reused**, but do not count as this plan being "landed" before being promoted to pytest e2e |
 
 ---
 
-## 2. 现状锚点（实现时复用，不重复造轮）
+## 2. Current State Anchors (reuse during implementation, do not reinvent the wheel)
 
-| 锚点 | 路径 | 已证明 |
+| Anchor | Path | Already proven |
 |------|------|--------|
-| 本地仿真链 + 真栈 + 规则 | `testbed/simulators/tests/test_product_path.py` | T1/T4/T5/F1/F2 结果码、翻译用户号、BYE；UDP/TCP/TLS；**integration**，短时 `as_load` |
-| 双腿 / SDP | `platform/tests/test_m7_forward_two_leg_integration.py`、`test_req_f4_sdp_identity_integration.py` | FORWARD 与 SDP 身份；无完整 S-CSCF 链 |
-| 契约消息 | `testbed/contracts/sip-baseline/S1-basic-call/` 等 | REQ-F-1 的 14 条 **形状**；尚未对产品栈全文回放 |
-| 现场 demo | `scripts/demo-review/story-*.sh`、kind `as-m71` | 客户路径；控制台在 compose，信令在 kind |
+| Local simulated chain + real stack + rules | `testbed/simulators/tests/test_product_path.py` | T1/T4/T5/F1/F2 result codes, translated user number, BYE; UDP/TCP/TLS; **integration**, short-duration `as_load` |
+| Two legs / SDP | `platform/tests/test_m7_forward_two_leg_integration.py`, `test_req_f4_sdp_identity_integration.py` | FORWARD and SDP identity; no complete S-CSCF chain |
+| Contract messages | `testbed/contracts/sip-baseline/S1-basic-call/` etc. | The 14 **shapes** of REQ-F-1; not yet replayed in full against the product stack |
+| On-site demo | `scripts/demo-review/story-*.sh`, kind `as-m71` | Customer path; console in compose, signaling in kind |
 
-**缺口：** 没有 `e2e` 标记；门禁层③ 无用例、不阻塞；REQ-F-1 勾选仍 open。
+**Gaps:** no `e2e` marker; gate layer ③ has no cases and does not block; REQ-F-1 tick still open.
 
 ---
 
-## 3. 范围（建议分波，review 时删减）
+## 3. Scope (suggested waves, to be cut down at review)
 
-### Wave 0 — 把门禁说清楚（文档 + 标记约定）
+### Wave 0 — Make the gates clear (docs + marker conventions)
 
-- 本文件 + `test-plan.md` 分层表（已写）。  
-- `pyproject.toml` 的 `e2e` marker 说明与实现对齐。  
-- 门禁：在 **至少一条** e2e 稳定前，层③ 保持不阻塞 **或** 改为阻塞但只跑 Wave 1 的 smoke（二选一，见 §6）。
+- This file + `test-plan.md` layering table (already written).  
+- `pyproject.toml`'s `e2e` marker description aligned with the implementation.  
+- Gates: until **at least one** e2e is stable, keep layer ③ non-blocking **or** change it to blocking but run only Wave 1's smoke (either/or, see §6).
 
-### Wave 1 — 信令 e2e（无控制台）
+### Wave 1 — Signaling e2e (no console)
 
-从 `test_product_path` **升格或拆出** `@pytest.mark.e2e`：
+Promote or split out `@pytest.mark.e2e` from `test_product_path`:
 
-| ID | 场景 | 断言（最小） | 禁止 |
+| ID | Scenario | Assertion (minimal) | Prohibited |
 |----|------|----------------|------|
-| E2E-SIP-1 | UDP：T1 翻译接通 | 200；出腿用户含翻译结果；BYE 计数与未决会话为 0 | `accept_all_invites` |
-| E2E-SIP-2 | UDP：T4 无匹配 | 404；不出腿或不出 BYE 业务腿（与现 `test_product_path` 一致） | harness |
-| E2E-SIP-3 | UDP：F2 阻止 | 603 | harness |
-| E2E-SIP-4 | TCP、TLS 各一条（可参数化，与现 4 组合对齐或先各 1） | 同 T1 子集 | 测试 CA，不声称 REQ-S-2/S-3 签收 |
+| E2E-SIP-1 | UDP: T1 translation call established | 200; outgoing leg user contains the translation result; BYE count and pending sessions are 0 | `accept_all_invites` |
+| E2E-SIP-2 | UDP: T4 no match | 404; no outgoing leg or no BYE business leg (consistent with the existing `test_product_path`) | harness |
+| E2E-SIP-3 | UDP: F2 blocked | 603 | harness |
+| E2E-SIP-4 | One each for TCP and TLS (parameterizable, aligned with the existing 4 combinations or 1 each first) | Same T1 subset | Test CA, no claim of REQ-S-2/S-3 sign-off |
 
-**完成标准：** `AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m e2e -q` 在已 `make m2-platform-resip-build` 的机器上绿；缺 `.so` 则 **fail**（与 native-contract 策略一致），不 skip。
+**Completion criteria:** `AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m e2e -q` green on a machine that has run `make m2-platform-resip-build`; without `.so` it **fails** (consistent with the native-contract strategy), not skips.
 
-**明确不做（Wave 1）：** 14 条逐条 header 对拍、控制台、kind、容量数字。
+**Explicitly not doing (Wave 1):** 14-message per-message header differential comparison, console, kind, capacity numbers.
 
-### Wave 2 — REQ-F-1 形状（仍无控制台）
+### Wave 2 — REQ-F-1 Shape (still no console)
 
-在 Wave 1 拓扑上，对 **一通** T1：
+On the Wave 1 topology, for **one** T1:
 
-- 采集入/出腿关键消息（方法 + 最终响应码序列，或与 `S1-basic-call` **归一化**对比）。  
-- 断言 **C_in ≠ C_out**（REQ-F-2 子集）。  
-- SDP offer 入腿与出腿 **逐字节**（REQ-F-4）若实现成本可接受；否则单列 follow-up。
+- Collect the inbound/outgoing legs' key messages (method + final response code sequence, or **normalized** comparison against `S1-basic-call`).  
+- Assert **C_in ≠ C_out** (REQ-F-2 subset).  
+- SDP offer byte-for-byte between the inbound and outgoing legs (REQ-F-4) if the implementation cost is acceptable; otherwise list a separate follow-up.
 
-**完成标准：** `test-plan.md` REQ-F-1 勾选改为「自动化子集已覆盖 / 全文仍 open」并链到本用例名，**不**在未对拍 14 条时打勾全文。
+**Completion criteria:** `test-plan.md` REQ-F-1 tick changes to "automated subset covered / full text still open" and links to this case name; **do not** tick the full text before the 14 messages have been differentially compared.
 
-### Wave 3 — 控制面 + 信令（可选，重）
+### Wave 3 — Control Plane + Signaling (optional, heavy)
 
-- compose 或 test client：规则变更 → 激活 bundle → **重启或热加载策略以仓库实际能力为准** → 再跑 E2E-SIP-1。  
-- 与 demo story A 对齐；**不**把浏览器手工步骤写进第一版门禁。
+- compose or test client: rule change → activate bundle → **restart or hot reload policy per the repo's actual capability** → re-run E2E-SIP-1.  
+- Align with demo story A; **do not** put manual browser steps into the first-version gate.
 
-### Wave 4 — kind `as-m71`（发布前证据，默认可选门禁）
+### Wave 4 — kind `as-m71` (pre-release evidence, default optional gate)
 
-- 复用 `kind-up.sh` + `publish-m71-bundle.sh` + 测试页或 `as_load` 打 **产品 Deployment**（非 `load_uas_runtime`）。  
-- 标记 `e2e` + `kind`（需新 marker 或 env `AS_E2E_KIND=1`），**按需手动运行**，不进每次 PR，除非维护者要求。
+- Reuse `kind-up.sh` + `publish-m71-bundle.sh` + test pages or `as_load` to hit the **product Deployment** (not `load_uas_runtime`).  
+- Marked `e2e` + `kind` (needs a new marker or env `AS_E2E_KIND=1`), **run manually on demand**, not on every PR, unless the maintainer requires it.
 
-**明确排除：**
+**Explicitly excluded:**
 
-- M6 容量 / O1 报告（`performance`）。  
-- `accept_all` harness 作为被测 AS。  
-- 运营商真 S-SBC / 客户 PKI（M8 环境证据，见 `m8-environment-evidence.md`）。
+- M6 capacity / O1 report (`performance`).  
+- `accept_all` harness as the AS under test.  
+- Real operator S-SBC / customer PKI (M8 environment evidence, see `m8-environment-evidence.md`).
 
 ---
 
-## 4. 与 harness / call load 的边界（写进用例 docstring）
+## 4. Boundary with Harness / Call Load (written into the case docstring)
 
-| 被测进程 | 允许 |
+| Process under test | Allowed |
 |----------|------|
-| E2E 里的 AS | `ResipRuntimeListener` 或产品进程壳，**`accept_all_invites=False`**，规则来自 `demo_rules()` 或 bundle |
-| 负载发生器 | `as_load` 可以（它是客户端）；**对端 UAS 用 `PeerUas` / 仿真被叫**，不用 `load_uas_runtime.py` |
-| 仿真 S-CSCF/S-SBC | `as_simulators` 或 kind `ims-sim`；标注「非运营商」 |
+| The AS in E2E | `ResipRuntimeListener` or the product process shell, **`accept_all_invites=False`**, rules from `demo_rules()` or a bundle |
+| Load generator | `as_load` is fine (it is a client); **the peer UAS uses `PeerUas` / a simulated called party**, not `load_uas_runtime.py` |
+| Simulated S-CSCF/S-SBC | `as_simulators` or kind `ims-sim`; labeled "non-operator" |
 
 ---
 
-## 5. 建议文件布局（实现时）
+## 5. Suggested File Layout (at implementation)
 
 ```text
-testbed/simulators/tests/test_product_path.py   # 可保留 integration；或改为 e2e
-testbed/e2e/test_sip_first_edition.py           # Wave 1 新文件（推荐，避免 integration 语义混淆）
+testbed/simulators/tests/test_product_path.py   # can keep integration; or change to e2e
+testbed/e2e/test_sip_first_edition.py           # Wave 1 new file (recommended, to avoid integration semantics confusion)
 ```
 
-门禁（Wave 1 落地后）：
+Gates (after Wave 1 lands):
 
-- job `e2e`：`needs: [native-contract]` 或自带 `m2-platform-resip-build`；  
-- `AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m e2e -q`；  
-- 去掉 `continue-on-error` **仅当** Wave 1 在 `ubuntu-latest` 稳定（OpenSSL 3 与本地缓存路径需在实现时验证）。
-
----
-
-## 6. 待你 review 的决定
-
-1. Wave 1 是否 **直接改** `test_product_path` 的 marker 为 `e2e`（少文件）还是 **新文件复制断言**（integration 仍给开发者本地快跑）？  
-2. 缺 native 时 e2e 是 **fail** 还是 **skip**？（建议与 `native-contract` 一致：**fail**。）  
-3. Wave 2 的 14 条对拍是 **本迭代必须** 还是 **单开 issue**？  
-4. kind e2e 是否 **永不**进 PR required checks？
+- job `e2e`: `needs: [native-contract]` or brings its own `m2-platform-resip-build`;  
+- `AS_REQUIRE_NATIVE_EXTENSIONS=1 uv run pytest -m e2e -q`;  
+- remove `continue-on-error` **only if** Wave 1 is stable on `ubuntu-latest` (OpenSSL 3 and local cache paths need verification at implementation).
 
 ---
 
-## 7. 验收（计划本身）
+## 6. Decisions Pending Your Review
 
-- [ ] 维护者确认 §1 定义与 §6 四项决定  
-- [ ] Wave 1 用例进 `master` 且门禁层③ 行为与决定一致  
-- [ ] `test-plan.md` REQ-F-1 勾选状态与 Wave 2 是否做完一致（未做完不打勾全文）
+1. Should Wave 1 **directly change** `test_product_path`'s marker to `e2e` (fewer files) or **create a new file copying the assertions** (integration still gives developers a fast local run)?  
+2. Without native, should e2e **fail** or **skip**? (Recommendation: consistent with `native-contract`: **fail**.)  
+3. Is Wave 2's 14-message differential comparison **mandatory in this iteration** or **a separate issue**?  
+4. Should kind e2e **never** enter PR required checks?
 
 ---
 
-## 8. 验收三框的当前处置（2026-10-11 追加；§7 原文保留不改）
+## 7. Acceptance (of the plan itself)
 
-> 上文三框按保史约定**原文保留**；本节只**追加**当前处置，便于核对。
+- [ ] The maintainer confirms the §1 definitions and the four decisions in §6  
+- [ ] Wave 1 cases enter `master` and gate layer ③ behaves consistently with the decisions  
+- [ ] `test-plan.md` REQ-F-1 tick status is consistent with whether Wave 2 is done (do not tick the full text if not done)
 
-| §7 框 | 处置（2026-10-11） |
+---
+
+## 8. Current Handling of the Three Acceptance Boxes (added 2026-10-11; §7 original text preserved unchanged)
+
+> The three boxes above are preserved **verbatim** per the history-keeping convention; this section only **appends** the current handling for cross-checking.
+
+| §7 box | Handling (2026-10-11) |
 |---|---|
-| ① 维护者确认 §1 定义与 §6 四项决定 | ✅ **已确认** —— 四项决定即 `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` §0-A.6 的 **G2 / A4-1…A4-4**，已于 2026-10-10 裁决落盘；本次即按其落地（A4-1 新建文件、A4-2 缺 native 时 fail、A4-3 Wave 2 后置到仓内载体、A4-4 仅登记政策方向**不改配置**） |
-| ② Wave 1 用例进 `master` 且门禁层③ 行为与决定一致 | ⚠️ **一半** —— 用例已落地并在本机稳定通过；**进 `master` 需维护者 commit**（本次未做任何 git 写操作）。「门禁层③ 行为与决定一致」中**可本机验证的部分一致**：缺 native 时 fail 不 skip（实测 5 failed / 0 skipped）。**kind e2e 进 PR required 的门禁配置变更未做** —— A4-4 裁决明确「不构成任何配置变更授权」 |
-| ③ `test-plan.md` REQ-F-1 勾选状态与 Wave 2 是否做完一致 | ❌ **未做** —— Wave 2 的 14 条对拍未实现，载体为 [`2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md)。**REQ-F-1 的 14 条全文仍 open，本次不勾选、不签收** |
+| ① The maintainer confirms the §1 definitions and the four decisions in §6 | ✅ **Confirmed** — the four decisions are the **G2 / A4-1…A4-4** of `docs/handoff/2026-10-10-unfinished-assessment-and-next-plan.md` §0-A.6, adjudicated and landed on 2026-10-10; this round implements per them (A4-1 new file, A4-2 fail when native is missing, A4-3 Wave 2 deferred to an in-repo carrier, A4-4 registers the policy direction only, **no configuration change**) |
+| ② Wave 1 cases enter `master` and gate layer ③ behaves consistently with the decisions | ⚠️ **Half done** — the cases have landed and passed stably on this machine; **entering `master` needs a maintainer commit** (this round made no git write operations). Of "gate layer ③ behaves consistently with the decisions", **the locally verifiable part is consistent**: fail not skip when native is missing (measured 5 failed / 0 skipped). **The gate configuration change for kind e2e entering PR required was not made** — the A4-4 adjudication explicitly states "does not constitute authorization for any configuration change" |
+| ③ `test-plan.md` REQ-F-1 tick status is consistent with whether Wave 2 is done | ❌ **Not done** — Wave 2's 14-message differential comparison is not implemented, with the carrier being [`2026-10-11-wave2-replay-register.md`](2026-10-11-wave2-replay-register.md). **REQ-F-1's 14-message full text is still open; not ticked and not signed off this round** |
 
-**§8 表格第 ③ 框的更新（2026-10-12 追加；上方表格原文保留不改）**：
+**Update to the §8 table's box ③ (added 2026-10-12; the original text of the table above is preserved unchanged)**:
 
-| §7 框 | 更新后处置（2026-10-12） |
+| §7 box | Updated handling (2026-10-12) |
 |---|---|
-| ③ `test-plan.md` REQ-F-1 勾选状态与 Wave 2 是否做完一致 | **已按完成标准落盘** —— Wave 2 已实现（`testbed/e2e/test_s1_replay_contract.py`，3 条），状态改为「**自动化子集已覆盖 / 全文仍 open**」并链到用例名（`test-plan.md` REQ-F-1 段）。**14 条逐条 header 对拍仍 open，`test-plan.md` 的所有 `- [ ]` 一项未打勾** —— 这与完成标准「未对拍 14 条时不得打勾全文」一致 |
+| ③ `test-plan.md` REQ-F-1 tick status is consistent with whether Wave 2 is done | **Landed per the completion criteria** — Wave 2 is implemented (`testbed/e2e/test_s1_replay_contract.py`, 3 tests), and the status changed to "**automated subset covered / full text still open**" and linked to the case name (`test-plan.md` REQ-F-1 section). **The 14-message per-message header differential comparison is still open, and not a single `- [ ]` in `test-plan.md` is ticked** — consistent with the completion criteria "do not tick the full text before the 14 messages have been differentially compared" |
 
-**本次的边界（避免据「Wave 1 已落地」推出过度结论）**：
+**This round's boundary (to avoid over-inferring from "Wave 1 has landed")**:
 
-- 落地的 4 个用例（E2E-SIP-1…4）覆盖的是**终态结果码 + 出腿翻译结果 + BYE 不挂死**，
-  **不含** 14 条消息的逐条 header 对拍、**不含**控制面、**不含** kind、**不含**任何容量数字。
-- 被测路径中的 S-CSCF / S-SBC 均为**仿真**（`as_simulators`），TLS 用**测试 CA**；
-  按本文 §3「明确排除」条，**不签收 REQ-S-2 / REQ-S-3**。
-- 真栈绿属**工程门禁层**证据；`docs/acceptance/report.md` §0.5 的 open 24 / blocked 12 **未改**。
+- The 4 landed cases (E2E-SIP-1…4) cover **terminal result codes + outgoing leg translation result + BYE not hanging**,
+  and **do not include** the 14-message per-message header differential comparison, **do not include** the control plane, **do not include** kind, and **do not include** any capacity numbers.
+- The S-CSCF / S-SBC in the tested path are all **simulated** (`as_simulators`), and TLS uses a **test CA**;
+  per this document's §3 "explicitly excluded" clause, **REQ-S-2 / REQ-S-3 are not signed off**.
+- The real stack being green is **engineering gate layer** evidence; `docs/acceptance/report.md` §0.5's open 24 / blocked 12 **are unchanged**.

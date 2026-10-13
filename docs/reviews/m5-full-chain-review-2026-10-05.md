@@ -12,219 +12,219 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M5 全链评审记录 — Requirement / ADR / Design / Code / Testing
+# M5 Full-Chain Review Record — Requirement / ADR / Design / Code / Testing
 
-- **评审对象**：M5 里程碑（运维）全链交付 —— Helm chart、自定义指标 HPA、缩容保护控制器、draining / ISSU、告警规则集、控制面集群部署证明（含 M4b-7.2d ingress/trusted-proxy）、D12 集群内 PostgreSQL/Redis（ADR-0026）。
-  - 计划与关门记录：`docs/plan.md` §4.4 / §4.5 / §4.6
-  - 代码范围：`deploy/helm/**`、`deploy/alerts/**`、`deploy/kind/**`、`platform/src/as_platform/{runtime,ops,telemetry}/`、`platform/src/as_platform/__main__.py`、`services/config-service/src/as_config_service/runtime.py`
-  - 门禁范围：`Makefile`、`pyproject.toml` pytest 配置
-- **评审日期**：2026-10-05
-- **评审人**：AI agent（维护者指派全链 review；维护者判定 `docs/reviews/` 下既有 M5 评审记录不可信）
-- **评审方法**：只读核查。按 AGENT.md §3 的文档链逐环节核对（需求 → ADR → HLD/LLD → 契约 → 代码 + 测试 → 验收）。
-- **证据排除声明**：本次评审**未采信** `docs/reviews/` 下任何 M5 评审记录（`m5-*` 系列）作为证据来源。全部结论来自 `docs/plan.md`、ADR、HLD/LLD、代码、Makefile 的原文。
-
----
-
-## 1. 评审结论
-
-**结论：不通过（Not approved）。建议撤销 / 降级 2026-10-04 的 M5 工程关门签字。**
-
-不是"文档没写全"的问题，而是三类硬伤：
-
-1. **核心交付物是死的** —— 8 条告警中 6 条永不触发；缩容保护配置读了不参与判定；生产 profile 渲染即不可启动。
-2. **证据是伪的** —— 5 处"看起来通过但不可能失败"的检查；唯一能变红的那项检查（`make chart-check`）不在任何门禁里；集群日志证据位于被 gitignore 的 `artifacts/`。
-3. **设计文档停在 M5 之前** —— HLD/LLD 仍写"PG/Redis 在 chart 外""真实集群滚动升级与缩容未跑"，与 ADR-0026 / §4.6 的实际交付直接矛盾。
-
-### 1.1 正面确认（应当保留，不是本次否定的对象）
-
-- **纯逻辑内核真实且测试质量高**：`plan_scale_down` 是纯函数并有 socket/时钟/随机数探针测试（`platform/tests/test_downscale_guard.py:138-163`）；`ProcessShell` draining 状态机（`test_shell.py`）、`MetricsRegistry`（`test_metrics.py`）、有界队列与后台导出线程（`test_telemetry.py`、`test_telemetry_export_integration.py`，真 UDP socket）、health HTTP server（真 socket）均为真实现。
-- **`make gate` 四步真的会红**：`ruff format --check` → `ruff check` → `mypy` → `pytest -m "unit or contract"`（`Makefile:21,22,25,33`），无 `|| true`、无 `-` 前缀、无结尾 `exit 0`。
-- **三个结构守卫有效且会红**：`tests/test_workspace_layout.py`、`tests/test_version_consistency.py`、`platform/tests/test_library_independence.py`，且均带防空转断言。
-- **ADR-0026 不是纸面 ADR**：`values.stateStores` + `state-{postgres,redis,networkpolicy,config-runtime-secret,migrate-job}.yaml` + `chart-check` bundled 矩阵 + kind `M5_BUNDLED_STATE=1` + `values-onprem.example.yaml` + runbook 全部落地。
-- **部分 kind 证据是真断言**：`m5-issu-scale-evidence.sh`（drain 期间必须观测到 503）、`m5-plan-scale-down-from-metrics.sh`（调用真实 `plan_scale_down`，拒绝路径 `SystemExit(1)`）、7.2d 浏览器脚本（登录成功与"无明文 HTTP POST"会抛错）。
+- **Review target**: the full-chain M5 milestone (operations) delivery —— Helm chart, custom-metric HPA, scale-down guard controller, draining / ISSU, alert rule set, control-plane cluster deployment proof (including M4b-7.2d ingress/trusted-proxy), D12 in-cluster PostgreSQL/Redis (ADR-0026).
+  - Plan and gate-closure records: `docs/plan.md` §4.4 / §4.5 / §4.6
+  - Code scope: `deploy/helm/**`、`deploy/alerts/**`、`deploy/kind/**`、`platform/src/as_platform/{runtime,ops,telemetry}/`、`platform/src/as_platform/__main__.py`、`services/config-service/src/as_config_service/runtime.py`
+  - Gate scope: `Makefile`、`pyproject.toml` pytest configuration
+- **Review date**: 2026-10-05
+- **Reviewer**: AI agent (full-chain review assigned by the maintainer; the maintainer judged the existing M5 review records under `docs/reviews/` to be untrustworthy)
+- **Review method**: read-only inspection. Each link of the document chain was checked per AGENT.md §3 (requirements → ADR → HLD/LLD → contracts → code + tests → acceptance).
+- **Evidence exclusion statement**: this review **did not accept** any M5 review record under `docs/reviews/` (the `m5-*` series) as an evidence source. All conclusions come from the verbatim text of `docs/plan.md`, the ADRs, HLD/LLD, the code, and the Makefile.
 
 ---
 
-## 2. Requirement 链
+## 1. Review conclusion
 
-M5 的 7 类交付物中 5 类可追溯到 `REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ-NF-13 / REQ-NF-14`，源头存在。链在两处断开：**验收文档层**与**运维代码层**。
+**Conclusion: fail (Not approved). Recommend revoking / downgrading the 2026-10-04 M5 engineering-closure sign-off.**
 
-| # | 现象 | 证据 | 影响 | 严重度 |
+This is not a problem of "the docs are incomplete" but of three classes of hard defects:
+
+1. **The core deliverables are dead** —— of the 8 alerts, 6 can never fire; the scale-down guard configuration is read but takes no part in the decision; the production profile cannot start as rendered.
+2. **The evidence is fake** —— 5 checks that "look like they pass but cannot fail"; the only check that can actually turn red (`make chart-check`) is in no gate at all; the cluster log evidence lives in the gitignored `artifacts/`.
+3. **The design docs stop before M5** —— HLD/LLD still say "PG/Redis 在 chart 外" "真实集群滚动升级与缩容未跑", which directly contradicts the actual delivery of ADR-0026 / §4.6.
+
+### 1.1 Positive confirmations (should be kept; not the target of this rejection)
+
+- **The pure-logic core is real and of high test quality**: `plan_scale_down` is a pure function with socket/clock/randomness probe tests (`platform/tests/test_downscale_guard.py:138-163`); the `ProcessShell` draining state machine (`test_shell.py`)、`MetricsRegistry` (`test_metrics.py`)、the bounded queue and background export thread (`test_telemetry.py`、`test_telemetry_export_integration.py`, real UDP socket), and the health HTTP server (real socket) are all real implementations.
+- **The four steps of `make gate` really do go red**: `ruff format --check` → `ruff check` → `mypy` → `pytest -m "unit or contract"` (`Makefile:21,22,25,33`), with no `|| true`, no `-` prefix, and no trailing `exit 0`.
+- **The three structural guards are effective and do go red**: `tests/test_workspace_layout.py`、`tests/test_version_consistency.py`、`platform/tests/test_library_independence.py`, and all carry anti-idle assertions.
+- **ADR-0026 is not a paper-only ADR**: `values.stateStores` + `state-{postgres,redis,networkpolicy,config-runtime-secret,migrate-job}.yaml` + the `chart-check` bundled matrix + kind `M5_BUNDLED_STATE=1` + `values-onprem.example.yaml` + the runbook have all landed.
+- **Some kind evidence is a real assertion**: `m5-issu-scale-evidence.sh` (503 must be observed during drain)、`m5-plan-scale-down-from-metrics.sh` (invokes the real `plan_scale_down`; the reject path raises `SystemExit(1)`)、the 7.2d browser script (successful login and "no plaintext HTTP POST" both raise an error).
+
+---
+
+## 2. Requirement chain
+
+Of M5's 7 classes of deliverable, 5 are traceable to `REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ-NF-13 / REQ-NF-14`, so the sources exist. The chain breaks in two places: the **acceptance-document layer** and the **ops-code layer**.
+
+| # | Phenomenon | Evidence | Impact | Severity |
 |---|---|---|---|---|
-| R-1 | **7.2d（ingress/trusted-proxy）是 M5 三大关门条件之一，但 PRD 中无任何对应需求**。`REQ-S-2` 是与 S-SBC 的 SIP 信令 TLS，`REQ-S-4` 只讲鉴权与审计，都不覆盖控制台 HTTPS 重定向 / `X-Forwarded-Proto` 信任 / ingress proxy CIDR 白名单 | `docs/plan.md:217,392` vs `docs/requirements/prd.md` 全文 | 关门条件无需求出处，也就没有可判定的验收项；`test-plan.md:183-191` 中它只是 §1.4 的 BLOCKED 前置条件 | **Blocker** |
-| R-2 | 5 份 M5 验收 / runbook 文档与 `report.md` 全文 **REQ-\* 引用数为 0** | `docs/acceptance/m5-*.md`；`report.md:167-227` | 违反 REQ-G-2 的验收项（`test-plan.md:339-342` 要求 review record 可追溯到至少一个 REQ 编号）；M5 证据无法与 REQ-NF-3/4/13/14 对齐 | Major |
-| R-3 | REQ-NF-3 验收口径含容量数字（阈值 500、1000 并发、3→≥5 副本），与项目硬规则互斥 | `test-plan.md:231-233` vs `plan.md:249,403` | 按验收项填就违反"M6 前不发布容量数字"，遵守禁令就永远无法通过；需求 / 验收 / 工程规则三方互斥 | Major |
-| R-4 | REQ-NF-14 验收写成"手动触发**任一**条件" + "通知通道待定（M2 冻结）" | `test-plan.md:295-301` | 4 条要求只需 1 条触发即可勾选，且通道未定则"正确发出告警"无从断言 | Major |
-| R-5 | 缩容保护判据（ADR-0010 的核心决策）在 `test-plan` 中**零验收断言** | `test-plan.md:230-235` vs `ADR-0010:6` | M5 声称"缩容保护已交付"，验收侧无从判定 | Major |
-| R-6 | M5 全部集群运行时证据位于被 gitignore 的 `artifacts/m5/<date>/`，仓库内不可复核 | `m5-evidence-summary.md:3,22-29`；`.gitignore:25` | 除维护者本机外无人可复核；`report.md` / closure 中的 "PASS" 全是对不存在文件的转述 | Major |
-| R-7 | ISSU / 缩容的"不掉呼叫"证据全部来自注入计数器 `AS_M5_SIMULATED_ACTIVE_CALLS` | `m5-downscale-runbook.md:48-56`；`deploy/kind/m5-issu-scale-evidence.sh:27-28,97` | 只能证明判据接线，证明不了"存量呼叫完成 / 无呼叫丢失"（那是 REQ-NF-1/3/4 的断言，属 M7） | Major |
-| R-8 | 无源交付项（有实现、无 REQ 出处）：PDB 模板、NetworkPolicy、`simulatedActiveCalls` chart 字段、D12 的 HA / PITR / RPO-RTO / restore drill 承诺 | `pdb.yaml:4`；`state-networkpolicy.yaml`；`deployment.yaml:99-102`；`m5-state-stores-runbook.md:70-105` | 无法判定做没做、做到什么程度；与 `plan.md:369-379` 自认的 PM/AM/UM"需求待补"同源 | Minor |
-| R-9 | 代码侧 REQ 追溯缺失：`downscale_guard.py` / `downscale_config.py` 只标 ADR-0010/0009，无 REQ 编号 | `platform/src/as_platform/ops/downscale_guard.py:9,22,46,86,88,118` | REQ-G-2 只能经 ADR 间接追溯，链长一跳 | Minor |
+| R-1 | **7.2d (ingress/trusted-proxy) is one of M5's three gate-closure conditions, but the PRD contains no corresponding requirement at all.** `REQ-S-2` is SIP signaling TLS with the S-SBC, and `REQ-S-4` only covers authentication and auditing; neither covers console HTTPS redirect / `X-Forwarded-Proto` trust / ingress proxy CIDR allowlist | `docs/plan.md:217,392` vs the full text of `docs/requirements/prd.md` | The gate-closure condition has no requirement origin, so there is no decidable acceptance item; in `test-plan.md:183-191` it is only a BLOCKED precondition of §1.4 | **Blocker** |
+| R-2 | The 5 M5 acceptance / runbook documents and the full text of `report.md` have **REQ-\* reference count = 0** | `docs/acceptance/m5-*.md`; `report.md:167-227` | Violates the REQ-G-2 acceptance item (`test-plan.md:339-342` requires a review record to be traceable to at least one REQ number); M5 evidence cannot be aligned with REQ-NF-3/4/13/14 | Major |
+| R-3 | The REQ-NF-3 acceptance criteria include capacity numbers (threshold 500, 1000 concurrent, 3→≥5 replicas), which is mutually exclusive with the project's hard rules | `test-plan.md:231-233` vs `plan.md:249,403` | Filling in per the acceptance item violates "M6 前不发布容量数字", while obeying the prohibition makes it impossible to ever pass; requirements / acceptance / engineering rules are mutually exclusive across the three parties | Major |
+| R-4 | REQ-NF-14 acceptance is written as "manually trigger **any one** condition" + "notification channel TBD (frozen at M2)" | `test-plan.md:295-301` | 4 requirements need only 1 of them to fire to be checkmarked, and with the channel undetermined "the alert was sent correctly" cannot be asserted at all | Major |
+| R-5 | The scale-down guard criteria (ADR-0010's core decision) have **zero acceptance assertions** in `test-plan` | `test-plan.md:230-235` vs `ADR-0010:6` | M5 claims "scale-down guard is delivered", but the acceptance side has no way to decide it | Major |
+| R-6 | All of M5's cluster runtime evidence sits in the gitignored `artifacts/m5/<date>/` and cannot be reviewed inside the repo | `m5-evidence-summary.md:3,22-29`; `.gitignore:25` | Nobody except on the maintainer's own machine can review it; every "PASS" in `report.md` / the closure record is a restatement about files that do not exist | Major |
+| R-7 | All ISSU / scale-down "no dropped call" evidence comes from the injected counter `AS_M5_SIMULATED_ACTIVE_CALLS` | `m5-downscale-runbook.md:48-56`; `deploy/kind/m5-issu-scale-evidence.sh:27-28,97` | It can only prove that the criteria are wired; it cannot prove "existing calls complete / no calls are lost" (those are REQ-NF-1/3/4 assertions, belonging to M7) | Major |
+| R-8 | Sourceless deliverables (implemented but with no REQ origin): the PDB template、NetworkPolicy、the `simulatedActiveCalls` chart field, D12's HA / PITR / RPO-RTO / restore-drill promises | `pdb.yaml:4`; `state-networkpolicy.yaml`; `deployment.yaml:99-102`; `m5-state-stores-runbook.md:70-105` | Impossible to decide whether they were done or to what extent; same source as the "requirement to be added" PM/AM/UM admitted in `plan.md:369-379` | Minor |
+| R-9 | Missing REQ traceability on the code side: `downscale_guard.py` / `downscale_config.py` cite only ADR-0010/0009, with no REQ numbers | `platform/src/as_platform/ops/downscale_guard.py:9,22,46,86,88,118` | REQ-G-2 is traceable only indirectly via the ADR, lengthening the chain by one hop | Minor |
 
-**M5 证据等级判定**：kind 真实集群证据覆盖部署形态与模板渲染；模拟注入证据覆盖"机制接线"；工程切片（`make gate` / integration）覆盖 REQ-G-4。**没有任何一项达到 REQ 级验收**。M5 文档自己也声明"Not claimed | REQ / test-plan acceptance"（`m5-engineering-closure-2026-10-04.md:76`），因此问题定性为"以工程切片 + 模拟注入证据充当里程碑关门"，而非虚假验收。
+**M5 evidence-grade verdict**: real kind cluster evidence covers the deployment shape and template rendering; simulated-injection evidence covers "mechanism wiring"; the engineering slice (`make gate` / integration) covers REQ-G-4. **No item reaches REQ-level acceptance.** M5's own documentation also declares "Not claimed | REQ / test-plan acceptance" (`m5-engineering-closure-2026-10-04.md:76`), so the problem is characterized as "passing off an engineering slice + simulated-injection evidence as milestone closure", rather than as a false acceptance.
 
 ---
 
 ## 3. ADR
 
-7 个 M5 相关 ADR（0005 / 0008 / 0009 / 0010 / 0013 / 0014 / 0026）状态均为 accepted，consequences 均非空，无"proposed 被当作 accepted 使用"。冲突集中在：
+All 7 M5-related ADRs (0005 / 0008 / 0009 / 0010 / 0013 / 0014 / 0026) have status accepted, all consequences are non-empty, and there is no case of "a proposed ADR being used as accepted". The conflicts concentrate in:
 
-| # | 冲突 / 缺口 | 证据 | 严重度 |
+| # | Conflict / gap | Evidence | Severity |
 |---|---|---|---|
-| A-1 | **ADR-0008「站点内零单点」与 ADR-0026 内建单副本 PG/Redis 直接冲突**。0008 要求 Redis Sentinel（1 主 2 从 3 哨兵）+ PG 流复制 + 备份 + PITR；0026 标准路径渲染出 `replicas: 1` StatefulSet 与 `replicas: 1` Redis Deployment，runbook 自认 "Production HA is customer-owned"。0008 无 Amendment 登记此缺口 | `0008:27-29` vs `state-postgres.yaml:35`、`state-redis.yaml:12`、`m5-state-stores-runbook.md:72,80` | **Blocker** |
-| A-2 | ADR-0008 把跨站点切换演练**明确指派给 M5**，M5 关门清单无此项，也未登记延期 | `0008:49,76`；`plan.md:236-241,314-325`（全文无"温备/切换/演练/RTO/RPO"） | Major |
-| A-3 | ADR-0005 三信号只落地 1/3：全仓无 `opentelemetry` 依赖、无 OTLP exporter 实现、无 `trace_id`/`span_id`、无结构化 JSON 日志、`cps` 指标不存在 | `telemetry/__init__.py:77-86,129`；`__main__.py:147-150`；`metrics.py:34-37` | Major |
-| A-4 | ADR-0019 推翻 SIP 栈后未同步架构文档：`新系统整体架构.md:348` 仍以 `sippy==2.4.2` 作为 ADR-0009 的"前提事实"，而 ADR-0009 的复核条款正是建立在该前提上 | `新系统整体架构.md:348,225,391,442` vs `0009:22,30`；AGENT.md §7 | Major |
-| A-5 | ADR-0013 正文 Decision / Consequences 仍写"chart 不部署 PG/Redis"，修订只在末尾 Amendment 段 | `0013:27,44` vs `0013:82-89` | Minor |
-| A-6 | 架构 §6.3 图写"缩容保护挑 active_calls **最少**的 Pod"，与 ADR-0010 / 实现 / values 的"≤ 阈值（默认 0）"矛盾 —— 按图实现会掉呼叫 | `新系统整体架构.md:377` vs `0010:25`、`downscale_guard.py:85-88`、`values.yaml:254` | Minor（实现正确，图错误） |
-| A-7 | 告警规则集（REQ-NF-14）无独立 ADR；`as_` 前缀命名契约从未被 ADR 裁决 | `deploy/alerts/README.md:38-60` | Minor |
-| A-8 | ADR-0014 的 REQ 追溯编号错误（自称 REQ-NF-13，实为 OTel 三信号），已自注并登记 D8，未裁决 | `0014:6,72`；`plan.md:352` | Minor |
-| A-9 | ADR-0009 / 0010 的 M5 实证基于模拟计数，ADR-0010 的 Evidence 节未披露 | `0010:57-62` vs `plan.md:226-228`（计划层已披露） | Minor |
+| A-1 | **ADR-0008's "zero single point of failure within the site" directly conflicts with ADR-0026's built-in single-replica PG/Redis.** 0008 requires Redis Sentinel (1 master, 2 replicas, 3 sentinels) + PG streaming replication + backup + PITR; 0026's standard path renders a StatefulSet with `replicas: 1` and a Redis Deployment with `replicas: 1`, and the runbook itself admits "Production HA is customer-owned". 0008 has no Amendment registering this gap | `0008:27-29` vs `state-postgres.yaml:35`、`state-redis.yaml:12`、`m5-state-stores-runbook.md:72,80` | **Blocker** |
+| A-2 | ADR-0008 **explicitly assigns** the cross-site switchover drill to M5; M5's closure checklist has no such item and no deferral was registered | `0008:49,76`; `plan.md:236-241,314-325` (the full text contains no "温备/切换/演练/RTO/RPO") | Major |
+| A-3 | Only 1 of ADR-0005's three signals is implemented: no `opentelemetry` dependency anywhere in the repo, no OTLP exporter implementation, no `trace_id`/`span_id`, no structured JSON logs, and the `cps` metric does not exist | `telemetry/__init__.py:77-86,129`; `__main__.py:147-150`; `metrics.py:34-37` | Major |
+| A-4 | After ADR-0019 overturned the SIP stack, the architecture doc was not updated: `system-architecture.md:348` still treats `sippy==2.4.2` as a "premise fact" of ADR-0009, and ADR-0009's re-review clause is precisely built on that premise | `system-architecture.md:348,225,391,442` vs `0009:22,30`; AGENT.md §7 | Major |
+| A-5 | The body Decision / Consequences of ADR-0013 still say "the chart does not deploy PG/Redis"; the revision exists only in the Amendment paragraph at the end | `0013:27,44` vs `0013:82-89` | Minor |
+| A-6 | The diagram in architecture §6.3 says scale-down protection "picks the Pod with the **fewest** active_calls", contradicting ADR-0010 / the implementation / the values "≤ threshold (default 0)" —— implementing per the diagram would drop calls | `system-architecture.md:377` vs `0010:25`、`downscale_guard.py:85-88`、`values.yaml:254` | Minor (the implementation is correct, the diagram is wrong) |
+| A-7 | The alert rule set (REQ-NF-14) has no dedicated ADR; the `as_` prefix naming contract was never adjudicated by an ADR | `deploy/alerts/README.md:38-60` | Minor |
+| A-8 | ADR-0014 has a wrong REQ traceability number (it claims REQ-NF-13, but it is actually the three OTel signals); it is self-annotated and registered as D8, unadjudicated | `0014:6,72`; `plan.md:352` | Minor |
+| A-9 | The M5 empirical evidence of ADR-0009 / 0010 is based on simulated counts, and ADR-0010's Evidence section does not disclose this | `0010:57-62` vs `plan.md:226-228` (already disclosed at the plan level) | Minor |
 
-**纸面 ADR**（写了、代码/工件不体现）：ADR-0005 的 traces / logs / 呼叫轨迹通道 / `cps`；ADR-0008 的跨站点温备、Sentinel、PG 流复制；ADR-0020 的 feature 门控整体（0020:59 自认"暂无实现证据"）；ADR-0010 的 in-cluster actuator（ADR 允许运维脚本，但至今无工件）。
+**Paper-only ADRs** (written down but not reflected in code/artifacts): ADR-0005's traces / logs / call-trace channel / `cps`; ADR-0008's cross-site warm standby, Sentinel, and PG streaming replication; ADR-0020's entire feature gating (0020:59 admits "暂无实现证据"); ADR-0010's in-cluster actuator (the ADR allows an ops script, but no artifact has ever been produced).
 
 ---
 
-## 4. Design（HLD / LLD）
+## 4. Design (HLD / LLD)
 
-**文档链断得最彻底的一环。** HLD / LLD 标注 `As of: 2026-10-02`，M5 工作发生在 2026-10-04，两份文档**从未为 M5 更新**。
+**The link of the document chain that is broken most thoroughly.** HLD / LLD are marked `As of: 2026-10-02`, M5 work happened on 2026-10-04, and the two documents **were never updated for M5**.
 
-| # | 现象 | 证据 | 严重度 |
+| # | Phenomenon | Evidence | Severity |
 |---|---|---|---|
-| D-1 | HLD §7 仍写 "**Redis and PostgreSQL are external to the chart**"，与 ADR-0026 / §4.6 已交付的 `stateStores` 直接矛盾 | `hld.md:135` | **Blocker（文档链）** |
-| D-2 | HLD §7 仍写 "**A real Kubernetes rolling upgrade and scale-down have not been run**"，而 §4.5 已声称 kind 上跑通并签字 | `hld.md:139` vs `plan.md:284-293` | **Blocker（文档链）** |
-| D-3 | LLD §1 对 `deploy/helm` 仍写 "no Helm lint/template/render proof…real cluster rollout/scale-down and alert firing also remain unverified"；LLD §7 同样写 "Live Kubernetes rolling-upgrade/scale-down … unverified" | `lld.md:34,124` | **Blocker（文档链）** |
-| D-4 | `stateStores` 在 HLD / LLD 中**零出现**（全 docs 检索仅命中 plan、ADR README、0013、0026、架构文档、reviews、acceptance runbook） | grep `stateStores` | Major |
-| D-5 | M5 新增的 `downscale_config.py`、`ActiveCallSource` 模拟计数 seam、health/metrics 端点、ingress 模板，HLD / LLD 均未记载；LLD 仍写"executable injects `active_calls=lambda: 0`" | `lld.md:23` | Major |
-| D-6 | HLD §6 / LLD §6 已诚实写明"alert rules are configuration artifacts, not evidence of an alert backend firing"，但该结论未传导到 M5 关门判定 | `lld.md:114`、`hld.md:113` | Minor（信息） |
+| D-1 | HLD §7 still says "**Redis and PostgreSQL are external to the chart**", directly contradicting the `stateStores` delivered in ADR-0026 / §4.6 | `hld.md:135` | **Blocker (document chain)** |
+| D-2 | HLD §7 still says "**A real Kubernetes rolling upgrade and scale-down have not been run**", while §4.5 already claims it passed on kind and was signed off | `hld.md:139` vs `plan.md:284-293` | **Blocker (document chain)** |
+| D-3 | LLD §1 still says of `deploy/helm` "no Helm lint/template/render proof…real cluster rollout/scale-down and alert firing also remain unverified"; LLD §7 likewise says "Live Kubernetes rolling-upgrade/scale-down … unverified" | `lld.md:34,124` | **Blocker (document chain)** |
+| D-4 | `stateStores` appears **zero times** in HLD / LLD (a repo-wide docs search hits only plan, the ADR README, 0013, 0026, the architecture doc, reviews, and the acceptance runbook) | grep `stateStores` | Major |
+| D-5 | The M5 additions — `downscale_config.py`, the `ActiveCallSource` simulated-count seam, the health/metrics endpoints, and the ingress template — are recorded in neither HLD nor LLD; LLD still says "executable injects `active_calls=lambda: 0`" | `lld.md:23` | Major |
+| D-6 | HLD §6 / LLD §6 honestly state that "alert rules are configuration artifacts, not evidence of an alert backend firing", but that conclusion was never carried into the M5 closure decision | `lld.md:114`、`hld.md:113` | Minor (informational) |
 
-按 AGENT.md §3.1，HLD/LLD 是编码前的必经产物；M5 的部署形态发生了**架构级变化**（chart 内建状态存储），却没有任何 HLD/LLD 落点。
+Per AGENT.md §3.1, HLD/LLD are mandatory pre-coding artifacts; M5's deployment shape underwent an **architecture-level change** (state stores built into the chart), yet there is no HLD/LLD landing point at all.
 
 ---
 
 ## 5. Code
 
-### 5.1 告警：8 条规则中 6 条是死规则
+### 5.1 Alerts: 6 of the 8 rules are dead rules
 
-| 规则 | 引用指标 | 事实 |
+| Rule | Referenced metric | Fact |
 |---|---|---|
-| `ASCallStateStoreUnavailable`（critical） | `as_state_store_available` | **代码中不存在** |
-| `ASConfigRollbackTriggered`（critical） | `as_config_rollbacks_total` | **代码中不存在** |
-| `ASTlsCertificateExpiring` | `as_tls_certificate_expiry_seconds` | **代码中不存在**（REQ-NF-14 明确要求"证书 30 天内到期"，实际不可达） |
-| `ASConfigDrift` | `as_config_version_in_sync` | **代码中不存在** |
-| `ASHighErrorRatio` | `as_sip_responses_total` | 名字存在，但 `record_response()` 在生产代码中**零调用点** |
-| `ASTelemetryDropped` | `as_telemetry_dropped_total` | 名字存在，但 `record_telemetry_dropped()` **零调用点** |
+| `ASCallStateStoreUnavailable` (critical) | `as_state_store_available` | **does not exist in the code** |
+| `ASConfigRollbackTriggered` (critical) | `as_config_rollbacks_total` | **does not exist in the code** |
+| `ASTlsCertificateExpiring` | `as_tls_certificate_expiry_seconds` | **does not exist in the code** (REQ-NF-14 explicitly requires "证书 30 天内到期", which is actually unreachable) |
+| `ASConfigDrift` | `as_config_version_in_sync` | **does not exist in the code** |
+| `ASHighErrorRatio` | `as_sip_responses_total` | The name exists, but `record_response()` has **zero call sites** in production code |
+| `ASTelemetryDropped` | `as_telemetry_dropped_total` | The name exists, but `record_telemetry_dropped()` has **zero call sites** |
 
-证据：`platform/src/as_platform/telemetry/metrics.py:34-37` 只定义 4 个指标；四个不存在的指标名全仓仅命中 `deploy/alerts/` 自身；`record_response` / `record_rule_hit` / `record_telemetry_dropped` 的调用点只出现在 `platform/tests/test_metrics.py`；`__main__.py:94` 只调用 `set_active_calls`。
+Evidence: `platform/src/as_platform/telemetry/metrics.py:34-37` defines only 4 metrics; the four non-existent metric names are hit nowhere in the repo except in `deploy/alerts/` itself; the call sites of `record_response` / `record_rule_hit` / `record_telemetry_dropped` appear only in `platform/tests/test_metrics.py`; `__main__.py:94` only calls `set_active_calls`.
 
-| # | 问题 | 证据 | 严重度 |
+| # | Issue | Evidence | Severity |
 |---|---|---|---|
-| C-1 | 上述 6 条规则永不 firing，且 `promtool check rules` 不会报错（PromQL 允许引用不存在的指标）；全仓无任何 `promtool` 执行点 | `as-alerts.yaml:86,123,140,157,23-31,49`；Makefile / 测试均无 promtool | **Blocker** |
-| C-2 | `ASHighErrorRatio` 分母 `clamp_min(sum(rate(...)), 1)` 数学错误：`rate()` 单位是"每秒"，低话务全量故障时 ratio 被压到 0.01，恰好不触发 | `as-alerts.yaml:30` | Major |
-| C-3 | `ASTelemetryDropped` 阈值 `> 0` 等价于"发生一次即告警"（配合 `for: 15m`），与 description 的"持续上升"语义不符 | `as-alerts.yaml:49` | Major |
-| C-4 | `ASActiveCallsSurge` 在零基线时任意非零即触发；`sum()` 抹掉 `use_case` 维度 | `as-alerts.yaml:104` | Minor |
-| C-5 | 8 条规则均无 `runbook` / `runbook_url`；无 `absent()` 类规则，指标从未出现不会告警 | `as-alerts.yaml` 全文 | Minor |
+| C-1 | The above 6 rules never fire, and `promtool check rules` reports no error (PromQL permits referencing a non-existent metric); there is no `promtool` execution point anywhere in the repo | `as-alerts.yaml:86,123,140,157,23-31,49`; neither the Makefile nor the tests have promtool | **Blocker** |
+| C-2 | The denominator of `ASHighErrorRatio`, `clamp_min(sum(rate(...)), 1)`, is mathematically wrong: the unit of `rate()` is "per second", so during a low-traffic full outage the ratio is compressed to 0.01, which is exactly the non-firing case | `as-alerts.yaml:30` | Major |
+| C-3 | The `> 0` threshold of `ASTelemetryDropped` is equivalent to "alert on a single occurrence" (combined with `for: 15m`), which does not match the "持续上升" semantics in the description | `as-alerts.yaml:49` | Major |
+| C-4 | `ASActiveCallsSurge` fires on any non-zero value against a zero baseline; `sum()` erases the `use_case` dimension | `as-alerts.yaml:104` | Minor |
+| C-5 | None of the 8 rules has a `runbook` / `runbook_url`; there are no `absent()`-style rules, so a metric that never appears will not alert | the full text of `as-alerts.yaml` | Minor |
 
-### 5.2 平台代码：模拟 seam 进入生产路径
+### 5.2 Platform code: the simulated seam has entered the production path
 
-| # | 问题 | 证据 | 严重度 |
+| # | Issue | Evidence | Severity |
 |---|---|---|---|
-| C-6 | **缩容保护是"死配置"**：`load_downscale_guard_config()` 读进来只 `logging.info`；`guard.enabled` / `protect_when_active_calls_above` 全仓无消费点；`plan_scale_down` 除测试外只在 kind 脚本中被手工调用。Helm 确实下发了 `AS_DOWNSCALE_GUARD_*`（`configmap.yaml:69-70`），形成"配了但不生效"的假象 | `__main__.py:119-124`；`downscale_config.py:40,46`；`plan.md:227`（只证明了"读取"，不证明"生效"） | **Blocker** |
-| C-7 | **OTLP 导出是空壳**：配了 `OTEL_EXPORTER_OTLP_ENDPOINT` 也只创建 `BoundedQueueSink(capacity=256)` 而不传 exporter → `NoOpExporter`，数据入队即丢弃；`export_failure_count` 永远为 0，运维无从发现 | `__main__.py:147-150,169`；`telemetry/__init__.py:77-86,129` | Major |
-| C-8 | **模拟计数 seam 进入生产类**：`ActiveCallSource.__init__` 无条件读 `AS_M5_SIMULATED_ACTIVE_CALLS`，`count()` 把假计数并入真实返回值；该 env 被 Helm 渲染为正式字段（`simulatedActiveCalls`） | `runtime/active_calls.py:22-29,49,68-76`；`deploy/helm/templates/deployment.yaml:99-102` | Major |
-| C-9 | `record_response` / `record_rule_hit` / `record_telemetry_dropped` 零生产调用点，指标永不递增 | grep 全仓 `*.py` | Major |
-| C-10 | `AS_DOWNSCALE_GUARD_*` 解析失败抛 `ValueError`，但加载点在 `try` 块**之外**（`try` 自 `:179` 开始）→ 配置错误直接崩进程而非返回 exit code 2；且失败路径无测试 | `downscale_config.py:31,45`；`__main__.py:119` vs `:187-189` | Major |
-| C-11 | `PostgresVersionStore` 运行时接线**零测试**：`test_runtime.py` 全文无 `version_store` / `PostgresVersionStore`；表名推导 `f"{config_schema}_config_versions"` 无任何断言固定 | `services/config-service/src/as_config_service/runtime.py:278-280`；`services/config-service/tests/test_runtime.py` | Major |
-| C-12 | 4 个 M5 新文件无 `# See ADR-00NN`（AGENT.md §5 硬性要求 / REQ-G-3） | `runtime/active_calls.py`、`runtime/health.py`、`ops/downscale_config.py`、`__main__.py` | Minor |
+| C-6 | **The scale-down guard is "dead configuration"**: `load_downscale_guard_config()` reads the config in and does nothing but `logging.info`; `guard.enabled` / `protect_when_active_calls_above` have no consumer anywhere in the repo; apart from tests, `plan_scale_down` is called only manually in the kind script. Helm does deliver `AS_DOWNSCALE_GUARD_*` (`configmap.yaml:69-70`), creating the illusion of "configured but not in effect" | `__main__.py:119-124`; `downscale_config.py:40,46`; `plan.md:227` (it only proves "read", not "in effect") | **Blocker** |
+| C-7 | **OTLP export is an empty shell**: even with `OTEL_EXPORTER_OTLP_ENDPOINT` configured, it only creates `BoundedQueueSink(capacity=256)` without passing an exporter → `NoOpExporter`, and data is dropped on enqueue; `export_failure_count` stays 0 forever and ops has no way to notice | `__main__.py:147-150,169`; `telemetry/__init__.py:77-86,129` | Major |
+| C-8 | **The simulated-count seam has entered a production class**: `ActiveCallSource.__init__` unconditionally reads `AS_M5_SIMULATED_ACTIVE_CALLS`, and `count()` merges the fake count into the real return value; that env var is rendered by Helm as an official field (`simulatedActiveCalls`) | `runtime/active_calls.py:22-29,49,68-76`; `deploy/helm/templates/deployment.yaml:99-102` | Major |
+| C-9 | `record_response` / `record_rule_hit` / `record_telemetry_dropped` have zero production call sites, so the metrics never increment | grep the whole repo for `*.py` | Major |
+| C-10 | A parse failure of `AS_DOWNSCALE_GUARD_*` raises `ValueError`, but the load point is **outside** the `try` block (the `try` starts at `:179`) → a config error crashes the process directly instead of returning exit code 2; and there is no test for the failure path | `downscale_config.py:31,45`; `__main__.py:119` vs `:187-189` | Major |
+| C-11 | `PostgresVersionStore` runtime wiring has **zero tests**: the entire `test_runtime.py` never mentions `version_store` / `PostgresVersionStore`; the derived table name `f"{config_schema}_config_versions"` is not pinned by any assertion | `services/config-service/src/as_config_service/runtime.py:278-280`; `services/config-service/tests/test_runtime.py` | Major |
+| C-12 | The 4 new M5 files have no `# See ADR-00NN` (a hard requirement of AGENT.md §5 / REQ-G-3) | `runtime/active_calls.py`、`runtime/health.py`、`ops/downscale_config.py`、`__main__.py` | Minor |
 
-### 5.3 Helm：生产 profile 开箱即坏
+### 5.3 Helm: the production profile is broken out of the box
 
-| # | 问题 | 证据 | 严重度 |
+| # | Issue | Evidence | Severity |
 |---|---|---|---|
-| H-1 | **`stateStores.enabled=true` + `bootstrapDevCredentials=false` → Postgres 起不来**。`secret.yaml` 的 else 分支不写 `POSTGRES_SUPERUSER_PASSWORD` / `CONFIG_DB_OWNER_PASSWORD`，而 `state-postgres.yaml` 用非 optional 的 `secretKeyRef` 引用它们 → `CreateContainerConfigError`。**这正是 `values-onprem.example.yaml` 的组合** | `secret.yaml:30-40` vs `state-postgres.yaml:58-72` vs `values-onprem.example.yaml:8-12` | **Blocker** |
-| H-2 | **`values-onprem.example.yaml` 原样无法通过 `helm template`**：`configService.enabled=true` 而 `secretName: ""` → 模板直接 `fail`；README 第 2-3 行的安装命令必然失败，而 `chart-check` 从不以该 profile 渲染 | `values-onprem.example.yaml:31-35`；`config-service-deployment.yaml:4-6`；`chart-check.sh` 只用 `--set` | **Blocker** |
-| H-3 | `tls.enabled=true` + `secretName=""`（**默认值**）→ 卷挂载被跳过，但 ConfigMap 无条件输出 `SIP_TLS_ENABLED: "true"`，fail-open | `deployment.yaml:138` vs `configmap.yaml:33-39`；`values.yaml:211-217` | Major |
-| H-4 | `sip.peerAllowlist` 默认空串，chart 侧不 fail-closed（ADR-0016 的核心控制退化为"靠进程自觉"） | `values.yaml:148`；`NOTES.txt:27-30` | Major |
-| H-5 | 明文口令进入 values；`state-migrate-job.yaml` 把 owner 口令作为**明文 env value**，`kubectl get job -o yaml` 即可读 | `values.yaml:160-165`；`state-migrate-job.yaml:16,67-68` | Major |
-| H-6 | `secretKeyRef: optional: true` + 空 `postgres.host` / `database` → 渲染出 `postgresql://:@:5432/`，Pod 正常起、运行时才失败；DSN 未做 URL 编码 | `deployment.yaml:69-89`；`secret.yaml:16-40`；`values.yaml:200-207` | Major |
-| H-7 | 含 `@` 的 `REDIS_URL` 被**静默丢弃**，无任何提示 | `configmap.yaml:43` | Major |
-| H-8 | NetworkPolicy 只有 `policyTypes: [Ingress]`（无 Egress），且源为任意带 `app.kubernetes.io/part-of: 3rdparty-as` 标签的 Pod → 同标签任意 Pod 可直连 5432/6379 | `state-networkpolicy.yaml:18-24` | Major |
-| H-9 | `postgres.port` 可配置，但 config-service Secret / migrate Job / NetworkPolicy 三处硬编码 `5432` | `values.yaml:202` vs 三处 | Major |
-| H-10 | `minAvailable: 0` 因 falsy 判定静默不渲染；`minAvailable >= replicas` 无校验会致节点 drain 死锁 | `pdb.yaml:11`；`deployment.yaml:29` | Minor |
-| H-11 | 无 `resources` → BestEffort QoS；AS 无 startupProbe；config-service 用 `tcpSocket` 探针且无 preStop / PDB | `values.yaml:103,107,128`；`config-service-deployment.yaml:78-91` | Minor |
+| H-1 | **`stateStores.enabled=true` + `bootstrapDevCredentials=false` → Postgres cannot start.** The else branch of `secret.yaml` does not write `POSTGRES_SUPERUSER_PASSWORD` / `CONFIG_DB_OWNER_PASSWORD`, while `state-postgres.yaml` references them via a non-optional `secretKeyRef` → `CreateContainerConfigError`. **This is exactly the combination in `values-onprem.example.yaml`** | `secret.yaml:30-40` vs `state-postgres.yaml:58-72` vs `values-onprem.example.yaml:8-12` | **Blocker** |
+| H-2 | **`values-onprem.example.yaml` cannot pass `helm template` as-is**: `configService.enabled=true` while `secretName: ""` → the template `fail`s outright; the install command on lines 2-3 of the README must fail, and `chart-check` never renders with that profile | `values-onprem.example.yaml:31-35`; `config-service-deployment.yaml:4-6`; `chart-check.sh` only uses `--set` | **Blocker** |
+| H-3 | `tls.enabled=true` + `secretName=""` (**the default**) → the volume mount is skipped, but the ConfigMap unconditionally emits `SIP_TLS_ENABLED: "true"`, i.e. fail-open | `deployment.yaml:138` vs `configmap.yaml:33-39`; `values.yaml:211-217` | Major |
+| H-4 | `sip.peerAllowlist` defaults to the empty string and the chart side does not fail closed (ADR-0016's core control degrades into "relying on the process's own restraint") | `values.yaml:148`; `NOTES.txt:27-30` | Major |
+| H-5 | A plaintext password enters the values; `state-migrate-job.yaml` puts the owner password in as a **plaintext env value**, readable with `kubectl get job -o yaml` | `values.yaml:160-165`; `state-migrate-job.yaml:16,67-68` | Major |
+| H-6 | `secretKeyRef: optional: true` + empty `postgres.host` / `database` → renders `postgresql://:@:5432/`; the Pod starts normally and only fails at runtime; the DSN is not URL-encoded | `deployment.yaml:69-89`; `secret.yaml:16-40`; `values.yaml:200-207` | Major |
+| H-7 | A `REDIS_URL` containing `@` is **silently dropped**, with no message at all | `configmap.yaml:43` | Major |
+| H-8 | The NetworkPolicy has only `policyTypes: [Ingress]` (no Egress), and its source is any Pod bearing the `app.kubernetes.io/part-of: 3rdparty-as` label → any Pod with the same label can connect straight to 5432/6379 | `state-networkpolicy.yaml:18-24` | Major |
+| H-9 | `postgres.port` is configurable, but `5432` is hardcoded in three places: the config-service Secret, the migrate Job, and the NetworkPolicy | `values.yaml:202` vs the three places | Major |
+| H-10 | `minAvailable: 0` is silently not rendered because of a falsy check; there is no validation of `minAvailable >= replicas`, which can deadlock a node drain | `pdb.yaml:11`; `deployment.yaml:29` | Minor |
+| H-11 | No `resources` → BestEffort QoS; no startupProbe on AS; config-service uses a `tcpSocket` probe and has neither preStop nor a PDB | `values.yaml:103,107,128`; `config-service-deployment.yaml:78-91` | Minor |
 
-### 5.4 kind 证据脚本：5 处伪验证
+### 5.4 kind evidence scripts: 5 instances of fake verification
 
-| # | 伪验证 | 证据 |
+| # | Fake verification | Evidence |
 |---|---|---|
-| K-1 | `m5-ingress-evidence.sh` 三个状态码**只 echo**：HTTP 非 3xx 仅 `WARN` 不退出，HTTPS / port-forward 码从不断言，结尾 `echo "recorded"` → 三个码全是 000 也 exit 0 | `:104-127` |
-| K-2 | `chart-check.sh` 的 HPA 守卫只 grep `minReplicas` 字符串、**不校验 helm 退出码**；而 `hpa.yaml:43` 正常渲染的 stdout 天然含 `minReplicas` → 把守卫删掉测试照样 PASS | `:50-57` vs `hpa.yaml:21-22,43` |
-| K-3 | `m5-7.2d-evidence.sh` item-2 无条件 PASS（else 分支直接打印 PASS）；item-3 空 secret 也打印 PASS | `:55-69` |
-| K-4 | bootstrap-admin 任何失败（口令错 / DSN 不通 / 命令不存在）都被吞成 "already complete or skipped" | `:37-42` |
-| K-5 | `m5-verify.sh` 无 kind 集群 → `exit 0`；无 config-service Pod → WARN 跳过断言，仍打印 `m5-verify: OK` | `:16-19,29-45` |
-| K-6 | `m5-ingress-evidence.sh:30` 从 GitHub `main` 拉取未 pin、无校验和的 ingress-nginx 清单 → 证据不可复现 + 供应链风险 | `:30` |
+| K-1 | `m5-ingress-evidence.sh` **only echoes** the three status codes: a non-3xx HTTP only emits `WARN` without exiting, the HTTPS / port-forward codes are never asserted, and the trailing `echo "recorded"` → all three codes can be 000 and it still exits 0 | `:104-127` |
+| K-2 | The HPA guard in `chart-check.sh` only greps the `minReplicas` string and **does not check the helm exit code**; meanwhile the normally rendered stdout of `hpa.yaml:43` naturally contains `minReplicas` → delete the guard and the test still PASSes | `:50-57` vs `hpa.yaml:21-22,43` |
+| K-3 | `m5-7.2d-evidence.sh` item-2 PASSes unconditionally (the else branch prints PASS directly); item-3 prints PASS even with an empty secret | `:55-69` |
+| K-4 | Any bootstrap-admin failure (wrong password / unreachable DSN / command missing) is swallowed into "already complete or skipped" | `:37-42` |
+| K-5 | `m5-verify.sh` with no kind cluster → `exit 0`; with no config-service Pod → WARN skips the assertion and it still prints `m5-verify: OK` | `:16-19,29-45` |
+| K-6 | `m5-ingress-evidence.sh:30` pulls an unpinned, unchecksummed ingress-nginx manifest from GitHub `main` → the evidence is not reproducible and there is supply-chain risk | `:30` |
 
-**关键定性**：所有 ISSU / 缩容证据的输入是注入的 `AS_M5_SIMULATED_ACTIVE_CALLS=3`。真实 SIP 呼叫从未驱动过 `as_active_calls`（`increment` / `decrement` 全仓无生产调用点）。这是"假造计数 → 观察假计数下降 → 断言通过"的自证式取证。
+**Key characterization**: the input to all ISSU / scale-down evidence is the injected `AS_M5_SIMULATED_ACTIVE_CALLS=3`. A real SIP call has never driven `as_active_calls` (`increment` / `decrement` have no production call sites anywhere in the repo). This is self-confirming forensics of the form "fabricate a count → observe the fake count drop → assert it passed".
 
 ---
 
-## 6. Testing 与门禁
+## 6. Testing and gates
 
-### 6.1 核心问题：门禁不会因为 M5 的问题而变红
+### 6.1 Core problem: the gate will not go red because of M5's problems
 
-| 事实 | 证据 |
+| Fact | Evidence |
 |---|---|
-| `make gate` = `lint type test-unit`，**不含 chart-check** | `Makefile:62` |
-| ② integration 无 PG service、无 `AS_PG_TEST_DSN` → 13 个文件中 11 个 `pytest.skip`，实际只跑 1-2 个；"142 passed" 是本地 compose PG 的数字，无 PG 环境产不出来 | AGENT.md §9 |
-| `make gate-strict` / AST 扫描**完全不存在**，但 AGENT.md:176、ADR-0015、prd.md:507 都写成既有能力 → REQ-G-3 无处执行 | Makefile 无此目标；全仓无 AST 扫描脚本 |
-| `.PHONY` 漏 4 个 m5 目标 | `Makefile:6` |
+| `make gate` = `lint type test-unit`, **it does not include chart-check** | `Makefile:62` |
+| ② integration has no PG service and no `AS_PG_TEST_DSN` → 11 of 13 files `pytest.skip`, so in practice only 1-2 run; the "142 passed" figure comes from a local compose PG and cannot be produced without a PG environment | AGENT.md §9 |
+| `make gate-strict` / the AST scan **do not exist at all**, yet AGENT.md:176、ADR-0015、prd.md:507 all describe them as existing capabilities → REQ-G-3 has nowhere to run | the Makefile has no such target; the repo has no AST scan script |
+| `.PHONY` misses 4 m5 targets | `Makefile:6` |
 
-**结论**：M5 关门证据的三项（`make gate` / `chart-check` / `test-integration-compose`）每一项单独看都真实可失败，但**合起来不等于"M5 通过了门禁"** —— M5 的交付物没有任何一层自动化门禁覆盖。`make gate` 的绿与 M5 是否完成**在技术上无关**。
+**Conclusion**: each of the three M5 closure-evidence items (`make gate` / `chart-check` / `test-integration-compose`) is individually real and can genuinely fail, but **together they do not mean "M5 passed the gate"** —— no layer of automated gating covers M5's deliverables at all. Whether `make gate` is green is **technically unrelated** to whether M5 is complete.
 
-### 6.2 测试层实况
+### 6.2 Actual state of the test layers
 
-| 层 | marker | 文件数 | 状态 |
+| Layer | marker | File count | Status |
 |---|---|---|---|
-| ① unit | `unit` | 42 | 真跑、真红（含 3 个守卫） |
-| ① contract | `contract` | 5 | 真跑 |
-| ② integration | `integration` | 13 | 无 PG 环境时 11 个 skip；本地需 compose PG |
-| ③ e2e | `e2e` | **0** | 至今没有任何测试 |
-| ④ performance | `performance` | **0** | `testbed/load/` 下 0 个测试文件 |
+| ① unit | `unit` | 42 | Really runs, really goes red (incl. 3 guards) |
+| ① contract | `contract` | 5 | Really runs |
+| ② integration | `integration` | 13 | 11 skip without a PG environment; locally requires a compose PG |
+| ③ e2e | `e2e` | **0** | No test whatsoever to date |
+| ④ performance | `performance` | **0** | 0 test files under `testbed/load/` |
 
-pytest 配置健康：无 `conftest.py`、无 `deselect`、无 `xfail`、无 `-k` / `-m not` 过滤；报告中的 "deselected" 是 `-m "unit or contract"` 的自然反选。
+The pytest configuration is healthy: no `conftest.py`, no `deselect`, no `xfail`, no `-k` / `-m not` filtering; the "deselected" in the report is the natural inverse selection of `-m "unit or contract"`.
 
-### 6.3 测试质量
+### 6.3 Test quality
 
-正面：未发现 `assert True`、未发现"只调用不断言"、未发现 mock 掉被测逻辑；`test_downscale_guard.py:138-163` 的纯度探针、`test_telemetry_export_integration.py` 的真 socket + 条件变量，质量高。
+Positive: no `assert True` was found, no "call without asserting" was found, and no mocking-away of the logic under test; the purity probes in `test_downscale_guard.py:138-163` and the real socket + condition variable in `test_telemetry_export_integration.py` are of high quality.
 
-| # | 问题 | 证据 | 严重度 |
+| # | Issue | Evidence | Severity |
 |---|---|---|---|
-| T-1 | **feature 开关只有解析层测试，无开 / 关两态的行为测试**。`AS_DOWNSCALE_GUARD_ENABLED` 已引入，但没有任何测试证明"关闭时行为不同"（事实上确实没不同，见 C-6）；ADR-0020 要求的默认态 / 灰度策略 / 移除条件在代码与注释中均未见 | `test_downscale_config.py:12-25`（全文件仅 4 条断言）；AGENT.md:109,151,287 | **Blocker** |
-| T-2 | `test_downscale_config.py` 无任何非法输入失败路径（`_parse_bool` 的 `ValueError`、非整数阈值的 `ValueError`） | `downscale_config.py:31,45` | Major |
-| T-3 | `test_health_server.py` 仅 `assert "as_active_calls" in body`，不校验 TYPE / 标签 / 数值；404 分支未测；4 类断言挤在单一 test 内，前一条失败即掩盖后续 | `:42-52` | Minor |
-| T-4 | `test_active_calls_source.py:22-35` 整体是在给生产模拟 seam 写合法性背书 | `:22-35` | Minor |
-| T-5 | 测试注释普遍只引 ADR / test-plan，不引 REQ 编号（对比 `version_store.py:40` 有 `REQ-NF-10`） | `test_downscale_guard.py`、`test_metrics.py`、`test_shell.py` | Minor |
+| T-1 | **The feature switch has only parsing-level tests, with no behavior tests for the on / off states.** `AS_DOWNSCALE_GUARD_ENABLED` has been introduced, but no test proves that "behavior differs when disabled" (in fact it does not differ; see C-6); the default state / canary strategy / removal conditions required by ADR-0020 appear neither in the code nor in the comments | `test_downscale_config.py:12-25` (only 4 assertions in the whole file); AGENT.md:109,151,287 | **Blocker** |
+| T-2 | `test_downscale_config.py` has no invalid-input failure paths at all (the `ValueError` of `_parse_bool`, the `ValueError` for a non-integer threshold) | `downscale_config.py:31,45` | Major |
+| T-3 | `test_health_server.py` only does `assert "as_active_calls" in body`, without validating TYPE / labels / values; the 404 branch is untested; 4 kinds of assertion are crammed into a single test, so the first failure masks the rest | `:42-52` | Minor |
+| T-4 | `test_active_calls_source.py:22-35` as a whole is vouching for the legitimacy of the production simulation seam | `:22-35` | Minor |
+| T-5 | Test comments generally cite only the ADR / test-plan and never REQ numbers (compare `version_store.py:40`, which has `REQ-NF-10`) | `test_downscale_guard.py`、`test_metrics.py`、`test_shell.py` | Minor |
 
 ---
 
-## 7. 建议的最小修复集（按性价比排序）
+## 7. Recommended minimum fix set (ordered by cost-effectiveness)
 
-1. **告警**：删掉或实现 4 个不存在指标对应的规则；给 `record_response` / `record_rule_hit` 接真实调用点；修 `clamp_min` 数学错误与 `> 0` 阈值；在有 `promtool` 的环境跑一次 `promtool check rules`。
-2. **缩容保护**：让 `guard.enabled` / `protect_when_active_calls_above` 真正参与判定（或删除配置项并同步改文档），补开 / 关两态行为测试与非法输入测试。
-3. **Helm**：修 `secret.yaml` else 分支缺 key（H-1）；让 `values-onprem.example.yaml` 可渲染并将其纳入 chart-check 矩阵（H-2）；`tls.secretName` 为空时 `fail`（H-3）；`peerAllowlist` 为空时 `fail`（H-4）。
-4. **伪验证**：修 K-1 ~ K-5 五处（核心是"断言必须能失败"+"校验退出码"），pin 住 ingress-nginx 清单（K-6）。
-5. **门禁**：`chart-check` 进 `make gate`（兑现 `plan.md:260` 已声称的行为）；批量跑 integration 前起 compose PG 并设 `AS_PG_TEST_DSN`；给 e2e / performance 加"该层有用例时必须阻塞"的守卫；补 `gate-strict` + AST 扫描，或把 AGENT.md / ADR-0015 / PRD 中的措辞改为"尚未实现"。
-6. **文档链**：HLD / LLD 补 M5 章节（`stateStores`、downscale 配置、模拟 seam、health/metrics、ingress），并改掉"PG/Redis 在 chart 外""真实集群未跑"等陈旧表述；ADR-0008 加 Amendment 处理与 ADR-0026 的 SPoF 冲突；`新系统整体架构.md` §6.2/§6.3/§8 的 sippy 前提事实按 ADR-0019 更新；补 7.2d 的 REQ 出处或显式登记为无源关门条件。
-7. **证据可复核**：把 `artifacts/m5/` 从 `.gitignore` 放开或改存至仓库内 `docs/acceptance/artifacts/`，否则所有 "PASS" 都是对不存在文件的转述。
+1. **Alerts**: delete or implement the 4 rules that correspond to non-existent metrics; wire real call sites into `record_response` / `record_rule_hit`; fix the `clamp_min` math error and the `> 0` threshold; run `promtool check rules` once in an environment that has `promtool`.
+2. **Scale-down guard**: make `guard.enabled` / `protect_when_active_calls_above` genuinely take part in the decision (or delete the config items and update the docs accordingly), and add behavior tests for both the on and off states plus invalid-input tests.
+3. **Helm**: fix the missing keys in the else branch of `secret.yaml` (H-1); make `values-onprem.example.yaml` renderable and add it to the chart-check matrix (H-2); `fail` when `tls.secretName` is empty (H-3); `fail` when `peerAllowlist` is empty (H-4).
+4. **Fake verification**: fix the five spots K-1 ~ K-5 (the core is "an assertion must be able to fail" + "check the exit code"), and pin the ingress-nginx manifest (K-6).
+5. **Gates**: fold `chart-check` into `make gate` (delivering the behavior already claimed in `plan.md:260`); start a compose PG and set `AS_PG_TEST_DSN` before running integration in bulk; add a guard to e2e / performance meaning "if that layer has cases, it must block"; add `gate-strict` + the AST scan, or else change the wording in AGENT.md / ADR-0015 / the PRD to "not yet implemented".
+6. **Document chain**: add M5 chapters to HLD / LLD (`stateStores`, the downscale configuration, the simulation seam, health/metrics, ingress), and remove stale statements such as "PG/Redis 在 chart 外" "真实集群未跑"; add an Amendment to ADR-0008 addressing the SPoF conflict with ADR-0026; update the sippy premise facts in §6.2/§6.3/§8 of `system-architecture.md` per ADR-0019; add a REQ origin for 7.2d or explicitly register it as a sourceless gate-closure condition.
+7. **Reviewable evidence**: un-ignore `artifacts/m5/` in `.gitignore` or move it into the repo at `docs/acceptance/artifacts/`, otherwise every "PASS" is a restatement about files that do not exist.
 
 ---
 
-## 8. 签字
+## 8. Sign-off
 
-| 项 | 记录 |
+| Item | Record |
 |---|---|
-| 评审结论 | **不通过（Not approved）** |
-| 建议处置 | 撤销 / 降级 2026-10-04 M5 工程关门签字；按 §7 修复后重新评审 |
-| 评审人 | AI agent（维护者指派），2026-10-05 |
-| 维护者确认 | **待签字**（本栏须由维护者填写；本记录不构成 REQ 级验收，也不替代 M5 关门裁决） |
-| 未采信证据 | `docs/reviews/` 下所有 `m5-*` 评审记录（维护者判定不可信） |
+| Review conclusion | **Fail (Not approved)** |
+| Recommended disposition | Revoke / downgrade the 2026-10-04 M5 engineering-closure sign-off; fix per §7 and re-review |
+| Reviewer | AI agent (assigned by the maintainer), 2026-10-05 |
+| Maintainer confirmation | **Awaiting sign-off** (this field must be filled in by the maintainer; this record does not constitute REQ-level acceptance, nor does it replace the M5 closure adjudication) |
+| Evidence not accepted | All `m5-*` review records under `docs/reviews/` (judged untrustworthy by the maintainer) |

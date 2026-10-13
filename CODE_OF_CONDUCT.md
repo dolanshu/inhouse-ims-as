@@ -12,43 +12,39 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 行为准则（Code of Conduct）
+# Code of Conduct
 
-## 我们的承诺（Our pledge）
+## Our pledge
 
-作为贡献者与维护者，我们承诺让每个人都能在本项目中获得不受骚扰的参与体验，
-不论年龄、体型、可见或不可见的残障、族裔、性征、性别认同与表达、经验水平、
-教育程度、社会经济地位、国籍、外貌、宗教，或性取向与性别身份。
+As contributors and maintainers, we pledge to make participation in this project a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, religion, or sexual orientation and gender identity.
 
-## 我们的标准（Our standards）
+## Our standards
 
-有助于营造积极环境的行为示例：
+Examples of behavior that contributes to a positive environment:
 
-- 专注于对项目和审稿人最有利的事。
-- 尊重不同的意见、观点和经历。
-- 善意地给出并接受建设性反馈，尤其是在评审中。
-- 为自己的错误负责，并从中学习。
+- Focusing on what is best for the project and for reviewers.
+- Respecting differing opinions, viewpoints, and experiences.
+- Giving and gracefully accepting constructive feedback, especially during review.
+- Taking responsibility for our mistakes and learning from them.
 
-不可接受的行为示例：
+Examples of unacceptable behavior:
 
-- 性化的语言或图像，以及不受欢迎的性关注或性骚扰。
-- 挑衅、侮辱或贬损性评论，以及人身或政治攻击。
-- 公开或私下的骚扰，以及在未经许可的情况下公开他人的私人信息。
-- 因为提问者刚接触 IMS 或 SIP 就轻视或贬低其问题。
+- Sexualized language or imagery, and unwelcome sexual attention or advances.
+- Trolling, insulting or derogatory comments, and personal or political attacks.
+- Public or private harassment, and publishing others' private information without permission.
+- Dismissing or belittling someone's question because they are new to IMS or SIP.
 
-## 执行（Enforcement）
+## Enforcement
 
-任何辱虐、骚扰或其他不可接受的行为，都可向项目维护者 Dolan Shu
-（<dolan.d.shu@gmail.com>）举报。所有投诉都会被及时、公正地审查与调查。
-维护者有义务尊重任何事件举报人的隐私与安全。
+Abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainer Dolan Shu (<dolan.d.shu@gmail.com>). All complaints will be reviewed and investigated promptly and fairly. The maintainer is obligated to respect the privacy and safety of any incident reporter.
 
-## 执行准则（Enforcement guidelines）
+## Enforcement guidelines
 
-1. **纠正（Correction）** —— 一封私下的书面警告，说明违规性质以及为何该行为不当。
-2. **警告（Warning）** —— 带有后果警告，包括一段与相关人停止互动的期限。
-3. **临时封禁（Temporary ban）** —— 临时禁止与项目或公开沟通互动。
-4. **永久封禁（Permanent ban）** —— 永久禁止在本项目内进行任何形式的公开互动。
+1. **Correction** — A private, written warning explaining the nature of the violation and why the behavior was inappropriate.
+2. **Warning** — A warning with consequences, including a period during which the person must cease interaction with those involved.
+3. **Temporary ban** — A temporary ban from interacting with the project or public communication.
+4. **Permanent ban** — A permanent ban from any form of public interaction within this project.
 
-## 出处（Attribution）
+## Attribution
 
-本行为准则改编自 [Contributor Covenant](https://www.contributor-covenant.org)，版本 2.1。
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.

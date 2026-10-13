@@ -12,50 +12,50 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# M1 至 HEAD 代码评审记录
+# M1 to HEAD code review record
 
-> 评审对象：`d63cfb70b5b917a6575af1d271b3bef2efd600a1` 至 `cbbd2eccc4025367147fa1c6eb64c01dc80d1371`（`git diff d63cfb7...HEAD`；48 commits，203 changed files）
-> 评审日期：2026-09-30
-> 评审人：AI agent
-> 规格依据：`docs/plan.md`
-> 评审结论：**待裁决** —— 本记录保留 Standards 与 Spec 两轴发现，不作通过或不通过裁决。
+> Review target: `d63cfb70b5b917a6575af1d271b3bef2efd600a1` to `cbbd2eccc4025367147fa1c6eb64c01dc80d1371` (`git diff d63cfb7...HEAD`; 48 commits, 203 changed files)
+> Review date: 2026-09-30
+> Reviewer: AI agent
+> Specification basis: `docs/plan.md`
+> Review conclusion: **pending adjudication** — this record retains findings on both the Standards and Spec axes and renders no pass/fail verdict.
 
 ## Standards
 
-| # | 严重性 | 发现与证据 |
+| # | Severity | Finding and evidence |
 |---|---|---|
-| 1 | [blocking] | `testbed/simulators/resip-probe/resip_probe.cxx` 中的中文代码注释、日志和错误信息违反已提交 `AGENT.md` §5“产物的语言：英文”要求。证据：文件第 1、428、467 行。 |
-| 2 | [blocking] | `ProbeInviteHandler::onConnected` 中执行阻塞调用 `std::this_thread::sleep_for(std::chrono::milliseconds(200))`，违反 `AGENT.md` §5 关于不得在 SIP 回调中执行阻塞操作的要求。证据：`testbed/simulators/resip-probe/resip_probe.cxx:250`。 |
-| 3 | [suggestion, judgement call: Duplicated Code] | 最长前缀候选项的 `max` 选择逻辑重复：`apps/anti-fraud/src/as_anti_fraud/decision.py:90` 与 `apps/translation/src/as_translation/decision.py:96` 均使用 `return max(candidates, key=lambda candidate: candidate[0])[1]`。 |
-| 4 | [suggestion, judgement call: Duplicated Code] | `_load_bindings` 中的导入、`ImportError` 指引及 `SystemExit` 逻辑重复：`testbed/probe/e1_baseline_probe.py:267` 与 `testbed/probe/tls_hot_rotation_probe.py:144`。 |
+| 1 | [blocking] | Chinese code comments, logs and error messages in `testbed/simulators/resip-probe/resip_probe.cxx` violate the committed `AGENT.md` §5 "language of artifacts: English" requirement. Evidence: lines 1, 428, 467 of the file. |
+| 2 | [blocking] | `ProbeInviteHandler::onConnected` performs the blocking call `std::this_thread::sleep_for(std::chrono::milliseconds(200))`, violating the `AGENT.md` §5 requirement that blocking operations must not be performed in SIP callbacks. Evidence: `testbed/simulators/resip-probe/resip_probe.cxx:250`. |
+| 3 | [suggestion, judgement call: Duplicated Code] | Duplicated `max` selection logic for the longest-prefix candidate: `apps/anti-fraud/src/as_anti_fraud/decision.py:90` and `apps/translation/src/as_translation/decision.py:96` both use `return max(candidates, key=lambda candidate: candidate[0])[1]`. |
+| 4 | [suggestion, judgement call: Duplicated Code] | Duplicated import, `ImportError` guidance and `SystemExit` logic in `_load_bindings`: `testbed/probe/e1_baseline_probe.py:267` and `testbed/probe/tls_hot_rotation_probe.py:144`. |
 
-格式、lint、类型等工具强制检查项未重复报告。
+Tool-enforced checks such as formatting, lint and typing are not reported again.
 
 ## Spec
 
-| # | 严重性 | 发现与证据 |
+| # | Severity | Finding and evidence |
 |---|---|---|
-| 1 | [important] | M5 要求“缩容不掉呼叫”（`docs/plan.md:120`），但缩容保护仅给出判定结果，未接入执行路径：守卫位于 `platform/src/as_platform/ops/downscale_guard.py:19,91`；HPA 直接以 Deployment 为目标，见 `deploy/helm/templates/hpa.yaml:38,40`；`plan_scale_down` 在运行时守卫模块之外没有使用点。 |
-| 2 | [important] | M5 要求“滚动升级不掉呼叫”（`docs/plan.md:120`），但进程入口注入 `active_calls=lambda: 0`，使 drain 完成判定与真实在途呼叫脱离。证据：`platform/src/as_platform/__main__.py:78`。 |
-| 3 | [praise] | 计划透明记录 M5 仍在进行中，并说明真实集群滚动升级与缩容验证尚未完成。证据：`docs/plan.md:120`。 |
-| 4 | 范围检查 | 未发现有行为意义的范围蔓延。 |
+| 1 | [important] | M5 requires "no call loss during scale-down" (`docs/plan.md:120`), but the scale-down protection only yields a verdict and is not wired into the execution path: the guard lives at `platform/src/as_platform/ops/downscale_guard.py:19,91`; the HPA targets the Deployment directly, see `deploy/helm/templates/hpa.yaml:38,40`; `plan_scale_down` has no usage point outside the runtime guard module. |
+| 2 | [important] | M5 requires "no call loss during rolling upgrade" (`docs/plan.md:120`), but the process entry point injects `active_calls=lambda: 0`, decoupling the drain-completion verdict from real in-flight calls. Evidence: `platform/src/as_platform/__main__.py:78`. |
+| 3 | [praise] | The plan transparently records that M5 is still in progress and states that real-cluster rolling upgrade and scale-down verification are not yet complete. Evidence: `docs/plan.md:120`. |
+| 4 | Scope check | No behaviourally meaningful scope creep was found. |
 
-## 当前状态与确认签字
+## Current status and confirmation sign-off
 
-| 项 | 状态 |
+| Item | Status |
 |---|---|
-| 发现裁决 | 待裁决 |
-| 修复 | 未应用 |
-| 维护者签字 | 待定 |
-| 评审范围外 | 当前工作区中 `AGENT.md` 与 `docs/agents/` 的设置变更不属于本次评审范围 |
+| Finding adjudication | pending adjudication |
+| Fixes | not applied |
+| Maintainer sign-off | pending |
+| Out of review scope | Setup changes to `AGENT.md` and `docs/agents/` in the current working tree are outside the scope of this review |
 
-## 轴别摘要
+## Per-axis summary
 
-| 评审轴 | 记录摘要 |
+| Review axis | Record summary |
 |---|---|
-| Standards | 4 项：2 项 [blocking]，2 项 [suggestion]（均为判断性意见）。 |
-| Spec | 4 项：2 项 [important]、1 项 [praise]、1 项范围检查（未发现有行为意义的范围蔓延）。 |
-| Standards 最严重发现 | 本轴最严重问题是 SIP probe 的两项 [blocking] 发现：非英文注释、日志和错误文本，以及 SIP 回调中的阻塞 sleep。 |
-| Spec 最严重发现 | 本轴最严重问题是 M5 保呼叫验收未满足/未完成：缩容保护未接入执行路径，且运行时 drain 计数器硬编码为零。 |
+| Standards | 4 items: 2 × [blocking], 2 × [suggestion] (both are judgement calls). |
+| Spec | 4 items: 2 × [important], 1 × [praise], 1 scope check (no behaviourally meaningful scope creep found). |
+| Most severe Standards finding | The most severe issues on this axis are the two [blocking] findings on the SIP probe: non-English comments, logs and error text, plus the blocking sleep inside a SIP callback. |
+| Most severe Spec finding | The most severe issue on this axis is that the M5 call-preservation acceptance is unmet/incomplete: the scale-down protection is not wired into the execution path, and the runtime drain counter is hard-coded to zero. |
 
-以上发现均未裁决，未应用修复，维护者签字待定。
+None of the findings above have been adjudicated, no fixes have been applied, and maintainer sign-off is pending.

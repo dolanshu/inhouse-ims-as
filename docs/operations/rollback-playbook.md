@@ -12,76 +12,76 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 业务摘流 / 回退手册（Rollback Playbook）— In-house IMS Application Server
+# Traffic Removal / Rollback Playbook (Rollback Playbook) — In-house IMS Application Server
 
-> **交付物归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第二批 **2.4 ISC 触发后业务灰度 / 摘流方案 + 与 S-CSCF 侧 iFC 灰度的配合**。按该计划 §3.2，本交付物的**文档部分**属 A 类；**真实集群演练部分为 B 类**，被M8 真实集群环境（**7.2d仍 blocked**）与 S-CSCF / HSS 侧配合阻塞（评审 **G-P1-10**）。**M8 退出签字仍搁置**。
+> **Deliverable ownership**: [`../product-packaging-plan.md`](../product-packaging-plan.md) §1 second batch **2.4 Post-ISC business grayscale / traffic removal plan + coordination with S-CSCF-side iFC grayscale**. Per §3.2 of that plan, the **documentation part** of this deliverable is class A; the **real-cluster drill part is class B**, blocked by the M8 real-cluster environment (**7.2d still blocked**) and S-CSCF / HSS side cooperation (review **G-P1-10**). **M8 exit sign-off is still shelved**.
 >
-> **⚠️ iFC 触发逻辑属 S-CSCF / HSS，不在 AS 侧（评审 G-P0-5已裁决）**。本产品**只实现 ISC 触发后的业务判决与摘流 / 回退**，**不实现 iFC**。按号段 / 百分比的 **iFC 触发**必须在 OP-NET / OP-HSS 侧配置，AS 侧无从代劳。本文**只定义 AS 侧的配合接口与流程**，不把 iFC 写成 AS 侧交付物。
+> **⚠️ The iFC triggering logic belongs to the S-CSCF / HSS, not the AS side (review G-P0-5 adjudicated)**. This product **only implements the business decision and traffic removal / rollback after ISC triggering**, and **does not implement iFC**. The **iFC triggering** by number range / percentage must be configured on the OP-NET / OP-HSS side; the AS side cannot do it on their behalf. This document **only defines the AS-side cooperation interface and process**, and does not write iFC as an AS-side deliverable.
 >
-> **AS 侧不主动摘在途呼叫。** 我方能保证的是「**不主动摘在途呼叫**」；**呼叫是否进入本 AS 由 S-SBC / S-CSCF 侧的 iFC 配置与摘流动作决定**（G-P0-5 / G-P1-10）。
+> **The AS side does not proactively remove in-flight calls.** What we can guarantee is "**not proactively removing in-flight calls**"; **whether a call enters this AS is decided by the S-SBC / S-CSCF-side iFC configuration and traffic removal actions** (G-P0-5 / G-P1-10).
 >
-> **draining 证据边界**：现有 draining / 缩容 / 滚动升级的不掉呼叫证据来自 kind 上 `AS_M5_SIMULATED_ACTIVE_CALLS` **模拟**在途呼叫（**G-P1-1**）。**真实 SIP 负载下的不掉呼叫待 M7 / M8 验收**。
+> **Draining evidence boundary**: existing draining / downscale / rolling-upgrade no-dropped-call evidence comes from `AS_M5_SIMULATED_ACTIVE_CALLS` **simulated** in-flight calls on kind (**G-P1-1**). **Not dropping calls under real SIP load awaits M7 / M8 acceptance**.
 >
-> **零容量数字**：本文无 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延 / 百分比容量，也不引用 M6 dev-host 数字（O1 未裁决，`AGENT.md` §2）。**本文不含任何恢复时长承诺**；表中「恢复时间量级」一列只写**相对表述**。
+> **Zero capacity numbers**: this document contains no CPS / CAPS / BHCA / concurrency / throughput / latency / percentage capacity, and does not cite M6 dev-host numbers (O1 undecided, `AGENT.md` §2). **This document contains no recovery duration commitments**; the "recovery time magnitude" column in the table uses only **relative wording**.
 >
-> **互链**：[`runbook-l1.md`](runbook-l1.md)（日常操作）、[`runbook-l2.md`](runbook-l2.md)（深度排障）、[`fault-demarcation.md`](fault-demarcation.md)（定界）、[`backup-restore.md`](backup-restore.md)（有状态组件维护窗口）、[`../product/responsibility-matrix.md`](../product/responsibility-matrix.md)（RACI）。
+> **Cross-links**: [`runbook-l1.md`](runbook-l1.md) (daily operations), [`runbook-l2.md`](runbook-l2.md) (deep troubleshooting), [`fault-demarcation.md`](fault-demarcation.md) (demarcation), [`backup-restore.md`](backup-restore.md) (stateful component maintenance windows), [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) (RACI).
 >
-> **状态说明**：上游文档中的过期「未创建」标注已于 2026-10-10 统一清理；本文件所述的 blocked 状态（**M8 真实集群环境 / 演练**）**仍然成立**。
+> **Status note**: the outdated "not created" annotations in upstream documents were cleaned up uniformly on 2026-10-10; the blocked states described in this document (**M8 real-cluster environment / drills**) **still hold**.
 >
-> **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
+> **B6 review status**: this document has been reviewed under B6 with a review record left — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 first review) and §7 (2026-10-12 closure re-review); **the conclusion awaits maintainer confirmation** and must not serve as a basis for external delivery or acceptance before confirmation (`AGENT.md` §3.3).
 
 ---
 
-## 1. 边界声明（三段式）
+## 1. Boundary Statement (Three-Part)
 
-| 段 | 内容 |
+| Part | Content |
 |---|---|
-| **我方负责** | ① ISC 触发后的**业务判决**（`decide()` 纯函数，可重放）；② **业务规则灰度**：运行态覆盖的判定粒度固定为**号段 + 稳定哈希百分比**（ADR-0021，`in_bucket` 用 `fnv1a32(call_id) % 100`，**按 Call-ID 判定、幂等**）；③ **摘流 / 回退的执行**（draining、Pod 级摘除、镜像回退）；④ **配置版本回滚**（变更单状态机，ADR-0006）；⑤ 提供给对方对齐的**字段契约与日志检索键** |
-| **对方负责** | ① **iFC 签约与触发配置**（按号段 / 百分比触发 ISC）—— OP-NET **A/R**、OP-HSS R；② trunk 建立、拓扑与优先级、摘流动作 —— OP-SBC；③ 呼叫是否进入本 AS 的决定权；④ 变更窗口批准（网络侧窗口 A 角是 OP-NET） |
-| **联合动作** | ① iFC 触发比例与 AS 侧 override 比例的**联合标定**；② 灰度期行为分布的联合观测；③ 摘流与放行的联合验证；④ 回退演练与证据互认（§5） |
+| **Our responsibility** | ① the **business decision** after ISC triggering (`decide()` pure function, replayable); ② **business rule grayscale**: the evaluation granularity of runtime overrides is fixed as **number range + stable-hash percentage** (ADR-0021, `in_bucket` uses `fnv1a32(call_id) % 100`, **judged by Call-ID, idempotent**); ③ **execution of traffic removal / rollback** (draining, Pod-level draining, image rollback); ④ **configuration version rollback** (change order state machine, ADR-0006); ⑤ the **field contract and log search keys** provided to the peer for alignment |
+| **Peer responsibility** | ① **iFC subscription and trigger configuration** (triggering ISC by number range / percentage) — OP-NET **A/R**, OP-HSS R; ② trunk establishment, topology and priority, traffic removal actions — OP-SBC; ③ the decision power over whether a call enters this AS; ④ change window approval (the network-side window's A role is OP-NET) |
+| **Joint actions** | ① the **joint calibration** of the iFC trigger ratio and the AS-side override ratio; ② the joint observation of behavior distribution during the grayscale period; ③ the joint verification of traffic removal and pass-through; ④ rollback drill and mutual recognition of evidence (§5) |
 
-**一句话**：AS 侧只拥有「ISC 触发之后的判决、摘流与回退」；触发之前的接入决策（iFC 签约、触发、灰度）全部在OP-NET / OP-HSS / OP-SBC 侧。
+**In one sentence**: the AS side only owns "the decision, traffic removal, and rollback after ISC triggering"; all pre-trigger access decisions (iFC subscription, triggering, grayscale) are on the OP-NET / OP-HSS / OP-SBC side.
 
 ---
 
-## 2. 回退层次
+## 2. Rollback Levels
 
-**层次由轻到重**。选择原则：**先用影响面最小、最不需要对方配合的一层**；只有当上一层无法达成目标时才下沉一层。**下沉不等于升级**—— L4 摘流仍可由 AS-Vendor决策 + OP-NOC 执行。
+**Levels from light to heavy**. Selection principle: **first use the level with the smallest blast radius and least need for peer cooperation**; only descend a level when the previous level cannot achieve the goal. **Descending is not escalating** — L4 traffic removal can still be decided by AS-Vendor + executed by OP-NOC.
 
-| 层次 | 触发条件 | 动作 | 影响面 | 恢复时间量级（**相对表述，不含时长承诺**） | 依赖 |
+| Level | Trigger condition | Action | Blast radius | Recovery time magnitude (**relative wording, no duration commitment**) | Dependencies |
 |---|---|---|---|---|---|
-| **L0** 业务规则灰度收窄 | 新判决逻辑在灰度池内行为不符预期，但仅限部分号段 | 通过 **runtime override** 收窄：按**号段**置`enabled=false`，或把稳定哈希**百分比**调到更小 | 只影响override 覆盖的号段 / 比例；**热判定、不重启** | 最短（热判定，下一次判决即生效，无需重启、无需对方动作） | override 的**当前实现状态见下方注记** |
-| **L1** 变更单回滚 | 配置版本 vN 生效后行为异常 | 控制台 / config-service 发起 `roll_back` → 变更单进入 `ROLLED_BACK`（终态），生效标记回退一个不可变版本行（vN-1）；灰度分发随之回退 | 全部实例的该配置版本；**审计链完整保留** | 短（走既有分发链路 + 健康检查）；**健康检查失败会自动回滚**（见 §2.1） | 不需要对方配合 |
-| **L2** AS 业务逻辑整体关闭 / 摘流 | AS 业务逻辑本身判错，影响面覆盖全部号段 | 用**部署级总开关**关闭 AS 业务逻辑，呼叫**放行到下一环节**（即 AS 侧不再改写 / 不再拒绝） | 全部用例、全部号段 | 比 L1 重（仍走变更流水线，**不是**独立通道）；**不得**用 L0 覆盖全部号段来代替总开关 | 部署级总开关走 ADR-0006 变更流水线（ADR-0020）；**实现现状见 §2.2** |
-| **L3** 镜像版本回退 | 新镜像引入缺陷、或与规则 schema 不兼容 | `helm history` → `helm rollback <revision>` → `kubectl rollout status`（原文见 §2.3） | 全部 Pod 的镜像 / manifest；**draining 在退出路径上生效**（ADR-0009） | 最重（要走完整的 Pod 替换周期，且存量呼叫须自然跑完） | 需要维护窗口 |
-| **L4** 摘流（Pod 级 draining） | 缩容 / 升级 / 实例异常，需要把实例移出轮转 | readiness 转 `503` → Endpoint 摘流 → 等 `as_active_calls` 归零 → 删除 Pod（**不得 SIGKILL**） | 单个 Pod / 单个用例 | 与存量呼叫时长相关，**不可压缩**（ISSU = draining，ADR-0009） | 不需要对方配合；**不需要在途状态迁移** |
+| **L0** Business rule grayscale narrowing | New decision logic behaves unexpectedly in the grayscale pool, but limited to some number ranges | Narrow via **runtime override**: set `enabled=false` by **number range**, or tune the stable-hash **percentage** smaller | Only affects the number ranges / proportions covered by the **override**; **hot evaluation, no restart** | Shortest (hot evaluation, takes effect at the next decision, no restart, no peer action) | The **current implementation status of the override see the note below** |
+| **L1** Change order rollback | Abnormal behavior after configuration version vN takes effect | Initiate `roll_back` from the console / config-service → the change order enters `ROLLED_BACK` (terminal state), the effective marker rolls back one immutable version row (vN-1); grayscale distribution rolls back accordingly | That configuration version across all instances; **the audit chain is fully preserved** | Short (via the existing distribution chain + health checks); **a failed health check triggers automatic rollback** (see §2.1) | No peer cooperation needed |
+| **L2** AS business logic overall off / traffic removal | The AS business logic itself decides wrong, with blast radius covering all number ranges | Use the **deployment-level master switch** to turn off the AS business logic, and calls are **passed through to the next stage** (i.e., the AS side no longer rewrites / no longer rejects) | All use cases, all number ranges | Heavier than L1 (still goes through the change pipeline, **not** an independent channel); **must not** use an L0 override covering all number ranges as a substitute for the master switch | The deployment-level master switch goes through the ADR-0006 change pipeline (ADR-0020); **current implementation status see §2.2** |
+| **L3** Image version rollback | New image introduces defects, or is incompatible with the rule schema | `helm history` → `helm rollback <revision>` → `kubectl rollout status` (commands as written see §2.3) | The image / manifest of all Pods; **draining takes effect on the exit path** (ADR-0009) | Heaviest (requires the full Pod replacement cycle, and existing calls must run to completion naturally) | Requires a maintenance window |
+| **L4** Traffic removal (Pod-level draining) | Downscale / upgrade / instance anomaly, need to move an instance out of rotation | readiness to `503` → Endpoint traffic removal → wait for `as_active_calls` to reach zero → delete the Pod (**must not SIGKILL**) | A single Pod / a single use case | Correlated with the duration of existing calls, **not compressible** (ISSU = draining, ADR-0009) | No peer cooperation needed; **no in-flight state migration needed** |
 
-### 2.1 L1 的自动回滚语义（照抄实现）
+### 2.1 L1's Automatic Rollback Semantics (copied verbatim from the implementation)
 
-灰度分发过程中**任一批次健康检查不通过即自动回滚**：
+During grayscale distribution, **a failed health check in any batch triggers automatic rollback**:
 
-- 分发状态机：`pending` → `in_progress` → `completed`；异常时 `rolled_back`（`services/config-service/src/as_config_service/distributor.py`）。
-- 自动回滚原因常量：`_AUTOMATIC_ROLLBACK_REASON = "health check failed"`（`distributor.py`）。
-- 回滚目标：`rolled_back_to` 必须**紧邻计划版本的前一个版本**（`distribution_store.py` 校验）。
-- 变更单侧：`APPLIED | DISTRIBUTING --roll_back--> ROLLED_BACK`（`change_order.py`）；`REJECTED` / `APPLIED` / `ROLLED_BACK` 是**终态**。
-- **自动回滚仍需人工确认**：NOTES.txt §3a 明确「always needs a human to confirm afterwards」。
+- Distribution state machine: `pending` → `in_progress` → `completed`; on anomaly, `rolled_back` (`services/config-service/src/as_config_service/distributor.py`).
+- Automatic rollback reason constant: `_AUTOMATIC_ROLLBACK_REASON = "health check failed"` (`distributor.py`).
+- Rollback target: `rolled_back_to` must be **the version immediately preceding the planned version** (validated by `distribution_store.py`).
+- Change order side: `APPLIED | DISTRIBUTING --roll_back--> ROLLED_BACK` (`change_order.py`); `REJECTED` / `APPLIED` / `ROLLED_BACK` are **terminal states**.
+- **Automatic rollback still needs human confirmation**: NOTES.txt §3a explicitly states "always needs a human to confirm afterwards".
 
-### 2.2 L2 的实现现状（如实说明，不夸大）
+### 2.2 L2's Implementation Status (stated factually, not overstated)
 
-- **部署级总开关（layer ①）**：ADR-0020 定义为「部署级总开关 + 运行态细粒度覆盖」两层。实现上，开关以 `ToggleDTO` 形式**搭配置变更单的同一趟车**（`ConfigBundle.toggles` → `toggle_deployment()` → `gating.is_enabled`），**不新开通道**；`is_enabled` **fail-closed**（未注册的开关名求值为 `False`）。其「开 / 关两态」由变更单流水线端到端测试覆盖。
-- **运行态细粒度覆盖（layer ②）**：判定函数 `match_override`（`platform/src/as_platform/gating/overrides.py`）已实现为**纯函数**，粒度为号段 + 稳定哈希百分比、最长前缀优先、显式 `enabled=false` 高于百分比、未覆盖返回 `None`（fail-closed）。⚠️ **当前生产路径尚无该模块的调用方**（仅单测覆盖），控制台 live 范围也只有**被叫 + 前缀规则**。
-- **因此**：L0 与 L2 的**机制与判定语义成立、治理通道成立**，但**「一键秒级关闭 AS 业务逻辑、放行到下一环节」是产品包装计划里的措辞，不是已交付、已验收的运维动作**。落地前需先补：控制台 / API 上的开关与override 管理入口、生产路径接线、以及开 / 关两态的验收证据。**不得**在本文把它写成可当场执行的按钮。
-- **L2 的边界**：关闭 AS 业务逻辑只改变 **AS 侧行为**；**把呼叫从本 AS 引走仍需 S-SBC / S-CSCF 侧配合**（G-P1-10）。
+- **Deployment-level master switch (layer ①)**: ADR-0020 defines it as two layers, "deployment-level master switch + runtime fine-grained override". In implementation, the switch rides the **same bus as the configuration change order** in the form of `ToggleDTO` (`ConfigBundle.toggles` → `toggle_deployment()` → `gating.is_enabled`), **opening no new channel**; `is_enabled` is **fail-closed** (an unregistered switch name evaluates to `False`). Its "on / off states" are covered by the change order pipeline's end-to-end tests.
+- **Runtime fine-grained override (layer ②)**: the evaluation function `match_override` (`platform/src/as_platform/gating/overrides.py`) is implemented as a **pure function**, with granularity of number range + stable-hash percentage, longest-prefix-first, explicit `enabled=false` above percentage, and returning `None` (fail-closed) when not covered. ⚠️ **The current production path has no caller of this module** (unit test coverage only), and the console's live scope is also only **called party + prefix rules**.
+- **Therefore**: the **mechanism and evaluation semantics of L0 and L2 hold, and the governance channel holds**, but **"turn off AS business logic in one click in seconds and pass through to the next stage" is wording in the product packaging plan, not a delivered, accepted operations action**. Before it lands, the following must be added first: a switch and override management entry on the console / API, production path wiring, and acceptance evidence for the on / off states. **Must not** write it in this document as a button executable on the spot.
+- **L2's boundary**: turning off AS business logic only changes **AS-side behavior**; **diverting calls away from this AS still requires S-SBC / S-CSCF-side cooperation** (G-P1-10).
 
-### 2.3 L3 的回退命令（原文照抄 `deploy/helm/templates/NOTES.txt` §3）
+### 2.3 L3's Rollback Commands (copied verbatim from `deploy/helm/templates/NOTES.txt` §3)
 
-NOTES.txt §3 明确「两种东西都叫 rollback，不要混淆」：**(a) 配置回滚**走变更单（= L1）；**(b) 镜像 / manifest 回退** revert Helm release 让 Deployment 滚回，**draining 在退出路径上生效**（ADR-0009）：
+NOTES.txt §3 explicitly states "two things are both called rollback, do not conflate them": **(a) configuration rollback** goes through the change order (= L1); **(b) image / manifest rollback** reverts the Helm release to roll the Deployment back, with **draining taking effect on the exit path** (ADR-0009):
 
-**版本映射前置（执行 `helm rollback` 前必做）**：先执行 `helm -n <ns> history <release>`，记录 **revision ↔ chart `version` / `appVersion`** 的对应关系，并与根 `VERSION`（当前 `0.2.0`）对照；回退证据链必须记录 **revision → chart version → 产品 VERSION** 三者，否则对外不可验证。
+**Version mapping prerequisite (mandatory before executing `helm rollback`)**: first execute `helm -n <ns> history <release>`, record the **revision ↔ chart `version` / `appVersion`** correspondence, and cross-check it with the root `VERSION` (currently `0.2.0`); the rollback evidence chain must record **all three of revision → chart version → product VERSION**, otherwise it is externally unverifiable.
 
-**如实标注当前不同步（已知缺口）**：`deploy/helm/Chart.yaml` 当前为 `version: 0.0.0-skeleton` / `appVersion: "0.0.0"`、**无 `kubeVersion`**，与根 `VERSION`（`0.2.0`）**不同步**；校验用 `scripts/sync-chart-version.sh --check`（默认只读，drift 即 exit 1）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效）；`kubeVersion` 已定为 `>=1.23.0-0`（由 chart 实际 API 反推），**尚未写入 Chart.yaml**。本文**不得**声称已演练或已同步 —— 上述同步动作截至本文闭环日（2026-10-12）**未执行**。
+**Factually noting the current desync (known gap)**: `deploy/helm/Chart.yaml` currently has `version: 0.0.0-skeleton` / `appVersion: "0.0.0"` with **no `kubeVersion`**, desynced with the root `VERSION` (`0.2.0`); validation uses `scripts/sync-chart-version.sh --check` (read-only by default, drift exits 1); **the timing and value of the first `--apply` are decided separately by the maintainer** (G4's "do not modify `VERSION` and `Chart.yaml` for now" remains in effect); `kubeVersion` has been set to `>=1.23.0-0` (reverse-derived from the chart's actual APIs) but is **not yet written into Chart.yaml**. This document **must not** claim it is drilled or synced — as of this document's closure date (2026-10-12), the above sync actions are **not executed**.
 
-> **注记（2026-10-13 追加）**：上段 chart 仍为 `0.0.0-skeleton` / `"0.0.0"` 的表述在事实层面已过期（首次同步已于 2026-10-12 执行），处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+> **Note (added 2026-10-13)**: the previous paragraph's statement that the chart is still `0.0.0-skeleton` / `"0.0.0"` is outdated at the factual level (the first sync was executed on 2026-10-12); the handling (original text preserved + note appended) see [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1, pending the maintainer's decision on whether to sync.
 
 ```sh
 helm -n <ns> history <release>
@@ -89,98 +89,98 @@ helm -n <ns> rollback <release> <revision>
 kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdparty-as
 ```
 
-> 原文的 Helm 模板占位符 `{{ include "as.namespace" . }}` / `{{ .Release.Name }}` 在此写成 `<ns>` / `<release>`。⚠️ NOTES.txt §3b 提到 `ASConfigRollbackTriggered` 会告警，但 `deploy/alerts/as-alerts.yaml` **里没有这条规则**（`deploy/alerts/README.md` 明确列为 deferred）—— 按名去查告警系统会一无所获。
+> The original Helm template placeholders `{{ include "as.namespace" . }}` / `{{ .Release.Name }}` are written here as `<ns>` / `<release>`. ⚠️ NOTES.txt §3b mentions that `ASConfigRollbackTriggered` will alert, but **there is no such rule** in `deploy/alerts/as-alerts.yaml` (`deploy/alerts/README.md` explicitly lists it as deferred) — searching the alerting system by name will find nothing.
 
-### 2.4 L4 的摘流四步
+### 2.4 L4's Four Traffic Removal Steps
 
-命令原文见 [`runbook-l1.md`](runbook-l1.md) §3.1 与 [`../acceptance/m5-downscale-runbook.md`](../acceptance/m5-downscale-runbook.md)：① 计算 `plan_scale_down`；② 对 removable 中每个 Pod，`kubectl delete pod` 前确认 `active_calls==0`；③ 对仍承载呼叫的 Pod **不删除**，等待自然结束，readiness 在 `request_terminate` 后为 `503`，Endpoint 应摘流；④ 若 `blocked`，仅缩减 removable 子集或等待。**不得 SIGKILL。**
+Commands as written see [`runbook-l1.md`](runbook-l1.md) §3.1 and [`../acceptance/m5-downscale-runbook.md`](../acceptance/m5-downscale-runbook.md): ① compute `plan_scale_down`; ② for each removable Pod, confirm `active_calls==0` before `kubectl delete pod`; ③ for Pods still carrying calls, **do not delete**, wait for natural completion, with readiness `503` after `request_terminate`, and the Endpoint should have traffic removed; ④ if `blocked`, only shrink the removable subset or wait. **Must not SIGKILL.**
 
 ---
 
-## 3. 与 S-CSCF / HSS 侧 iFC 灰度的配合
+## 3. Coordination with S-CSCF / HSS-side iFC Grayscale
 
-> **本章是本手册的核心边界。** 按号段 / 百分比的 **iFC 触发**在 S-CSCF / HSS 侧配置，**我方不实现 iFC**；本章定义的是**配合接口、联合验证点与失败回退**。
+> **This chapter is the core boundary of this playbook.** The **iFC triggering** by number range / percentage is configured on the S-CSCF / HSS side, and **we do not implement iFC**; what this chapter defines is the **cooperation interface, joint verification points, and failure rollback**.
 
-### 3.1 配合接口
+### 3.1 Cooperation Interface
 
-| 接口项 | 我方提供 | 对方提供 |
+| Interface item | What we provide | What the peer provides |
 |---|---|---|
-| **关联键** | 入腿 `inbound_call_id` ↔ 出腿 `outgoing_call_id`（B2BUA 两腿 Call-ID 不同，REQ-F-2） | 触发侧的呼叫标识（Call-ID 或等价） |
-| **判定粒度** | AS 侧 override：**号段前缀 + 稳定哈希百分比**（ADR-0021） | iFC 侧触发粒度：**号段 / 百分比**（G-P0-5） |
-| **生效观测** | `as_active_calls`、判决结果分布（404/ 603 占比）、`CONFIG_VERSION` | 触发量观测、触发成功率 |
-| **摘流信号** | draining 期间 readiness `503` + Endpoint 摘除（AS 侧只对自己摘） | 对端停止向本 AS 引发的动作 |
-| **对齐方式** | 双方**各自抓本侧**；TLS 解密各方自理，**密钥不跨方共享** | 同左 |
+| **Correlation key** | inbound leg `inbound_call_id` ↔ outgoing leg `outgoing_call_id` (the two legs of the B2BUA have different Call-IDs, REQ-F-2) | The trigger-side call identifier (Call-ID or equivalent) |
+| **Evaluation granularity** | AS-side override: **number range prefix + stable-hash percentage** (ADR-0021) | iFC-side trigger granularity: **number range / percentage** (G-P0-5) |
+| **Effect observation** | `as_active_calls`, decision result distribution (404/603 ratio), `CONFIG_VERSION` | Trigger volume observation, trigger success rate |
+| **Traffic removal signal** | readiness `503` + Endpoint removal during draining (the AS side only removes itself) | The action of the peer stopping to send new calls to this AS |
+| **Alignment method** | Both sides **capture on their own side**; TLS decryption is each party's own responsibility, and **keys are not shared across parties** | Same as left |
 
-### 3.2 联合阶段表
+### 3.2 Joint Stage Table
 
-| 阶段 | 对方动作（S-CSCF / HSS / S-SBC） | 我方动作（AS-Vendor） | 联合验证点 | 失败时的回退 |
+| Stage | Peer action (S-CSCF / HSS / S-SBC) | Our action (AS-Vendor) | Joint verification point | Rollback on failure |
 |---|---|---|---|---|
-| **0. 前置对齐** | 提供 iFC 侧当前触发粒度与生效范围 | 提供 AS 侧 override 粒度与当前生效配置版本 | 双方对「哪些号段处于灰度中」的理解一致 | 不一致 → **停止变更**；先对齐口径，不动任何一侧 |
-| **1. 灰度比例调整** | 调整 iFC 触发比例 / 号段 | 观察 `as_active_calls` 与判决结果分布的变化 | AS 侧入腿呼叫量与对方触发量**方向一致、量级相当**（**相对比较，不预设绝对数字**） | 方向不一致 → 先查关联键对齐，不调AS 侧 override |
-| **2. AS 侧业务灰度** | 无（AS 侧 override 由我方自管） | 按号段 / 百分比设置或收窄 override | 同一号段内不同 `call_id` 落不同桶 —— **这是设计预期**（`FNV-1a 32-bit(call_id)`）；先看 `call_id` 落在哪个桶 | 命中判断不了 → 用 `call_id` + 生效规则版本 + 判决路径判定；**不用 `as_rule_hits_total`**（无生产调用方） |
-| **3. 摘流** | 停止向本 AS 引入新呼叫（iFC / trunk 侧动作） | Pod 级 draining：readiness `503` → Endpoint 摘除 → 等 `active_calls` 归零 | `as_downscale_removable` 与 `as_active_calls` 的收敛过程；存量呼叫自然结束 | 不收敛 → 不删 Pod，转 L2 / L3（§2） |
-| **4. 呼叫放行** | 呼叫按原路径继续 | AS 侧业务逻辑关闭时**不改写、不拒绝**（L2 的语义） | 呼叫在 AS 侧**未被拒绝**、未被改写 | AS 侧仍改写 → override / 总开关未生效，回 §2.2 与变更流水线 |
-| **5. 收尾** | 确认 iFC 侧配置稳定 | 确认 `CONFIG_VERSION` 各副本一致、审计行已产生 | 双方各留一份变更记录 | — |
+| **0. Pre-alignment** | Provide the iFC-side current trigger granularity and effective scope | Provide the AS-side override granularity and current effective configuration version | Both sides agree on "which number ranges are in grayscale" | Inconsistent → **stop the change**; align wording first, without touching either side |
+| **1. Grayscale ratio adjustment** | Adjust the iFC trigger ratio / number range | Observe changes in `as_active_calls` and the decision result distribution | The AS-side inbound call volume and the peer's trigger volume are **consistent in direction and comparable in magnitude** (**relative comparison, no absolute numbers preset**) | Inconsistent direction → check correlation key alignment first, do not tune the AS-side override |
+| **2. AS-side business grayscale** | None (AS-side overrides are self-managed by us) | Set or narrow overrides by number range / percentage | Different `call_id`s within the same number range land in different buckets — **this is the design expectation** (`FNV-1a 32-bit(call_id)`); first look at which bucket the `call_id` lands in | If the hit cannot be determined → judge with `call_id` + effective rule version + decision path; **do not use `as_rule_hits_total`** (no production caller) |
+| **3. Traffic removal** | Stop introducing new calls to this AS (iFC / trunk side actions) | Pod-level draining: readiness `503` → Endpoint removal → wait for `active_calls` to reach zero | The convergence process of `as_downscale_removable` and `as_active_calls`; existing calls end naturally | Not converging → do not delete the Pod, switch to L2 / L3 (§2) |
+| **4. Call pass-through** | Calls continue on their original path | When the AS-side business logic is off, **no rewriting, no rejecting** (L2's semantics) | Calls are **not rejected** and **not rewritten** on the AS side | The AS side still rewrites → override / master switch not in effect, return to §2.2 and the change pipeline |
+| **5. Wrap-up** | Confirm the iFC-side configuration is stable | Confirm `CONFIG_VERSION` is consistent across replicas and audit rows have been produced | Both sides each keep a change record | — |
 
-### 3.3 联合验证清单（可勾选）
+### 3.3 Joint Verification Checklist (checkable)
 
-- [ ] 对方已确认 iFC 侧当前生效的触发号段 / 比例，并提供书面记录。
-- [ ] 我方已确认 AS 侧 override 当前生效的号段 / 比例，`CONFIG_VERSION` 各副本**一致**。
-- [ ] 双方时间基准已对齐（不是「看起来同时」）。
-- [ ] 灰度比例调整后，AS 侧入腿呼叫量与对方触发量方向一致（**相对表述，不预设绝对数值**）。
-- [ ] 判决结果分布（404 / 603 占比）变化可解释，且404 / 603 被当作**业务判决**而非故障处理。
-- [ ] 摘流期间 AS 侧 readiness 为 `503`、Endpoint 已摘除，`as_active_calls` 呈收敛趋势。
-- [ ] 呼叫放行验证通过：AS 侧不再改写、不再拒绝。
-- [ ] 双方各留一份变更记录与时间线，入档路径 `artifacts/<milestone>/<YYYY-MM-DD>/`（按维护者指定目录）。
-- [ ] 脱敏检查：无密码 / token / cookie / 私钥，无真实抓包（`AGENT.md` §11 / §13）。
+- [ ] The peer has confirmed the currently effective trigger number ranges / ratios on the iFC side, and provided a written record.
+- [ ] We have confirmed the currently effective number ranges / ratios of AS-side overrides, with `CONFIG_VERSION` **consistent** across replicas.
+- [ ] Both sides' time bases are aligned (not "appears simultaneous").
+- [ ] After grayscale ratio adjustment, the AS-side inbound call volume and the peer's trigger volume are consistent in direction (**relative wording, no absolute values preset**).
+- [ ] Changes in the decision result distribution (404 / 603 ratio) are explainable, and 404 / 603 are treated as **business decisions** rather than failures.
+- [ ] During traffic removal, AS-side readiness is `503`, the Endpoint has been removed, and `as_active_calls` shows a convergence trend.
+- [ ] Call pass-through verification passes: the AS side no longer rewrites and no longer rejects.
+- [ ] Both sides each keep a change record and timeline, with filing path `artifacts/<milestone>/<YYYY-MM-DD>/` (per the directory designated by the maintainer).
+- [ ] Redaction check: no passwords / tokens / cookies / private keys, no real packet captures (`AGENT.md` §11 / §13).
 
-> ⚠️ **风险注记（G-P1-10）**：以上清单**依赖 S-CSCF 侧配合窗口与真实集群演练**。当前 **7.2d仍 blocked**、**无真实集群演练记录**、**M8 退出签字搁置**。本文给出的是**可执行的流程与验证点**，**不是**已演练通过的结论。
+> ⚠️ **Risk note (G-P1-10)**: the checklist above **depends on the S-CSCF-side cooperation window and real-cluster drills**. Currently **7.2d is still blocked**, there are **no real-cluster drill records**, and **M8 exit sign-off is shelved**. What this document provides is an **executable process and verification points**, **not** a drilled-and-passed conclusion.
 
 ---
 
-## 4. 变更窗口与决策人
+## 4. Change Windows and Decision Makers
 
-| 项 | 内容 |
+| Item | Content |
 |---|---|
-| **谁决策回退** | **AS 侧决策 + OP-NOC 执行 + OP-NET 配合**（RACI §5.2）。AS-Vendor 对 L0–L4 的选择负责；**呼叫是否进入本 AS** 不在我方决策范围 |
-| **网络侧窗口** | iFC 签约 / 触发灰度、trunk 优先级、摘流的提单与审批在**OP-NET**，**AS 侧不代提、不代批** |
-| **有状态组件窗口的特殊性** | PostgreSQL / Redis 维护需 OP-NOC 批准窗口。⚠️ **Redis 维护窗口内预期出现短暂运行态不可用** —— 在途呼叫状态（会话 / dialog / 反诈速率窗口）都在 Redis，Redis 不可用即在途呼叫无法维持。**这不是缺陷，是已知窗口行为**；处置与恢复见 [`backup-restore.md`](backup-restore.md) |
-| **PG / Redis 拓扑提醒** | chart 内建的是**单副本**，**不是 HA**；Redis HA 拓扑取值已裁（**O5 / D3，G7**：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel，沿用 ADR-0008 拓扑、不选 Redis Cluster；chart 仍单副本渲染，failover 实测行为无证据）；生产 PG HA 由客户拥有（ADR-0008 / ADR-0026） |
-| **回退后复核项** | ① 生效配置版本回退到位（`CONFIG_VERSION` 各副本一致）；② 判决结果分布回到预期；③ `as_active_calls` 与 draining 状态收敛；④ **审计行已产生**（append-only，回退本身也留痕）；⑤ 变更单进入终态且**不可再动**；⑥ 双方时间线归档 |
-| **回退不是「一键零影响」** | L0 / L2 只改变 AS 侧行为；**把呼叫从本 AS 引走仍需 S-SBC / S-CSCF 侧配合** |
+| **Who decides rollback** | **AS-side decision + OP-NOC execution + OP-NET cooperation** (RACI §5.2). AS-Vendor is responsible for the choice of L0–L4; **whether calls enter this AS** is outside our decision scope |
+| **Network-side window** | iFC subscription / trigger grayscale, trunk priority, and traffic removal tickets and approvals are at **OP-NET**, and **the AS side does not submit or approve on their behalf** |
+| **The special nature of stateful component windows** | PostgreSQL / Redis maintenance requires an OP-NOC-approved window. ⚠️ **Brief runtime unavailability is expected within the Redis maintenance window** — in-flight call state (session / dialog / anti-fraud rate windows) is all in Redis, and Redis unavailable means in-flight calls cannot be sustained. **This is not a defect, it is known window behavior**; handling and recovery see [`backup-restore.md`](backup-restore.md) |
+| **PG / Redis topology reminder** | The chart's built-in stores are **single replica**, **not HA**; the Redis HA topology values are adjudicated (**O5 / D3, G7**: in-site N+1 + cross-site 1+1 warm standby, Redis primary/replica + Sentinel, following the ADR-0008 topology, not Redis Cluster; the chart still renders single replica, with no evidence of measured failover behavior); production PG HA is owned by the customer (ADR-0008 / ADR-0026) |
+| **Post-rollback re-verification items** | ① the effective configuration version rolled back into place (`CONFIG_VERSION` consistent across replicas); ② the decision result distribution back to expectations; ③ `as_active_calls` and draining status converge; ④ **audit rows have been produced** (append-only, the rollback itself also leaves a trace); ⑤ the change order enters a terminal state and **cannot be touched again**; ⑥ both sides' timelines archived |
+| **Rollback is not "one-click, zero impact"** | L0 / L2 only change AS-side behavior; **diverting calls away from this AS still requires S-SBC / S-CSCF-side cooperation** |
 
 ---
 
-## 5. 回退演练记录模板
+## 5. Rollback Drill Record Template
 
-**当前状态：⚠️ 无真实集群演练记录。** 下表为模板，**当前没有任何一行已填数据**。M8 **7.2d blocked**、M8 退出签字搁置；iFC 侧配合窗口未安排（G-P1-10）。**不得**用 kind / compose / `testbed/` 的仿真结果充当演练记录（ADR-0014：testbed 非 v1 交付物）。
+**Current state: ⚠️ No real-cluster drill record.** The table below is a template, **with no rows currently filled in**. M8 **7.2d blocked**, M8 exit sign-off shelved; the iFC-side cooperation window is not scheduled (G-P1-10). **Must not** use kind / compose / `testbed/` simulation results as drill records (ADR-0014: the testbed is not a v1 deliverable).
 
-| 字段 | 填写要求 |
+| Field | Fill-in requirement |
 |---|---|
-| **日期** | 演练实际执行日期（含时区） |
-| **环境** | 集群标识 / 命名空间 / chart release；⚠️ **当前无真实集群** |
-| **版本 from → to** | 回退前的版本 → 回退后的版本（配置版本填 `CONFIG_VERSION` / 变更单号；镜像 / manifest 版本填 `helm history` 的 revision + chart `version` / `appVersion`，并与根 `VERSION` 对齐记录 —— 当前 chart 与 `VERSION` 不同步（`0.0.0-skeleton` / `"0.0.0"` vs `0.2.0`），须如实记录三者） |
-| **触发原因** | 现象 + 判定依据；写明是哪个剧本（§2 的 L0–L4 哪一层） |
-| **层次** | L0 / L1 / L2 / L3 / L4 |
-| **双方参与人** | AS-Vendor（决策人 / 执行人）、OP-NOC（执行）、OP-NET / OP-SBC（配合）；**姓名与角色由各方自行记录**，本模板不代填 |
-| **观察项** | 逐条勾选 §3.3 联合验证清单 + §4 回退后复核项 |
-| **结果** | 通过 / 有条件通过 / 不通过；**证据路径**（`artifacts/...`，脱敏后） |
-| **遗留问题** | 未闭合项、责任方、需要谁裁决 |
+| **Date** | Actual execution date of the drill (including time zone) |
+| **Environment** | Cluster identifier / namespace / chart release; ⚠️ **no real cluster currently** |
+| **Version from → to** | The version before rollback → the version after rollback (configuration version fills in `CONFIG_VERSION` / change order number; image / manifest version fills in `helm history` revision + chart `version` / `appVersion`, recorded in alignment with the root `VERSION` — the chart and `VERSION` are currently desynced (`0.0.0-skeleton` / `"0.0.0"` vs `0.2.0`), and all three must be recorded factually) |
+| **Trigger reason** | Symptom + judgment basis; state which playbook (which level of §2's L0–L4) |
+| **Level** | L0 / L1 / L2 / L3 / L4 |
+| **Both sides' participants** | AS-Vendor (decision maker / executor), OP-NOC (execution), OP-NET / OP-SBC (cooperation); **names and roles are recorded by each party itself**, this template does not fill them in on their behalf |
+| **Observation items** | Check item by item the §3.3 joint verification checklist + the §4 post-rollback re-verification items |
+| **Result** | Pass / conditional pass / fail; **evidence path** (`artifacts/...`, after redaction) |
+| **Open issues** | Unclosed items, responsible party, who needs to adjudicate |
 
-> 记录纪律：按 `AGENT.md` §3.2/ §3.3，演练记录属证据，**必须有对应 review record** 才算走完文档链；记录本身**不构成验收结论**。
+> Record discipline: per `AGENT.md` §3.2/ §3.3, drill records are evidence and **must have a corresponding review record** to complete the documentation chain; the records themselves **do not constitute an acceptance conclusion**.
 
 ---
 
-## 6. 未决与阻塞
+## 6. Undecided and Blocked
 
-| 项 | 阻塞源 | 对本文的影响 | 责任方 |
+| Item | Blocking source | Impact on this document | Responsible party |
 |---|---|---|---|
-| **iFC 侧灰度联调** | OP-NET / OP-HSS 配置（G-P0-5 / G-P1-10） | §3 全章**无法端到端闭环**；AS 侧只能自证 override 生效 | OP-NET / OP-HSS |
-| **真实集群演练** | M8 **7.2d blocked**、退出签字搁置 | §5 **无任何已填记录**；§2 各层的时序均为**未演练**表述 | 维护者 + OP-NOC |
-| **L2 部署级总开关的运维入口** | 控制台 live 范围只有被叫 + 前缀规则；override 生产路径无调用方 | §2.2：「一键关闭」目前是**机制成立、入口未交付** | AS-Vendor（M4b / M8） |
-| **L0 runtime override 生产接线** | `match_override` 仅单测覆盖 | §2 的 L0 行**当前不可当场执行** | AS-Vendor |
-| **真实 SIP 不掉呼叫** | G-P1-1；draining 证据为**模拟** `active_calls` | §2.4 与 §3.2 阶段 3 的收敛性**未验收** | AS-Vendor（M7 / M8） |
-| **E1 / E4 / E5** | M8 验收（O2 / O3） | L3 回退后的行为判定缺生产证据 | AS-Vendor |
-| **O5 / D3（容灾 / Redis Sentinel）** | 客户 SLA | 取值已裁（G7）：站点内 N+1 + 跨站 1+1 warm standby，Redis primary/replica + Sentinel（ADR-0008）；**实现未落**（chart 仍单副本渲染，failover 实测行为无证据），§4 的 PG / Redis 窗口分级待客户侧拓扑落地后定稿 | OP-NET + 维护者 |
-| **告警侧确认** | `ASConfigRollbackTriggered` / `ASConfigDrift` 在 `as-alerts.yaml` 中**不存在** | 回退后**没有告警证据**可自动留痕，只能人工记录 | AS-Vendor（M6 后 / O1 裁决后另定） |
-| **本文评审状态** | `AGENT.md` §3.3 需独立 review record | 已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据 | 维护者 |
+| **iFC-side grayscale joint testing** | OP-NET / OP-HSS configuration (G-P0-5 / G-P1-10) | §3 as a whole **cannot be closed end-to-end**; the AS side can only self-certify override effectiveness | OP-NET / OP-HSS |
+| **Real-cluster drill** | M8 **7.2d blocked**, exit sign-off shelved | §5 has **no filled-in records**; the timing of each level in §2 is all **not drilled** wording | Maintainer + OP-NOC |
+| **L2 deployment-level master switch's operations entry** | The console's live scope is only called party + prefix rules; the override production path has no caller | §2.2: "one-click off" is currently **mechanism holds, entry not delivered** | AS-Vendor (M4b / M8) |
+| **L0 runtime override production wiring** | `match_override` has unit test coverage only | The L0 row in §2 is **currently not executable on the spot** | AS-Vendor |
+| **Real SIP no-dropped-calls** | G-P1-1; draining evidence is **simulated** `active_calls` | The convergence of §2.4 and §3.2 stage 3 is **not accepted** | AS-Vendor (M7 / M8) |
+| **E1 / E4 / E5** | M8 acceptance (O2 / O3) | Post-L3-rollback behavior judgment lacks production evidence | AS-Vendor |
+| **O5 / D3 (disaster recovery / Redis Sentinel)** | Customer SLA | Values adjudicated (G7): in-site N+1 + cross-site 1+1 warm standby, Redis primary/replica + Sentinel (ADR-0008); **not yet implemented** (the chart still renders single replica, with no evidence of measured failover behavior); the PG / Redis window tiering in §4 is to be finalized after customer-side topology lands | OP-NET + maintainer |
+| **Alert-side confirmation** | `ASConfigRollbackTriggered` / `ASConfigDrift` **do not exist** in `as-alerts.yaml` | After rollback there is **no alert evidence** to automatically leave a trace, so it can only be recorded manually | AS-Vendor (decided separately after M6 / after O1 adjudication) |
+| **This document's review status** | `AGENT.md` §3.3 requires an independent review record | A review record has been left under B6 review — [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 first review) and §7 (2026-10-12 closure re-review); **the conclusion awaits maintainer confirmation** and must not serve as a basis for external delivery or acceptance before confirmation | Maintainer |

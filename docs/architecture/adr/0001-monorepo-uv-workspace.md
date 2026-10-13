@@ -12,79 +12,128 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# ADR-0001：单一 monorepo + uv workspace
+# ADR-0001: Single monorepo + uv workspace
 
 - **Status**: accepted
 - **Date**: 2026-09-28
-- **Decides**: §0 决策 3 —— 仓库组织：单 monorepo + uv workspace
-- **回应 REQ**: REQ-NF-12, REQ-G-2
+- **Decides**: §0 decision 3 — repository organization: single monorepo + uv workspace
+- **Responds to REQ**: REQ-NF-12, REQ-G-2
 
 ---
 
-## Context（背景）
+## Context
 
-产品前身为两个仓库：`3rtparty_AS_POC` 与 `as_platform`。这两个仓库的物理分离在 POC 阶段暴露了三类硬伤：
+The product's predecessor was two repositories: `3rtparty_AS_POC` and
+`as_platform`. Their physical separation exposed three hard defects during the
+POC phase:
 
-1. **每个构建 job 都要 `git clone ../as_platform`。** 任何跨仓引用都依赖兄弟仓库在构建机上恰好在同一相对路径存在，每次都要 checkout 两次。构建上下文、测试并行化、缓存命中率全部为此受损。
-2. **`deploy/Dockerfile.as` 因构建上下文在仓外而失败。** Docker 构建上下文限制在单仓目录内，`COPY ../as_platform` 在标准构建环境下不可用。构建脚本必须手动把两个仓合成一个临时目录，额外一层脆弱的胶水。
-3. **版本漂移已发生。** 根 `VERSION` 文件是 `0.2.0`，各组件自己的 `pyproject.toml` 却写着 `0.1.0`——两个数字两个家，没有任何自动化守卫阻止这个漂移（详见 ADR-0018）。
+1. **Every build job had to `git clone ../as_platform`.** Any cross-repo
+   reference relied on the sibling repo happening to exist at the same relative
+   path on the build machine, so the checkout had to happen twice every time.
+   Build context, test parallelization, and cache hit rates all suffered for it.
+2. **`deploy/Dockerfile.as` failed because the build context was outside the
+   repo.** The Docker build context is confined to a single repo directory, so
+   `COPY ../as_platform` is unavailable under a standard build environment. The
+   build script had to manually merge the two repos into a temporary directory —
+   an extra, fragile layer of glue.
+3. **Version drift had already occurred.** The root `VERSION` file read `0.2.0`,
+   while each component's own `pyproject.toml` said `0.1.0` — two numbers in two
+   places, and no automated guard prevented the drift (see ADR-0018).
 
-本产品全部组件（内核 `platform/`、用例 `apps/translation` / `apps/anti-fraud`、控制面 `services/config-service` / `services/console`、测试平台 `testbed/`）均使用 Python 实现。`uv` 作为现代 Python 包管理工具，原生支持 workspace 概念：一个顶层 `pyproject.toml` 声明 `[tool.uv.workspace]`，所有成员共享同一工具链配置（lint、format、type check），每个成员独立发布但受统一结构守卫约束。
+Every component of this product (the kernel `platform/`, the use cases
+`apps/translation` / `apps/anti-fraud`, the control plane
+`services/config-service` / `services/console`, and the test platform
+`testbed/`) is implemented in Python. `uv`, a modern Python package manager,
+natively supports the workspace concept: a top-level `pyproject.toml` declares
+`[tool.uv.workspace]`, all members share the same toolchain configuration (lint,
+format, type check), each member is published independently but constrained by a
+unified structure guard.
 
-分层规则（`AGENT.md` §4）明确 **内核绝不能 import 应用、服务或 testbed**。但在 monorepo 中，任何 import 都能被解析成功 —— 仓库边界本身不再是防线，防线必须搬到测试里。
+The layering rule (`AGENT.md` §4) states clearly that the **kernel must never
+import applications, services, or testbed**. But in a monorepo any import
+resolves successfully — the repository boundary is no longer a line of defense,
+so the defense must move into tests.
 
-## Decision（决策）
+## Decision
 
-采用**单仓 + uv workspace** 作为本产品的仓库组织形态。所有组件同属一个 workspace：
+Adopt **single repo + uv workspace** as the repository organization for this
+product. All components belong to one workspace:
 
 ```
-as-product/                       # 单仓 · uv workspace
-├── platform/                     # 内核库（原 as_platform，并入）
+as-product/                       # single repo · uv workspace
+├── platform/                     # kernel library (formerly as_platform, merged in)
 ├── apps/
-│   ├── translation/              # 号码翻译 AS（原 as_app）
-│   ├── anti-fraud/               # 反诈 AS（原 anti_fraud_as）
+│   ├── translation/              # number-translation AS (formerly as_app)
+│   ├── anti-fraud/               # anti-fraud AS (formerly anti_fraud_as)
 │   └── <future>/
 ├── services/
-│   ├── config-service/           # 规则版本库 + 变更单 + 分发
-│   └── console/                  # 运维控制台
+│   ├── config-service/           # rule version store + change order + distribution
+│   └── console/                  # ops console
 ├── testbed/
 ├── deploy/
 ├── docs/architecture/adr/
 └── AGENT.md
 ```
 
-"不反向依赖"**不靠仓库边界保证，靠测试保证**。`platform/tests/test_library_independence.py` 使用 AST 扫描 `APPLICATION_PACKAGES`，搬进 monorepo 后继续跑并把守卫范围扩到 `services/`、`testbed/`。结构本身由 `tests/test_workspace_layout.py` 守卫。
+"Do not take a reverse dependency" is **guaranteed not by the repo boundary but
+by tests**. `platform/tests/test_library_independence.py` uses an AST scan of
+`APPLICATION_PACKAGES`; after moving into the monorepo it keeps running and
+extends the guard scope to `services/`, `testbed/`. The structure itself is
+guarded by `tests/test_workspace_layout.py`.
 
-## Consequences（后果）
+## Consequences
 
-### Positive（正面）
+### Positive
 
-- **一次性消除 POC 三大硬伤**：兄弟仓库 checkout 不再需要；Docker 构建上下文全部在单仓内；版本漂移问题通过 ADR-0018 的根 `VERSION` + `pyproject` 接口版本治理解决。
-- **workspace 统一工具配置**：顶层 `pyproject.toml` 集中声明 `[tool.ruff]`、`[tool.mypy]` 等工具链配置，每个成员只需引用，不会出现"同一项目不同成员 lint 规则不同步"的情况。
-- **每个组件版本独立但受统一守卫约束**：`pyproject.toml` 中接口版本由各组件自主声明，根 `VERSION` 是产品 release 的唯一源头，二者的 SemVer 合法性由 `tests/test_version_consistency.py` 自动校验。
-- **构建 / 交付简化**：不再需要兄弟仓库 checkout，`uv sync` 一次搞定全部依赖。缓存命中率提升。
+- **Eliminates the three POC defects in one move**: sibling-repo checkout is no
+  longer needed; the Docker build context is entirely within a single repo; the
+  version-drift problem is solved by ADR-0018's root `VERSION` + `pyproject`
+  interface-version governance.
+- **Unified toolchain configuration for the workspace**: the top-level
+  `pyproject.toml` declares `[tool.ruff]`, `[tool.mypy]`, and similar toolchain
+  config centrally; each member only references it, so "same project, different
+  lint rules per member" cannot happen.
+- **Each component's version is independent but under unified guard**: the
+  interface version in `pyproject.toml` is declared autonomously by each
+  component; the root `VERSION` is the single source of product release, and the
+  SemVer validity of the two is auto-checked by
+  `tests/test_version_consistency.py`.
+- **Simplified build / delivery**: no sibling-repo checkout is needed; `uv sync`
+  pulls all dependencies in one go. Cache hit rate improves.
 
-### Negative / accepted（负面 / 已接受）
+### Negative / accepted
 
-- **monorepo 体积变大**：所有组件、testbed 仿真器、压测 harness、契约用例集都在一个仓里。通过 `AGENT.md` §4 的分层规则和 `test_library_independence.py` 的 AST 守卫防止互相污染。
-- **"不反向依赖"从编译时防线变为测试防线**：在多仓模式下内核引用应用代码会在 import 时报错；monorepo 下任何 import 都能解析，防线退化为 pytest（门禁① 层）。已接受，因为 AST 扫描测试在 `make gate` 第一层即阻塞 PR。
+- **Monorepo volume grows**: all components, testbed simulators, load-test
+  harnesses, and contract use-case sets live in one repo. `AGENT.md` §4's
+  layering rule and `test_library_independence.py`'s AST guard prevent mutual
+  contamination.
+- **"No reverse dependency" moves from a compile-time guard to a test guard**:
+  under the multi-repo model, the kernel referencing application code would error
+  at import time; under the monorepo any import resolves, so the guard degrades
+  to pytest (gate tier ①). Accepted, because the AST-scan test blocks the PR at
+  the first tier of `make gate`.
 
-## Alternatives considered（考虑过的备选）
+## Alternatives considered
 
 | Option | Why not |
 |---|---|
-| 多仓库保持不变 | 已在 POC 中证明失败：每次构建都要 clone 兄弟仓库；Docker 构建上下文跨仓不可用；版本漂移无自动化守卫 |
-| lerna / nx 等 JS 生态的 Python 替代（pants / buck） | 额外引入工具链复杂度；uv workspace 原生支持足够本仓库需求 |
+| Keep multiple repos as-is | Already proven to fail in the POC: every build must clone the sibling repo; the Docker build context cannot cross repos; version drift has no automated guard |
+| JS-ecosystem Python substitutes like lerna / nx (pants / buck) | Adds toolchain complexity; uv workspace native support is sufficient for this repo's needs |
 
-## Evidence（证据）
+## Evidence
 
-- `tests/test_workspace_layout.py` 已实现并通过，检查 workspace 成员清单、成员路径格式、顶层 `pyproject.toml` 存在性。
-- `platform/tests/test_library_independence.py` 已实现并通过，使用 AST 扫描验证内核不引用 `apps/`、`services/`、`testbed/`。
-- `uv sync` 在本仓库成功解析 workspace，成员间相互引用的依赖关系正确。
+- `tests/test_workspace_layout.py` is implemented and passing; it checks the
+  workspace member list, member path format, and presence of the top-level
+  `pyproject.toml`.
+- `platform/tests/test_library_independence.py` is implemented and passing; it
+  uses AST scanning to verify the kernel does not reference `apps/`,
+  `services/`, `testbed/`.
+- `uv sync` resolves the workspace successfully in this repo, with correct
+  inter-member dependency relationships.
 
-## Related（相关）
+## Related
 
-- [`../新系统整体架构.md`](../新系统整体架构.md) §11.1 monorepo 结构
-- [`../../plan.md`](../../plan.md) §2.1 目录结构
-- [`../../AGENT.md`](../../AGENT.md) §4 分层规则
-- [ADR-0018](0018-release-versioning.md) 统一产品 release 版本治理
+- [`../system-architecture.md`](../system-architecture.md) §11.1 monorepo structure
+- [`../../plan.md`](../../plan.md) §2.1 directory structure
+- [`../../AGENT.md`](../../AGENT.md) §4 layering rules
+- [ADR-0018](0018-release-versioning.md) unified product release version governance
