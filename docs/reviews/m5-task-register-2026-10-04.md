@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # M5 任务登记与评审索引（2026-10-04）
 
 > **Spec 来源**：[`plan.md`](../plan.md) §4.4（§217 关门条件）、§4.5、§4.6；[`m5-closure-adjudication-2026-10-04.md`](m5-closure-adjudication-2026-10-04.md) 逐项裁决。  

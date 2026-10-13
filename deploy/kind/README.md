@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # kind — M5 集群证据（开发/门禁可选）
 
 在本地 Docker 上创建 [kind](https://kind.sigs.k8s.io/) 集群，加载 AS / config-service 镜像，安装 Helm chart，收集 **M5-3a/b** 与 **7.2d** 证据。

@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # M5 REQ 级验收评审记录（M8 发布候选，Phase B 最小集）
 
 - **评审对象（object）**：M5 里程碑 **REQ 级**验收（为 M8 test-plan 勾选提供口径），范围 = REQ-NF-3 / REQ-NF-4 / REQ-NF-9 / REQ-NF-13 / REQ-NF-14 + 7.2d ingress/trusted-proxy 关门条件。输入：[`m5-full-chain-review-2026-10-05.md`](m5-full-chain-review-2026-10-05.md)（结论：不通过）、[`2026-10-06-m8-release-candidate-plan.md`](../handoff/2026-10-06-m8-release-candidate-plan.md) §4 Phase B。

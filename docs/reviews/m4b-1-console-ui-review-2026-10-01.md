@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # M4b-1 Console UI Engineering Preview Review
 
 > 评审对象：D4 与 M4b 范围；[`services/console/README.md`](../../services/console/README.md)、[`index.html`](../../services/console/web/index.html)、[`console.css`](../../services/console/web/console.css)、[`console.js`](../../services/console/web/console.js)；[`plan.md`](../plan.md) 的 M4b / D4 状态；[`test-plan.md`](../acceptance/test-plan.md) §1.4 REQ-F-12/13/14/15、§3 REQ-S-4

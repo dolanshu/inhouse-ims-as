@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # M8 下一步（2026-10-07）
 
 > **状态**：**仍搁置（2026-10-07）**。M7.1 已工程关门。剩下的搁置条件是 Close 前不做真实运营商 S-SBC / 客户 K8s 测试，见 [`acceptance/m8-environment-evidence.md`](../acceptance/m8-environment-evidence.md)。搁置期间不执行 N2–N4，不填 M8 总审确认栏。重开之前，发布镜像再带上 SIP 监听。  

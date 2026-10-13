@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # Demo 接到 M7.1 平台 — 准备（2026-10-07）
 
 > **状态**：第 4、5 步已跑通（2026-10-08）。故事 C 的集群镜头是 kind `as-m71`（`ims-sim` 五个仿真 Deployment，`as-sut` 的翻译、Redis、config-service；反诈没起），仍是 L1。7.2d 留在 `kind-as-m5`，本场跳过。故事 D 口播加上 `as-sut` Redis 不是客户 K8s 的 REQ-NF-1。故事 E 口播加上测试页几秒计数不进 O1 报告。测量脚本没改。M8 仍搁置。

@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # 业务摘流 / 回退手册（Rollback Playbook）— In-house IMS Application Server
 
 > **交付物归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第二批 **2.4 ISC 触发后业务灰度 / 摘流方案 + 与 S-CSCF 侧 iFC 灰度的配合**。按该计划 §3.2，本交付物的**文档部分**属 A 类；**真实集群演练部分为 B 类**，被M8 真实集群环境（**7.2d仍 blocked**）与 S-CSCF / HSS 侧配合阻塞（评审 **G-P1-10**）。**M8 退出签字仍搁置**。

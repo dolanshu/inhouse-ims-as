@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # M8 发布候选退出评审记录（2026-10-06）
 
 - **评审对象（object）**：M8 发布候选（RC）退出，范围 = RC 计划 §3 退出条件 1–5（阶段 A–B 闭合、阶段 C v1 签收矩阵、阶段 D 环境 true blocker 结论、阶段 E 报告/版本/签字、本总审 + 里程碑签字表）。

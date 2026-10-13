@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # `docs/delivery/` — 交付文档与脚本
 
 > **产品**：In-house IMS Application Server，**已正式采用为产品/文档描述名**（G8-2；非商标 / 非品牌宣称；3GPP Third-Party AS role；命名状态见 [`../product-packaging-plan.md`](../product-packaging-plan.md) §4.3）。命名边界：chart name / 镜像名 / OTel 服务名保持 `3rdparty-as` 不变；git repo 名已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅仓库名与 remote URL）。

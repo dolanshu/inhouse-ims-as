@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # Grafana 看板模板 — In-house IMS Application Server
 
 > **状态**：交付物 **2.1 Grafana 看板模板**（[`docs/product-packaging-plan.md`](../../product-packaging-plan.md) §1 第二批 #2.1；评审意见 **G-P0-4** 已落实：不含 Diameter Sh 面板，且**未创建** `sh-interface.json`（**G-P2-3**）。本目录含 `overview.json` 与 `sip-signaling.json` 两份看板。

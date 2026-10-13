@@ -1,3 +1,17 @@
+/*
+ * Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ */
+
 // resip_probe.cxx —— 最小化 reSIProcate SIP 服务器验证探针
 // 目标：验证 reSIProcate DUM 层能正确处理 INVITE/100/180/200/ACK/BYE/CANCEL
 // 与 POC 基线 S1/S4 对拍。本程序**不做媒体处理**（不带 SDP answer）。

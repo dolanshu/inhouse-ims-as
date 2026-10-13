@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # M6 resip_probe external UAS smoke review (2026-10-04)
 
 > **SUPERSEDED for milestone purposes (2026-10-05).** Premature relative to agreed sequencing (M2 must complete before M6 milestone credit). Retain as WIP engineering reference only; does not advance M6 status in [`plan.md`](../plan.md). See [`m2-task-register-2026-10-05.md`](m2-task-register-2026-10-05.md).

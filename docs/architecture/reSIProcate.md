@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 关于reSIProcate,是不是不含b2bua控制层。如果b2bua自研，会不会有风险，不如采用带B2Bua的go-b2bua. 或者有没有开源的基于C或者python的b2bua控制层可用? 不用go-b2bua的原因是如果用它就要把现有的绝大多数python改成go
 
 结论先说：reSIProcate 本身不是“带完整业务控制的开箱 B2BUA”，它提供栈 + DUM（对话框/Invite 会话状态机）+ repro（代理/注册）＋recon（带媒体 UA）。要“外部第三方 AS、B2BUA、号码转换、404/603/CANCEL、SDP 透传”，用 reSIProcate 通常是DUM 之上自研薄控制层，不是拿来配配脚本就能跑。自研有风险，但是可控；比起整体迁 Go 用 go-b2bua，更合理的替代是“reSIProcate+DUM 自研”或“Python 继续用 sippy B2BUA”，取决于你们语言投入和POC速度。

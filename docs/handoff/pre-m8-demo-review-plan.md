@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # Pre-M8 产品 Demo / Review 计划
 
 > **状态（2026-10-08）**：故事 A/B 的现场走 kind `as-m71` 测试页。判决规则来自 config-service 编译 bundle。故事 C 的集群镜头已改到 `as-m71`，仍是 L1；7.2d 留在 `kind-as-m5`。故事 D/E 只补了口播。执行单是 [`2026-10-07-demo-on-m71-platform-plan.md`](2026-10-07-demo-on-m71-platform-plan.md)。

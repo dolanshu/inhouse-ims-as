@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # 运维文档（Operations）— In-house IMS Application Server
 
 > **状态**：本目录为**新增**运维文档目录（2026-10-09 创建，对应 `docs/product-packaging-plan.md` §2 与评审意见 **G-P2-1**）。目录内容是**归集与重组** —— 把原先散在 `docs/acceptance/` 的验收态 runbook 重新组织为面向值班的操作正文。

@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 A:我在github上，从之前的一个POC完善了一个offical 的repo。现在的问题是，怎样才能"包装"得像像一个电信级的商业产品?
 
 B:电信客户采购时看的从来不是"功能能不能跑"，而是能不能进机房、能不能被运维、出事谁负责。POC 和商业产品之间差的不是代码量，是一条"可信性证据链"。按下面六层补，观感会立刻不一样：

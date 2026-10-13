@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # M6 Load Harness Work-in-Progress Review
 
 > Supersession note (2026-10-03, later update): This file is a historical snapshot of an earlier WIP review state. Subsequent code changes in the same branch addressed several items that were open at that point, including Contact/route-based 2xx dialog targeting, non-2xx INVITE ACK handling, INVITE CPS separation from scheduled attempts, and harness source provenance reporting. Remaining limits still include D8/REQ traceability closure, target-side resource observations for formal measurement evidence, absence of real target-stack measurement results, and unsupported retransmission/forking dialog behaviors. Keep this record unchanged as historical review evidence.

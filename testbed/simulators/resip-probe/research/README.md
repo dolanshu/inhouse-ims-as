@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # reSIProcate D9/D10 探索性证据索引
 
 本目录归档来自 `/tmp` 的 D9/D10 探索性探针源码、运行脚本、结果记录，以及经筛选的 SIP 原始报文。它们用于保留实验事实和边界，**不是已接受的产品实现、验收证据或架构决策**。这些实验均不改变 ADR-0019，也不表示 D10 已通过；D10 仍未解决。

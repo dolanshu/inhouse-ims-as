@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # `deploy/helm/` — 生产交付形态
 
 当前仓库包含 AS workload Helm chart，以及 M4b-7.2c config-service 的代码级 workload 切片（默认关闭）。**Chart 回归**：仓库根目录 `make chart-check`（或 `deploy/helm/scripts/chart-check.sh`）对 AS 默认渲染、config-service 开启、ingress 模板路径与 HPA fail-fast 做断言；门禁① fast 层已纳入。真实集群 HTTPS ingress/trusted-proxy（7.2d）仍属 M5 未验收项。

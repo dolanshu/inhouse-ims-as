@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # 故障定界手册（Fault Demarcation）— In-house IMS Application Server
 
 > **交付物归属**：[`../product-packaging-plan.md`](../product-packaging-plan.md) §1 第一批 **1.4 故障定界手册**。按该计划 §3.2，本交付物属 **A 类**（文档本身不依赖未决项）；但**真实集群 / 真实对端证据仍 blocked**（见 §8）。

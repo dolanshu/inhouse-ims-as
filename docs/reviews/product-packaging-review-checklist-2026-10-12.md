@@ -1,3 +1,17 @@
+<!--
+Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-->
+
 # 产品化包装 16 份文档 · 评审项目清单（B6）
 
 > **落盘日期：2026-10-12。状态：评审已执行（2026-10-12），16 份结论全部为「需修改」（accept 0 / 驳回 0）；结论由 agent 分批评审 + 主 agent 抽查复核后填写，待维护者确认。**

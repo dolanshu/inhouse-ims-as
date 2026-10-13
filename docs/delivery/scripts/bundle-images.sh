@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+# Inhouse-IMS-AS — Copyright 2026 Dolan Shu <dolan.d.shu@gmail.com>, Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
 # bundle-images.sh — 交付物 3.2 的联网侧脚本：镜像同步 + 校验和 + helm package
 # In-house IMS Application Server（已正式采用为产品/文档描述名，G8-2；非商标 / 非品牌宣称），Helm-only 生产交付形态（ADR-0013）。
 #
