@@ -14,13 +14,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 # Requirements
 
-本目录存放产品需求相关文档。
+This directory holds product-requirement documents.
 
-| 文件 | 内容 | 状态 |
+| File | Content | Status |
 |---|---|---|
-| [prd.md](prd.md) | 产品需求文档（PRD），v0.2 reviewed | reviewed — prd-v0.1-review 24 Gap 全部接受并修改落盘 |
-| [req-nf-15-testbed-performance.md](req-nf-15-testbed-performance.md) | REQ-NF-15：三层 testbed + 真实 socket 容量研究（ADR-0014） | reviewed — D8 关闭 2026-10-05 |
+| [prd.md](prd.md) | Product Requirements Document (PRD), v0.2 reviewed | reviewed — all 24 Gap items from prd-v0.1-review accepted and modified, persisted |
+| [req-nf-15-testbed-performance.md](req-nf-15-testbed-performance.md) | REQ-NF-15: three-layer testbed + real-socket capacity research (ADR-0014) | reviewed — D8 closed 2026-10-05 |
 
-验收测试计划已移至 [docs/acceptance/](../acceptance/)。
+The acceptance test plan has moved to [docs/acceptance/](../acceptance/).
 
-PRD 是整个文档链的第一环（AGENT.md §3）。格式和编号规则见 prd.md 头部。
+The PRD is the first link in the whole document chain (AGENT.md §3). Format and numbering rules are in the prd.md header.

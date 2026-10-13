@@ -12,230 +12,230 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# 从 PRD v0.1 剥离的技术注解
+# Technical notes stripped from PRD v0.1
 
-> 本文件收集了从 `docs/requirements/prd.md` v0.1 重写时剥离的全部 27 条"技术注解"段。这些内容是设计暗示，不属于需求文档，但作为 M2 设计阶段的素材来源保留。
+> This file collects all 27 "technical note" sections stripped during the rewrite of `docs/requirements/prd.md` v0.1. These are design hints, not part of the requirements document, but are retained as source material for the M2 design phase.
 >
-> **搬运原则**：只搬运原文，不修改内容。每条前标注原位置。
+> **Carry-over principle**: carry the original text only, do not modify content. Each item is prefixed with its original location.
 
 ---
 
-## REQ-F-* 功能需求
+## REQ-F-* functional requirements
 
 ### REQ-F-1
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-1 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-1 "Technical note" section
 
-B2BUA 模式把一个呼叫拆成两条独立的 SIP 腿——上游（连 S-SBC）和下游（连对端），中间是我们的业务逻辑。这是 RFC 3261 §12 定义的 B2BUA 行为，不是我们额外发明的。
+The B2BUA pattern splits a call into two independent SIP legs — upstream (to the S-SBC) and downstream (to the peer) — with our business logic in between. This is the B2BUA behavior defined in RFC 3261 §12, not something we invented.
 
 ---
 
 ### REQ-F-2
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-2 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-2 "Technical note" section
 
-双腿 Call-ID 不同、Request-URI 改写是 B2BUA 模式的直接协议推论，不是我们额外发明的行为。
+Different Call-IDs on the two legs and Request-URI rewriting are direct protocol corollaries of the B2BUA pattern, not behaviors we invented.
 
 ---
 
 ### REQ-F-3
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-3 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-3 "Technical note" section
 
-Request-URI 改写发生在 B2BUA 状态机的 `call_controller` 层；改写规则来自配置的路由策略。
+Request-URI rewriting happens in the B2BUA state machine's `call_controller` layer; the rewrite rules come from the configured routing policy.
 
 ---
 
 ### REQ-F-4
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-4 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-4 "Technical note" section
 
-媒体 seam 保留接口定义但不实现生产逻辑，SDP body 在 Transport seam 处做字节级透传。
+The media seam retains the interface definition but does not implement production logic; the SDP body is passed through byte-for-byte at the Transport seam.
 
 ---
 
 ### REQ-F-5
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-5 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-5 "Technical note" section
 
-Route/Record-Route 是 SIP 对话链的"跳转历史"，生产栈（reSIProcate）对此有内置处理。
+Route/Record-Route is the "hop history" of the SIP dialog chain; the production stack (reSIProcate) has built-in handling for this.
 
 ---
 
 ### REQ-F-6
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-6 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-6 "Technical note" section
 
-规则匹配在 `decide()` 决策函数里执行，匹配表来自 config-service 下发的规则版本。"无匹配"是决策函数的 return case 之一。
+Rule matching executes inside the `decide()` decision function; the match table comes from the rule version delivered by config-service. "No match" is one of the decision function's return cases.
 
 ---
 
 ### REQ-F-7
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-7 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-7 "Technical note" section
 
-"阻止"策略是 `decide()` 的另一个 return case，返回值携带"拒绝"判决；决策本身是纯函数，不依赖 SIP 栈。
+The "block" policy is another return case of `decide()`, whose return value carries a "reject" verdict; the decision itself is a pure function, independent of the SIP stack.
 
 ---
 
 ### REQ-F-8
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-8 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-8 "Technical note" section
 
-CANCEL 触发 B2BUA 状态机从 Early 状态转入 Terminating 状态，内部 `DialogState` 标记为 canceling。
+CANCEL drives the B2BUA state machine from the Early state into the Terminating state, with the internal `DialogState` marked canceling.
 
 ---
 
 ### REQ-F-9
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-9 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-9 "Technical note" section
 
-POC 有 chained topology 覆盖，但 capture_call.py 不跑这个场景，POC 基线缺失。生产栈 reSIProcate 对此有内置对话匹配机制，但我们需要确保对话状态外置后仍能正确路由。
+The POC has chained-topology coverage, but capture_call.py does not run that scenario, so the POC baseline is missing. The production stack reSIProcate has a built-in dialog-matching mechanism, but we must ensure correct routing still holds after dialog state is externalized.
 
 ---
 
 ### REQ-F-10
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-10 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-10 "Technical note" section
 
-POC 的 ReturnUas 只返回 200 OK，基线缺失。生产实现需要在 `call_controller` 层对非 2xx 做分支处理，不能硬编码"下游永远成功"。
+The POC's ReturnUas only returns 200 OK, so the baseline is missing. The production implementation must branch on non-2xx at the `call_controller` layer and must not hardcode "downstream always succeeds".
 
 ---
 
 ### REQ-F-11
 
-> 从 PRD v0.1 剥离，原位置 REQ-F-11 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-F-11 "Technical note" section
 
-POC 没有显式竞态测试，基线缺失。生产实现需要在 `DialogState` 里维护一个 `canceling` 状态，CANCEL 到达后置位，之后收到任何最终响应都按"已取消"处理。
+The POC has no explicit race test, so the baseline is missing. The production implementation must maintain a `canceling` state in `DialogState`, set when CANCEL arrives, after which any final response received is handled as "already canceled".
 
 ---
 
-## REQ-NF-* 非功能需求
+## REQ-NF-* non-functional requirements
 
 ### REQ-NF-1
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-1 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-1 "Technical note" section
 
-POC 使用的 InMemoryStateStore 重启即丢会话。生产实现必须用 StateStore seam + Redis 外置，会话状态存 Redis（Sentinel 冗余），进程内存只做缓存。
+The InMemoryStateStore used by the POC loses sessions on restart. The production implementation must use the StateStore seam + Redis externalization, storing session state in Redis (Sentinel redundancy), with process memory used only as a cache.
 
 ---
 
 ### REQ-NF-2
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-2 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-2 "Technical note" section
 
-sippy 自带阻塞 ED2.loop()，天然一进程一用例。进程边界 = 故障域边界 = 独立灰度/扩缩容边界。
+sippy ships a blocking ED2.loop(), naturally one process per use case. Process boundary = fault-domain boundary = independent canary / scale boundary.
 
 ---
 
 ### REQ-NF-3
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-3 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-3 "Technical note" section
 
-进程无状态（REQ-NF-1）是水平扩展的硬前提。Redis 会话表做亲和兜底，LB 层再用 `sessionAffinity: ClientIP` 双保险。
+A stateless process (REQ-NF-1) is a hard prerequisite for horizontal scaling. The Redis session table provides affinity fallback, and the LB layer adds `sessionAffinity: ClientIP` as a second safeguard.
 
 ---
 
 ### REQ-NF-5
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-5 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-5 "Technical note" section
 
-这是 §0 产品概述中"单一 ISC 语义"的直接推论。S-SBC 是运营商侧网元，不属于我方交付物；testbed 中必须有 S-SBC 仿真器来验证这个认知。
+This is a direct corollary of the "single ISC semantic" in the §0 product overview. The S-SBC is an operator-side NE, not part of our deliverables; the testbed must include an S-SBC simulator to validate this understanding.
 
 ---
 
 ### REQ-NF-9
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-9 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-9 "Technical note" section
 
-单租户意味着 Helm chart 产出一个完整系统，每个客户一套 K8s namespace。
+Single-tenant means the Helm chart produces one complete system, with one K8s namespace per customer.
 
 ---
 
 ### REQ-NF-4
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-4 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-4 "Technical note" section
 
-前提事实：生产栈（reSIProcate）SIP 事务/对话状态在进程内存，无法"把在途呼叫无缝移交给新版本"——所以 ISSU 只能走 draining，不能走零流量切换。
+Premise: the production stack's (reSIProcate) SIP transaction/dialog state lives in process memory and cannot be "seamlessly handed over to a new version" — so ISSU can only use draining, not zero-traffic switchover.
 
 ---
 
 ### REQ-NF-6
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-6 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-6 "Technical note" section
 
-媒体 seam 只定义接口，不实现生产逻辑。
+The media seam defines the interface only, and does not implement production logic.
 
 ---
 
 ### REQ-NF-7
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-7 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-7 "Technical note" section
 
-呼叫轨迹同时是运维信号（走 OTel trace 后端）和产品能力（走 AS 自身 `/api/v1/traces` 查询通道），两条通道用同一 Call-ID/TraceID 关联。
+The call trace is both an operations signal (to the OTel trace backend) and a product capability (via the AS's own `/api/v1/traces` query channel); the two channels are correlated by the same Call-ID/TraceID.
 
 ---
 
 ### REQ-NF-8
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-8 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-8 "Technical note" section
 
-生产代码中无 LI / IRI / Intercept 相关实现。
+No LI / IRI / Intercept-related implementation in production code.
 
 ---
 
 ### REQ-NF-10
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-10 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-10 "Technical note" section
 
-不是运维直接 UPDATE 数据库，也不是用 git 仓库管理配置。schema 版本化 + 兼容矩阵是 ISSU（REQ-NF-4）的硬前置。
+Not operations directly UPDATING the database, and not managing configuration with a git repo. Schema versioning + compatibility matrix is a hard prerequisite for ISSU (REQ-NF-4).
 
 ---
 
 ### REQ-NF-11
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-11 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-11 "Technical note" section
 
-由 `tests/test_version_consistency.py` 守卫；门禁阻断任何 VERSION 与 pyproject 漂移的提交。
+Guarded by `tests/test_version_consistency.py`; the gate blocks any commit where VERSION and pyproject drift.
 
 ---
 
 ### REQ-NF-12
 
-> 从 PRD v0.1 剥离，原位置 REQ-NF-12 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-NF-12 "Technical note" section
 
-这是架构决策账本的落地。
+This is the realization of the architecture decision ledger.
 
 ---
 
-## REQ-G-* 治理需求
+## REQ-G-* governance requirements
 
 ### REQ-G-1
 
-> 从 PRD v0.1 剥离，原位置 REQ-G-1 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-G-1 "Technical note" section
 
-两层门控：部署级总开关（PG 版本库）+ 运行态细粒度覆盖（Redis，号段/呼叫/用户/百分比级别）。
+Two layers of gating: a deployment-level master switch (PG version store) + runtime fine-grained overrides (Redis, at number-range / call / user / percentage granularity).
 
 ---
 
 ### REQ-G-2
 
-> 从 PRD v0.1 剥离，原位置 REQ-G-2 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-G-2 "Technical note" section
 
-文档链在 AGENT.md §3 定义。PR checklist 中必须包含"上游文档已更新"项；review record 必须标注对应 REQ-*。
+The document chain is defined in AGENT.md §3. The PR checklist must include an "upstream docs updated" item; the review record must tag the corresponding REQ-*.
 
 ---
 
 ### REQ-G-3
 
-> 从 PRD v0.1 剥离，原位置 REQ-G-3 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-G-3 "Technical note" section
 
-由 AST 扫描守卫（`tests/` 目录下的扫描脚本）强制——新增"违反 ADR 标注纪律"的代码会被 `make gate-strict` 阻断。
+Enforced by an AST-scan guard (the scan script under the `tests/` directory) — new code that "violates ADR annotation discipline" is blocked by `make gate-strict`.
 
 ---
 
 ### REQ-G-4
 
-> 从 PRD v0.1 剥离，原位置 REQ-G-4 "技术注解" 段
+> Stripped from PRD v0.1, original location REQ-G-4 "Technical note" section
 
-本地门禁跑同样的四层（快 → 集成 → e2e → 性能）。M0 阶段 integration/e2e/performance 层无测试，不作为阻塞项；首个引入某层测试的里程碑必须同步把该层改为阻塞。
+The local gate runs the same four layers (fast → integration → e2e → performance). During M0, the integration/e2e/performance layers have no tests and are not blocking; the milestone that first introduces a test for a layer must simultaneously make that layer blocking.

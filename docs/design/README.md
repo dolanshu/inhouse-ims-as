@@ -12,19 +12,19 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# Design（设计）
+# Design
 
-本目录存放设计文档。
+This directory holds design documents.
 
-**当前状态**：M1 还没开始设计。本目录只有一个占位文件，暂存从 PRD 剥离出来的技术注解——它们是 M2 设计阶段的素材来源，不是最终设计。
+**Current status**: M1 has not yet started design. This directory contains only a placeholder file, temporarily holding the technical notes stripped from the PRD — they are source material for the M2 design phase, not the final design.
 
-| 文件 | 内容 | 状态 |
+| File | Content | Status |
 |---|---|---|
-| [from-prd-notes.md](from-prd-notes.md) | 从 PRD v0.1 剥离的 27 条技术注解，按 REQ 编号整理 | 占位，M2 开始设计时参考 |
+| [from-prd-notes.md](from-prd-notes.md) | 27 technical notes stripped from PRD v0.1, organized by REQ number | Placeholder, reference when M2 design begins |
 
-## 什么时候有真正的设计
+## When real design arrives
 
-M1→M2 过渡阶段，完成 requirement review 之后。按 AGENT.md §3：
-1. Requirement → review 通过
-2. ADR → 已有，需补 skeleton 条目的正式 ADR
-3. HLD/LLD → M2 开始写
+At the M1→M2 transition, after requirement review is complete. Per AGENT.md §3:
+1. Requirement → review passes
+2. ADR → already exists; need to fill in formal ADRs for the skeleton entries
+3. HLD/LLD → start writing in M2

@@ -12,112 +12,112 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# In-house IMS Application Server —— 产品一页纸
+# In-house IMS Application Server — product one-pager
 
-> **状态块（阅读本文前先看这里）**
+> **Status block (read this before the rest of the document)**
 >
-> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。
-> - **git repo 名**：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`，见 `deploy/helm/Chart.yaml`）、镜像名（`registry.example.com/3rdparty-as`）、OTel 服务名**保持 `3rdparty-as` 不变**。
-> - **目标场景**：**xx运营商 内部生产就绪 / 发版评审（internal production-readiness / release review）** —— G8-1 正式口径，已落 `docs/plan.md` §0 决策记录。
-> - **本文件归属**：`docs/product-packaging-plan.md` §1 第一批交付物 **1.1（产品一页纸 + 命名）**。
-> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
-> - **本文不含任何容量/性能数字**：O1（容量目标）**未裁决**（`docs/plan.md` §5.1）。M6 dev-host 测量属内部参考、非对外指标，`AGENT.md` §2 在 O1 裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 时延数字。本文因此**没有**容量章节，也**没有**时延 KPI。
+> - **Product name**: `In-house IMS Application Server`, **formally adopted as the product / documentation descriptor name** (G8-2; **not a trademark / not a brand claim**), first appearing annotated with the 3GPP Third-Party AS role; hereafter abbreviated in-house AS (`docs/plan.md` §0 "Product Decision Log", G8 line).
+> - **git repo name**: reported renamed to `inhouse-ims-as` by the maintainer (G8-3; repo name and remote URL only; this repo has not had its remote or local path changed); chart name (`3rdparty-as`, see `deploy/helm/Chart.yaml`), image name (`registry.example.com/3rdparty-as`), and OTel service name **remain `3rdparty-as` unchanged**.
+> - **Target scenario**: **xx Operator internal production-readiness / release review** —— G8-1 official wording, recorded in `docs/plan.md` §0 decision log.
+> - **This file belongs to**: `docs/product-packaging-plan.md` §1 first-batch deliverable **1.1 (product one-pager + naming)**.
+> - **B6 review status**: this document has left a review record with the B6 review —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 initial review) and §7 (2026-10-12 closed-loop re-review); **conclusion pending maintainer confirmation**, and before confirmation it is not used as a basis for external delivery or acceptance (`AGENT.md` §3.3).
+> - **This document contains no capacity/performance numbers**: O1 (capacity target) **is unresolved** (`docs/plan.md` §5.1). The M6 dev-host measurements are internal reference, not external metrics; `AGENT.md` §2 forbids publishing any CPS / CAPS / BHCA / concurrency / latency numbers before O1 is resolved. This document therefore has **no** capacity section and **no** latency KPI.
 
 ---
 
-## 1. 价值主张
+## 1. Value proposition
 
-in-house AS 是一个**多业务承载平台**：每个业务用例是一个独立进程（`apps/`，一个用例一个进程、一个故障域、一个灰度单元），业务引擎可插拔，新增业务不改核心网。新业务上线只需要"加一个 app + 一条配置变更单"，**不需要改动 IMS 核心网** —— S-CSCF 按 HSS 里的 iFC 签约触发 ISC，S-SBC 做透明桥接把呼叫送到网外。平台因此**不被核心网厂商的业务版本绑定**：业务逻辑在我们自己的进程里，核心网侧只看到标准 ISC 触发。交付形态是**单租户、on-premises**，数据（运行态与治理态）全部留在客户机房，不出客户边界。
+in-house AS is a **multi-service hosting platform**: each business use case is an independent process (`apps/`, one process per use case, one fault domain, one canary unit), business engines are pluggable, and adding a service requires no core-network change. Bringing a new service online only needs "add an app + a config change order" — **no change to the IMS core network** —— the S-CSCF triggers ISC based on the iFC subscription in the HSS, and the S-SBC does transparent bridging to deliver the call off-net. The platform is therefore **not bound by any core-network vendor's service release version**: business logic runs in our own processes, and the core-network side only sees a standard ISC trigger. The delivery form is **single-tenant, on-premises**, with data (runtime and governance state) all remaining in the customer's data center, never leaving the customer boundary.
 
 ---
 
-## 2. 我们是什么 / 不是什么
+## 2. What we are / are not
 
-| 维度 | 是什么 | 不是什么 | 理由与依据 |
+| Dimension | What we are | What we are not | Rationale and basis |
 |---|---|---|---|
-| 网络角色 | 运营商 IMS 网络**之外**的外部 AS，由 S-CSCF 按 iFC 触发 | 不是核心网网元，不是 S-CSCF / S-SBC / HSS 的替代品 | 核心网是运营商的；我方只实现外部 AS（S-CSCF / S-SBC / HSS 仅作为 `testbed/` 仿真器出现，`AGENT.md` §1） |
-| 接入语义 | 只实现**一种**接入语义：ISC（被 S-CSCF 触发） | 不做"网内 / 网外"双模适配器；SIP trunk 只是承载层，不是第二种业务语义 | S-SBC 透明桥接使两侧都无感（ADR-0003 accepted；REQ-NF-5） |
-| 业务面 | 只做**信令**：SIP 消息与业务判决，头域与 SDP 原样透传 | 不做媒体：无 RTP、无转码、无 DTMF、无 MRF、无媒体锚定 | 网外做媒体中继会形成三角路由并引入语音合规问题；媒体能力只保留 seam 并写明触发条件（ADR-0004 accepted） |
-| 呼叫记录 | 按 **Call-ID** 的呼叫轨迹，用于投诉追溯与反诈举证 | 不做 CDR：不采集、不投递、不归档、不批价 | CDR 是话单，网外第三方 AS 不介入（ADR-0017 accepted） |
-| 计费 | 不参与计费；计费域（OCS / 计费网元）**N/A**，不出现在本产品架构图内 | 不做计费、不做批价、不做话单分发 | 计费数据归属运营商计费域；本产品数据面只有 Redis / PostgreSQL（ADR-0017 accepted） |
-| 合规 | 边界内安全：trunk 对端白名单 + 端到端 TLS + 控制台鉴权与全量审计 | 不做合法监听（LI）；IRI 由网内网元出 | 第三方 AS 介入 LI 会引入跨法域暴露（ADR-0016 accepted） |
-| 接口面 | 对外只有 SIP trunk；控制面只暴露 AS 内部 API | 不做 **Diameter Sh** | 数据来自我们自己的数据面，不需要 Sh（`AGENT.md` §2 非目标，无独立 ADR） |
-| 部署形态 | 单租户、on-premises，一个 namespace 承载一套完整系统 | 不做多租户 / 共享实例逻辑隔离 | 运营商交付本身就是一客户一系统；单租户天然物理隔离、数据不出机房（REQ-NF-9；`AGENT.md` §2） |
-| 配置治理 | 变更单 → 审批 → 写 PostgreSQL → 灰度分发 → 可回滚 | 配置**不走 GitOps**；不是运维直接 UPDATE 数据库 | 不应要求运营商运维为改号段去学 Git（ADR-0006 accepted） |
-| 交付物 | Helm + 标准 Deployment / ConfigMap / Secret 是生产唯一形态 | 不写 Operator（CRD） | 标准 Helm 已足够（ADR-0013 accepted） |
-| 容量口径 | 只声明"如何测量"，不声明"能扛多少" | **M6 实测与维护者裁决之前，不发布任何容量数字** | O1 未裁决；`deploy/alerts/README.md` 明确"没有容量类告警"（`AGENT.md` §2） |
+| Network role | An external AS **outside** the operator IMS network, triggered by the S-CSCF via iFC | Not a core-network NE, not a replacement for S-CSCF / S-SBC / HSS | The core network is the operator's; we only implement the external AS (S-CSCF / S-SBC / HSS appear only as `testbed/` simulators, `AGENT.md` §1) |
+| Access semantic | Only **one** access semantic: ISC (triggered by the S-CSCF) | No "on-net / off-net" dual-mode adapter; the SIP trunk is only a transport layer, not a second business semantic | S-SBC transparent bridging makes both sides unaware (ADR-0003 accepted; REQ-NF-5) |
+| Service plane | Only **signaling**: SIP messages and business decisions; headers and SDP passed through as-is | No media: no RTP, no transcoding, no DTMF, no MRF, no media anchoring | Off-net media relay would create triangular routing and introduce voice-compliance issues; media capability retains only a seam with trigger conditions written down (ADR-0004 accepted) |
+| Call records | Call trace by **Call-ID**, for complaint tracing and anti-fraud evidence | No CDR: no collection, no delivery, no archiving, no rating | A CDR is a billing record; an off-net third-party AS does not intervene (ADR-0017 accepted) |
+| Charging | Not involved in charging; the charging domain (OCS / charging NE) is **N/A**, absent from this product's architecture diagram | No charging, no rating, no CDR distribution | Charging data belongs to the operator's charging domain; this product's data plane has only Redis / PostgreSQL (ADR-0017 accepted) |
+| Compliance | In-boundary security: trunk peer allowlist + end-to-end TLS + console auth and full audit | No lawful interception (LI); IRI comes from on-net NEs | A third-party AS intervening in LI would introduce cross-jurisdiction exposure (ADR-0016 accepted) |
+| Interface plane | Outward only a SIP trunk; control plane exposes only the AS-internal API | No **Diameter Sh** | Data comes from our own data plane; Sh is not needed (`AGENT.md` §2 non-goal, no separate ADR) |
+| Deployment form | Single-tenant, on-premises, one namespace hosting one complete system | No multi-tenant / shared-instance logical isolation | An operator delivery is itself one system per customer; single-tenant gives natural physical isolation and data stays in the data center (REQ-NF-9; `AGENT.md` §2) |
+| Config governance | Change order → approval → write PostgreSQL → canary distribution → rollbackable | Config **does not use GitOps**; not ops directly UPDATING the database | We should not require operator ops to learn Git just to change a number range (ADR-0006 accepted) |
+| Deliverables | Helm + standard Deployment / ConfigMap / Secret is the only production form | No Operator (CRD) | Standard Helm is sufficient (ADR-0013 accepted) |
+| Capacity wording | Only declares "how to measure", not "how much it can handle" | **Before M6 measurement and maintainer adjudication, publish no capacity numbers** | O1 unresolved; `deploy/alerts/README.md` states explicitly "no capacity-class alerts" (`AGENT.md` §2) |
 
 ---
 
-## 3. 在网络中的位置
+## 3. Position in the network
 
 ```mermaid
 flowchart LR
-    subgraph IMS["运营商 IMS 核心网 · 信任域"]
-        UE["UE"] --> PCSCF["P-CSCF"] --> SCSCF["S-CSCF<br/>按 iFC 触发"]
-        HSS["HSS"] -. "iFC 签约" .-> SCSCF
+    subgraph IMS["Operator IMS core network · trust domain"]
+        UE["UE"] --> PCSCF["P-CSCF"] --> SCSCF["S-CSCF<br/>triggered by iFC"]
+        HSS["HSS"] -. "iFC subscription" .-> SCSCF
     end
-    subgraph EDGE["运营商边界 · 非我方交付"]
-        SSBC["S-SBC<br/>透明桥接 · 拓扑隐藏"]
+    subgraph EDGE["Operator boundary · not our delivery"]
+        SSBC["S-SBC<br/>transparent bridging · topology hiding"]
     end
-    subgraph EXT["网外 · 本项目交付边界"]
+    subgraph EXT["Off-net · this project's delivery boundary"]
         AS["In-house AS<br/>3GPP Third-Party AS role"]
     end
-    SCSCF -->|"ISC 触发"| SSBC
-    SSBC ==>|"SIP trunk · UDP/TCP 5060 · TLS 5061<br/>mTLS + 对端白名单"| AS
-    AS -.->|"回送应答 / 出腿"| SSBC
-    SSBC -.->|"回送 S-CSCF"| SCSCF
+    SCSCF -->|"ISC trigger"| SSBC
+    SSBC ==>|"SIP trunk · UDP/TCP 5060 · TLS 5061<br/>mTLS + peer allowlist"| AS
+    AS -.->|"return response / outbound leg"| SSBC
+    SSBC -.->|"return to S-CSCF"| SCSCF
     style AS fill:#e8f0fe,stroke:#1a73e8,stroke-width:2px
     style SSBC fill:#fff4e5,stroke:#e8a33d
 ```
 
-- S-SBC 对两侧都透明：对 S-CSCF，AS 是网内 AS；对 AS，对端就是 S-CSCF。因此本系统只实现 ISC（ADR-0003）。
-- **计费域不在图内**：本产品与计费域无接口，标 **N/A**（不做 CDR / 计费，ADR-0017）。
-- **ISSC / iFC 触发不可用时**：呼叫不经本 AS 放行，AS 侧不介入。iFC 触发逻辑属于 S-CSCF / HSS，不在我方交付边界内；AS 只实现 ISC 触发后的业务判决。
+- The S-SBC is transparent to both sides: to the S-CSCF, the AS is an on-net AS; to the AS, the peer is the S-CSCF. Therefore this system implements only ISC (ADR-0003).
+- **The charging domain is not in the diagram**: this product has no interface to the charging domain, marked **N/A** (no CDR / charging, ADR-0017).
+- **When ISC / iFC trigger is unavailable**: the call is not routed through this AS; the AS side does not intervene. The iFC trigger logic belongs to the S-CSCF / HSS, outside our delivery boundary; the AS only implements the business decision after the ISC trigger.
 
 ---
 
-## 4. 架构大图
+## 4. Architecture overview
 
 ```mermaid
 flowchart TB
-    subgraph SIG["① 信令面 · apps/ · 无状态 · 一用例一进程"]
+    subgraph SIG["① Signaling plane · apps/ · stateless · one process per use case"]
         direction LR
-        APP1["apps/translation<br/>号码翻译"]
-        APP2["apps/anti-fraud<br/>反诈"]
-        APPN["apps/&lt;用例&gt;<br/>可插拔业务引擎"]
+        APP1["apps/translation<br/>number translation"]
+        APP2["apps/anti-fraud<br/>anti-fraud"]
+        APPN["apps/&lt;use case&gt;<br/>pluggable business engine"]
     end
-    subgraph CORE["② 内核 · platform/ · 无状态"]
-        CORE1["进程壳 BaseAsStack<br/>decide() 纯函数决策缝<br/>Transport seam · StateStore seam"]
+    subgraph CORE["② Core · platform/ · stateless"]
+        CORE1["process shell BaseAsStack<br/>decide() pure-function decision seam<br/>Transport seam · StateStore seam"]
     end
-    subgraph CTRL["③ 控制面 · services/ · 无状态"]
+    subgraph CTRL["③ Control plane · services/ · stateless"]
         direction LR
-        CFG["config-service<br/>规则版本库 · 变更单 · 灰度分发"]
-        CON["console<br/>运维控制台 · 鉴权 · 审计"]
+        CFG["config-service<br/>rule version store · change orders · canary distribution"]
+        CON["console<br/>ops console · auth · audit"]
     end
-    subgraph DATA["④ 数据面 · 有状态 · 同 namespace"]
+    subgraph DATA["④ Data plane · stateful · same namespace"]
         direction LR
-        REDIS[("Redis<br/>运行态：会话状态 · 速率窗口")]
-        PG[("PostgreSQL<br/>治理态：规则版本 · 变更单 · 审计")]
+        REDIS[("Redis<br/>runtime: session state · rate windows")]
+        PG[("PostgreSQL<br/>governance: rule versions · change orders · audit")]
     end
-    subgraph CROSS["⑤ 横切能力"]
+    subgraph CROSS["⑤ Cross-cutting capabilities"]
         direction LR
-        OBS["可观测性<br/>as_* 指标 · OTel"]
-        SEC["安全<br/>白名单 · mTLS · 鉴权 · 审计"]
-        OPS["运维<br/>Helm · 扩缩容 · ISSU draining"]
+        OBS["Observability<br/>as_* metrics · OTel"]
+        SEC["Security<br/>allowlist · mTLS · auth · audit"]
+        OPS["Operations<br/>Helm · scale · ISSU draining"]
     end
-    subgraph TEST["⑥ testbed/ · 研发资产 · 不作为 v1 交付物"]
-        TB1["契约用例 · 仿真网元 · 真实 socket 压测"]
+    subgraph TEST["⑥ testbed/ · R&D asset · not a v1 deliverable"]
+        TB1["contract cases · simulated NEs · real-socket load test"]
     end
 
     SIG --> CORE
     CORE --> DATA
     CTRL --> DATA
-    CTRL -. "规则分发 / 版本上报" .-> SIG
-    SIG -. "指标 / 日志" .-> OBS
-    CTRL -. "指标 / 日志" .-> OBS
-    OBS -. "指标驱动" .-> OPS
-    TEST -. "研发验证，不进入交付边界" .-> SIG
+    CTRL -. "rule distribution / version report" .-> SIG
+    SIG -. "metrics / logs" .-> OBS
+    CTRL -. "metrics / logs" .-> OBS
+    OBS -. "metric-driven" .-> OPS
+    TEST -. "R&D validation, not in delivery boundary" .-> SIG
 
     style SIG fill:#e8f0fe,stroke:#1a73e8
     style CORE fill:#e6f4ea,stroke:#34a853
@@ -127,103 +127,103 @@ flowchart TB
     style TEST fill:#f1f3f4,stroke:#5f6368,stroke-dasharray: 5 5
 ```
 
-**关键决策缝（换零件不换架构）**
+**Key decision seams (swap parts, not architecture)**
 
-| 决策缝 | 位置 | 性质 | 依据 |
+| Decision seam | Location | Nature | Basis |
 |---|---|---|---|
-| `decide()` 纯函数 | 内核 | 判决模块内无 socket、无时钟、无全局状态 → 可强制 TDD | `AGENT.md` §5；`apps/` 业务判决为纯函数 |
-| Transport seam | 内核 | 对端准入与传输策略可替换（白名单、证书、监听） | ADR-0016 accepted |
-| StateStore seam | 内核 | 运行态存储可替换（内存 / Redis），数据面职责单一 | ADR-0007 accepted |
-| 一用例一进程 | `apps/` | 每用例独立 Deployment、独立 Service、独立缩容单元 | ADR-0002 accepted；chart 每个 `useCases` 条目渲染一个 Deployment |
-| ISSU = draining | 内核 + 运维 | 摘流 → draining → 归零才退出；不做在途呼叫迁移 | ADR-0009 accepted |
-| ISC 触发不可用 | 网络边界 | 呼叫不经本 AS，AS 侧不介入（无 iFC 逻辑落在 AS 侧） | ADR-0003 accepted；REQ-NF-5 |
+| `decide()` pure function | Core | The decision module has no socket, no clock, no global state → TDD can be forced | `AGENT.md` §5; `apps/` business decisions are pure functions |
+| Transport seam | Core | Peer admission and transport policy are replaceable (allowlist, certificate, listen) | ADR-0016 accepted |
+| StateStore seam | Core | Runtime store is replaceable (memory / Redis); single data-plane responsibility | ADR-0007 accepted |
+| One process per use case | `apps/` | Each use case has an independent Deployment, independent Service, independent scale unit | ADR-0002 accepted; the chart renders one Deployment per `useCases` entry |
+| ISSU = draining | Core + ops | Drain traffic → draining → exit only at zero; no in-flight call migration | ADR-0009 accepted |
+| ISC trigger unavailable | Network boundary | Call does not route through this AS; AS side does not intervene (no iFC logic on the AS side) | ADR-0003 accepted; REQ-NF-5 |
 
 ---
 
-## 5. 关键 KPI（定义式，不含数值）
+## 5. Key KPIs (definitional, no values)
 
-指标名与语义以 `platform/src/as_platform/telemetry/metrics.py` 为唯一权威；采集通路是进程的 `/metrics` 端点（Prometheus 文本格式，`HealthServer`，需 `AS_HEALTH_PORT`）。**本页只给定义，不给阈值、不给目标值。**
+Metric names and semantics take `platform/src/as_platform/telemetry/metrics.py` as the single authority; the collection path is the process's `/metrics` endpoint (Prometheus text format, `HealthServer`, requires `AS_HEALTH_PORT`). **This page gives definitions only — no thresholds, no target values.**
 
-| KPI | 定义 | 数据来源 | 当前可观测性状态（如实标注） |
+| KPI | Definition | Data source | Current observability status (stated honestly) |
 |---|---|---|---|
-| 在途呼叫数 | 单个实例当前承载的在途呼叫数 | `as_active_calls{use_case,pod}` | 生产路径**有**生产者，但覆盖范围受限：仅在 reSIProcate 运行时（`AS_ENABLE_SIP_RUNTIME=1` 且 `_resip_runtime` 已构建）的 dialog established / terminated 事件上 +1 / −1；非该运行时下只能由 `AS_M5_SIMULATED_ACTIVE_CALLS` 模拟。而 reSIProcate 生产路径行为 E1 仍未验收（`docs/plan.md` §5.1 O3），故**尚无生产环境证据** |
-| 缩容可摘除标志 | 缩容保护判定：`1` = 允许摘除，`0` = 受保护或 draining 中 | `as_downscale_removable{use_case,pod}` | 生产路径**已接线**：metrics 循环按 guard 配置与 draining 状态周期性写入。无阈值、无目标值 |
-| 状态存储可用性 | Redis 可达性：`1` = 可达，`0` = 不可达 | `as_state_store_available{use_case}` | 生产路径**已接线但有条件**：仅当环境变量 `REDIS_URL` 非空时才探测；未设置 `REDIS_URL` 时该序列**不存在**（不是 0） |
-| SIP 响应计数 | 按 `use_case` / `status_class` / `status_code` 计数的 SIP 响应 | `as_sip_responses_total{use_case,status_class,status_code}` | 生产路径**暂无数据生产者**：只有 `AS_M5_PROBE_SIP_STATUS` 探针（进程启动时写一次，生产 on-prem 不设该变量）；产品 SIP adapter 在每次发最终响应时调用该路径**仍待接线**。因此依赖它的 `ASHighErrorRatio` 告警当前不会触发（见 `deploy/alerts/README.md` 指标契约表） |
-| 规则命中计数 | 每条规则做出判决的次数 | `as_rule_hits_total{rule}` | 定义与写入接口已存在，但**生产路径无调用方**（目前只有单测调用），且不在 `deploy/alerts/README.md` 的告警契约表内 |
-| 遥测丢弃计数 | 有界队列丢弃的遥测事件数 | `as_telemetry_dropped_total{use_case}` | 需配置 `OTEL_EXPORTER_OTLP_ENDPOINT` 才会启用有界队列（未配置时 sink 为 `NoOpSink`，该计数不产生）；且队列的 exporter 目前默认 `NoOpExporter`，**真实 OTLP 后端接线仍未完成** |
+| In-flight calls | Number of in-flight calls currently carried by a single instance | `as_active_calls{use_case,pod}` | Production path **has** a producer, but coverage is limited: it only increments/decrements on dialog established / terminated events under the reSIProcate runtime (`AS_ENABLE_SIP_RUNTIME=1` and `_resip_runtime` built); otherwise only `AS_M5_SIMULATED_ACTIVE_CALLS` can simulate. reSIProcate production-path behavior E1 is still un-accepted (`docs/plan.md` §5.1 O3), so **no production evidence yet** |
+| Downscale removable flag | Downscale protection decision: `1` = removable, `0` = protected or draining | `as_downscale_removable{use_case,pod}` | Production path **wired**: the metrics loop writes periodically based on guard config and draining status. No threshold, no target value |
+| State-store availability | Redis reachability: `1` = reachable, `0` = unreachable | `as_state_store_available{use_case}` | Production path **wired but conditional**: probed only when env var `REDIS_URL` is non-empty; when `REDIS_URL` is unset the series **does not exist** (not 0) |
+| SIP response count | SIP responses counted by `use_case` / `status_class` / `status_code` | `as_sip_responses_total{use_case,status_class,status_code}` | Production path **has no data producer yet**: only the `AS_M5_PROBE_SIP_STATUS` probe (written once at process startup, not set in on-prem production); the product SIP adapter calling this path on every final response **is still pending wiring**. Therefore the `ASHighErrorRatio` alert depending on it will not fire now (see `deploy/alerts/README.md` metric-contract table) |
+| Rule-hit count | Number of decisions made by each rule | `as_rule_hits_total{rule}` | Definition and write interface exist, but **no production caller** (only unit tests call it), and it is not in `deploy/alerts/README.md`'s alert-contract table |
+| Telemetry-dropped count | Number of telemetry events dropped by the bounded queue | `as_telemetry_dropped_total{use_case}` | Bounded queue enabled only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured (when unconfigured the sink is `NoOpSink`, so no count is produced); and the queue's exporter currently defaults to `NoOpExporter`, **real OTLP backend wiring still incomplete** |
 
-> **注记：当前没有时延 / 吞吐 / CPS 类指标。** `MetricKind` 只有 `COUNTER` 与 `GAUGE` 两种（`platform/src/as_platform/telemetry/metrics.py`），没有 histogram 类型，指标注册表里也不存在任何时延或吞吐序列；`deploy/alerts/README.md` 的阈值一律是比率、相对变化或状态条件，不含绝对容量值。因此本页**不列时延 KPI，也不列任何容量 KPI** —— 容量模型与测量方法待 O1 裁决后写入 [`docs/product/ne-datasheet.md`](ne-datasheet.md)。
+> **Note: there are currently no latency / throughput / CPS metrics.** `MetricKind` has only `COUNTER` and `GAUGE` (`platform/src/as_platform/telemetry/metrics.py`), no histogram type, and the metric registry contains no latency or throughput series; the thresholds in `deploy/alerts/README.md` are all ratios, relative changes, or state conditions, with no absolute capacity values. Therefore this page **lists no latency KPI and no capacity KPI** —— the capacity model and measurement methodology will be written into [`docs/product/ne-datasheet.md`](ne-datasheet.md) after O1 is resolved.
 
 ---
 
-## 6. 三步部署
+## 6. Three-step deployment
 
-Helm 是生产唯一交付形态（ADR-0013），chart name 为 `3rdparty-as`。
+Helm is the only production delivery form (ADR-0013), chart name `3rdparty-as`.
 
-| 步骤 | 做什么 | 注意 |
+| Step | What to do | Notes |
 |---|---|---|
-| 1. 准备环境与依赖 | 确认 K8s 版本与 API、节点资源、Helm 与 RBAC；准备运行态 Redis 与治理态 PostgreSQL（或启用 chart 的 `stateStores`）；执行部署前环境校验 | 校验脚本见 [`docs/delivery/preflight.sh`](../delivery/preflight.sh)（预检 K8s / 资源 / 依赖服务 / Helm / RBAC） |
-| 2. 安装 | 用 `helm upgrade --install` 安装 chart，每个业务用例渲染为独立 Deployment | **本文不复述 values 参数** —— 参数与渲染行为以 [`deploy/helm/README.md`](../../deploy/helm/README.md) 为权威，交付清单与命令序列见 [`docs/delivery/install-guide.md`](../delivery/install-guide.md) |
-| 3. 接入与验证 | 与运营商 S-SBC 对接 SIP trunk（UDP/TCP 5060、TLS 5061，mTLS + 对端白名单）；由 S-CSCF / HSS 侧 iFC 签约触发 ISC；用仿真对端或真实 S-SBC 验证呼叫与判决 | iFC 触发在 S-CSCF / HSS 侧配置，不在 AS 侧；AS 只实现 ISC 触发后的业务判决 |
+| 1. Prepare environment and dependencies | Confirm K8s version and API, node resources, Helm and RBAC; prepare runtime Redis and governance PostgreSQL (or enable the chart's `stateStores`); run pre-deployment environment validation | Validation script in [`docs/delivery/preflight.sh`](../delivery/preflight.sh) (validates K8s / resources / dependency services / Helm / RBAC) |
+| 2. Install | Install the chart with `helm upgrade --install`; each business use case renders as an independent Deployment | **This page does not repeat the values parameters** —— parameters and render behavior take [`deploy/helm/README.md`](../../deploy/helm/README.md) as authority; the delivery checklist and command sequence are in [`docs/delivery/install-guide.md`](../delivery/install-guide.md) |
+| 3. Connect and verify | Peer the SIP trunk with the operator S-SBC (UDP/TCP 5060, TLS 5061, mTLS + peer allowlist); trigger ISC via the iFC subscription on the S-CSCF / HSS side; verify calls and decisions with a simulated peer or a real S-SBC | iFC trigger is configured on the S-CSCF / HSS side, not on the AS side; the AS only implements the business decision after the ISC trigger |
 
-**不在范围内**：生产 ingress（7.2d）与真实集群证据当前仍 **blocked**；本页不提供任何集群内验证结论，也不提供 air-gapped 离线包步骤（见 [`docs/delivery/airgap-package.md`](../delivery/airgap-package.md)）。
+**Out of scope**: production ingress (7.2d) and real-cluster evidence are currently still **blocked**; this page offers no in-cluster verification conclusions, and no air-gapped offline-package steps (see [`docs/delivery/airgap-package.md`](../delivery/airgap-package.md)).
 
 ---
 
-## 7. 当前状态与未决（如实标注，不得当已验收引用）
+## 7. Current status and open items (stated honestly; must not be cited as accepted)
 
-| 项 | 状态 |
+| Item | Status |
 |---|---|
-| M8 发布候选 | 产物就绪，**退出签字未完成**（`docs/plan.md` §0） |
-| E1 reSIProcate 生产路径行为 | **待验收**（O3 / O2） |
-| E4 TLS 证书热轮换 | **待验收**；运营商 PKI 无实验室证据 |
-| E5 状态外置与恢复 | **待验收**（REQ-NF-1 签收仍归 M8） |
-| e2e 测试 | `pytest -m e2e` **8 条稳定通过**（Wave 1 五条 `testbed/e2e/test_sip_first_edition.py` + Wave 2 三条 `testbed/e2e/test_s1_replay_contract.py`；缺 native 扩展时 fail 不 skip）；REQ-F-1 = **自动化子集已覆盖 / 全文仍 open**（14 条消息逐条 header 对拍未覆盖，见 `../acceptance/test-plan.md` REQ-F-1 段 2026-10-12 追加块） |
-| O1 容量目标 | **未裁决** —— 因此本文无任何容量数字 |
-| O4 呼叫轨迹保留期 | **已裁（G6，2026-10-10）**：默认 10 天、部署可配；**实现未落** —— 轨迹存储 / 查询 / 删除能力当前不存在，不得表述为「系统已按 10 天清理」 |
-| D5 轨迹存储选型 | **已裁（G6，2026-10-10）**：in-cluster PostgreSQL；**实现未落**（随轨迹存储能力落地） |
-| O5 容灾等级 | **已裁（G7，2026-10-10）**：站点内 N+1 + 跨站 1+1 warm standby（沿用 ADR-0008 拓扑；**不承诺机架 / AZ 级容错**）；RPO / RTO 数值仍未裁；chart 当前仍单副本渲染，failover 实测行为无证据 |
+| M8 release candidate | Artifacts ready, **exit sign-off not completed** (`docs/plan.md` §0) |
+| E1 reSIProcate production-path behavior | **Pending acceptance** (O3 / O2) |
+| E4 TLS certificate hot-rotation | **Pending acceptance**; no lab evidence for operator PKI |
+| E5 state externalization and recovery | **Pending acceptance** (REQ-NF-1 sign-off still belongs to M8) |
+| e2e tests | `pytest -m e2e` **8 cases stably passing** (Wave 1 five `testbed/e2e/test_sip_first_edition.py` + Wave 2 three `testbed/e2e/test_s1_replay_contract.py`; when native extension is missing they fail, not skip); REQ-F-1 = **automated subset covered / full text still open** (14 messages header-by-header diff not covered, see `../acceptance/test-plan.md` REQ-F-1 section 2026-10-12 appended block) |
+| O1 capacity target | **Unresolved** —— therefore this document has no capacity numbers |
+| O4 call-trace retention period | **Resolved (G6, 2026-10-10)**: default 10 days, deploy-configurable; **implementation not delivered** —— the trace store / query / delete capability does not currently exist; must not be stated as "the system already purges at 10 days" |
+| D5 trace-storage selection | **Resolved (G6, 2026-10-10)**: in-cluster PostgreSQL; **implementation not delivered** (lands with the trace-storage capability) |
+| O5 disaster-recovery tier | **Resolved (G7, 2026-10-10)**: in-site N+1 + cross-site 1+1 warm standby (reusing ADR-0008 topology; **no rack / AZ-level fault-tolerance promised**); RPO / RTO values still unresolved; the chart still renders single-replica, with no evidence of failover behavior |
 
 ---
 
-## 8. 文档索引
+## 8. Documentation index
 
-| 文档 | 内容 | 位置 |
+| Document | Content | Location |
 |---|---|---|
-| **本文件** | 定位、价值主张、架构大图、KPI 定义、三步部署 | `docs/product/one-pager.md` |
-| [`compliance-matrix.md`](compliance-matrix.md) | 3GPP / GSMA / RFC 规范符合性矩阵（Sh 与计费标 N/A 并保留理由） | `docs/product/` |
-| [`ne-datasheet.md`](ne-datasheet.md) | 网元档案：KPI 定义、告警清单、依赖关系、资源规格、容量模型（容量数值受 O1 阻塞） | `docs/product/` |
-| [`responsibility-matrix.md`](responsibility-matrix.md) | 责任边界矩阵 RACI：AS 与 S-CSCF / HSS / 计费域 / 网管 / 安全各域 | `docs/product/` |
-| [`version-lifecycle.md`](version-lifecycle.md) | 版本生命周期与 EOL 策略（REQ-NF-16 / ADR-0027） | `docs/product/` |
-| [`security-privacy.md`](security-privacy.md) | 安全与隐私合规（PDPO）；保留期（O4）与存储选型（D5）取值已裁（G6），实现未落 | `docs/product/` |
-| [`../operations/runbook-l1.md`](../operations/runbook-l1.md) | L1 运维手册（NOC 日常与告警处置） | `docs/operations/` |
-| [`../operations/runbook-l2.md`](../operations/runbook-l2.md) | L2 运维手册（深度排障与信令分析） | `docs/operations/` |
-| [`../operations/fault-demarcation.md`](../operations/fault-demarcation.md) | 故障定界手册：AS / S-CSCF / HSS / 计费域四方定界 | `docs/operations/` |
-| [`../operations/rollback-playbook.md`](../operations/rollback-playbook.md) | 业务摘流 / 回退 + iFC 侧配合手册 | `docs/operations/` |
-| [`../operations/backup-restore.md`](../operations/backup-restore.md) | 备份恢复方案 + 演练记录模板（受真实集群环境阻塞） | `docs/operations/` |
-| [`../delivery/install-guide.md`](../delivery/install-guide.md) | 交付清单、镜像同步、`helm install` 命令序列 | `docs/delivery/` |
-| [`../delivery/airgap-package.md`](../delivery/airgap-package.md) | 离线安装包（镜像同步 + `helm package`）制作与使用 | `docs/delivery/` |
-| [`../delivery/preflight.sh`](../delivery/preflight.sh) | 部署前环境校验脚本 | `docs/delivery/` |
-| [`../../deploy/helm/README.md`](../../deploy/helm/README.md) | Helm chart 参数与渲染行为的**权威**说明 | 已存在 |
-| [`../architecture/新系统整体架构.md`](../architecture/新系统整体架构.md) | 设计基线：网络位置、分层、配置治理、冗余与 ISSU、安全边界、未决与风险 | 已存在 |
-| [`../plan.md`](../plan.md) | 里程碑状态、产品决策记录、未决项（O1–O5） | 已存在 |
-| [`../product-packaging-plan.md`](../product-packaging-plan.md) | 本文件所属的包装计划与交付物清单 | 已存在 |
-| [`../acceptance/test-plan.md`](../acceptance/test-plan.md) | 验收标准与自动化分层边界（e2e marker 现状） | 已存在 |
-| [`../../deploy/alerts/README.md`](../../deploy/alerts/README.md) | 告警规则集与指标契约（为什么没有容量类告警） | 已存在 |
-| [`../../AGENT.md`](../../AGENT.md) | 协作守则：非目标、编码约定、门禁、DoD | 已存在 |
+| **This file** | Positioning, value proposition, architecture overview, KPI definitions, three-step deployment | `docs/product/one-pager.md` |
+| [`compliance-matrix.md`](compliance-matrix.md) | 3GPP / GSMA / RFC compliance matrix (Sh and charging marked N/A with rationale) | `docs/product/` |
+| [`ne-datasheet.md`](ne-datasheet.md) | NE profile: KPI definitions, alert list, dependencies, resource specs, capacity model (capacity values blocked by O1) | `docs/product/` |
+| [`responsibility-matrix.md`](responsibility-matrix.md) | Responsibility-boundary matrix RACI: AS vs S-CSCF / HSS / charging domain / NMS / security domains | `docs/product/` |
+| [`version-lifecycle.md`](version-lifecycle.md) | Version lifecycle and EOL strategy (REQ-NF-16 / ADR-0027) | `docs/product/` |
+| [`security-privacy.md`](security-privacy.md) | Security and privacy compliance (PDPO); retention (O4) and storage selection (D5) values resolved (G6), implementation not delivered | `docs/product/` |
+| [`../operations/runbook-l1.md`](../operations/runbook-l1.md) | L1 operations manual (NOC daily and alert handling) | `docs/operations/` |
+| [`../operations/runbook-l2.md`](../operations/runbook-l2.md) | L2 operations manual (deep troubleshooting and signaling analysis) | `docs/operations/` |
+| [`../operations/fault-demarcation.md`](../operations/fault-demarcation.md) | Fault-demarcation manual: AS / S-CSCF / HSS / charging-domain four-party demarcation | `docs/operations/` |
+| [`../operations/rollback-playbook.md`](../operations/rollback-playbook.md) | Service drain / rollback + iFC-side coordination manual | `docs/operations/` |
+| [`../operations/backup-restore.md`](../operations/backup-restore.md) | Backup and restore plan + drill-record template (blocked by real-cluster environment) | `docs/operations/` |
+| [`../delivery/install-guide.md`](../delivery/install-guide.md) | Delivery checklist, image sync, `helm install` command sequence | `docs/delivery/` |
+| [`../delivery/airgap-package.md`](../delivery/airgap-package.md) | Offline install package (image sync + `helm package`) creation and use | `docs/delivery/` |
+| [`../delivery/preflight.sh`](../delivery/preflight.sh) | Pre-deployment environment validation script | `docs/delivery/` |
+| [`../../deploy/helm/README.md`](../../deploy/helm/README.md) | **Authoritative** description of Helm chart parameters and render behavior | Existing |
+| [`../architecture/新系统整体架构.md`](../architecture/新系统整体架构.md) | Design baseline: network position, layering, config governance, redundancy and ISSU, security boundary, open items and risks | Existing |
+| [`../plan.md`](../plan.md) | Milestone status, product decision log, open items (O1–O5) | Existing |
+| [`../product-packaging-plan.md`](../product-packaging-plan.md) | The packaging plan this file belongs to, and the deliverable list | Existing |
+| [`../acceptance/test-plan.md`](../acceptance/test-plan.md) | Acceptance criteria and automated-layering boundaries (e2e marker status) | Existing |
+| [`../../deploy/alerts/README.md`](../../deploy/alerts/README.md) | Alert ruleset and metric contract (why there are no capacity-class alerts) | Existing |
+| [`../../AGENT.md`](../../AGENT.md) | Collaboration rules: non-goals, coding conventions, gate, DoD | Existing |
 
-> 上表中标注 `docs/product/`、`docs/operations/`、`docs/delivery/` 的链接**均已落盘**，可直接打开；其中**依赖真实集群 / 依赖对端配合的部分仍 blocked**（G-P1-10），见各自文档的阻塞标注。
+> The links marked `docs/product/`, `docs/operations/`, `docs/delivery/` in the table above **are all persisted** and can be opened directly; among them, **the parts depending on a real cluster / peer coordination are still blocked** (G-P1-10), as noted in each document's blockages.
 
 ---
 
-## 9. 追溯
+## 9. Traceability
 
-- **对应交付物**：`docs/product-packaging-plan.md` §1 第一批 **1.1（产品一页纸 + 命名）**；工程事实约束见该计划 §0.3。
-- **已落实的评审整改项**：
-  - **G-P0-6**（目标场景决策依据不足）→ 目标场景降格为**当前默认方向（讨论确认，待补正式决策落点）**，见状态块；正式落点位置为 `docs/plan.md` §0「产品决策记录」。
-  - **G-P2-6**（产品名"已确认"依据不足）→ 全文使用**文档暂用名**，并写明「不是已正式批准的产品名」；git repo 改名限定为仓库名与 remote URL，chart / 镜像 / OTel 服务名不变。
-  - **2026-10-12 追加（G8）**：上述两条整改项的「降格为默认方向 / 暂用名」处理已被 G8-1 / G8-2 / G8-3 裁决覆盖 —— 目标场景正式口径与描述名均已落 `docs/plan.md` §0 决策记录；本段原文保留为审计链。
-- **引用的 REQ**：`REQ-NF-1`（进程重启不丢会话）、`REQ-NF-2`（单进程状态有界）、`REQ-NF-3`（可水平扩展）、`REQ-NF-4`（ISSU）、`REQ-NF-5`（S-SBC 透明桥接）、`REQ-NF-9`（单租户 on-premises）、`REQ-NF-13`（OTel 三信号导出）、`REQ-NF-14`（告警规则集）、`REQ-NF-16`（版本生命周期与 EOL）；`REQ-F-1`（基本呼叫信令序列）、`REQ-F-2`（B2BUA 两侧 Call-ID 不同）、`REQ-F-5`（Route / Record-Route 处理）、`REQ-F-7`（命中阻止策略返回 603 Decline）。定义见 `docs/requirements/prd.md`。
-- **引用的 ADR（状态以各文件头为准）**：ADR-0002（一用例一进程，accepted）、ADR-0003（S-SBC 透明桥接 / 单一 ISC，accepted）、ADR-0004（媒体 seam，accepted）、ADR-0005（OTel 可观测性，accepted）、ADR-0006（配置治理，accepted）、ADR-0007（数据面 split，accepted）、ADR-0009（ISSU / draining，accepted）、ADR-0013（Helm-only 生产形态，accepted）、ADR-0014（三层 testbed，accepted）、ADR-0016（边界内安全，accepted）、ADR-0017（不做 CDR，accepted）、ADR-0021（运行态覆盖粒度，accepted）、ADR-0026（集群内状态存储，accepted）、ADR-0027（版本生命周期与 EOL，accepted）。**ADR-0023（Redis checkpoint，proposed）与 ADR-0025（托管规则运行时 bundle，draft）尚未通过**，本文不据其作结论。
-- **未做的事**：不写容量数字（O1 未裁决）；不写 Diameter Sh 与 CDR / 计费相关内容（N/A 并给理由）；不引用 M6 dev-host 数字作为对外指标；不把任何未验收项写成已通过。
+- **Corresponding deliverable**: `docs/product-packaging-plan.md` §1 first-batch **1.1 (product one-pager + naming)**; engineering-fact constraints are in the plan §0.3.
+- **Review remediation items already applied**:
+  - **G-P0-6** (insufficient basis for the target-scenario decision) → the target scenario is downgraded to **current default direction (discussed and confirmed, pending formal decision landing)**, see the status block; the formal landing location is `docs/plan.md` §0 "Product Decision Log".
+  - **G-P2-6** (insufficient basis for the product name being "confirmed") → the whole text uses a **temporary documentation name** and states "not a formally approved product name"; the git repo rename is limited to the repo name and remote URL, while chart / image / OTel service names are unchanged.
+  - **2026-10-12 addition (G8)**: the "downgrade to default direction / temporary name" handling of the two items above has been superseded by the G8-1 / G8-2 / G8-3 adjudications —— the official target-scenario wording and the descriptor name are both recorded in `docs/plan.md` §0 decision log; this paragraph is retained as the audit chain.
+- **REQs referenced**: `REQ-NF-1` (no session loss on process restart), `REQ-NF-2` (bounded per-process state), `REQ-NF-3` (horizontally scalable), `REQ-NF-4` (ISSU), `REQ-NF-5` (S-SBC transparent bridging), `REQ-NF-9` (single-tenant on-premises), `REQ-NF-13` (OTel three-signal export), `REQ-NF-14` (alert ruleset), `REQ-NF-16` (version lifecycle and EOL); `REQ-F-1` (basic call signaling sequence), `REQ-F-2` (B2BUA two-leg different Call-IDs), `REQ-F-5` (Route / Record-Route handling), `REQ-F-7` (hit block policy returns 603 Decline). Definitions in `docs/requirements/prd.md`.
+- **ADRs referenced (status per each file header)**: ADR-0002 (one process per use case, accepted), ADR-0003 (S-SBC transparent bridging / single ISC, accepted), ADR-0004 (media seam, accepted), ADR-0005 (OTel observability, accepted), ADR-0006 (config governance, accepted), ADR-0007 (data-plane split, accepted), ADR-0009 (ISSU / draining, accepted), ADR-0013 (Helm-only production form, accepted), ADR-0014 (three-layer testbed, accepted), ADR-0016 (in-boundary security, accepted), ADR-0017 (no CDR, accepted), ADR-0021 (runtime override granularity, accepted), ADR-0026 (in-cluster state storage, accepted), ADR-0027 (version lifecycle and EOL, accepted). **ADR-0023 (Redis checkpoint, proposed) and ADR-0025 (managed rule-runtime bundle, draft) have not passed**, and this document draws no conclusions from them.
+- **What was not done**: no capacity numbers (O1 unresolved); no Diameter Sh and no CDR / charging content (N/A with rationale); no M6 dev-host numbers cited as external metrics; nothing un-accepted presented as passed.

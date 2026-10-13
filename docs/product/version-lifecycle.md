@@ -12,54 +12,54 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# In-house IMS Application Server —— 版本生命周期、EOL 与接口兼容策略
+# In-house IMS Application Server — version lifecycle, EOL, and interface-compatibility strategy
 
-> **状态块（阅读本文前先看这里）**
+> **Status block (read this before the rest of the document)**
 >
-> - **产品名**：`In-house IMS Application Server`，**已正式采用为产品/文档描述名**（G8-2；**非商标 / 非品牌宣称**），首现处标注 3GPP Third-Party AS role，下文简称 in-house AS（`docs/plan.md` §0「产品决策记录」G8 行）。
-> - **git repo 名**：已由维护者报告改名为 `inhouse-ims-as`（G8-3；仅 git 仓库名与 remote URL，本仓库未执行 remote 或本地路径改动）；chart name（`3rdparty-as`，`deploy/helm/Chart.yaml:2`）、镜像名、OTel 服务名**保持 `3rdparty-as` 不变**。
-> - **本文件归属**：`docs/product-packaging-plan.md` §1 第三批交付物 **3.5（版本生命周期与 EOL 策略）** + 第四批交付物 **4.3（API 版本兼容策略）**，合并成一份文档。
-> - **§3 的决策已落地**：版本生命周期与 EOL 的决定已由 **REQ-NF-16**（`docs/requirements/prd.md:459-470`）+ **ADR-0027**（`docs/architecture/adr/0027-version-lifecycle-and-eol.md`，**accepted，2026-10-09**，已注册于 `docs/architecture/adr/README.md:43`）承载。本文是**面向评审与运维的说明文档**，只忠实转述 ADR-0027 已接受的决定，**不改写、不扩写**其结论。
-> - **§7（交付物 4.3）尚无 ADR**：API 与接口版本兼容策略**尚无决策落点**。本文只给「现状盘点 + 候选方案 + 需要决策的点」，**任何表述都不得被引用为已确认承诺**。出口条件见 §7.4。
-> - **B6 评审状态**：本文档已随 B6 评审留下 review record —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6（2026-10-12 首评）与 §7（2026-10-12 闭环复评）；**结论待维护者确认**，确认前不作为对外交付或验收依据（`AGENT.md` §3.3）。
-> - **本文不含任何容量/性能数字**：O1（容量目标）**未裁决**（`docs/plan.md` §5.1）；`AGENT.md` §2 在 M6 真实 socket 实测与维护者裁决前禁止发布任何 CPS / CAPS / BHCA / 并发 / 吞吐 / 时延数字。本文因此不给任何容量结论。
-> - **本文不含发布状态声明**：M8 现状是「**RC 产物就绪，退出签字仍搁置**」（`docs/plan.md` §4 M8 行）；本文不把任何 RC 产物写成已发布，也不把任何未验收项写成已验收。
+> - **Product name**: `In-house IMS Application Server`, **formally adopted as the product / documentation descriptor name** (G8-2; **not a trademark / not a brand claim**), first appearing annotated with the 3GPP Third-Party AS role; hereafter abbreviated in-house AS (`docs/plan.md` §0 "Product Decision Log", G8 line).
+> - **git repo name**: reported renamed to `inhouse-ims-as` by the maintainer (G8-3; repo name and remote URL only; this repo has not had its remote or local path changed); chart name (`3rdparty-as`, `deploy/helm/Chart.yaml:2`), image name, and OTel service name **remain `3rdparty-as` unchanged**.
+> - **This file belongs to**: `docs/product-packaging-plan.md` §1 third-batch deliverable **3.5 (version lifecycle and EOL strategy)** + fourth-batch deliverable **4.3 (API version-compatibility strategy)**, merged into one document.
+> - **§3 decisions are landed**: the version-lifecycle and EOL decision is carried by **REQ-NF-16** (`docs/requirements/prd.md:459-470`) + **ADR-0027** (`docs/architecture/adr/0027-version-lifecycle-and-eol.md`, **accepted, 2026-10-09**, registered in `docs/architecture/adr/README.md:43`). This document is a **review-and-ops-facing explanatory document** that faithfully restates ADR-0027's accepted decisions, **without rewriting or expanding** its conclusions.
+> - **§7 (deliverable 4.3) has no ADR yet**: the API and interface version-compatibility strategy **has no decision landing**. This document only gives "current inventory + candidate options + points needing a decision", **and no statement may be cited as a confirmed commitment**. Exit conditions in §7.4.
+> - **B6 review status**: this document has left a review record with the B6 review —— [`../reviews/product-packaging-review-checklist-2026-10-12.md`](../reviews/product-packaging-review-checklist-2026-10-12.md) §6 (2026-10-12 initial review) and §7 (2026-10-12 closed-loop re-review); **conclusion pending maintainer confirmation**, and before confirmation it is not used as a basis for external delivery or acceptance (`AGENT.md` §3.3).
+> - **This document contains no capacity/performance numbers**: O1 (capacity target) **is unresolved** (`docs/plan.md` §5.1); `AGENT.md` §2 forbids publishing any CPS / CAPS / BHCA / concurrency / throughput / latency numbers before the M6 real-socket measurement and maintainer adjudication. This document therefore gives no capacity conclusion.
+> - **This document contains no release-status statement**: the M8 status is "**RC artifacts ready, exit sign-off still on hold**" (`docs/plan.md` §4 M8 line); this document does not present any RC artifact as released, nor any un-accepted item as accepted.
 
 ---
 
-## 1. 为什么需要这份文档
+## 1. Why this document is needed
 
-运营商评审最容易被问到的两类问题只有两个：
+Operator reviews most easily ask only two kinds of questions:
 
-1. **「你的版本会不会乱？」** —— 客户拿到手的是一个系统，不是一堆组件版本号；他们要知道对外报的是哪个号、装的是哪个镜像、chart 说的是哪个版本。
-2. **「升级会不会中断业务？」** —— 运维团队要知道当前版本还能用多久、EOL 什么时候到、升级窗口有多长、需不需要停业务。
+1. **"Will your versions be a mess?"** —— The customer receives a system, not a pile of component version numbers; they need to know which number is reported outward, which image is installed, which version the chart describes.
+2. **"Will upgrades interrupt service?"** —— The ops team needs to know how long the current version is usable, when EOL arrives, how long the upgrade window is, whether service must stop.
 
-这两类问题此前由两份不同的东西回答，而且都不完整：
+These two questions were previously answered by two different things, both incomplete:
 
-- **ADR-0018** 只解决了「一个 release 号从哪里来」：根 `VERSION` 是唯一源头、组件接口版本在各自 `pyproject.toml`、任何成员不得拥有 `VERSION` 文件（ADR-0018 §Decision）。它**没有**回答"一个版本发布后支持多久、什么时候停止支持、怎么升级"——这正是 review 结论 **G-P1-4**（`docs/reviews/product-packaging-plan-review-2026-10-09.md:250-252`、`:360`）指出的缺口：**SLA/EOL 缺口未区分 ADR-0018 只覆盖版本号**。
-- 同一 review 的 **G-P1-9**（`:365`）进一步要求 §3.5「先补 requirement + ADR」。**该条已关闭**：已新增 REQ-NF-16（`prd.md:459-470`）与 ADR-0027，并在 ADR 注册表登记（`README.md:43`）。本文是该关闭动作的**面向客户的说明**，不是新的决策。
+- **ADR-0018** only solved "where a release number comes from": the root `VERSION` is the single source, component interface versions are in their respective `pyproject.toml`, and no member may own a `VERSION` file (ADR-0018 §Decision). It did **not** answer "how long a version is supported after release, when support stops, how to upgrade" —— precisely the gap pointed out by review conclusion **G-P1-4** (`docs/reviews/product-packaging-plan-review-2026-10-09.md:250-252`, `:360`): **the SLA/EOL gap does not distinguish that ADR-0018 only covers version numbers**.
+- The same review's **G-P1-9** (`:365`) further required §3.5 to "first add requirement + ADR". **That item is closed**: REQ-NF-16 (`prd.md:459-470`) and ADR-0027 were added and registered in the ADR registry (`README.md:43`). This document is the **customer-facing explanation** of that closure action, not a new decision.
 
-本文的边界：解释**现状是什么**、**已接受的决定是什么**、**哪些还没决定**。不新建承诺，不替 ADR 说话。
+The boundary of this document: explain **what the current state is**, **what the accepted decisions are**, **what is not yet decided**. No new commitments, no speaking for the ADR.
 
 ---
 
-## 2. 版本号语义（现状）
+## 2. Version-number semantics (current state)
 
-### 2.1 唯一源头与守卫
+### 2.1 Single source and guards
 
-| 事实 | 位置 |
+| Fact | Location |
 |---|---|
-| 产品 release 版本唯一源头是根 `VERSION`，当前值 **`0.2.0`** | `VERSION:1`；规则见 `AGENT.md` §8、`ADR-0018` §Decision |
-| `VERSION` 必须是可读 SemVer（比 PEP 440 更严） | `tests/test_version_consistency.py:33-37`、`:56-60` |
-| `CHANGELOG.md` 最新标题必须等于 `VERSION` | `tests/test_version_consistency.py:63-70` |
-| 每个成员的 `version` 字段必须是 SemVer（成员清单取自 `pyproject.toml` 的 `tool.uv.workspace.members`） | `tests/test_version_consistency.py:50-53`、`:73-78` |
-| **任何成员不得拥有 `VERSION` 文件** | `AGENT.md` §8；由 `tests/test_workspace_layout.py` 强制（`docs/plan.md:89`） |
+| The product release version's single source is the root `VERSION`, current value **`0.2.0`** | `VERSION:1`; rules in `AGENT.md` §8, `ADR-0018` §Decision |
+| `VERSION` must be readable SemVer (stricter than PEP 440) | `tests/test_version_consistency.py:33-37`, `:56-60` |
+| `CHANGELOG.md`'s latest heading must equal `VERSION` | `tests/test_version_consistency.py:63-70` |
+| Each member's `version` field must be SemVer (member list from `pyproject.toml`'s `tool.uv.workspace.members`) | `tests/test_version_consistency.py:50-53`, `:73-78` |
+| **No member may own a `VERSION` file** | `AGENT.md` §8; enforced by `tests/test_workspace_layout.py` (`docs/plan.md:89`) |
 
-### 2.2 组件接口版本与产品 release 版本的关系
+### 2.2 Relationship between component interface version and product release version
 
-组件接口版本是**各成员 `pyproject.toml` 的 `version` 字段**（`[project]` 下），与产品 release 版本**相互独立**：接口 `0.3.1` 可以出现在产品 release `1.2.0` 中（ADR-0018 §Decision）。当前仓库的实际取值：
+The component interface version is **each member's `pyproject.toml` `version` field** (under `[project]`), and is **independent** of the product release version: interface `0.3.1` can appear inside product release `1.2.0` (ADR-0018 §Decision). The actual values in the current repo:
 
-| 成员 | `[project] name` | `version` | 位置 |
+| Member | `[project] name` | `version` | Location |
 |---|---|---|---|
 | `platform/` | `as-platform` | `0.1.0` | `platform/pyproject.toml:3` |
 | `apps/anti-fraud/` | `as-anti-fraud` | `0.1.0` | `apps/anti-fraud/pyproject.toml:3` |
@@ -69,209 +69,209 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | `testbed/load/` | `as-load` | `0.1.0` | `testbed/load/pyproject.toml:3` |
 | `testbed/simulators/` | `as-simulators` | `0.1.0` | `testbed/simulators/pyproject.toml:3` |
 
-`VERSION`（`0.2.0`）与各成员接口版本（`0.1.0`）**不同值是设计如此，不是漂移**；守卫拦的是"格式非法"与"CHANGELOG 头不一致"，不是"两者必须相等"（`tests/test_version_consistency.py:7-14`）。
+`VERSION` (`0.2.0`) and each member's interface version (`0.1.0`) **being different values is by design, not drift**; the guard blocks "illegal format" and "CHANGELOG header mismatch", not "the two must be equal" (`tests/test_version_consistency.py:7-14`).
 
-### 2.3 口径纪律：文档里的 v1 / v1.1 不是发行版本
+### 2.3 Wording discipline: "v1" / "v1.1" in docs are not release versions
 
-> **原文**（`docs/plan.md:16`，产品决策记录「版本称呼」行）：
-> **「没有 v1 / v1.1 定义（2026-10-07，维护者）。产品版本号只看根目录 `VERSION`。其他文档里的「v1」「v1.1」不是发行版本，不能当作范围依据。要定义，须写在本文并经维护者确认。」**
+> **Original** (`docs/plan.md:16`, product decision log "version naming" line):
+> **"No v1 / v1.1 definition (2026-10-07, maintainer). The product version number only looks at the root `VERSION`. 'v1' / 'v1.1' appearing in other documents are not release versions and cannot be used as scope basis. To define them, they must be written here and confirmed by the maintainer."**
 
-因此本文、以及其它任何交付物中出现的「v1」「v1.1」字样都**不是发行版本**，不得当作交付范围或版本承诺引用。ADR-0027 §Context 也据此把当前状态记为「尚未正式发布 GA 版本」（`0027:19`）。
+Therefore "v1" / "v1.1" appearing in this document and any other deliverable **are not release versions** and must not be cited as delivery scope or version commitment. ADR-0027 §Context accordingly records the current state as "no formally released GA version yet" (`0027:19`).
 
-### 2.4 已知缺口：chart 版本与 `VERSION` 不同步（如实记录；修法口径已裁，首次同步未执行）
+### 2.4 Known gap: chart version not synced with `VERSION` (recorded honestly; fix wording resolved, first sync not executed)
 
-| 项 | 实际值 | 位置 |
+| Item | Actual value | Location |
 |---|---|---|
 | chart `version` | `0.0.0-skeleton` | `deploy/helm/Chart.yaml:5` |
 | chart `appVersion` | `"0.0.0"` | `deploy/helm/Chart.yaml:6` |
-| 产品 release 版本 | `0.2.0` | `VERSION:1` |
-| `image.tag` 为空时回落到 `Chart.appVersion` | — | `deploy/helm/templates/_helpers.tpl:38-41` |
-| `app.kubernetes.io/version` 标签同样取 `image.tag` 或 `appVersion` | — | `deploy/helm/templates/_helpers.tpl:53`、`:69` |
+| product release version | `0.2.0` | `VERSION:1` |
+| `image.tag` falls back to `Chart.appVersion` when empty | — | `deploy/helm/templates/_helpers.tpl:38-41` |
+| `app.kubernetes.io/version` label also takes `image.tag` or `appVersion` | — | `deploy/helm/templates/_helpers.tpl:53`, `:69` |
 
-**缺口的准确表述**：chart 的 `version` / `appVersion` 目前是骨架占位值，**与根 `VERSION` 不同步**；由于 `image.tag` 为空时回落到 `appVersion`，**镜像 tag 与 `app.kubernetes.io/version` 标签当前也不反映产品 release 版本**。`tests/test_version_consistency.py` **不覆盖** chart（它只检查 `VERSION`、`CHANGELOG.md` 与成员 `pyproject.toml`）。
+**Accurate statement of the gap**: the chart's `version` / `appVersion` are currently skeleton placeholder values, **not synced with the root `VERSION`**; because `image.tag` falls back to `appVersion` when empty, **the image tag and the `app.kubernetes.io/version` label also do not currently reflect the product release version**. `tests/test_version_consistency.py` does **not** cover the chart (it only checks `VERSION`, `CHANGELOG.md`, and member `pyproject.toml`).
 
-> **注记（2026-10-13 追加）**：上段所描述的 chart 版本不同步缺口在事实层面已过期（chart 已于 2026-10-12 首次同步到 `0.2.0`，本节表格内的 `0.0.0-skeleton` / `"0.0.0"` 为原文保留），处置（原文保留 + 追加注记）见 [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1，待维护者决定是否同步。
+> **Note (added 2026-10-13)**: the chart version-sync gap described in the paragraph above is factually stale (the chart was first synced to `0.2.0` on 2026-10-12; the `0.0.0-skeleton` / `"0.0.0"` in this table's cells are retained from the original). The handling (retain original + add note) is in [`../next-release-v1.1-plan.md`](../next-release-v1.1-plan.md) §5-1, pending the maintainer's decision on whether to sync.
 
-**已裁修法（G4 / A6，2026-10-10 裁；2026-10-12 脚本落地）**：把「发布时 chart `version` / `appVersion` 与 `VERSION` 对齐」写成发布检查清单的一条，并在 `make chart-check` 之外增加一致性断言；`VERSION` 仍是唯一源头，chart 值是它的**派生物**，不构成第二个家。该口径已落地为 `scripts/sync-chart-version.sh`（默认 `--check` 只读，drift 即 exit 1；`--apply` 才写入）；**首次 `--apply` 的时机与取值由维护者另行决定**（G4「当前不修改 `VERSION` 与 `Chart.yaml`」继续有效，本文不改任何 chart/代码）。
+**Resolved fix (G4 / A6, adjudicated 2026-10-10; script landed 2026-10-12)**: add "at release, align chart `version` / `appVersion` with `VERSION`" as one line in the release checklist, and add a consistency assertion beyond `make chart-check`; `VERSION` remains the single source and the chart value is its **derived artifact**, not a second home. This wording is landed as `scripts/sync-chart-version.sh` (default `--check` read-only, drift exits 1; `--apply` writes); **the timing and value of the first `--apply` are decided separately by the maintainer** (G4 "do not modify `VERSION` and `Chart.yaml` now" remains in effect; this document modifies no chart/code).
 
 ---
 
-## 3. 支持周期与 EOL（逐条转述 ADR-0027 已接受的决定）
+## 3. Support period and EOL (restating ADR-0027's accepted decisions item by item)
 
-以下是 ADR-0027 §Decision 的**全部内容**（`0027:21-35`，共 6 项决定，其中「升级路径」含相邻 minor 与跨 major 两条；下表按行拆开），**不增不减**。第二列是原文口径，第三列是给客户看的解释，第四列指回 ADR 的行号。
+The following is the **full content** of ADR-0027 §Decision (`0027:21-35`, 6 decisions total, of which "upgrade path" includes two lines for adjacent minor and cross-major; the table splits them out), **with nothing added or removed**. The second column is the original wording, the third is the customer-facing explanation, the fourth points back to the ADR line.
 
-| # | 已接受的决定（ADR-0027 原文口径） | 客户视角的含义 | 依据 |
+| # | Accepted decision (ADR-0027 original wording) | Meaning from the customer's view | Basis |
 |---|---|---|---|
-| 1 | **支持周期**：每个 minor 版本从 GA 起**至少支持 12 个月**；支持期内提供 **bug fix 与安全补丁** | 拿到一个 GA 版本，可以据此规划至少一年的变更节奏；这一年内的缺陷与安全风险由我们补 | `0027:23` |
-| 2 | **EOL 提前通知期**：版本 EOL 前**至少 6 个月**发布 EOL 公告 | 不会"突然被通知停止支持"；任何一次 EOL 都有半年以上的缓冲期用于安排升级 | `0027:25` |
-| 3 | **升级路径（相邻 minor）**：相邻 minor 版本（如 1.0 → 1.1 → 1.2）**必须支持直接升级，不中断业务**（ISSU，见 ADR-0009） | 日常小版本升级不需要换架构、不需要停业务；口径的准确边界见 §4.2 | `0027:28` |
-| 4 | **升级路径（跨 major）**：跨 major 版本（如 1.x → 2.0）**须提供迁移指南与数据迁移工具** | 大版本不是"自己换个镜像"的事：会有书面的迁移步骤与工具，需要单独排期 | `0027:29` |
-| 5 | **LTS 版本**：**当前不定义 LTS**。如未来运营商客户明确要求 LTS，**须新增 ADR** 定义（支持周期、升级路径、维护成本分摊） | 现在没有 3–5 年长期支持版本可签；这是已知的、ADR-0027 明确接受的缺口 | `0027:31`、`0027:48`、`0027:55` |
-| 6 | **安全补丁**：**EOL 后不再提供安全补丁**，客户必须升级到受支持版本 | EOL 是一个真实的截止线，不是"慢慢来"；安全敏感客户必须在 EOL 前完成升级 | `0027:33`、`0027:49` |
-| 7 | **适用范围**：本策略**仅适用于 GA 版本（major.minor.0）**；开发版（0.x.y）与 pre-release **不享受**生命周期承诺 | 当前 `VERSION` 的 `0.2.0` 属开发版，**本文给出的 12 个月 / 6 个月等承诺对它不生效**；承诺从第一个 GA 版本起算 | `0027:35`、`:19` |
+| 1 | **Support period**: each minor version is supported for **at least 12 months** from GA; within the support period provide **bug fixes and security patches** | Getting a GA version lets you plan a change cadence of at least a year; defects and security risks within that year are patched by us | `0027:23` |
+| 2 | **EOL advance-notice period**: announce EOL **at least 6 months** before version EOL | No "suddenly notified that support stops"; any EOL has a buffer of over half a year to arrange the upgrade | `0027:25` |
+| 3 | **Upgrade path (adjacent minor)**: adjacent minor versions (e.g., 1.0 → 1.1 → 1.2) **must support direct upgrade without interrupting service** (ISSU, see ADR-0009) | Daily minor upgrades need no architecture change, no service stop; the precise boundary is in §4.2 | `0027:28` |
+| 4 | **Upgrade path (cross-major)**: cross-major versions (e.g., 1.x → 2.0) **must provide a migration guide and data-migration tooling** | A major version is not "just swap an image": there will be written migration steps and tooling, requiring separate scheduling | `0027:29` |
+| 5 | **LTS version**: **no LTS defined currently**. If a future operator customer explicitly requires LTS, **a new ADR must be added** to define it (support period, upgrade path, maintenance-cost sharing) | There is no 3–5 year long-term support version to sign now; this is a known gap explicitly accepted by ADR-0027 | `0027:31`, `0027:48`, `0027:55` |
+| 6 | **Security patches**: **no security patches after EOL**; customers must upgrade to a supported version | EOL is a real deadline, not "take your time"; security-sensitive customers must complete the upgrade before EOL | `0027:33`, `0027:49` |
+| 7 | **Scope of application**: this policy **applies only to GA versions (major.minor.0)**; development versions (0.x.y) and pre-releases **do not enjoy** the lifecycle commitment | The current `VERSION`'s `0.2.0` is a development version, and **the 12-month / 6-month commitments herein do not apply to it**; commitments start from the first GA version | `0027:35`, `:19` |
 
-**已接受的负面后果**（ADR-0027 §Consequences，售前必须如实告知）：
+**Accepted negative consequences** (ADR-0027 §Consequences, must be told honestly in pre-sales):
 
-- 每个 minor 发布后至少 12 个月内的维护负担对小团队是实打实的成本（`0027:47`）。
-- 部分运营商可能要求 LTS，当前策略**不满足**（`0027:48`、`0027:55`）。
-- EOL 后无安全补丁对安全敏感客户可能不可接受，**须在售前阶段明确沟通**（`0027:49`）。
-
----
-
-## 4. 发布与升级流程
-
-### 4.1 一次版本发布要落的东西
-
-| 项 | 现状与做法 | 依据 |
-|---|---|---|
-| 产品 release 号 | bump 根 `VERSION` | `AGENT.md` §8、§14；`ADR-0018` |
-| 变更记录 | `CHANGELOG.md`，遵循 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)，版本遵循 SemVer；标题层级为 `## [x.y.z] - 未发布（Unreleased）`（当前首条为 `## [0.2.0] - 未发布（Unreleased）`，`CHANGELOG.md:6`），其下按 `### 新增（Added）` / `### 变更（Changed）` 分节（`:8`） | 格式说明 `CHANGELOG.md:3-4`；标题与分节结构 `:6`、`:8`、`:20`、`:29`、`:67` |
-| 一致性 | `CHANGELOG.md` 最新标题必须等于 `VERSION`，否则守卫失败 | `tests/test_version_consistency.py:63-70` |
-| chart 版本 | **现状缺口**：chart `version` / `appVersion` 与 `VERSION` 不同步（见 §2.4）；发布时应对齐（G4 / A6 已裁口径，脚本 `scripts/sync-chart-version.sh` 已就绪；首次 `--apply` 待维护者执行） | `deploy/helm/Chart.yaml:5-6` |
-| 镜像 tag | `image.tag` 为空时回落到 `Chart.appVersion`；仓库地址为占位值 `registry.example.com/3rdparty-as`，安装时由客户内网 registry 指定 | `deploy/helm/values.yaml:76-82`；`deploy/helm/templates/_helpers.tpl:38-41` |
-| 发布 / 打 tag | **tag 是维护者的步骤**，agent 不打 tag、不 push | `AGENT.md` §10.4 结束仪式、§11 |
-
-**工具现状（如实记录）**：`Makefile` 中**没有** bump / release / version 类 target —— 现有 target 只有 `lint` / `type` / `test*` / `chart-check` / `alert-check` / `m2-*` / `m5-*` / `m7-*` / `demo-*` / `gate` / `gate-native` / `gate-strict`。chart↔`VERSION` 一致性已有脚本：`scripts/sync-chart-version.sh`（默认 `--check` 只读，drift 即 exit 1；`--apply` 才写入，首次执行时机待维护者决定）；`VERSION` bump 本身仍**无** Makefile target，保持**人工步骤**。
-
-### 4.2 升级语义（ISSU = draining）
-
-ISSU 的准确语义由 **ADR-0009**（accepted）定义，**不是**在途状态迁移：① 停止接收新请求（摘流）；② 存量呼叫继续在原进程上跑完；③ `active_calls` 归零后退出（ADR-0009 §Decision ①、`0009:18-20`、`:26`）。缩容走同一条路径（ADR-0009 §Decision ③；ADR-0010）。
-
-**因此 ADR-0027 第 3 条「不中断业务」的准确含义必须写清，不得夸大**：
-
-- 成立的：摘流后**不再接新呼叫**，存量呼叫在原进程上**无损跑完**（状态外置 Redis，见 ADR-0002）。「不迁移状态」**不等于**「可以立刻杀进程」——进程上仍有在途呼叫，其事务机、定时器与 socket 都在本进程（ADR-0009 §Context、`:14`）。
-- 不成立的 / 不在承诺内的：升级期间的**无损只覆盖「不接新呼叫」这一侧**；摘流期间新呼叫如何处置，**依赖 S-SBC / S-CSCF 侧 iFC 触发停用的配合**——iFC 触发逻辑属于 S-CSCF/HSS、**不在 AS 侧**，这是**跨域依赖**，我方不能单方面承诺（`docs/product-packaging-plan.md` §2.4，`:82`：按号段 / 百分比的 iFC 触发需 S-SBC/HSS 侧配合配置，真实集群演练受 M8 7.2d 阻塞）。
-- 兜底与代价：draining 有**硬超时**，超时后强制退出即掉呼叫，因此**必须告警**；升级窗口下限 ≈ 存量呼叫最长剩余时长（ADR-0009 §Decision ④、§Consequences；`docs/architecture/新系统整体架构.md:360`、风险 R3 `:614`）。具体超时值是运维参数，本文不给任何时间数值。
-
-### 4.3 升级窗口纪律
-
-| 组件 | 升级方式 | 依据 |
-|---|---|---|
-| AS 镜像（各 use case Deployment） | 走 `helm upgrade`（RollingUpdate + `preStop` + 延长 `terminationGracePeriodSeconds` + PDB）；配置与证书走热更新不重启进程 | ADR-0009 §Decision ②；`docs/architecture/新系统整体架构.md:363` |
-| PostgreSQL / Redis（`stateStores`，ADR-0026） | 有状态组件，升级走**维护窗口**，不随 AS 镜像一起滚；`stateStores.migrateJob` 只做一次性 schema 迁移（owner DSN），运行时启动**不做** DDL / 迁移 / 授权 | `deploy/helm/templates/state-migrate-job.yaml:1-6`、`:52`；`docs/product/ne-datasheet.md` 升级纪律行 |
-| 回退 | 见 [`../operations/rollback-playbook.md`](../operations/rollback-playbook.md) —— **该文件已落盘**；但其 iFC / 摘流部分**依赖 S-CSCF / HSS 侧配合配置与真实集群演练**，当前仍 blocked（G-P1-10） | — |
+- The maintenance burden for at least 12 months after each minor release is a real cost for a small team (`0027:47`).
+- Some operators may require LTS, which the current policy **does not satisfy** (`0027:48`, `0027:55`).
+- No security patches after EOL may be unacceptable to security-sensitive customers and **must be communicated clearly in the pre-sales stage** (`0027:49`).
 
 ---
 
-## 5. 版本生命周期状态流转（示意，非数值化）
+## 4. Release and upgrade process
+
+### 4.1 What a version release must land
+
+| Item | Current state and practice | Basis |
+|---|---|---|
+| Product release number | bump the root `VERSION` | `AGENT.md` §8, §14; `ADR-0018` |
+| Change log | `CHANGELOG.md`, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version following SemVer; heading level `## [x.y.z] - 未发布（Unreleased）` (currently the first line is `## [0.2.0] - 未发布（Unreleased）`, `CHANGELOG.md:6`), under it split by `### 新增（Added）` / `### 变更（Changed）` (`:8`) | format note `CHANGELOG.md:3-4`; heading and section structure `:6`, `:8`, `:20`, `:29`, `:67` |
+| Consistency | `CHANGELOG.md`'s latest heading must equal `VERSION`, otherwise the guard fails | `tests/test_version_consistency.py:63-70` |
+| chart version | **current gap**: chart `version` / `appVersion` not synced with `VERSION` (see §2.4); should be aligned at release (G4 / A6 resolved wording, script `scripts/sync-chart-version.sh` ready; first `--apply` pending maintainer) | `deploy/helm/Chart.yaml:5-6` |
+| image tag | `image.tag` falls back to `Chart.appVersion` when empty; repo address is placeholder `registry.example.com/3rdparty-as`, specified by the customer's internal registry at install | `deploy/helm/values.yaml:76-82`; `deploy/helm/templates/_helpers.tpl:38-41` |
+| Release / tagging | **tag is the maintainer's step**, agents do not tag or push | `AGENT.md` §10.4 closing ceremony, §11 |
+
+**Tooling state (recorded honestly)**: the `Makefile` has **no** bump / release / version targets —— existing targets are only `lint` / `type` / `test*` / `chart-check` / `alert-check` / `m2-*` / `m5-*` / `m7-*` / `demo-*` / `gate` / `gate-native` / `gate-strict`. The chart↔`VERSION` consistency already has a script: `scripts/sync-chart-version.sh` (default `--check` read-only, drift exits 1; `--apply` writes, first-execution timing pending maintainer); `VERSION` bump itself still has **no** Makefile target and remains a **manual step**.
+
+### 4.2 Upgrade semantics (ISSU = draining)
+
+The precise semantics of ISSU are defined by **ADR-0009** (accepted), **not** in-flight state migration: ① stop accepting new requests (drain); ② existing calls continue to completion on the original process; ③ exit after `active_calls` reaches zero (ADR-0009 §Decision ①, `0009:18-20`, `:26`). Scale-down follows the same path (ADR-0009 §Decision ③; ADR-0010).
+
+**Therefore the precise meaning of ADR-0027 item 3 "without interrupting service" must be written clearly, not exaggerated**:
+
+- Holds: after draining, **no new calls are accepted**, and existing calls run to completion **losslessly** on the original process (state externalized to Redis, see ADR-0002). "Not migrating state" **does not equal** "can kill the process immediately" —— the process still has in-flight calls whose transaction machine, timers, and sockets are all in this process (ADR-0009 §Context, `:14`).
+- Does not hold / not in the commitment: during the upgrade, the **losslessness only covers the "stop accepting new calls" side**; how new calls are handled during draining **depends on S-SBC / S-CSCF-side iFC-trigger deactivation coordination** —— the iFC trigger logic belongs to S-CSCF/HSS, **not the AS side**, which is a **cross-domain dependency** we cannot unilaterally commit to (`docs/product-packaging-plan.md` §2.4, `:82`: iFC triggering by number range / percentage requires S-SBC/HSS-side coordinated configuration, and real-cluster drills are blocked by M8 7.2d).
+- Backstop and cost: draining has a **hard timeout**; on timeout a forced exit drops calls, so **it must alert**; the lower bound of the upgrade window ≈ the longest remaining duration of in-flight calls (ADR-0009 §Decision ④, §Consequences; `docs/architecture/新系统整体架构.md:360`, risk R3 `:614`). The specific timeout value is an ops parameter; this document gives no time values.
+
+### 4.3 Upgrade-window discipline
+
+| Component | Upgrade method | Basis |
+|---|---|---|
+| AS image (each use-case Deployment) | `helm upgrade` (RollingUpdate + `preStop` + extended `terminationGracePeriodSeconds` + PDB); config and certs go hot-update without process restart | ADR-0009 §Decision ②; `docs/architecture/新系统整体架构.md:363` |
+| PostgreSQL / Redis (`stateStores`, ADR-0026) | Stateful components, upgraded in a **maintenance window**, not rolling with the AS image; `stateStores.migrateJob` does only a one-time schema migration (owner DSN), and the runtime startup does **no** DDL / migration / grant | `deploy/helm/templates/state-migrate-job.yaml:1-6`, `:52`; `docs/product/ne-datasheet.md` upgrade-discipline line |
+| Rollback | See [`../operations/rollback-playbook.md`](../operations/rollback-playbook.md) —— **that file is persisted**; but its iFC / drain part **depends on S-CSCF / HSS-side coordinated config and real-cluster drills**, currently still blocked (G-P1-10) | — |
+
+---
+
+## 5. Version lifecycle state transitions (illustrative, not numeric)
 
 ```mermaid
 stateDiagram-v2
-    [*] --> 开发版: 开发中（0.x.y / pre-release）
-    开发版 --> 开发版: 不享受生命周期承诺
-    开发版 --> GA: 首个 GA（major.minor.0）起算承诺
-    GA --> 支持期: 自 GA 起至少 12 个月（bug fix + 安全补丁）
-    支持期 --> 支持期: 相邻 minor 直接升级（ISSU draining）
-    支持期 --> 支持期: 跨 major 须迁移指南 + 数据迁移工具
-    支持期 --> EOL公告: EOL 前至少 6 个月发布公告
-    EOL公告 --> EOL: 公告期满 + 客户升级完成
-    EOL --> [*]: 不再提供安全补丁，须升级到受支持版本
+    [*] --> DevVersion: in development (0.x.y / pre-release)
+    DevVersion --> DevVersion: no lifecycle commitment
+    DevVersion --> GA: first GA (major.minor.0) starts commitment
+    GA --> SupportPeriod: at least 12 months from GA (bug fix + security patch)
+    SupportPeriod --> SupportPeriod: adjacent minor direct upgrade (ISSU draining)
+    SupportPeriod --> SupportPeriod: cross-major needs migration guide + data-migration tool
+    SupportPeriod --> EOLAnnounce: announce at least 6 months before EOL
+    EOLAnnounce --> EOL: announcement period ends + customer upgrade complete
+    EOL --> [*]: no security patches, must upgrade to a supported version
 ```
 
-图中的时长来自 ADR-0027（`0027:23`、`:25`、`:33`、`:35`），是**策略下限**，不是排期表；本文不给出任何日历日期。
+The durations in the diagram come from ADR-0027 (`0027:23`, `:25`, `:33`, `:35`); they are **policy lower bounds**, not a schedule; this document gives no calendar dates.
 
 ---
 
-## 6. 弃用与公告
+## 6. Deprecation and announcements
 
-| 项 | 内容 | 依据 |
+| Item | Content | Basis |
 |---|---|---|
-| 公告内容 | 版本 EOL 公告：哪个版本、何时 EOL、升级路径 | `0027:25` |
-| 最低提前期 | **至少 6 个月**（与 §3 第 2 条一致） | `0027:25` |
-| 弃用（deprecation）本身的提前期 | **尚无决策** —— 「功能/接口弃用公告的最低提前期」与「版本 EOL 公告」是否同一套机制，属交付物 4.3 待决项（§7.3 Q3） | 本文判断，无 ADR |
-| 通知责任方 | 版本 EOL 公告由**我方（维护者 / 架构）**向客户发布；变更窗口协商与 iFC / S-SBC 侧的停用配合由**客户运维 + S-CSCF/S-SBC 侧**执行，边界见 [`responsibility-matrix.md`](responsibility-matrix.md) | ADR-0027；`AGENT.md` §1 |
-| 渠道 | 本文不裁决渠道（发行说明 / 客户通知 / 公告页）；**待决项见 §7.3 Q3** | 本文判断，无 ADR |
+| Announcement content | Version EOL announcement: which version, when EOL, upgrade path | `0027:25` |
+| Minimum lead time | **At least 6 months** (consistent with §3 item 2) | `0027:25` |
+| Lead time for deprecation itself | **No decision yet** —— whether "minimum lead time for feature/interface deprecation announcement" uses the same mechanism as "version EOL announcement" is an open item of deliverable 4.3 (§7.3 Q3) | This document's judgment, no ADR |
+| Notification responsible party | The version EOL announcement is published to the customer by **us (maintainer / architecture)**; change-window negotiation and iFC / S-SBC-side deactivation coordination are executed by **customer ops + S-CSCF/S-SBC side**, boundary in [`responsibility-matrix.md`](responsibility-matrix.md) | ADR-0027; `AGENT.md` §1 |
+| Channel | This document does not adjudicate the channel (release notes / customer notice / announcements page); **open item in §7.3 Q3** | This document's judgment, no ADR |
 
 ---
 
-## 7. API 与接口版本兼容策略（交付物 4.3 —— **待决策**）
+## 7. API and interface version-compatibility strategy (deliverable 4.3 —— **pending decision**)
 
-> **本节状态：候选，不是承诺。** 交付物 4.3 尚无 REQ / ADR / HLD / 验收链。按 `docs/product-packaging-plan.md` §1 第四批表格与 §3.2 B 类表，4.3 依赖 ADR-0018 之上的**新决策**，与 3.5 同源（G-P1-9）。本节只做三件事：盘点现状（§7.1）、列候选（§7.2）、列需要谁来裁的点（§7.3）。**任何一条都不得被引用为已确认策略。**
+> **Status of this section: candidate, not commitment.** Deliverable 4.3 has no REQ / ADR / HLD / acceptance chain yet. Per `docs/product-packaging-plan.md` §1 fourth-batch table and §3.2 Class B table, 4.3 depends on a **new decision** above ADR-0018, from the same source as 3.5 (G-P1-9). This section does only three things: inventory the current state (§7.1), list candidates (§7.2), list the points needing someone's adjudication (§7.3). **No statement may be cited as a confirmed strategy.**
 
-### 7.1 现状盘点
+### 7.1 Current-state inventory
 
-| 接口面 | 版本标识方式 | 现状（已核实） | 兼容性风险点 |
+| Interface plane | Version-identification method | Current state (verified) | Compatibility risk point |
 |---|---|---|---|
-| AS 内部 HTTP API（config-service / console 共用） | **URL 路径前缀 `/internal/v1`** | 路由以 `prefix="/internal/v1"` 注册（`services/config-service/src/as_config_service/api.py:682-714`）；console 在 `/` 提供静态资源、API 位于同一前缀（`services/console/README.md:34`） | 版本只在路径里；**没有**弃用期机制、**没有**旧前缀保留策略。破坏性变更只有契约测试（`contract` marker）被动发现 |
-| SIP trunk（对 S-SBC） | **无版本号可版本** | 标准 ISC 触发、S-SBC 透明桥接（ADR-0003）；行为基线 `testbed/contracts/sip-baseline/` | 靠**行为基线契约**与对端兼容，不靠版本号；我方不能单方面升级对端能力 |
-| 决策契约用例 | 用例文件名 + `case_id` | `testbed/contracts/decision/cases.json` + `README.md`（字段表 `README.md:31-44`） | 改用例集 = **接口变更**，需要 ADR 且所有实现 gate 重跑（`README.md:101-106`）。这一条已有硬规则，**不需要新决策** |
-| PostgreSQL 配置 / 审计 schema | **schema 名 + 环境变量**，非数字版本 | 默认 `as_config` / `console_audit`（`deploy/helm/values.yaml:122-123`；`AS_CONFIG_SCHEMA` / `AS_AUDIT_SCHEMA`，`services/config-service/src/as_config_service/migrate.py:119`、`:165`） | schema **没有版本号**；迁移由 `as-config-migrate` 一次性 Job 执行（`state-migrate-job.yaml:52`）。滚动升级期间新旧版本并存时，schema 必须双向兼容（`新系统整体架构.md:361`、风险 R4 `:615`） |
-| 组件接口版本 | 各成员 `pyproject.toml` 的 `version` | 全部 `0.1.0`（见 §2.2） | 仅 SemVer 格式受守卫；**语义化与向后兼容的承诺尚未定义** |
-| 告警 / 指标标签契约 | **指标名 + 标签名即契约** | 命名规则（`as_` 前缀、snake_case、counter 带 `_total`、秒类带基础单位后缀）与标签（`severity` + `component`，指标带 `use_case`）见 `deploy/alerts/README.md:39-40`；指标契约表在 `:45-62` | **规则依赖指标名：改名即静默失效**（告警不再触发而无任何报错）。README 明确要求改名时同步更新契约表并跑 `promtool check rules`（`:87-93`） |
+| AS-internal HTTP API (config-service / console shared) | **URL path prefix `/internal/v1`** | Routed registered with `prefix="/internal/v1"` (`services/config-service/src/as_config_service/api.py:682-714`); console serves static resources at `/` and API at the same prefix (`services/console/README.md:34`) | Version is only in the path; **no** deprecation-period mechanism, **no** old-prefix retention policy. Breaking changes are only passively discovered by contract tests (`contract` marker) |
+| SIP trunk (to S-SBC) | **no version number to version** | Standard ISC trigger, S-SBC transparent bridging (ADR-0003); behavior baseline `testbed/contracts/sip-baseline/` | Relies on **behavior-baseline contract** and peer compatibility, not version numbers; we cannot unilaterally upgrade peer capability |
+| Decision contract cases | Case filename + `case_id` | `testbed/contracts/decision/cases.json` + `README.md` (field table `README.md:31-44`) | Changing the case set = **interface change**, needs ADR and all implementations' gate re-run (`README.md:101-106`). This one already has a hard rule, **no new decision needed** |
+| PostgreSQL config / audit schema | **schema name + env var**, not numeric version | Default `as_config` / `console_audit` (`deploy/helm/values.yaml:122-123`; `AS_CONFIG_SCHEMA` / `AS_AUDIT_SCHEMA`, `services/config-service/src/as_config_service/migrate.py:119`, `:165`) | Schema **has no version number**; migration executed by the `as-config-migrate` one-time Job (`state-migrate-job.yaml:52`). When old and new versions coexist during rolling upgrade, the schema must be bidirectional-compatible (`新系统整体架构.md:361`, risk R4 `:615`) |
+| Component interface version | Each member's `pyproject.toml` `version` | All `0.1.0` (see §2.2) | Only the SemVer format is guarded; **the semantics and backward-compatibility commitment are not yet defined** |
+| Alert / metric-label contract | **metric name + label name is the contract** | Naming rules (`as_` prefix, snake_case, counter with `_total`, second-class with base-unit suffix) and labels (`severity` + `component`, metrics carry `use_case`) in `deploy/alerts/README.md:39-40`; metric-contract table at `:45-62` | **rules depend on metric names: renaming silently disables them** (alerts stop firing with no error). The README explicitly requires updating the contract table and running `promtool check rules` when renaming (`:87-93`) |
 
-### 7.2 候选兼容策略（**候选，未决策**）
+### 7.2 Candidate compatibility strategies (**candidate, undecided**)
 
-1. **语义化 + 向后兼容承诺**：以 §2.2 的组件接口版本为锚，声明同一 major 内向后兼容、破坏性变更必须 bump major。*候选*，未定。
-2. **两阶段废弃（deprecated → removed）**：新增能力先标 deprecated、保留至少一个兼容窗口、再移除。窗口长度**未裁决**（与 §3 的 6 个月 EOL 通知期是否复用同一数值，待决）。*候选*，未定。
-3. **版本号放 URL 路径 vs Header**：现状是路径（`/internal/v1`）。改 Header 的收益是路径稳定，代价是代理 / 路由 / 审计动作字符串全要改（审计记录里存的就是 `GET /internal/v1/{unmatched_path:path}` 这类 action）。两条路都可行，**取哪种未裁决**。
-4. **配置 schema 的向前 / 向后兼容**：架构文档已把「规则 schema 双向兼容」列为 **ISSU 的硬前置**（`新系统整体架构.md:361`）—— 因此这条**不是纯候选，而是已被架构文档约束的前提**；仍缺的是：schema 版本号怎么表达、`as-config-migrate` 如何做多版本共存。
-5. **指标标签破坏性变更的处理**：由于改名静默失效，候选做法是「先双写新旧指标名 → 通知 → 再删旧名」，并把契约表更新纳入发布检查清单。*候选*，未定。
+1. **Semantic versioning + backward-compatibility commitment**: anchor on the component interface version from §2.2, declare backward compatibility within the same major, breaking changes must bump major. *Candidate*, undecided.
+2. **Two-phase deprecation (deprecated → removed)**: new capability first marked deprecated, retained for at least one compatibility window, then removed. Window length **unresolved** (whether to reuse the same value as the 6-month EOL-notice period in §3 is open). *Candidate*, undecided.
+3. **Version number in URL path vs Header**: current state is path (`/internal/v1`). Moving to Header keeps the path stable but costs changing all proxy / routing / audit action strings (the audit record stores action strings like `GET /internal/v1/{unmatched_path:path}`). Both paths work, **which to take is undecided**.
+4. **Forward / backward compatibility of config schema**: the architecture doc already lists "rule schema bidirectional compatibility" as a **hard prerequisite of ISSU** (`新系统整体架构.md:361`) —— so this is **not a pure candidate but a premise already constrained by the architecture doc**; what is still missing: how to express the schema version number, how `as-config-migrate` handles multi-version coexistence.
+5. **Handling of metric-label breaking changes**: because renaming silently disables, the candidate is "dual-write old and new metric names → notify → then delete old name", and fold the contract-table update into the release checklist. *Candidate*, undecided.
 
-### 7.3 需要决策的点
+### 7.3 Points needing a decision
 
-| # | 待决问题 | 候选 | 影响面 | 建议决策层级 | 阻塞的交付物 |
+| # | Open question | Candidate | Impact surface | Suggested decision level | Blocked deliverable |
 |---|---|---|---|---|---|
-| Q1 | 组件接口版本是否给出**向后兼容承诺**，承诺边界是 major 还是 minor | ① 同 major 向后兼容 ② 不承诺，仅标 SemVer ③ 按组件分别定 | 组件边界、`apps/` 第三方接入 | 架构（涉 ADR-0018 补充） | 4.3 主体 |
-| Q2 | 内部 API 的版本标识载体：保持 URL 路径前缀 vs 改 Header | ① 保持 `/internal/v1` ② 改 Header ③ 双轨 | config-service / console 路由、审计 action 字符串、Ingress | 架构 | 4.3、`/internal/v1` 契约文档 |
-| Q3 | 弃用（deprecation）公告的**最低提前期**与**发布渠道**；是否与 §3 的 6 个月 EOL 通知期同一套机制 | ① 复用 EOL 机制 ② 独立且更长 ③ 独立且更短 | 客户沟通、售前 | 维护者 + 架构 | 4.3、§6 |
-| Q4 | 配置 schema 的**版本号表达方式**与多版本共存策略（`as_config` / `console_audit` 现无版本号） | ① schema 名带版本 ② 表/列级版本列 ③ 仅靠 `as-config-migrate` 单次迁移 | 配置治理、ISSU、data migration | 架构 | 4.3、跨 major 迁移指南（§3 第 4 条） |
-| Q5 | 指标 / 标签**破坏性变更**的正式流程（双写窗口长度、是否需要 ADR） | ① 双写 + 通知 ② 直接改并同步告警文档 ③ 指标改名一律要 ADR | 告警（REQ-NF-14）、客户既有 Grafana 看板 | 架构 + 运维 | 4.3、`deploy/alerts/README.md` 契约表维护 |
-| Q6 | SIP 侧无版本号，靠什么承载兼容承诺 | ① 只靠行为基线契约 ② 对端能力协商 ③ 由 S-SBC 侧版本约束 | 跨域协同（客户 S-SBC） | 架构 + 客户 | 4.3 中的北向/南向章节 |
+| Q1 | Whether the component interface version gives a **backward-compatibility commitment**, and the boundary is major or minor | ① same-major backward compatible ② no commitment, only SemVer ③ per-component separately | Component boundary, `apps/` third-party access | Architecture (involves ADR-0018 supplement) | 4.3 main body |
+| Q2 | Version-identification carrier for the internal API: keep URL path prefix vs move to Header | ① keep `/internal/v1` ② move to Header ③ dual-track | config-service / console routing, audit action strings, Ingress | Architecture | 4.3, `/internal/v1` contract doc |
+| Q3 | **minimum lead time** and **publish channel** for deprecation announcements; whether to reuse the same mechanism as the 6-month EOL-notice period in §3 | ① reuse EOL mechanism ② independent and longer ③ independent and shorter | Customer communication, pre-sales | Maintainer + Architecture | 4.3, §6 |
+| Q4 | Schema version-number expression and multi-version coexistence strategy for config schema (`as_config` / `console_audit` currently have no version number) | ① schema name carries version ② table/column-level version column ③ rely only on `as-config-migrate` one-time migration | Config governance, ISSU, data migration | Architecture | 4.3, cross-major migration guide (§3 item 4) |
+| Q5 | Formal process for metric / label **breaking changes** (dual-write window length, whether ADR needed) | ① dual-write + notify ② directly change and sync alert doc ③ any metric rename requires ADR | Alerts (REQ-NF-14), customer's existing Grafana dashboards | Architecture + Ops | 4.3, `deploy/alerts/README.md` contract-table maintenance |
+| Q6 | SIP side has no version number; what carries the compatibility commitment | ① rely only on behavior-baseline contract ② peer capability negotiation ③ constrain via S-SBC-side version | Cross-domain coordination (customer S-SBC) | Architecture + customer | Northbound/southbound chapters in 4.3 |
 
-### 7.4 出口条件
+### 7.4 Exit conditions
 
-把本节从「候选」转为「承诺」必须同时满足：
+To move this section from "candidate" to "commitment", all of the following must be satisfied:
 
-1. 新增 **REQ**（承接 §7.3 的待决问题，当前**不存在**对应 REQ 条目；REQ-NF-16 只覆盖版本生命周期，不覆盖 API 兼容）；
-2. 新增 **ADR**（在 ADR-0018 之上，不得改写 ADR-0018 的既有决定），并在 `docs/architecture/adr/README.md` 注册；
-3. 补 **HLD/LLD 设计与验收项**，走完 `AGENT.md` §3 的整条文档链；
-4. 取得独立 **review record**（`AGENT.md` §3.3），本文随之更新并去掉「待决策」标注。
+1. Add a **REQ** (carrying the open questions in §7.3; currently **no corresponding REQ entry exists**; REQ-NF-16 only covers version lifecycle, not API compatibility);
+2. Add an **ADR** (above ADR-0018, without rewriting ADR-0018's existing decisions), and register it in `docs/architecture/adr/README.md`;
+3. Add **HLD/LLD design and acceptance items**, completing the full document chain in `AGENT.md` §3;
+4. Obtain an independent **review record** (`AGENT.md` §3.3), and this document is updated accordingly and the "pending decision" mark removed.
 
-在此之前，本文 §7 的任何表述都不得写进对外承诺、SLA 或招标文件。
+Until then, no statement in §7 of this document may be written into an external commitment, SLA, or tender document.
 
 ---
 
-## 8. 与其它文档的关系
+## 8. Relationship to other documents
 
-| 主题 | 权威文档 | 说明 |
+| Topic | Authoritative document | Note |
 |---|---|---|
-| 版本号语义（唯一源头、组件接口版本、无成员 VERSION 文件） | [`ADR-0018`](../architecture/adr/0018-release-versioning.md) | accepted 2026-09-28，回应 REQ-NF-11 |
-| 版本生命周期与 EOL | [`ADR-0027`](../architecture/adr/0027-version-lifecycle-and-eol.md) | accepted 2026-10-09，回应 REQ-NF-16；本文 §3 只转述 |
-| 需求条目 | [`prd.md`](../requirements/prd.md) REQ-NF-16（`:459-470`）、REQ-NF-11（`:419-423`） | REQ 是设计与验收的唯一标准 |
-| ISSU / draining / 缩容排空 | [`ADR-0009`](../architecture/adr/0009-issu-draining.md) | accepted；§4.2 的语义来源 |
-| 集群内状态存储（PG / Redis、migrateJob） | [`ADR-0026`](../architecture/adr/0026-in-cluster-state-stores-proposal.md) | accepted |
-| Helm 参数与 chart 结构 | [`deploy/helm/README.md`](../../deploy/helm/README.md) | chart 参数的权威说明 |
-| 告警与指标契约 | [`deploy/alerts/README.md`](../../deploy/alerts/README.md) | 指标名 / 标签契约表 |
-| 升级回退 | [`../operations/rollback-playbook.md`](../operations/rollback-playbook.md) | **已落盘**；真实集群演练仍 blocked（G-P1-10） |
-| 责任边界（RACI） | [`responsibility-matrix.md`](responsibility-matrix.md) | 已存在；客户配合项的分工依据 |
-| 命名（描述名 / repo 名） | [`docs/plan.md`](../plan.md) §0 决策记录 G8 行 | G8-2：描述名 `In-house IMS Application Server` 已正式采用（非商标 / 非品牌宣称）；G8-3：repo rename `inhouse-ims-as` 维护者报告已完成；chart name / 镜像名 / OTel 服务名仍为 `3rdparty-as` |
-| 版本称呼纪律（无 v1 / v1.1 定义） | [`docs/plan.md`](../plan.md) §0「版本称呼」行（`:16`） | 维护者 2026-10-07 确认 |
+| Version-number semantics (single source, component interface version, no member VERSION file) | [`ADR-0018`](../architecture/adr/0018-release-versioning.md) | accepted 2026-09-28, responding to REQ-NF-11 |
+| Version lifecycle and EOL | [`ADR-0027`](../architecture/adr/0027-version-lifecycle-and-eol.md) | accepted 2026-10-09, responding to REQ-NF-16; §3 of this document only restates |
+| Requirement entries | [`prd.md`](../requirements/prd.md) REQ-NF-16 (`:459-470`), REQ-NF-11 (`:419-423`) | REQ is the sole standard for design and acceptance |
+| ISSU / draining / scale-down drain | [`ADR-0009`](../architecture/adr/0009-issu-draining.md) | accepted; the semantic source of §4.2 |
+| In-cluster state storage (PG / Redis, migrateJob) | [`ADR-0026`](../architecture/adr/0026-in-cluster-state-stores-proposal.md) | accepted |
+| Helm parameters and chart structure | [`deploy/helm/README.md`](../../deploy/helm/README.md) | Authoritative description of chart parameters |
+| Alert and metric contract | [`deploy/alerts/README.md`](../../deploy/alerts/README.md) | Metric-name / label contract table |
+| Upgrade rollback | [`../operations/rollback-playbook.md`](../operations/rollback-playbook.md) | **persisted**; real-cluster drill still blocked (G-P1-10) |
+| Responsibility boundary (RACI) | [`responsibility-matrix.md`](responsibility-matrix.md) | Exists; basis for customer-coordination division |
+| Naming (descriptor name / repo name) | [`docs/plan.md`](../plan.md) §0 decision-log G8 line | G8-2: descriptor name `In-house IMS Application Server` formally adopted (not trademark / not brand claim); G8-3: repo rename `inhouse-ims-as` reported complete by maintainer; chart name / image name / OTel service name still `3rdparty-as` |
+| Version-naming discipline (no v1 / v1.1 definition) | [`docs/plan.md`](../plan.md) §0 "version naming" line (`:16`) | Confirmed by maintainer 2026-10-07 |
 
 ---
 
-## 9. 未决与阻塞
+## 9. Open items and blockages
 
-| 项 | 状态 | 阻塞源 | 何时可闭合 |
+| Item | Status | Blockage source | When closable |
 |---|---|---|---|
-| 4.3 API 版本兼容策略无 ADR | **未决** | 无 REQ / 无 ADR（§7.3 Q1–Q6） | 走 §7.4 四步出口条件 |
-| chart `version` / `appVersion` 与 `VERSION` 不同步 | **口径已裁（G4 / A6），首次同步未执行**（已知缺口） | 同步动作由 `scripts/sync-chart-version.sh` 承担（默认 `--check` 只读、drift 即 exit 1；`--apply` 才写入）；首次 `--apply` 时机与取值待维护者决定 | 维护者执行首次 `--apply` |
-| 摘流期间新呼叫的停用配合 + 升级演练证据 | 依赖客户侧；**暂无真实集群证据** | 需 S-CSCF / S-SBC 侧 iFC 停用配合；真实集群演练受 M8 7.2d 阻塞 | 真实 S-SBC / 客户 K8s 环境具备后（M8 7.2d 解锁） |
-| 发布 tag | 由维护者执行 | `AGENT.md` §10.4 / §11：agent 不打 tag、不 push | 维护者执行 |
-| M8 退出签字 | **搁置** | `docs/plan.md` §4 M8 行：RC 产物就绪但退出签字待维护者 | 维护者签字；本文不把 RC 当作已发布 |
-| EOL 后无安全补丁这一后果 | **已在 ADR-0027 接受**（`0027:33`、`:49`） | 非阻塞，但**必须在售前说明** | 售前材料补入即可 |
-| LTS | **当前不定义** | 运营商明确要求时须新增 ADR（`0027:31`） | 客户提出需求后 |
+| 4.3 API version-compatibility strategy has no ADR | **Open** | No REQ / no ADR (§7.3 Q1–Q6) | Go through the four-step exit conditions in §7.4 |
+| chart `version` / `appVersion` not synced with `VERSION` | **Wording resolved (G4 / A6), first sync not executed** (known gap) | Sync action carried by `scripts/sync-chart-version.sh` (default `--check` read-only, drift exits 1; `--apply` writes); timing and value of first `--apply` pending maintainer | Maintainer executes first `--apply` |
+| Drain-period new-call deactivation coordination + upgrade-drill evidence | Depends on customer side; **no real-cluster evidence yet** | Needs S-CSCF / S-SBC-side iFC deactivation coordination; real-cluster drills blocked by M8 7.2d | After real S-SBC / customer K8s environment is available (M8 7.2d unlocked) |
+| Release tag | Executed by maintainer | `AGENT.md` §10.4 / §11: agents do not tag or push | Maintainer executes |
+| M8 exit sign-off | **On hold** | `docs/plan.md` §4 M8 line: RC artifacts ready but exit sign-off pending maintainer | Maintainer signs off; this document does not present RC as released |
+| The consequence "no security patch after EOL" | **Already accepted in ADR-0027** (`0027:33`, `:49`) | Not blocking, but **must be stated in pre-sales** | Just add to pre-sales material |
+| LTS | **Not defined currently** | Requires a new ADR when an operator explicitly requests it (`0027:31`) | After customer raises the need |
 
 ---
 
-## 10. 追溯
+## 10. Traceability
 
-| 项 | 依据 |
+| Item | Basis |
 |---|---|
-| 交付物 **3.5** 版本生命周期与 EOL 策略 | `docs/product-packaging-plan.md` §1 第三批（L95）、§3.2 B 类表（L183）；决策落点 REQ-NF-16 + ADR-0027 |
-| 交付物 **4.3** API 版本兼容策略 | `docs/product-packaging-plan.md` §1 第四批（L105）；**本文 §7 标为待决策，无 ADR** |
-| review **G-P1-4**（SLA/EOL 缺口未区分 ADR-0018 只覆盖版本号） | `docs/reviews/product-packaging-plan-review-2026-10-09.md:250-252`、`:360` —— **关闭方式**：新增 REQ-NF-16 + ADR-0027，§3 据此成文 |
-| review **G-P1-9**（§3.5 需先补 REQ + ADR） | 同文件 `:365` —— **已关闭**：REQ-NF-16（`prd.md:459-470`）+ ADR-0027（`adr/README.md:43` 注册，accepted 2026-10-09） |
-| 引用的 REQ | REQ-NF-16（版本生命周期与 EOL）、REQ-NF-11（版本单一来源） |
-| 引用的 ADR（状态以各文件头为准） | ADR-0002（状态外置 / 一用例一进程，accepted）、ADR-0003（S-SBC 透明桥接，accepted）、ADR-0009（ISSU = draining，accepted）、ADR-0010（缩容保护，accepted）、ADR-0018（版本号语义，accepted）、ADR-0026（集群内状态存储，accepted）、ADR-0027（版本生命周期与 EOL，accepted）。**ADR-0023（Redis checkpoint）与 ADR-0025（托管规则运行时 bundle）均为 draft，尚未通过**，本文不据其作结论（`docs/architecture/adr/README.md:39`、`:41`） |
-| 本文引用的主要代码 / 配置依据 | `VERSION:1`；`tests/test_version_consistency.py:56-78`；`deploy/helm/Chart.yaml:5-6`；`deploy/helm/templates/_helpers.tpl:38-41`、`:53`、`:69`；`deploy/helm/values.yaml:76-82`、`:122-123`；`deploy/helm/templates/state-migrate-job.yaml:52`；`deploy/alerts/README.md:39-62`、`:87-93`；`services/config-service/src/as_config_service/api.py:682-714`；`services/config-service/src/as_config_service/migrate.py:119`、`:165`；`services/console/README.md:34`；`testbed/contracts/decision/README.md:31-44`、`:101-106` |
-| 本文不做的事 | 不发布容量数字；不写产品正式命名决策；不打 tag / 不 commit；不改 `deploy/helm/Chart.yaml` 或任何代码；不把 M8 RC 或任何未验收项写成已发布 / 已验收 |
+| Deliverable **3.5** version lifecycle and EOL strategy | `docs/product-packaging-plan.md` §1 third-batch (L95), §3.2 Class B table (L183); decision landing REQ-NF-16 + ADR-0027 |
+| Deliverable **4.3** API version-compatibility strategy | `docs/product-packaging-plan.md` §1 fourth-batch (L105); **this document §7 marked pending decision, no ADR** |
+| Review **G-P1-4** (SLA/EOL gap does not distinguish that ADR-0018 only covers version numbers) | `docs/reviews/product-packaging-plan-review-2026-10-09.md:250-252`, `:360` —— **closure**: added REQ-NF-16 + ADR-0027, §3 written accordingly |
+| Review **G-P1-9** (§3.5 needs REQ + ADR first) | Same file `:365` —— **closed**: REQ-NF-16 (`prd.md:459-470`) + ADR-0027 (`adr/README.md:43` registered, accepted 2026-10-09) |
+| REQs referenced | REQ-NF-16 (version lifecycle and EOL), REQ-NF-11 (single version source) |
+| ADRs referenced (status per each file header) | ADR-0002 (state externalization / one process per use case, accepted), ADR-0003 (S-SBC transparent bridging, accepted), ADR-0009 (ISSU = draining, accepted), ADR-0010 (scale-down protection, accepted), ADR-0018 (version-number semantics, accepted), ADR-0026 (in-cluster state storage, accepted), ADR-0027 (version lifecycle and EOL, accepted). **ADR-0023 (Redis checkpoint) and ADR-0025 (managed rule-runtime bundle) are both draft, not yet passed**, and this document draws no conclusions from them (`docs/architecture/adr/README.md:39`, `:41`) |
+| Main code / config basis referenced in this document | `VERSION:1`; `tests/test_version_consistency.py:56-78`; `deploy/helm/Chart.yaml:5-6`; `deploy/helm/templates/_helpers.tpl:38-41`, `:53`, `:69`; `deploy/helm/values.yaml:76-82`, `:122-123`; `deploy/helm/templates/state-migrate-job.yaml:52`; `deploy/alerts/README.md:39-62`, `:87-93`; `services/config-service/src/as_config_service/api.py:682-714`; `services/config-service/src/as_config_service/migrate.py:119`, `:165`; `services/console/README.md:34`; `testbed/contracts/decision/README.md:31-44`, `:101-106` |
+| What this document does not do | No capacity numbers published; no product formal-naming decision written; no tag / commit; no modification of `deploy/helm/Chart.yaml` or any code; no M8 RC or un-accepted item presented as released / accepted |
