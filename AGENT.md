@@ -143,6 +143,7 @@ Directory structure and member list are in [`docs/plan.md`](docs/plan.md) §2.
 
 ## 5. Coding conventions
 
+- A behavioral change must traverse the whole documentation chain: requirement → ADR → design → interface contract → acceptance item → CHANGELOG.
 - **Language of artifacts: English.** Identifiers, comments, logs, error strings, commit messages, and code-adjacent docs are all English. Human-facing documentation in this repo is in Chinese; that is the only exception.
 - **All public functions must have type annotations; `mypy` strict mode must be clean.**
 - **The decision module is a pure function.** The module that produces decisions must have no socket, no clock, no global state. This is precisely why TDD is cheap there.
@@ -264,13 +265,9 @@ The **opening ceremony** of each milestone conversation:
 
 ## 11. Git rules
 
-- **Never push without the maintainer's explicit approval in that conversation.** Not push, not force-push, not tag.
-- **Agents do not create branches.** Work on the branch designated by the maintainer. Each branch needs a clear purpose and end condition.
 - **Nothing may enter `main` / `master` without per-instance, explicit approval.**
 - **Conventional Commits**, in English, one logical change per commit: `feat` · `fix` · `docs` · `refactor` · `test` · `chore` · `build`.
 - **Do not skip hooks.** `--no-verify` and its equivalents are forbidden. If a hook blocks a commit, fix the cause.
-- **Never commit keys, certificates, or real traffic captures.**
-- A behavioral change must traverse the whole documentation chain: requirement → ADR → design → interface contract → acceptance item → CHANGELOG.
 
 ## 12. Adopting code from the POC
 
