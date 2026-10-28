@@ -14,7 +14,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 # R2612 目录结构评审 v3（逐目录：干什么用 / 里面有什么 / 是否该在根目录）
 
-> **状态：分析结论，待维护者裁决**。本版按维护者要求改为逐目录三段式：每个目录先讲清它是干什么的、里面实际装了什么，再回答"是否应该放在根目录"。**覆盖并替代 v2 分析版**；v2 的 F-1（apps 改名建议）在本版被修订，见 §3。
+> **状态：分析结论，待维护者裁决**。本版按维护者要求改为逐目录三段式：每个目录先讲清它是干什么的、里面实际装了什么，再回答"是否应该放在根目录"。**覆盖并替代 v2 分析版**；v2 的 F-1（apps 改名建议）在本版被修订，见 §4。
+> **v3.1 增补（2026-10-28）**：新增 §1——维护者追问"apps/、services/、platform/ 都是产品源码，docs/ 是文档入口，为什么四个目录在同一级"，§1 是该问题的书面回答，并新增发现 F-9 与裁决项 Q6。
 > 证据采集：2026-10-28，全部来自对仓库文件系统、git 索引和 README/AGENT.md/plan.md 原文的直接检查。
 > 关联：[R2612_Cont.md](R2612_Cont.md)（剩余项规划）。
 
@@ -31,9 +32,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 下面逐目录过这三问。
 
-## 1. 九个顶层目录逐个过三问
+## 1. 根目录的组织原则：为什么产品源码与 docs/ 同级
 
-### 1.1 apps/
+**维护者的追问（2026-10-28）**：apps/、services/、platform/ 都是 product 的部分源码，docs/ 是整个产品的文档入口——为什么这四个目录在同一级？
+
+**回答分三层**：
+
+1. **根目录的组织原则是"一个关注点一个入口"，不是"源码 vs 非源码"二分。** 九个目录 = 九个关注点：产品源码三层（内核 platform / 业务 apps / 控制面 services）、测试两件事（器械 testbed / 结构守卫 tests）、交付产物 deploy、文档入口 docs、两类工具（工作流 scripts / 工具链 tools）。docs 与源码同级是 OSS 通行做法——Linux kernel、CPython、Go、rustc 都把 docs/（或 Doc/）与源码目录并列在根。
+2. **三个源码目录刻意平铺，因为它们不是"一坨源码"，是三条有依赖方向的架构层。** 本项目的核心设计是"内核承载业务包"：apps → platform（业务用例通过 `decide()` 接缝接入内核）、services → platform（控制面进程）、apps 之间互斥、产品包禁依赖 testbed。这个分层不是纸面说法——`tests/test_workspace_layout.py` 明文校验 workspace 成员恰好落进 kernel / apps / services / testbed 四类，`tests/test_layer_boundaries.py` 从 pyproject 依赖声明机器推导边界。**平铺的根目录 = 把架构图放在第一眼**（AGENT.md §4 的分层图与根目录一一对应）；收拢进一个父目录会把分层藏深一层，且给最常改动的路径加深一级。
+3. **追问指出的真实缺口（新发现 F-9）**：这个组织原则**没有被声明出来**。根 README 的目录树只列了名字，没有一句话说明"platform / apps / services 是产品源码三层、其余是支撑件"——所以外人看不出哪三个是产品，"同级"看起来像偶然而不是原则。修法很轻：根 README 加一张分类地图（产品源码 = platform/apps/services；测试 = testbed/tests；交付 = deploy；文档 = docs；工具 = tools/scripts）。
+
+**另一个流派的存在（诚实陈述）**：PostgreSQL 把全部源码收在 `src/` 下、`doc/` 在根——"产品 vs 支撑"的视觉二分同样是正经做法，不是错误答案。选择依据是工具链与规模：本项目只有 3 个源码目录、7 个成员，`src/` 收拢要动根 pyproject workspace 声明、两个门禁测试、Dockerfile COPY 路径、约数十处文档引用（ADR / AGENT.md / README 的目录树与分层图），换来的是根目录少两个条目 + 视觉二分。
+
+**本版建议**：维持平铺，把组织原则写进根 README（F-9 的修法）。`src/` 收拢列为可选项，由维护者裁决（§5 Q6）。
+
+---
+
+## 2. 九个顶层目录逐个过三问
+
+### 2.1 apps/
 
 **它是干什么用的**：放这个 IMS AS 承载的**业务应用（用例）**。IMS 语境里"应用服务器（AS）"的职能就是承载增值业务；本项目架构（README 架构图、ADR-0002）把 apps/ 定义为"信令面业务应用，**one process per use case**"——每个业务用例一个 Deployment / 一个故障域 / 一个金丝雀单元。业务逻辑通过 `decide()` 纯函数接缝接入 platform 引擎。
 
@@ -47,7 +64,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **必须补的一句说明**：web 工程惯例里 apps/ 指"可独立部署的应用"，本项目 apps/ 指"IMS 业务用例（进程由 platform 外壳承载）"。两种读法都成立，但差异要写进 `apps/README.md` 消歧，否则 web 背景的工程师会像 v2 一样误判。
 
-### 1.2 services/
+### 2.2 services/
 
 **它是干什么用的**：放产品的**控制面进程**——两个长期运行的独立服务进程（工程意义上的"服务"，与 apps/ 的 IMS 语义刻意区分）。
 
@@ -57,7 +74,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **是否应该放在根目录**：**应该**。它们是部署产物的一部分（Helm chart 里有独立的 config-service deployment；Docker 构建直接引用），构建/测试/发布都会进入。
 
-### 1.3 platform/
+### 2.3 platform/
 
 **它是干什么用的**：**SIP 内核/引擎**——所有信令在这里进出与裁决；对 reSIProcate C++ 栈的绑定、进程外壳、StateStore 等核心接缝都在这。
 
@@ -65,7 +82,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **是否应该放在根目录**：**应该**。最大最重要的构件，一切依赖它。`native/` 放 platform 内部而不是顶层是正确的——它是引擎的实现细节，不是独立构件。
 
-### 1.4 testbed/
+### 2.4 testbed/
 
 **它是干什么用的**：**测试器械**——给被测系统提供"对端世界"：模拟终端、负载、探针、契约夹具、e2e 用例、可部署的模拟平台。与 tests/ 的分工：testbed 提供环境和器械，tests/ 放断言。
 
@@ -75,7 +92,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **是否应该放在根目录**：**应该**（电信仓库惯例：测试器械与测试用例分离）。但**内部治理不合格**：probe 有 tests/ 却不是 workspace 成员（它的测试如何被 pytest 收集？无成文说明）；e2e 用例散在 testbed/ 而非根 tests/，是刻意例外还是漂移无说明；sim-platform 带着与 deploy/ 平行的 chart 混在器械目录里。这是本版保留的最高优先级结构问题。
 
-### 1.5 tests/
+### 2.5 tests/
 
 **它是干什么用的**：**跨切治理守卫**——不测业务功能，测"仓库结构本身"：布局、依赖边界、版本一致性、需求登记、证据纪律。
 
@@ -83,7 +100,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **是否应该放在根目录**：**应该**。跨包守卫放根 tests/、成员单测放成员内，是标准分层；这 5 个守卫正是"结构不会烂回去"的自动化保障。
 
-### 1.6 deploy/
+### 2.6 deploy/
 
 **它是干什么用的**：**一切部署产物**的归口——镜像、本地编排、交付 chart、本地集群、告警规则。on-prem 交付形态下这是一等公民。
 
@@ -91,7 +108,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **是否应该放在根目录**：**应该**。归口正确。内部问题一处：kind/ 顶部的 17 个里程碑脚本应移入 `deploy/kind/scripts/` 子目录（执行时 grep Makefile 引用同步）。
 
-### 1.7 docs/
+### 2.7 docs/
 
 **它是干什么用的**：全部文档的归口。
 
@@ -99,7 +116,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **是否应该放在根目录**：**应该**。结构层无问题；堆积与导航是内容治理，另案处理（v2 的 S1 批次仍然有效）。
 
-### 1.8 scripts/
+### 2.8 scripts/
 
 **它是干什么用的**：**仓库工作流自动化**——文档守卫、版本同步、评审演示编排。
 
@@ -107,7 +124,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **是否应该放在根目录**：**应该**。与 tools/ 的分工成立（工作流脚本 vs 工具链二进制），但边界无成文说明，各补一句 README 即可。
 
-### 1.9 tools/
+### 2.9 tools/
 
 **它是干什么用的**：**本地工具链与环境引导**——开发者机器上装的本地二进制和初始化脚本。
 
@@ -117,7 +134,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **九目录总裁决**：九个全部配占根目录位置，没有多余也没有缺失。需要修的是三个**内部治理**问题（testbed 成员资格、kind 脚本堆积、scripts/tools 边界成文）和一个**消歧说明**（apps 语义）。
 
-## 2. 根目录文件逐个裁决
+## 3. 根目录文件逐个裁决
 
 | 文件 | 干什么用的 | 有用? | 该在根? |
 |---|---|---|---|
@@ -142,7 +159,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **根目录总裁决**：正式文件没有一个不该在；唯一实际问题是 .codebuddy/teams/ 误跟踪。
 
-## 3. 与 v2 的差异
+## 4. 与 v2 的差异
 
 | v2 结论 | v3 修订 | 修订理由 |
 |---|---|---|
@@ -152,7 +169,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | F-4：.codebuddy/teams/ 误跟踪 | **维持** | 证据未变 |
 | F-5：scripts/tools 边界无成文 | **维持** | 证据未变 |
 
-## 4. 待维护者裁决
+## 5. 待维护者裁决
 
 | # | 问题 | 选项 |
 |---|---|---|
@@ -161,7 +178,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | Q3 | testbed/e2e 与 sim-platform | A. 维持现状 + README 成文；B. e2e 并入根 tests/；C. sim-platform 移出 testbed |
 | Q4 | kind m5-\* 脚本归位 + .codebuddy teams/ 去跟踪 + scripts/tools README | A. 一批授权执行；B. 逐项再议 |
 | Q5 | v2 的文档批次（docs 导航 + reviews/handoff 索引） | 待本文件裁决后一并执行 |
+| Q6 | 根目录组织原则 | A. 维持平铺 + README 写明分类地图（本版建议，F-9 修法）；B. 引入 `src/` 收拢产品源码（PostgreSQL 流派，需先出迁移清单评估） |
 
 ---
 
-Written to disk: 2026-10-28. Status: v3 analysis delivered, awaiting maintainer rulings on §4. Nothing executed, nothing committed.
+Written to disk: 2026-10-28 (v3.1: added §1 root-organization rationale, F-9, Q6). Status: awaiting maintainer rulings on §5. Nothing executed, nothing committed.
