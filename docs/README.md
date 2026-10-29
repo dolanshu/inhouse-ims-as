@@ -25,6 +25,9 @@ Read by reader role. Everything is plain text — Mermaid or ASCII diagrams, nev
 | [`architecture/README.md`](architecture/README.md) | **Architecture entry point.** The document map and priorities (**specification documents = `hld.md` / `lld.md`**), delivery boundaries, evidence grading, currently known open items |
 | [`architecture/system-architecture.md`](architecture/system-architecture.md) | **Design baseline.** Every confirmed decision, its rationale, the open-items list and the risk register |
 | [`architecture/adr/`](architecture/adr/) | Decision records; start with the registry in its README |
+| [`requirements/`](requirements/) | Requirements documents (PRD, REQ-NF-15 testbed / performance research); start from its README |
+| [`design/`](design/) | Design working notes, including the technical notes stripped from PRD v0.1; start from its README |
+| [`SIP_stack_selection.md`](SIP_stack_selection.md) | Open-source SIP protocol stack selection comparison (against sippy) — the input behind ADR-0019 |
 | [`plan.md`](plan.md) | Delivery plan: milestones, ordering, exit criteria |
 | [`environments.md`](environments.md) | **Environment registry.** Register of long-lived facts: each machine's name, hostname, tools present/absent, evidence already produced. When citing an environment you must use the name in the table. **The data is generated on the spot by `tools/env-probe.sh` probing and is not maintained by hand** (see "Local environment and tooling") |
 | [`product-packaging-plan.md`](product-packaging-plan.md) | **Product packaging plan.** Four batches of deliverables, the origin and execution order of the three new directories `product/`·`operations/`·`delivery/` |
@@ -38,6 +41,7 @@ Read by reader role. Everything is plain text — Mermaid or ASCII diagrams, nev
 | [`../AGENT.md`](../AGENT.md) | **Read this before writing code.** Collaboration rules, layering, TDD policy, gates, git rules |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Environment setup, local gates, commit and review conventions |
 | [`../README.md`](../README.md) | Positioning, repository tour, quick start |
+| [`agents/`](agents/) | Agent-facing docs: domain docs, the GitHub issue tracker conventions, triage labels |
 
 ## For reviewers: product and review documents
 
@@ -49,6 +53,7 @@ Read by reader role. Everything is plain text — Mermaid or ASCII diagrams, nev
 | [`product/responsibility-matrix.md`](product/responsibility-matrix.md) | RACI responsibility boundary matrix: AS versus the S-CSCF / HSS / billing domain / network management / security domains |
 | [`product/version-lifecycle.md`](product/version-lifecycle.md) | Version lifecycle and EOL policy (REQ-NF-16 / ADR-0027) |
 | [`product/security-privacy.md`](product/security-privacy.md) | Security and privacy compliance (PDPO); retention period pending O4, storage selection pending D5 |
+| [`reviews/README.md`](reviews/README.md) | **Review record index.** Every review record in this directory (162 files, dated M0→M8) with its topic; each record ends with an `## Adjudication` table (`AGENT.md` §3.2 / §3.3) |
 
 ## Operations and on-call
 
@@ -93,6 +98,7 @@ Read by reader role. Everything is plain text — Mermaid or ASCII diagrams, nev
 |---|---|
 | [`../tools/env-probe.sh`](../tools/env-probe.sh) | **Environment probe (read-only).** Probes hostname / OS / architecture plus docker / uv / python3.10 / helm / kubectl / kind / promtool / make / git, distinguishing three states: "✅ present / ❌ missing / ⚠ installed but unusable". `--markdown` emits rows that can be pasted straight into the table in [`environments.md`](environments.md), `--json` is for machines. It installs nothing, changes no system state and needs no root, and still exits 0 when tools are missing |
 | [`../tools/bootstrap-infra.sh`](../tools/bootstrap-infra.sh) | **infra tooling installation (no root, idempotent).** Unpacks helm / kubectl / kind / promtool into `tools/bin/`, with versions pinned in [`../tools/VERSIONS`](../tools/VERSIONS); supports `--dry-run`, `--only <tool>`, `--force`, and automatically invokes `env-probe.sh` to verify afterwards. **Any path that needs root reports an explicit error and never sneaks in a sudo** |
+| [`handoff/README.md`](handoff/README.md) | **Handoff record index.** Every session handoff record in `handoff/` (36 files) with its topic |
 | [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) | **The execution plan for filling in the four missing tools locally** (prerequisite checks, installation inventory, pinned versions, falsifiable verification steps, rollback, stop line). Executors should start from that document, not from this one |
 
 ## References
