@@ -12,23 +12,57 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -->
 
-# `testbed/` — 测试平台（layer ⑥）
+# `testbed/` — test instrumentation: the peer world (layer ⑥)
 
-三层，全部把关：
+`testbed/` is the **peer world** the product under test faces: simulated network
+elements, load generation, probes, contract fixtures, and a deployable
+simulation platform. It is an R&D asset and **not a v1 deliverable** (ADR-0014);
+testbed results must never be presented as operator IOT or live-network evidence.
 
-| 层 | 目录 | 证明什么 |
+## Division of labor vs root `tests/`
+
+`testbed/` provides **environment and instrumentation**; root [`tests/`](../tests/)
+holds **assertions and cross-cutting structural guards**. Test layering is
+orthogonal to the directory axis: layers are selected by pytest markers
+(`unit` / `contract` / `integration` / `e2e` / `performance`), so the directory
+answers "where does the instrument live" and the marker answers "which gate runs
+it". E2e assertion cases live in root [`tests/e2e/`](../tests/e2e/) since R2612;
+nothing in this directory is an e2e assertion case anymore.
+
+## Workspace membership rule
+
+A subdirectory is a uv workspace member **only if it carries its own
+`pyproject.toml`** (guard: [`tests/test_workspace_layout.py`](../tests/test_workspace_layout.py)).
+Membership governs installability via uv — it is a separate mechanism from pytest
+collection. Instrumentation directories without a `pyproject.toml` stay
+non-members and are still collected by the root pytest `testpaths`
+(`tests, platform, apps, services, testbed`). `probe/` became member `as-probe`
+in R2612 (previously a flat script directory with no `pyproject.toml`).
+
+## Two probes, on purpose (ruling Q7=B: keep both)
+
+| Path | What it is |
+|---|---|
+| [`probe/`](probe/README.md) | **Python baseline probes** — workspace member `as-probe`, `src/as_probe` layout: `e1_baseline_probe`, `sequence_compare`, `tls_hot_rotation_probe` |
+| [`simulators/resip-probe/`](simulators/resip-probe/README.md) | **Native probe harness** — reSIProcate C++ binding; the entry point of `make gate-native` and every `m2-native-*` target, all of which call its `scripts/m2-native.sh` |
+
+Both are called probes; only the language and the role differ.
+
+## Members
+
+| Subdirectory | Workspace member | Holds |
 |---|---|---|
-| ① 契约 / 单元 | `contracts/` + 每个包的 `tests/` | 决策是对的，且每个实现都一致 |
-| ② 仿真集成 | `simulators/` | AS 能对着一个行为像运营商对等端的东西工作 |
-| ③ 性能 | `load/` | 容量边界到底在哪 |
+| `simulators/` | `as-simulators` | Simulated peer NEs |
+| `simulators/resip-probe/` | — (native harness) | reSIProcate C++ probe, vendored source, build scripts |
+| `load/` | `as-load` | Real-socket load generator |
+| `probe/` | `as-probe` | Python baseline probes (member since R2612) |
+| `contracts/` | — | Declarative contract fixtures: `decision/`, `sip-baseline/` (pure data) |
+| `sim-platform/` | — | Deployable simulation platform (see below) |
 
-## 为什么仿真器是一等资产
+## Why `sim-platform/` is here and not in `deploy/`
 
-在交付环境里，S-CSCF 和 S-SBC 是运营商的网元。本地只能仿真。如果 iFC 链和 S-SBC 透明桥接无法仿真，
-集成测试就无处可跑。
-
-## 规则
-
-- **压测必须走真实 socket。** 直接驱动回调的 harness 测的是业务逻辑，不是容量。
-- **v1 不把 testbed 作为交付物交付。** 它是研发资产；客户验收测试能力留到 v1.1。
-- 这里可以用 SIPp。它是 GPL，仅**内部使用、绝不随产品分发**。
+`sim-platform/` simulates the **customer environment and the peer platform** —
+it carries its own Helm chart, kind tooling, and product-bundle values. It is
+part of the **world under test**, not a deliverable; its chart sitting parallel
+to [`deploy/helm/`](../deploy/helm/) is deliberate (the product chart vs the
+simulated target environment). It must never ship to a customer.
