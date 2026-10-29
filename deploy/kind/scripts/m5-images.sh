@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 CLUSTER_NAME="${KIND_CLUSTER_NAME:-as-m5}"
 PLATFORM_TAG="${AS_PLATFORM_IMAGE:-as-platform:m5}"
 CONFIG_TAG="${AS_CONFIG_IMAGE:-as-config-service:m5}"

@@ -24,18 +24,10 @@ These tests are pure: no sockets, no clock, no fixtures on disk.
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import pytest
 
 from as_platform.sip.message import build_request, build_response
-
-# The probe package is not a workspace member, so it is not installed; put its
-# parent on the path the way running the probe as a script does.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
-from probe.sequence_compare import (  # noqa: E402
+from as_probe.sequence_compare import (
     MessageExpectation,
     compare_sequence,
     to_expectation,

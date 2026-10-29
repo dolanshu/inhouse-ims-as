@@ -13,7 +13,7 @@
 
 # TLS for kind 7.2d: localhost + ingress host (default console.m5.test).
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 CERT_DIR="${ROOT}/deploy/kind/certs"
 HOST="${M5_INGRESS_HOST:-console.m5.test}"
 mkdir -p "${CERT_DIR}"

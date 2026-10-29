@@ -105,7 +105,7 @@ ARCHITECTURE_README = DOCS / "architecture" / "README.md"
 # `FAILCLOSED-` is listed before `FAIL-` so the longer prefix wins. The three
 # verdicts are not interchangeable: PASS- is a green run, FAIL- is a command that
 # ran and exited non-zero, FAILCLOSED- is the deliberate 「refuse rather than
-# guess」 path. All three were needed the moment deploy/kind/m5-record-artifacts.sh
+# guess」 path. All three were needed the moment deploy/kind/scripts/m5-record-artifacts.sh
 # started naming files after the exit code it actually observed.
 EVIDENCE_NAME = re.compile(
     r"^(?P<verdict>PASS|FAILCLOSED|FAIL)-[a-z0-9-]+(-sample)?-\d{4}-\d{2}-\d{2}\.txt$"
@@ -132,7 +132,8 @@ DOCS_SCAN_EXCLUDED = (
 )
 
 # What a FAILCLOSED- entry must say nearby before it may sit in an index.
-NOT_PASS_MARKERS = ("不是通过证据", "不计入", "不得计入")
+# docs/acceptance/artifacts/m5/README.md labels these rows "**Not pass evidence**".
+NOT_PASS_MARKERS = ("Not pass evidence",)
 
 
 def _markdown_files(root: Path) -> list[Path]:
@@ -200,8 +201,8 @@ def test_failclosed_entries_are_labelled_as_not_pass_evidence() -> None:
         assert any(marker in line for marker in NOT_PASS_MARKERS), (
             f"{M5_INDEX.relative_to(REPOSITORY_ROOT)} lists {name} without saying it is not pass "
             f"evidence. Rule (1) of the four-layer mechanism: a FAILCLOSED- transcript (here: "
-            f"exit=1, M5_STRICT=1 with no kind-as-m5 cluster) must be labelled 「不是通过证据」 in "
-            f"the same table row, so nobody counts it towards 「全部通过」."
+            f'exit=1, M5_STRICT=1 with no kind-as-m5 cluster) must be labelled "Not pass '
+            f'evidence" in the same table row, so nobody counts it towards the pass list.'
         )
 
 
@@ -225,7 +226,7 @@ def test_fail_entries_are_labelled_as_not_pass_evidence() -> None:
         assert any(marker in line for marker in NOT_PASS_MARKERS), (
             f"{M5_INDEX.relative_to(REPOSITORY_ROOT)} lists {name} without saying it is not pass "
             f"evidence. Rule (1) of the four-layer mechanism: a FAIL- transcript records a command "
-            f"that exited non-zero and must be labelled 「不是通过证据」 in the same table row."
+            f'that exited non-zero and must be labelled "Not pass evidence" in the same table row.'
         )
 
 
@@ -269,10 +270,11 @@ def test_environment_probe_exists_and_is_executable() -> None:
 def test_environment_register_carries_a_named_row() -> None:
     """Generated or not, the table must still hold at least one usable row."""
     text = ENVIRONMENTS.read_text(encoding="utf-8")
-    header = "| 环境名 | hostname |"
+    header = "| Environment name | hostname |"
     assert header in text, (
         "docs/environments.md must carry the registry table with the columns "
-        "环境名 / hostname / 具备工具 / 缺失工具 / 已在此产出的证据 / 备注."
+        "Environment name / hostname / Tools present / Tools missing / Evidence produced "
+        "here / Notes."
     )
 
     rows = [line for line in text.splitlines() if line.startswith("| `")]
@@ -285,7 +287,7 @@ def test_environment_register_carries_a_named_row() -> None:
     assert named, (
         "docs/environments.md registers no usable environment. Run "
         "`tools/env-probe.sh --markdown` on a machine and paste the result: each row needs a "
-        "kebab-case 环境名 (column 1) and a real hostname (column 2)."
+        "kebab-case environment name (column 1) and a real hostname (column 2)."
     )
 
 
@@ -442,11 +444,14 @@ def test_architecture_entry_point_exists_and_links_the_conventions() -> None:
 
 def test_status_claims_in_the_entry_point_use_the_triple() -> None:
     """The entry point must state the triple convention, not merely use it once."""
-    text = ARCHITECTURE_README.read_text(encoding="utf-8")
-    assert "(结论, 证据文件, 日期)" in text or "(verdict, evidence file, date)" in text, (
-        "docs/architecture/README.md must state the status-claim triple "
-        "(结论, 证据文件, 日期). Rule (3) of the four-layer mechanism: 「已验证 / 未验证」 is "
-        "never a bare sentence — it always names the evidence file and its date."
+    # The triplet phrase is line-wrapped in the source (§3), so collapse whitespace
+    # before matching — the full literal must still appear in order.
+    text = " ".join(ARCHITECTURE_README.read_text(encoding="utf-8").split())
+    assert "(conclusion, evidence file, date)" in text, (
+        "docs/architecture/README.md must state the status-claim triplet "
+        "(conclusion, evidence file, date). Rule (3) of the four-layer mechanism: "
+        '"verified / unverified" is never a bare sentence — it always names the '
+        "evidence file and its date."
     )
 
 

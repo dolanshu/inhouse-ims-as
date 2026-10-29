@@ -13,9 +13,9 @@
 
 # H10 / ADR-0010: build InstanceLoad rows from live /metrics and run plan_scale_down.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# shellcheck source=deploy/kind/m5-metrics-lib.sh
-source "${ROOT}/deploy/kind/m5-metrics-lib.sh"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+# shellcheck source=deploy/kind/scripts/m5-metrics-lib.sh
+source "${ROOT}/deploy/kind/scripts/m5-metrics-lib.sh"
 
 NS="${K8S_NAMESPACE:-as-m5}"
 RELEASE="${HELM_RELEASE_NAME:-as}"

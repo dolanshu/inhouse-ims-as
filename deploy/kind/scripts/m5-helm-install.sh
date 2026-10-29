@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 # shellcheck source=scripts/lib/repo-toolchain.sh
 source "${ROOT}/scripts/lib/repo-toolchain.sh"
 repo_toolchain_prepend_path "${ROOT}"

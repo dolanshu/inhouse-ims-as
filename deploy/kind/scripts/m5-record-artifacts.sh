@@ -44,7 +44,7 @@
 # shellcheck shell=bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 DATE="${M5_ARTIFACT_DATE:-$(date -u +%Y-%m-%d)}"
 OUT="${ROOT}/docs/acceptance/artifacts/m5/${DATE}"
 mkdir -p "${OUT}"
@@ -113,7 +113,7 @@ write_evidence() {
     printf '# command: %s\n' "${label}"
     printf '# exit-code: %s\n' "${rc}"
     printf '# verdict: %s\n' "${verdict}"
-    printf '# recorded-by: deploy/kind/m5-record-artifacts.sh on %s\n' "${DATE}"
+    printf '# recorded-by: deploy/kind/scripts/m5-record-artifacts.sh on %s\n' "${DATE}"
     printf '# --- transcript begin ---\n'
     cat "${body}"
     printf '# --- transcript end ---\n'
@@ -208,7 +208,7 @@ STRICT_BODY="${WORK}/m5-strict-context.body"
 } >"${STRICT_BODY}"
 
 set +e
-bash -c "source '${ROOT}/deploy/kind/m5-lib.sh'; export M5_STRICT=1; export KIND_CLUSTER_NAME='${CLUSTER}'; m5_require_kind_context" \
+bash -c "source '${ROOT}/deploy/kind/scripts/m5-lib.sh'; export M5_STRICT=1; export KIND_CLUSTER_NAME='${CLUSTER}'; m5_require_kind_context" \
   >>"${STRICT_BODY}" 2>&1
 STRICT_RC=$?
 set -e
@@ -235,7 +235,7 @@ fi
   printf '# exit-code: %s\n' "${STRICT_RC}"
   printf '# verdict: FAILCLOSED\n'
   printf '# note: records the fail-closed path itself; NOT pass evidence\n'
-  printf '# recorded-by: deploy/kind/m5-record-artifacts.sh on %s\n' "${DATE}"
+  printf '# recorded-by: deploy/kind/scripts/m5-record-artifacts.sh on %s\n' "${DATE}"
   printf '# --- transcript begin ---\n'
   cat "${STRICT_BODY}"
   printf '# --- transcript end ---\n'
@@ -250,8 +250,8 @@ if [[ "${CLUSTER_PRESENT}" -eq 1 ]]; then
     note_failure "kind-${CLUSTER} context exists but M5_STRICT=1 context check failed (exit=${STRICT_RC})"
   fi
   echo "==> live cluster: M5_STRICT=1 m5-verify (may take several minutes)"
-  capture m5-verify-strict "M5_STRICT=1 bash deploy/kind/m5-verify.sh" copy \
-    env M5_STRICT=1 bash "${ROOT}/deploy/kind/m5-verify.sh"
+  capture m5-verify-strict "M5_STRICT=1 bash deploy/kind/scripts/m5-verify.sh" copy \
+    env M5_STRICT=1 bash "${ROOT}/deploy/kind/scripts/m5-verify.sh"
 fi
 
 # ---------------------------------------------------------------------------

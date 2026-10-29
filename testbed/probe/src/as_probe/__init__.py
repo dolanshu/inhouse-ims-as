@@ -72,7 +72,7 @@ How to make the bindings importable:
          uv run python -c "import resip"
 
   3. Re-run this probe, pointing it at the module name if it is not `resip`:
-         uv run python testbed/probe/e1_baseline_probe.py \\
+         uv run python testbed/probe/src/as_probe/e1_baseline_probe.py \\
              --bindings-module resip
 
 If the binding is unavailable in your environment, run this probe on a host

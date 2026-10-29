@@ -45,14 +45,14 @@ from pathlib import Path
 
 import pytest
 
-# Neither the probe package nor the scaffolding next to this file is installed,
-# so put both parents on the path the way the other probe tests do.
+from as_probe import e1_baseline_probe
+
+# fake_stack is self-check scaffolding next to this file, not part of any
+# installed package; put its directory on the path to import it.
 _SELFCHECK_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SELFCHECK_DIR))
-sys.path.insert(0, str(_SELFCHECK_DIR.parents[1]))
 
 import fake_stack  # noqa: E402
-from probe import e1_baseline_probe  # noqa: E402
 
 pytestmark = pytest.mark.integration
 

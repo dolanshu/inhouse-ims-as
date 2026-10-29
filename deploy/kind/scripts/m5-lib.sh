@@ -14,7 +14,7 @@
 # shellcheck shell=bash
 
 if [[ -z "${_REPO_TOOLCHAIN_LOADED:-}" ]]; then
-  _M5_LIB_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  _M5_LIB_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
   # shellcheck source=scripts/lib/repo-toolchain.sh
   source "${_M5_LIB_ROOT}/scripts/lib/repo-toolchain.sh"
   repo_toolchain_prepend_path "${_M5_LIB_ROOT}"
@@ -22,7 +22,7 @@ if [[ -z "${_REPO_TOOLCHAIN_LOADED:-}" ]]; then
 fi
 
 m5_repo_root() {
-  cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd
+  cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd
 }
 
 # IP on the docker bridge that kind nodes use to reach services on the Docker host (compose PG).

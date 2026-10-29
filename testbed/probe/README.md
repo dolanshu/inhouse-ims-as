@@ -31,10 +31,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ```
 testbed/probe/
-├── __init__.py                  # 包说明 + 绑定缺失时的指引文本与退出码常量
-├── sequence_compare.py          # 纯函数：两条 SIP 消息序列的比对（无 IO / 无时钟 / 无全局状态）
-├── e1_baseline_probe.py         # E1 基线对拍探针（可执行）
-├── tls_hot_rotation_probe.py    # E4 / S12 TLS 热轮换探针（可执行）
+├── pyproject.toml               # workspace 成员 as-probe 的清单（版本仅此一处）
+├── src/as_probe/
+│   ├── __init__.py              # 包说明 + 绑定缺失时的指引文本与退出码常量
+│   ├── sequence_compare.py      # 纯函数：两条 SIP 消息序列的比对（无 IO / 无时钟 / 无全局状态）
+│   ├── e1_baseline_probe.py     # E1 基线对拍探针（可执行）
+│   └── tls_hot_rotation_probe.py # E4 / S12 TLS 热轮换探针（可执行）
 ├── tests/
 │   └── test_sequence_compare.py # 比对逻辑的 unit 测试（marker: unit）
 ├── out/                         # 运行产物（证据），按需生成，不入版本库
@@ -62,7 +64,7 @@ testbed/probe/
 ### E1 基线对拍
 
 ```bash
-uv run python testbed/probe/e1_baseline_probe.py
+uv run python testbed/probe/src/as_probe/e1_baseline_probe.py
 ```
 
 常用参数：
@@ -81,24 +83,24 @@ uv run python testbed/probe/e1_baseline_probe.py
 上面的默认值只是 argparse 的兜底，并行跑多用例会撞端口。完整形式：
 
 ```bash
-uv run python testbed/probe/e1_baseline_probe.py \
+uv run python testbed/probe/src/as_probe/e1_baseline_probe.py \
     --scenario S1 --bindings-module resip \
     --out-dir testbed/probe/out --host 127.0.0.1 --port 45060
 ```
 
 ```bash
 # 只跑一个场景，指定 AS 地址与证据目录
-uv run python testbed/probe/e1_baseline_probe.py \
+uv run python testbed/probe/src/as_probe/e1_baseline_probe.py \
     --scenario S1 --host 127.0.0.1 --port 45060 --out-dir /tmp/probe-out
 
 # 场景没有基线时的行为（S5–S11 目前只有 README，没有消息文件）
-uv run python testbed/probe/e1_baseline_probe.py --scenario S5
+uv run python testbed/probe/src/as_probe/e1_baseline_probe.py --scenario S5
 ```
 
 ### E4 / S12 TLS 热轮换
 
 ```bash
-uv run python testbed/probe/tls_hot_rotation_probe.py
+uv run python testbed/probe/src/as_probe/tls_hot_rotation_probe.py
 ```
 
 常用参数：`--bindings-module`（默认 `resip`）、`--host`（默认 `127.0.0.1`）、`--port`（默认 `5061`）、
@@ -136,7 +138,7 @@ uv run python testbed/probe/tls_hot_rotation_probe.py
 实跑证据（2026-09-30，本环境无绑定）：
 
 ```
-$ uv run python testbed/probe/e1_baseline_probe.py
+$ uv run python testbed/probe/src/as_probe/e1_baseline_probe.py
 probe aborted: Python bindings 'resip' are not importable (No module named 'resip')
 ...（构建指引）...
 $ echo $?
@@ -204,7 +206,7 @@ ADR-0019 §7.1 K2：**probe 完成前，`platform/` 的 SIP 适配层不开工�
 
 本目录的探针通过之前：
 
-- `platform/src/as_platform/sip/` 的栈绑定实现不开工；
+- `src/platform/src/as_platform/sip/` 的栈绑定实现不开工；
 - E1 / E4 / E5 在 ADR-0019 中保持"接受的缺口"状态；
 - E5（状态外置 / 序列化）的探针尚未编写，是后续项。
 

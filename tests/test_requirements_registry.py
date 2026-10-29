@@ -66,8 +66,8 @@ REQ_ID = re.compile(r"\bREQ-(?P<prefix>F|NF|S|G)-(?P<number>\d+)\b")
 H3 = re.compile(r"^###\s+(?P<title>.+?)\s*$", re.MULTILINE)
 
 # The two REQ-NF subsections that each must be internally ascending.
-NF_P0_HEADING = "3.1 核心架构约束（P0）"
-NF_P1_HEADING = "3.2 扩展与治理（P1）"
+NF_P0_HEADING = "3.1 Core architectural constraints (P0)"
+NF_P1_HEADING = "3.2 Scaling and governance (P1)"
 
 
 def _load_toml(path: Path) -> dict[str, Any]:
@@ -283,7 +283,8 @@ def test_prd_req_ids_ascend_within_each_subsection() -> None:
     must still go up, so a reader never reads 3 → 1 → 2.
 
     For REQ-NF specifically, the two groups are:
-    ``### 3.1 核心架构约束（P0）`` and ``### 3.2 扩展与治理（P1）``.
+    ``### 3.1 Core architectural constraints (P0)`` and
+    ``### 3.2 Scaling and governance (P1)``.
     """
     grouped = _prd_req_ids_by_subsection()
 

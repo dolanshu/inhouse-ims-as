@@ -13,11 +13,11 @@
 
 # M5 §217①② + H10: kind evidence for draining/ISSU and plan_scale_down from live metrics.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# shellcheck source=deploy/kind/m5-lib.sh
-source "${ROOT}/deploy/kind/m5-lib.sh"
-# shellcheck source=deploy/kind/m5-metrics-lib.sh
-source "${ROOT}/deploy/kind/m5-metrics-lib.sh"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+# shellcheck source=deploy/kind/scripts/m5-lib.sh
+source "${ROOT}/deploy/kind/scripts/m5-lib.sh"
+# shellcheck source=deploy/kind/scripts/m5-metrics-lib.sh
+source "${ROOT}/deploy/kind/scripts/m5-metrics-lib.sh"
 
 NS="${K8S_NAMESPACE:-as-m5}"
 RELEASE="${HELM_RELEASE_NAME:-as}"
@@ -86,7 +86,7 @@ echo "post-issu pod=${TR_POD} as_active_calls=${calls}"
 echo "==> H10: plan_scale_down allowed path (anti-fraud 2 -> 1, zero calls)"
 kubectl -n "${NS}" scale "deployment/${AF_DEPLOY}" --replicas=2
 kubectl -n "${NS}" rollout status "deployment/${AF_DEPLOY}" --timeout=180s
-bash "${ROOT}/deploy/kind/m5-plan-scale-down-from-metrics.sh" anti-fraud 1
+bash "${ROOT}/deploy/kind/scripts/m5-plan-scale-down-from-metrics.sh" anti-fraud 1
 kubectl -n "${NS}" scale "deployment/${AF_DEPLOY}" --replicas=1
 kubectl -n "${NS}" rollout status "deployment/${AF_DEPLOY}" --timeout=180s
 
@@ -94,7 +94,7 @@ echo "==> H10: plan_scale_down blocked path (translation 2 replicas, simulated c
 kubectl -n "${NS}" scale "deployment/${TR_DEPLOY}" --replicas=2
 kubectl -n "${NS}" rollout status "deployment/${TR_DEPLOY}" --timeout=180s
 set +e
-bash "${ROOT}/deploy/kind/m5-plan-scale-down-from-metrics.sh" translation 1
+bash "${ROOT}/deploy/kind/scripts/m5-plan-scale-down-from-metrics.sh" translation 1
 blocked_rc=$?
 set -e
 [[ "${blocked_rc}" -ne 0 ]] || {

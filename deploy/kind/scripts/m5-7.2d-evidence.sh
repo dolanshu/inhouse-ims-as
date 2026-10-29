@@ -13,9 +13,9 @@
 
 # M4b-7.2d / M5-1c closure: runbook items 1–6 (kind via ingress port-forward + browser).
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# shellcheck source=deploy/kind/m5-lib.sh
-source "${ROOT}/deploy/kind/m5-lib.sh"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+# shellcheck source=deploy/kind/scripts/m5-lib.sh
+source "${ROOT}/deploy/kind/scripts/m5-lib.sh"
 
 NS="${K8S_NAMESPACE:-as-m5}"
 HOST="${M5_INGRESS_HOST:-console.m5.test}"
@@ -35,13 +35,13 @@ kubectl config use-context "kind-${KIND_CLUSTER_NAME:-as-m5}"
 
 if [[ "${M5_7_2D_SKIP_INGRESS:-0}" != "1" ]]; then
   echo "==> ensure ingress + config-service (m5-ingress-evidence)"
-  M5_BUNDLED_STATE="${M5_BUNDLED_STATE:-1}" bash "${ROOT}/deploy/kind/m5-ingress-evidence.sh"
+  M5_BUNDLED_STATE="${M5_BUNDLED_STATE:-1}" bash "${ROOT}/deploy/kind/scripts/m5-ingress-evidence.sh"
 else
   echo "==> skip ingress install (M5_7_2D_SKIP_INGRESS=1)"
 fi
 
 echo "==> schema migrate (bundled PG)"
-bash "${ROOT}/deploy/kind/m5-config-migrate-kind.sh"
+bash "${ROOT}/deploy/kind/scripts/m5-config-migrate-kind.sh"
 
 echo "==> seed console users (owner DSN)"
 LOCAL_PG="${M5_PG_LOCAL_PORT:-15432}"

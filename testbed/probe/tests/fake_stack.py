@@ -13,7 +13,7 @@
 """A fake stack under probe: bindings stand-in plus a local replay server.
 
 This module is **self-check scaffolding** for the E1 probe harness
-(``testbed/probe/e1_baseline_probe.py``). Its job is to prove that the harness
+(``testbed/probe/src/as_probe/e1_baseline_probe.py``). Its job is to prove that the harness
 can run at all: that the bindings gate opens, that a scenario's ``in-*``
 messages reach a peer over a real socket, and that what comes back is framed,
 compared and folded into an exit code. A harness that cannot run is worse than
@@ -27,7 +27,7 @@ transactions, no dialogs, no retransmissions, no timers and no notion of what
 a correct response would be. A green run against this peer says the harness is
 wired up and the comparison is live; it says nothing whatsoever about the stack
 ADR-0019 selected. The real probe has to be run on a host where the
-reSIProcate Python bindings import (see ``probe.BINDING_GUIDANCE``), and only
+reSIProcate Python bindings import (see ``as_probe.BINDING_GUIDANCE``), and only
 that run can close E1.
 
 Usage, from a test:
@@ -83,7 +83,7 @@ def make_fake_bindings(name: str = DEFAULT_BINDINGS_MODULE) -> ModuleType:
     skips. This stand-in exists to open that gate in a test, and for nothing
     else --- it carries no stack behaviour at all.
 
-    It exposes no ``create_stack_under_probe`` (``probe.BINDINGS_FACTORY``) on
+    It exposes no ``create_stack_under_probe`` (``as_probe.BINDINGS_FACTORY``) on
     purpose. With the factory absent the probe falls back to its own socket
     peer, which is what a self-check wants: the harness is then driven end to
     end over a real socket, instead of being handed an object that answers

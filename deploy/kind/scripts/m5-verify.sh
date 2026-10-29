@@ -13,9 +13,9 @@
 
 # Quick M5 acceptance checks: gate + chart + kind cluster smoke (existing as-m5).
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# shellcheck source=deploy/kind/m5-lib.sh
-source "${ROOT}/deploy/kind/m5-lib.sh"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+# shellcheck source=deploy/kind/scripts/m5-lib.sh
+source "${ROOT}/deploy/kind/scripts/m5-lib.sh"
 NS="${K8S_NAMESPACE:-as-m5}"
 CLUSTER="${KIND_CLUSTER_NAME:-as-m5}"
 

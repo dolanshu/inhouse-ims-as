@@ -24,7 +24,7 @@ What it does, per scenario:
    ``testbed/contracts/sip-baseline/`` --- the messages that enter the AS.
 2. Deliver them, in file order, to the AS the stack under probe plays.
 3. Collect what the AS emits and compare it with the ``out-*`` messages of the
-   same directory, using :func:`probe.sequence_compare.compare_sequence`.
+   same directory, using :func:`as_probe.sequence_compare.compare_sequence`.
 4. Write what was captured to ``--out-dir/<scenario>/`` as evidence, print
    ``PASS`` / ``FAIL`` / ``NO_BASELINE``, and exit non-zero on any ``FAIL``.
 
@@ -59,15 +59,12 @@ from types import ModuleType
 from typing import Final, Protocol, cast
 
 from as_platform.sip.message import header, parse_message
+from as_probe import BINDING_GUIDANCE, BINDINGS_FACTORY, EXIT_BINDINGS_MISSING
+from as_probe.sequence_compare import compare_sequence
 
-# Running this file as a script puts ``testbed/probe`` on sys.path, not
-# ``testbed``; the package the script belongs to lives one level up.
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from probe import BINDING_GUIDANCE, BINDINGS_FACTORY, EXIT_BINDINGS_MISSING  # noqa: E402
-from probe.sequence_compare import compare_sequence  # noqa: E402
-
-REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
+# src/as_probe/ sits four levels below the repository root; the baseline and
+# the evidence directory are repository locations, not install locations.
+REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[4]
 BASELINE_ROOT: Final = REPOSITORY_ROOT / "testbed" / "contracts" / "sip-baseline"
 DEFAULT_OUT_DIR: Final = REPOSITORY_ROOT / "testbed" / "probe" / "out"
 
@@ -286,7 +283,7 @@ def _load_bindings(module_name: str) -> ModuleType:
         The imported module.
 
     Raises:
-        SystemExit: With :data:`probe.EXIT_BINDINGS_MISSING` when the module
+        SystemExit: With :data:`as_probe.EXIT_BINDINGS_MISSING` when the module
             cannot be imported. This is the point of the probe: a missing
             binding is a failed run, never a skipped one.
     """
@@ -305,7 +302,7 @@ def _load_bindings(module_name: str) -> ModuleType:
 def _open_stack(bindings: ModuleType, host: str, port: int) -> StackUnderProbe:
     """Obtain the stack handle the probe will drive.
 
-    A bindings module may expose :data:`probe.BINDINGS_FACTORY`; that is the
+    A bindings module may expose :data:`as_probe.BINDINGS_FACTORY`; that is the
     adapter the reSIProcate bindings are expected to grow, and it is **not**
     implemented in this repository. When it is absent the probe falls back to
     its own socket peer, which speaks to an AS that is already listening on

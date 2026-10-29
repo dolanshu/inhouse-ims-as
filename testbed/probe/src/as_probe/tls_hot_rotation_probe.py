@@ -54,14 +54,11 @@ from types import ModuleType
 from typing import Final, Protocol, cast
 
 from as_platform.sip.message import parse_message, status_code
+from as_probe import BINDING_GUIDANCE, BINDINGS_FACTORY, EXIT_BINDINGS_MISSING
 
-# Running this file as a script puts ``testbed/probe`` on sys.path, not
-# ``testbed``; the package the script belongs to lives one level up.
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from probe import BINDING_GUIDANCE, BINDINGS_FACTORY, EXIT_BINDINGS_MISSING  # noqa: E402
-
-REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
+# src/as_probe/ sits four levels below the repository root; the default
+# evidence directory is a repository location, not an install location.
+REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[4]
 DEFAULT_OUT_DIR: Final = REPOSITORY_ROOT / "testbed" / "probe" / "out"
 
 DEFAULT_HOST: Final = "127.0.0.1"
@@ -163,7 +160,7 @@ def _load_bindings(module_name: str) -> ModuleType:
         The imported module.
 
     Raises:
-        SystemExit: With :data:`probe.EXIT_BINDINGS_MISSING` when the module
+        SystemExit: With :data:`as_probe.EXIT_BINDINGS_MISSING` when the module
             cannot be imported. E4 stays an open gap instead of being silently
             skipped.
     """
@@ -182,7 +179,7 @@ def _load_bindings(module_name: str) -> ModuleType:
 def _open_stack(bindings: ModuleType, host: str, port: int) -> TlsStackUnderProbe:
     """Obtain the TLS stack handle the probe will drive.
 
-    A bindings module may expose :data:`probe.BINDINGS_FACTORY`; that is the
+    A bindings module may expose :data:`as_probe.BINDINGS_FACTORY`; that is the
     adapter the reSIProcate bindings are expected to grow, and it is **not**
     implemented in this repository.
 
@@ -195,7 +192,7 @@ def _open_stack(bindings: ModuleType, host: str, port: int) -> TlsStackUnderProb
         An object satisfying :class:`TlsStackUnderProbe`.
 
     Raises:
-        SystemExit: With :data:`probe.EXIT_BINDINGS_MISSING` when the module
+        SystemExit: With :data:`as_probe.EXIT_BINDINGS_MISSING` when the module
             offers no way to build a stack handle. Without one there is no
             rotation to observe.
     """

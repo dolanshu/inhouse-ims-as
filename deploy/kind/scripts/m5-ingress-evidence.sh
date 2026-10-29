@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# shellcheck source=deploy/kind/m5-lib.sh
-source "${ROOT}/deploy/kind/m5-lib.sh"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+# shellcheck source=deploy/kind/scripts/m5-lib.sh
+source "${ROOT}/deploy/kind/scripts/m5-lib.sh"
 NS="${K8S_NAMESPACE:-as-m5}"
 RELEASE="${HELM_RELEASE_NAME:-as}"
 CONFIG_TAG="${AS_CONFIG_IMAGE:-as-config-service:m5}"
@@ -35,7 +35,7 @@ else
 fi
 
 if [[ ! -f "${CERT_DIR}/tls.crt" ]]; then
-  M5_INGRESS_HOST="${HOST}" "${ROOT}/deploy/kind/m5-gen-certs.sh"
+  M5_INGRESS_HOST="${HOST}" "${ROOT}/deploy/kind/scripts/m5-gen-certs.sh"
 fi
 
 echo "==> ingress-nginx (kind manifest)"

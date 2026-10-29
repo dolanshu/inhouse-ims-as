@@ -13,7 +13,7 @@
 
 # Owner migrate against bundled chart Postgres (ADR-0026 kind profile).
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 NS="${K8S_NAMESPACE:-as-m5}"
 PG_POD="${M5_PG_POD:-as-3rdparty-as-postgres-0}"
 LOCAL_PORT="${M5_PG_LOCAL_PORT:-15432}"
