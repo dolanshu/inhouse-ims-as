@@ -54,6 +54,7 @@ _NETWORK_UNAVAILABLE_MESSAGES = (
     "operation timed out",
     "no route to host",
     "network is unreachable",
+    "server closed the connection unexpectedly",
 )
 
 

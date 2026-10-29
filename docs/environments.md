@@ -229,3 +229,29 @@ consistent with the existing rows; the semantics of `--role` / `--name` are unch
 (adding the measured values for the two new columns `make` / `git`, plus OS and architecture; `helm` / `kubectl` / `kind` / `promtool` all confirmed as "not found").
 All version numbers come from the script output; not a single cell was hand-filled. §2.1's original "no data row written to disk in this round" statement is retained undeleted as the audit chain requires,
 with the subsequent addendum stating the current state. §0 framing, §3 naming rule, §4 triple, §5 security boundary, and §6 maintenance conventions are unchanged.
+
+## 7. Local test containers (docker, on `dev-win03ib7niepf0`)
+
+> Added 2026-10-29 (E7 batch). Machines are registered in §2; this section additionally registers the
+> **local docker containers** that the integration tests depend on. If a container is re-created or
+> re-ported, update this table in the same round.
+
+| Container | Image | Host port | Role |
+|---|---|---|---|
+| `as-m4b8-dev-postgres-1` | PostgreSQL 12.22 (deploy/compose project) | 55432 | canonical integration PG |
+| `as-redis-test` | redis:7 | 6379 | d10 redis integration |
+| `as-pg-logical-test` | PostgreSQL 12.22 with `wal_level=logical` | 55433 | logical-replication acceptance only |
+| `as-pg15-test` | PostgreSQL 15 with `wal_level=logical` | 55434 | logical-replication acceptance only |
+
+Dependencies: `make test-integration-compose` targets the canonical PG (`AS_PG_TEST_DSN` → 55432), and the
+d10 redis integration tests target 6379 — both depend on the first two containers. Ports 55433 / 55434 are
+reserved for logical-replication acceptance only.
+
+Operational notes:
+
+- **Restart policy `unless-stopped` (effective 2026-10-29).** Before that the containers ran with
+  restart=no, so a host reboot silently took them off the network — this happened on 2026-10-12 and went
+  unnoticed for two weeks.
+- **Never run a PG ≥ 13 container on the same port.** The integration schema is written against PG 12; on
+  PG 16 it fails with `operator is not unique: "char" || unknown`, which has misled debugging before.
+- `as-pg-test` (PG 16 on 55432 — the port-collision source) was removed on 2026-10-29.

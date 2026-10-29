@@ -16,6 +16,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 > **状态：分析结论，待维护者裁决**。本版按维护者要求改为逐目录三段式：每个目录先讲清它是干什么的、里面实际装了什么，再回答"是否应该放在根目录"。**覆盖并替代 v2 分析版**；v2 的 F-1（apps 改名建议）在本版被修订，见 §4。
 > **v3.1 增补（2026-10-28）**：新增 §1——维护者追问"apps/、services/、platform/ 都是产品源码，docs/ 是文档入口，为什么四个目录在同一级"，§1 是该问题的书面回答，并新增发现 F-9 与裁决项 Q6。
+> **v3.2 增补（2026-10-29）**：新增 §3——对其余五个目录（testbed / tests / deploy / scripts / tools）做同等力度判断，含三组组织张力与两处 v3 结论修正；新增发现 F-10、裁决项 Q7。
 > 证据采集：2026-10-28，全部来自对仓库文件系统、git 索引和 README/AGENT.md/plan.md 原文的直接检查。
 > 关联：[R2612_Cont.md](R2612_Cont.md)（剩余项规划）。
 
@@ -45,6 +46,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 **另一个流派的存在（诚实陈述）**：PostgreSQL 把全部源码收在 `src/` 下、`doc/` 在根——"产品 vs 支撑"的视觉二分同样是正经做法，不是错误答案。选择依据是工具链与规模：本项目只有 3 个源码目录、7 个成员，`src/` 收拢要动根 pyproject workspace 声明、两个门禁测试、Dockerfile COPY 路径、约数十处文档引用（ADR / AGENT.md / README 的目录树与分层图），换来的是根目录少两个条目 + 视觉二分。
 
 **本版建议**：维持平铺，把组织原则写进根 README（F-9 的修法）。`src/` 收拢列为可选项，由维护者裁决（§5 Q6）。
+
+**（2026-10-29 裁决更新）**：维护者选 Q6=B——引入 `src/` 收拢产品源码。本节"维持平铺"的建议被裁决取代；按裁决，第一步是产出迁移清单评估（见 §7 E3），清单经维护者批准后才执行实际迁移。
 
 ---
 
@@ -90,7 +93,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - 成员：`simulators`（对端模拟器，可运行，13 个模块）、`load`（负载发生器，有进程入口）；
 - 非成员：`contracts/`（decision + sip-baseline 契约夹具，纯数据）、`e2e/`（2 个 e2e 用例文件）、`probe/`（基线探针，含自己的 tests/）、`sim-platform/`（自带 Helm chart 的模拟平台，准部署物）。
 
-**是否应该放在根目录**：**应该**（电信仓库惯例：测试器械与测试用例分离）。但**内部治理不合格**：probe 有 tests/ 却不是 workspace 成员（它的测试如何被 pytest 收集？无成文说明）；e2e 用例散在 testbed/ 而非根 tests/，是刻意例外还是漂移无说明；sim-platform 带着与 deploy/ 平行的 chart 混在器械目录里。这是本版保留的最高优先级结构问题。
+**是否应该放在根目录**：**应该**（电信仓库惯例：测试器械与测试用例分离）。但**内部治理不合格**：probe 有 tests/ 却不是 workspace 成员（它的测试如何被 pytest 收集？无成文说明）；e2e 用例散在 testbed/ 而非根 tests/，是刻意例外还是漂移无说明；sim-platform 带着与 deploy/ 平行的 chart 混在器械目录里。这是本版保留的最高优先级结构问题。（**v3.2 修正：见 §3.2** —— pytest 收集机制自洽，真问题降级为"成员资格规则未成文" + probe 语义分裂。）
 
 ### 2.5 tests/
 
@@ -134,7 +137,68 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **九目录总裁决**：九个全部配占根目录位置，没有多余也没有缺失。需要修的是三个**内部治理**问题（testbed 成员资格、kind 脚本堆积、scripts/tools 边界成文）和一个**消歧说明**（apps 语义）。
 
-## 3. 根目录文件逐个裁决
+## 3. 其余五个目录的深度判断（v3.2 增补）
+
+> 维护者指示（2026-10-29）：对 platform / apps / services / docs 之外的目录做同等力度的判断。本节逐个复核 testbed / tests / deploy / scripts / tools 的根目录资格，并回答三组"为什么是两个 / 为什么混放"的组织张力。**本节补证修正 v3 对 testbed 的两处判断，见 §3.2。**
+
+**新证据（2026-10-29 采集）**：
+- 根 pyproject `[tool.pytest.ini_options].testpaths = ["tests", "platform", "apps", "services", "testbed"]` —— pytest 按**目录**收集，testbed/probe/tests 与 testbed/e2e 一直在收集范围内；
+- 测试分层由 **pytest markers** 定义（unit / contract / integration / e2e / performance），与目录轴正交；
+- uv workspace 成员资格只决定"是否作为可安装包被 uv 管理"，与 pytest 收集是两套机制；
+- Makefile：4 个 target 直接引用 `deploy/kind/m5-*.sh`；gate-native 系列全部指向 `testbed/simulators/resip-probe/scripts/m2-native.sh`；chart-check 指向 `deploy/helm/scripts/chart-check.sh`；
+- `git ls-files tools/` = VERSIONS、bootstrap-infra.sh、env-probe.sh（bin/ 不跟踪，符合惯例）；
+- helm 模板列表中**没有** PrometheusRule 模板 —— `deploy/alerts/` 不随 chart 分发，独立引入。
+
+### 3.1 tests/ —— 5 个文件占一个根目录，值不值？
+
+**它是什么**：5 个跨切守卫（workspace 布局 / 依赖边界 / 版本一致性 / 需求登记 / 证据纪律）。不测产品功能，测"仓库结构本身"——是 AGENT.md 规则的机器执行版。
+
+**判断：维持，无合并选项**。守卫不属于任何一个成员（它们管全部成员），放进任何成员目录都是错位；它们与 testbed 的关系是裁判与器械——守卫测试若依赖 testbed 器械，依赖方向就反了。这是"只能放根目录"的少数目录之一。5 个文件的体量不是问题——每条守卫都在替 review 省争吵。
+
+### 3.2 testbed/ —— 两处 v3 结论修正 + 一个新发现
+
+**修正 1（撤回"probe 成员矛盾"表述）**：v3 称"probe 有 tests/ 却非 workspace 成员是最明显的矛盾"。补证后：pytest 收集与 uv 成员资格**正交**——testpaths 含 "testbed"，probe/tests 一直被收集；成员资格只关乎包安装。probe 无 pyproject（扁平脚本目录），本就不是可安装包，非成员自洽。真问题降级为：**"有 pyproject 才进 workspace，否则留在 testbed 由 pytest 收集"这条规则没有成文**。
+
+**修正 2（e2e-in-testbed 非漂移）**：分层由 markers 定义（`pytest -m e2e`），目录轴回答"器械放哪"——两轴正交是刻意设计，与 §3.1 的"tests/=裁判"裁决自洽。需成文。
+
+**新发现 F-10（probe 语义分裂）**：仓库有两处都叫 probe，新人无法判断"探针在哪"：
+- `testbed/probe/` —— Python 基线探针（e1_baseline_probe.py、sequence_compare.py、tls_hot_rotation_probe.py）；
+- `testbed/simulators/resip-probe/` —— native 探针 harness（Makefile gate-native 系列全部指向它）。
+
+归一方向交裁决（§6 Q7）。
+
+**sim-platform 混放复核**：自带 chart 的模拟平台是"被测世界的一部分"（模拟客户环境 + 对端平台），不是交付物；与 deploy/ 的 chart 平行不冲突。维持。
+
+### 3.3 deploy/ —— 交付物与本地器具混放复核
+
+**事实分组**：
+- 产品交付物：`helm/`（chart 0.2.0，自带 scripts/chart-check.sh 先例）、`docker/`（产品镜像）、`alerts/`（告警规则，不随 chart 分发、独立引入——需一句话成文）；
+- 本地开发/证据器具：`compose/`（本地编排 + playwright 证据）、`kind/`（本地集群 + **17 个 m5-\* 脚本堆在顶层**，Makefile 4 个 target 直接引用）。
+
+**判断：维持单目录**。kind/compose 是"把产品在本地跑起来"的两种形态，与交付物同属"部署"一个关注点；拆成 deploy/ + dev-env/ 会把一个心智劈成两个根目录，碎。内部动作两项：m5-\* 移入 `deploy/kind/scripts/`（Makefile 4 处引用同步；与 helm/scripts/ 先例方向一致）；alerts 分发方式成文。
+
+### 3.4 scripts/ 与 tools/ —— 为什么是两个，能不能合一个
+
+**真实分界线**（比 v3 更准的表述）：`scripts/` = **仓库逻辑的一部分**（被 Makefile/gate 直接调用，进 git、进 review）；`tools/` = **把开发机变成能跑仓库的环境**（bootstrap-infra.sh 装的就是 tools/bin/ 里那四样；bin/ 不进 git）。一个面向"仓库怎么做事"，一个面向"机器怎么备好"。
+
+**合并选项评估**：
+- A. 维持两个 + 各自一句话 README（本版建议）：成本最低，边界本就清晰，只欠成文；
+- B. 合并进 scripts/、bin 改 scripts/bin：省一个根目录条目，代价是丢掉"进 git 的内容 vs 本地产物"的一眼区分，Makefile 引用要改，收益不抵；
+- C. tools/ 隐藏化为 .tools/：对 Windows 与部分工具链不友好，否。
+
+### 3.5 汇总
+
+| 目录 | 根目录资格 | 本节动作项 |
+|---|---|---|
+| tests/ | 维持 | 无（无合并选项，见 §3.1） |
+| testbed/ | 维持 | 成员资格规则成文；probe 归一（Q7）；e2e 两轴设计成文 |
+| deploy/ | 维持 | m5-\* 归位 kind/scripts/；alerts 分发方式成文 |
+| scripts/ | 维持 | 一句话 README |
+| tools/ | 维持 | 一句话 README |
+
+**结论：五个目录全部维持根目录资格，无需搬动任何目录。工作量收敛为"四处成文 + 一次脚本归位 + 一个 probe 归一裁决"。**
+
+## 4. 根目录文件逐个裁决
 
 | 文件 | 干什么用的 | 有用? | 该在根? |
 |---|---|---|---|
@@ -159,7 +223,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **根目录总裁决**：正式文件没有一个不该在；唯一实际问题是 .codebuddy/teams/ 误跟踪。
 
-## 4. 与 v2 的差异
+## 5. 与 v2 的差异
 
 | v2 结论 | v3 修订 | 修订理由 |
 |---|---|---|
@@ -169,17 +233,116 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | F-4：.codebuddy/teams/ 误跟踪 | **维持** | 证据未变 |
 | F-5：scripts/tools 边界无成文 | **维持** | 证据未变 |
 
-## 5. 待维护者裁决
+**v3.1 / v3.2 增补记录**：v3.1 新增 §1 组织原则、发现 F-9、裁决 Q6；v3.2 新增 §3 五目录深度判断、发现 F-10、裁决 Q7，并修正 F-2 的事实前提（pytest 收集与 uv 成员资格正交，probe 非成员自洽，真问题为规则未成文 + probe 语义分裂）。
 
-| # | 问题 | 选项 |
-|---|---|---|
-| Q1 | apps/ 语义消歧 | A. 批准补 `apps/README.md`（写明"IMS 业务用例、进程由 platform 外壳承载、与 services/ 的语义区分"）；B. 不补 |
-| Q2 | testbed/probe 的地位 | A. 升级为 workspace 成员；B. 移入 simulators/；C. 维持非成员但在 testbed/README.md 成文说明收集方式 |
-| Q3 | testbed/e2e 与 sim-platform | A. 维持现状 + README 成文；B. e2e 并入根 tests/；C. sim-platform 移出 testbed |
-| Q4 | kind m5-\* 脚本归位 + .codebuddy teams/ 去跟踪 + scripts/tools README | A. 一批授权执行；B. 逐项再议 |
-| Q5 | v2 的文档批次（docs 导航 + reviews/handoff 索引） | 待本文件裁决后一并执行 |
-| Q6 | 根目录组织原则 | A. 维持平铺 + README 写明分类地图（本版建议，F-9 修法）；B. 引入 `src/` 收拢产品源码（PostgreSQL 流派，需先出迁移清单评估） |
+## 6. 待维护者裁决
+
+| # | 问题 | 选项 | 裁决（维护者，2026-10-29） |
+|---|---|---|---|
+| Q1 | apps/ 语义消歧 | A. 补 apps/README.md；B. 不补 | **A** |
+| Q2 | testbed/probe 的地位 | A. 升级为 workspace 成员；B. 移入 simulators/；C. 成文说明 | **A**（升级为成员） |
+| Q3 | testbed/e2e 与 sim-platform | A. 维持+成文；B. e2e 并入根 tests/；C. sim-platform 移出 | **B**（e2e 并入根 tests/；sim-platform 维持在 testbed） |
+| Q4 | kind m5-\* 归位 + .codebuddy teams 去跟踪 + scripts/tools README | A. 一批授权执行；B. 逐项再议 | **A** |
+| Q5 | v2 文档批次（docs 导航 + reviews/handoff 索引） | 待本文件裁决后执行 | **go（2026-10-29 维护者补答）：执行 v2 S1 文档批次（docs 导航补全 + reviews/handoff 索引）** |
+| Q6 | 根目录组织原则 | A. 维持平铺+README；B. 引入 src/ 收拢（先出迁移清单评估） | **B**（先出迁移清单，批准后再执行） |
+| Q7 | probe 语义分裂 | A. 合一两处；B. 保留两处 + testbed/README 区分成文 | **B** |
+
+> v3.2 补证后的推荐项更新：Q2 推荐 C（机制自洽，仅成文）；Q3 中 e2e 疑虑撤回（两轴正交设计），sim-platform 维持。
+
+## 7. 执行计划（依据 §6 裁决，2026-10-29 落盘）
+
+> 每批由一个 writing subagent 串行执行（同一工作树同时只允许一个），主 agent 每批后 `git status` / `git diff` 核对并跑 `make gate`；全程不 commit、不 push、不 tag，commit 切分由维护者决定。
+
+### E1 结构改动批次（对应 Q2=A、Q3=B、Q4=A）—— **已全部执行完成（2026-10-29），逐条结果见右列**
+
+| # | 动作 | 细节与验证 | 执行结果（E1 批次后核对） |
+|---|---|---|---|
+| E1-1 | probe 成员化（Q2=A） | probe 现无 pyproject（扁平脚本目录）。步骤：读 `tests/test_workspace_layout.py` 确认门禁对成员的要求（是否强制 src-layout）；按门禁要求建 `testbed/probe/pyproject.toml`（包名 as-probe，必要时改 src/as_probe 布局并同步 import 引用）；加入根 pyproject `[tool.uv.workspace].members` 与 ruff `src` 列表；`uv sync` + `make gate` 验证 | **完成**：建 `testbed/probe/pyproject.toml`（包名 `as-probe`），迁移为 `src/as_probe` 布局并同步 import 引用；已加入根 pyproject 的 workspace members / ruff src / mypy files 列表 |
+| E1-2 | e2e 并入根 tests/（Q3=B） | `git mv testbed/e2e/test_*.py tests/e2e/`（新建 tests/e2e/，__pycache__ 不移）；pytest 收集不变（tests/ 已在 testpaths，marker -m e2e 照常）；Makefile L53-59 历史注释按保史约定**不改原文**，在注释块末尾追加一行新注记说明 e2e 已移至 tests/e2e/；grep 全库 `testbed/e2e` 引用同步；`make test-e2e` 验证 5 条仍通过 | **完成**：两个用例文件已 `git mv` 至 `tests/e2e/`；**12 条 e2e passed**（历史口径"5 条"为场景级计数，参数化后实为 12） |
+| E1-3 | kind m5-\* 脚本归位（Q4） | `git mv` 17 个 `deploy/kind/m5-*.sh` → `deploy/kind/scripts/`；Makefile 4 处引用同步（m5-cluster-evidence / m5-kind-verify / m5-issu-scale-evidence / m5-7.2d-evidence 四个 target）；grep 全库其余引用同步 | **完成**：实为 **16 个**脚本（v3 计数 17 有误）归位 `deploy/kind/scripts/`，Makefile 引用同步，含脚本内 dirname 层级修正 |
+| E1-4 | .codebuddy teams 去跟踪（Q4） | `.gitignore` 追加 `.codebuddy/teams/`；`git rm -r --cached .codebuddy/teams/`（磁盘文件保留，仅解除跟踪；rules/ 保持跟踪） | **完成**：`.gitignore` 已追加，teams/ 子树已解除跟踪（磁盘保留） |
+| E1-收尾 | `make gate` 全绿 | 全部改动后跑一次 | **完成（含一段插曲）**：门禁曾暴露 **5 个预先存在的失败**——根因是 commit 521c834 文档英文化未同步守卫测试的字符串预期；经基线 worktree 对照证实非本批引入；已修 `tests/test_evidence_discipline.py` 与 `tests/test_requirements_registry.py` 的预期字符串。现 `make gate` **1181 passed / 0 failed** |
+
+### E2 文档批次（对应 Q1=A、Q4=A、Q7=B；在 E1 完成后按新事实撰写）—— **已完成（本批次，2026-10-29）**
+
+| # | 文件 | 内容 | 执行结果 |
+|---|---|---|---|
+| E2-1 | `apps/README.md`（新建，Q1=A） | apps/ = IMS 业务用例（one process per use case，ADR-0002）；进程外壳由 platform `__main__.py` 承载，app 以业务模块装载；依赖方向 apps→platform、platform 永不 import apps（门禁锁定）；与 services/ 的语义区分（IMS 业务应用 vs 控制面进程）；每个用例一个 Deployment/故障域的目标形态 | **完成**（英文撰写；既有中文旧版为英文化遗漏，本批改写覆盖）：含语义消歧、依赖方向与门禁引用、与 services/ 对照表、成员清单 |
+| E2-2 | `testbed/README.md`（新建，Q7=B） | 两处 probe 的区分成文（testbed/probe = Python 基线探针；simulators/resip-probe = native 探针 harness，gate-native 入口）；成员资格规则成文（有 pyproject 才进 workspace；probe 已于 E1 升级为成员）；sim-platform = 被测世界的一部分、与 deploy/ chart 的关系；e2e 已移至 tests/e2e/（E1-2 之后）与 markers 两轴设计说明 | **完成**（英文撰写；同上为改写覆盖）：两处 probe 对照表、成员资格规则、六个子目录清单、sim-platform 定位专节 |
+| E2-3 | `scripts/README.md` + `tools/README.md`（新建，Q4=A） | scripts/ = 仓库逻辑的一部分（被 Makefile/gate 调用，进 git、进 review）；tools/ = 把开发机备好（bootstrap 装的就是 bin/ 四样；bin/ 不进 git）；各列现有条目一句话说明 | **完成**：两文件均新建，含条目表与一句话边界表述（scripts/ = 仓库逻辑；tools/ = 把机器备好；bin/ 不进 git） |
+| E2-4 | 本文件执行状态更新 | §7 各条目标注执行结果 | **完成**：即本节状态标注；文末状态行同步更新 |
+
+### E3 src/ 收拢迁移清单（对应 Q6=B 第一步；只调研不改代码）—— **清单已产出并获维护者批准；迁移已全部执行完成（2026-10-29，分支 R2612，批准语"好的，执行吧"）**
+
+产出 `docs/handoff/2026-10-29-src-consolidation-migration-plan.md`：
+- 范围调研：根 pyproject（workspace members / pytest testpaths / ruff src）、门禁测试（test_workspace_layout / test_layer_boundaries）、Dockerfile COPY 路径、Makefile、helm chart 构建引用、uv.lock 再生成、全库文档引用（README / AGENT.md / ADR 目录树与分层图）；
+- 产出新旧路径映射表（platform→src/platform 等）与分步执行清单、每步验证方式；
+- **清单经维护者批准后才执行迁移**；本批次不搬任何目录。
+
+**执行记录（清单 §3 七步；步骤 1–6 为先行批次，步骤 7 最终验证与本文记录为收尾批次，2026-10-29）**：
+
+- **步骤 1–2（基线 + 搬移）**：三目录 `git mv` 至 `src/`，共 **225 处 rename**（186 纯 rename + 39 rename 后又有修改）；**10 个文件深度修复**——6 处直接 `parents[2]→[3]`（gen-cert 解析三处、test_m2_native_probe_smoke、test_m5_verify_strict、test_e1_contract_resip_runtime_full）、3 处 walk-up **fallback**（`test_sip_message.py` L418 与两处 `test_contract_replay.py`——**实际为 parents[3]→[4]，计划原文统一写 parents[2]→[3] 对这两个文件有误，按文件实际内容修正**）、`test_library_independence.py` 3 处（REPOSITORY_ROOT 深度、KERNEL_SOURCE 插 `src` 段、成员判定改 `src/platform`）；
+- **步骤 3（manifest + 锁）**：根 pyproject **六键**按计划同步（`[tool.uv.workspace].members`、`[tool.pytest.ini_options].testpaths`、`[tool.ruff].src`、`[tool.ruff].extend-exclude`（计划即标注无需改动）、`[tool.mypy].files`、`[tool.mypy].mypy_path`）；`uv.lock` 未按计划字面全量重建，改用"**恢复 HEAD 锁 + 增量 uv lock**"避免全量重建的版本漂移——16 条 editable 全部指向 `src/…`，testbed 三条不变，E1/E2 未暂存的锁改动由 uv 重新解析语义等价复原；
+- **步骤 4（门禁测试）**：`tests/test_layer_boundaries.py` 四层分类逻辑与断言/提示文本同步；
+- **步骤 5（构建/部署/工具，17 处编辑）**：`.dockerignore`、`deploy/docker/` 两个 Dockerfile、`testbed/sim-platform/` 两个 Dockerfile*、`kind-up.sh`、Makefile `m71-sim`、`m2-native.sh` 6 处、`scripts/check_adr_annotations.py`（`_scan_roots` + GRANDFATHERED 键）、`scripts/demo-review/` 5 文件、`d10-req-nf1-harness.sh`、`deploy/compose/` README + 脚本；
+- **步骤 6（活文档清扫）**：36 个文件路径引用同步；ADR 裁决 (a) 加注于 `docs/architecture/adr/README.md` L26（`docs/acceptance/`、`docs/reviews/`、历史 `docs/handoff/`、`CHANGELOG.md`、`docs/migration/`、`R2612_*` 均未触碰）；
+- **步骤 7（最终验证链，2026-10-29）**：`make gate` **1181 passed / 249 deselected / 0 failed**（与 E1 基线一致）；`make gate-strict` **check_adr_annotations: clean**（既有现象如实记录：`_repo_root()` 深度 bug 使扫描器休眠、打印 `checked 0 files`，23 条 GRANDFATHERED 键以非致命 warning 打印 "allowlist entry no longer needed"）；`make chart-check` **OK**（helm v3.16.4 以 `HELM_BIN` 临时指向 /tmp/linux-amd64，lint 0 chart(s) failed、全部模板守卫通过）；`make alert-check` **SUCCESS: 10 rules found**；`make test-e2e` **12 passed / 1418 deselected**；`uv run pytest -m integration -q`：**82 passed / 12 skipped / 137 errors + 1 failed，逐条甄别全部为环境性、零迁移致因**——137 error + 1 failed 的签名唯一：psycopg 连 `127.0.0.1:55432` 被拒（本机未起 PostgreSQL 服务；本机 libpq 对拒连的措辞是 "server closed the connection unexpectedly"，不在部分测试文件 skip 分类器 `_NETWORK_UNAVAILABLE_MESSAGES` 的六种签名内，故按 ERROR/FAILED 落地而非设计预期的 SKIP——既有测试基建局限，非迁移引入）；12 个 skip 均按设计：9 个 pg store 集成（无 postgres）+ 2 个 d10 redis（6379 拒连）+ 1 个 resip 扩展未构建；迁移敏感的 6 个 gen-cert 路径解析集成用例显式运行全绿（6 passed in 42.37s）。
+
+**与计划的偏离**：① GRANDFATHERED 实为 **23 键**（计划 §2.4 写 26）；② 两处 `test_contract_replay.py` fallback 深度按实际为 parents[3]→[4]（计划统一写 parents[2]→[3]）；③ `uv.lock` 重建方式改为"恢复 HEAD 锁 + 增量 uv lock"（见步骤 3）。
+
+**移交维护者的独立事项（已执行，2026-10-29 E5 批次）**：`scripts/check_adr_annotations.py` 的 `_repo_root()`（L98）由 `parents[2]` 修为 `parents[1]`——维护者批准"修parents"，E5 批次一行修复落地。史实更正：扫描器并非自诞生休眠——它诞生于 `scripts/ci/`，当时 `parents[2]` 恰为仓库根；后上移到 `scripts/` 深度未改，才转为休眠（每次打印 `checked 0 files`）。修复后 REQ-G-3 扫描首次真实运行：`checked 73 files`，实测浮出 **21 个既有 REQ-G-3 违规**（metrics.py×5、auth.py×7、call_controller.py×2、redis_store.py×2、downscale_guard.py / adapter.py / ingress.py / in_memory.py / telemetry `__init__.py` 各 1；本条原先预估分布 auth×6 与实际 ×7 有出入，以实际输出为准）；23 条 GRANDFATHERED 键 stale=0 全部正确命中。`make gate` 不受影响仍全绿（扫描器按 ADR-0015 只在 gate-strict）。**gate-strict 现为诚实红（21 项）：triage（逐条补 ADR 注解或进 allowlist）待维护者裁决后作为 E6 执行**。执行细节见下方 E5 小节。
+
+**未提交声明**：全部改动留在工作树，commit 切分归维护者。
+
+### E4 文档导航批次（对应 Q5=go）—— **已完成（2026-10-29）**
+
+| # | 文件 | 内容 | 执行结果 |
+|---|---|---|---|
+| E4-1 | docs/README.md | 导航补全（只增补不重写）：Deciding what to build 表增 `requirements/`、`design/`、`SIP_stack_selection.md` 三行；Building it 表增 `agents/` 一行；For reviewers 表增 `reviews/README.md` 一行；Local environment and tooling 表增 `handoff/README.md` 一行 | **完成**：11 个子目录与顶层散放 md（plan.md / environments.md / product-packaging-plan.md / next-release-v1.1-plan.md / SIP_stack_selection.md）全部有导航条目 |
+| E4-2 | docs/reviews/README.md（新建） | 全目录 review record 索引（日期｜文件链接｜主题一行），按文件名日期升序、22 个无文件名日期的 M0–M4 早期记录列前；目录说明含 `## Adjudication` 裁决表列说明（ID/来源/问题摘要/裁决/修改方案/状态/验证方式/备注） | **完成**：162 条索引 = 162 个既有 md（README 自身排除）；主题取自各文件首个 H1/H2；162 个相对链接逐一 `test -f` 通过，0 断链，链接集合与文件集合完全一致 |
+| E4-3 | docs/handoff/README.md（新建） | 全目录交接文档索引（同上格式），目录说明 2 句（handoff = 会话交接/迁移清单类记录） | **完成**：36 条索引 = 36 个既有 md；0 断链，链接集合与文件集合完全一致 |
+
+**验证**：`make gate` **1181 passed / 249 deselected / 0 failed**（2026-10-29）；守卫测试无红，无需同步任何预期字符串。既有 review/handoff 文件零触碰：`git status --short docs/reviews docs/handoff` 仅两个新增 README，外加 E3 批次既有未跟踪的 `docs/handoff/2026-10-29-src-consolidation-migration-plan.md`（非本批产出）。
+
+### E5 REQ-G-3 扫描器根修复（对应移交事项）—— **已完成（2026-10-29）；gate-strict 诚实红待 E6 triage**
+
+| 项 | 记录 |
+|---|---|
+| 改动 | `scripts/check_adr_annotations.py` L98：`return Path(__file__).resolve().parents[2]` → `parents[1]`（本批仅此一行，docstring 与其余零改动；该文件 diff 相对 HEAD 另含 E3 步骤 5 的既有未提交改动——GRANDFATHERED 键加 `src/` 前缀、`_scan_roots` 加 `src/` 段） |
+| 修复前行为 | 脚本位于 `scripts/`，`parents[2]` 指向仓库上一级 `/home/shudong/project`（脚本诞生于 `scripts/ci/` 时 `parents[2]` 恰为仓库根，上移后深度未改）→ 扫描根不存在 → 每次打印 `checked 0 files`、永远 clean，扫描器休眠 |
+| 修复后行为 | `parents[1]` = 仓库根，REQ-G-3 扫描首次真实运行 |
+| 扫描验证 | `uv run python scripts/check_adr_annotations.py`：stderr `checked 73 files`；stdout 列 21 条 "lacks an ADR annotation (REQ-G-3)"，EXIT=1；stderr 无 stale warning → 23 条 GRANDFATHERED 键全部命中（stale=0） |
+| 21 条分布 | `src/services/config-service/src/as_config_service/auth.py`×7（IssuedSession / RevokedSession / PostgresConsoleAuthStore / create_session / resolve_session / revoke_user_sessions / revoke_session）；`src/platform/src/as_platform/telemetry/metrics.py`×5（MetricsRegistry / CallMetrics / set_downscale_removable / set_state_store_available / record_telemetry_dropped）；`src/platform/src/as_platform/sip/call_controller.py`×2（CallController / restore_from_checkpoint）；`src/platform/src/as_platform/state/redis_store.py`×2（RedisStateStore / load_redis_store_from_env）；各 1：`ops/downscale_guard.py`（ScaleDownPlan）、`sip/adapter.py`（respond_with_metrics）、`sip/ingress.py`（TransportIngressGate）、`state/in_memory.py`（InMemoryStateStore）、`telemetry/__init__.py`（TelemetryEvent） |
+| make gate | **1181 passed / 249 deselected / 0 failed**（2026-10-29）；扫描器不在 gate 内，按 ADR-0015 只在 gate-strict |
+| 后续 | 21 项违规的 triage 已由 E6 完成甄别与处置（全部为 header 窗口伪影，零注解、零扩白名单，gate-strict 复绿），见下方 E6 小节 |
+
+### E6 REQ-G-3 头窗口伪影修正（对应 21 条违规甄别）—— **已完成（2026-10-29）**
+
+维护者授权按独立判断推进（"E6,为什么需要我裁决？"）。
+
+| 项 | 记录 |
+|---|---|
+| 甄别结论 | 21 条违规**全部为 header 窗口伪影**，非真实 REQ-G-3 gap：9 个被标记文件的模块 docstring 均已引用治理 ADR，但首个引用多位于 L16–22，落在 `HEADER_LINE_COUNT = 15` 的原始行窗口之外；修复前脚本 L48–49 注释自述设计意图 "the same-file header is the leading lines holding the module docstring"——license 头占 12 行、docstring 起始于 L13 附近，其 ADR 引用常在 L16+，15 行窗口装不下，属实现与设计意图不符 |
+| 9 文件 docstring 引用行号（逐行核实） | `src/platform/src/as_platform/` 下：`ops/downscale_guard.py` L21（ADR-0010）与 L34（ADR-0009，docstring 跨 L13–38，两处均在内）；`sip/adapter.py` L22（ADR-0019）；`sip/call_controller.py` L16（ADR-0022）；`sip/ingress.py` L16（ADR-0016）；`state/in_memory.py` L17（ADR-0002/0007）；`state/redis_store.py` L16（ADR-0007）；`telemetry/__init__.py` L18（ADR-0005）；`telemetry/metrics.py` L21（ADR-0010）+ L33（ADR-0005）；`src/services/config-service/src/as_config_service/auth.py` L16（ADR-0024） |
+| 处置 | `scripts/check_adr_annotations.py`：新增模块级 `_module_docstring()`（`ast.get_docstring` 提取，`SyntaxError` 回退空串，置于 `_scan_roots` 后）；`_scan_file` 改为读盘一次复用（`text` → docstring + `splitlines()`）；header 判定改为两口径——**模块 docstring ∪ 前 15 行原始行**任一命中即整文件豁免；同步头部注释块说明两口径及依据。依据即脚本自身注释声明的设计意图（见上），**零注解改动、零扩白名单、GRANDFATHERED 23 键零改动**；stale / main / MARKER_SUBSTRINGS 等其余逻辑逐字未动 |
+| GRANDFATHERED 核实 | 23 键所在 9 文件（api.py、as_instance_store.py、managed_rule_store.py、sip_stack_service.py、transport_env.py、recovery.py、recovery_coordinator.py、resip_recovery.py、resip_runtime.py）前 25 行均无 ADR 引用——修复后这些定义仍走白名单命中，23 键保持 used、stderr 零 stale warning、白名单零改动 |
+| 验证 | `uv run python scripts/check_adr_annotations.py`：stdout 恰为 `check_adr_annotations: clean`，stderr 恰为 `checked 73 files`、无任何 stale warning，EXIT=0；`make gate` **1181 passed / 249 deselected / 0 failed**（本批曾因新增表达式换行不符 formatter 被拦一次，按 `ruff format` 期望修正后全绿）；`make gate-strict` 全绿（1181 passed / 249 deselected + `checked 73 files` / `check_adr_annotations: clean`） |
+
+### E7 测试容器治理与 skip 签名（维护者整体授权）—— **已完成（2026-10-29）**
+
+| 项 | 记录 |
+|---|---|
+| 容器治理 | `docker rm -v as-pg-test`（PG16/55432 端口冲突源，stopped 状态，仅挂一个匿名卷随 `-v` 清除）→ 输出容器名，删除成功；`docker update --restart unless-stopped as-m4b8-dev-postgres-1 as-redis-test as-pg-logical-test as-pg15-test` → 四容器名逐一回显，更新成功（as-pg-logical-test 与 as-pg15-test 处于 Exited，仅改策略不启动）；inspect 复核：四容器 `restart=unless-stopped` 全部生效，`docker inspect as-pg-test` 报 `no such object` |
+| skip 签名修复 | grep `_NETWORK_UNAVAILABLE_MESSAGES` 全仓共 **10 个定义副本**（全在 `src/services/config-service/tests/`，远多于预检已知 3 个）：as_instance_store L47、change_order_store L46、activation L67、managed_rule_pipeline L57、auth_api L54、audit_store L39、managed_rule_store L45、migrate L32、distribution_store L56、auth L50；每个元组仅追加一行 `"server closed the connection unexpectedly"`（libpq 对拒连的包装措辞，本机 E3 实测；原六签名全为 socket 层短语漏了它），元组其余内容与格式零改动 |
+| 双向验证 | 活 DSN `AS_PG_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:55432/as_config uv run pytest src/services/config-service/tests/test_postgres_auth_api_integration.py -q` → **19 passed**（PG 在跑，skip 分支不触发）；死端口同命令 DSN 换 `127.0.0.1:59999` → **19 skipped**，skip 原因消息即 `…server closed the connection unexpectedly`（修复前该形态为 error）——本批核心验证通过 |
+| 文档化 | `docs/environments.md` 追加 §7 Local test containers：四容器族谱表（as-m4b8-dev-postgres-1 55432 canonical 集成 PG／as-redis-test 6379 d10 redis／as-pg-logical-test 55433、as-pg15-test 55434 逻辑复制验收专用）、`make test-integration-compose`（AS_PG_TEST_DSN→55432）与 d10 redis（6379）的依赖关系、restart=unless-stopped（2026-10-29 起，防宿主机重启后静默退网——2026-10-12 曾发生且两周未察觉）、PG≥13 勿同端口（PG16 实测报 `operator is not unique: "char" || unknown`，曾误导排障）、as-pg-test 已于 2026-10-29 移除；既有内容零改动 |
+| make gate | **1181 passed / 249 deselected / 0 failed**（2026-10-29）；`tests/test_evidence_discipline.py` 137 passed 先行单验，environments.md 追加小节未触发任何守卫 |
+| 备注 | distribution_store 的 `_is_network_unavailable(exc)` 为内联 `psycopg.OperationalError` 判断（非其余 9 副本的参数化形态），但元组 marker 机制相同，追加签名同样生效，按 grep 为准一并修复 |
+
+### 暂缓项
+
+- Q5（v2 文档批次：docs/README 导航补全 + reviews/handoff 索引）已裁决（2026-10-29 维护者补答 go），已作为 E4 执行完成。
 
 ---
 
-Written to disk: 2026-10-28 (v3.1: added §1 root-organization rationale, F-9, Q6). Status: awaiting maintainer rulings on §5. Nothing executed, nothing committed.
+Written to disk: 2026-10-28; v3.2 2026-10-29; rulings recorded 2026-10-29 (Q1=A Q2=A Q3=B Q4=A Q6=B Q7=B). Status per §7: **E1 done, E2 done (docs batch, 2026-10-29), E3 done (src/ consolidation migration executed and verified, 2026-10-29), E4 done (docs navigation + reviews/handoff index, 2026-10-29), E5 done (REQ-G-3 scanner repo-root fix; gate-strict honestly red with 21 pre-existing violations pending E6 triage, 2026-10-29), E6 done (REQ-G-3 header-window artifact fixed — 21 items pass via module-docstring citations, zero annotations, zero allowlist growth, 2026-10-29), E7 done (test-container governance + PG-unreachable skip signature, 2026-10-29)**. Nothing committed.

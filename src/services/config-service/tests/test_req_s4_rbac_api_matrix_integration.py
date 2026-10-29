@@ -12,7 +12,7 @@
 
 """REQ-S-4 role/permission matrix at the HTTP boundary, against real PostgreSQL.
 
-``services/console/tests/test_access.py`` already proves the matrix as a pure
+``src/services/console/tests/test_access.py`` already proves the matrix as a pure
 function: for every role and every permission it asserts what ``authorize``
 returns. What it cannot prove is that a request actually meets that decision —
 that the endpoint carrying a write operation calls the matching
@@ -26,7 +26,7 @@ line. It reuses the application, session and login helpers from
 wiring that module exercises.
 
 Covered operations and their enforcement point in
-``services/config-service/src/as_config_service/api.py``:
+``src/services/config-service/src/as_config_service/api.py``:
 
 * ``read``          — router dependency ``require_config_read`` (READ_CONFIG)
 * ``submit``        — ``require_submit_permission``   (SUBMIT_CHANGE)
@@ -89,7 +89,7 @@ _NON_ADMIN_ROLES: tuple[tuple[str, str, Role], ...] = (
 )
 
 # (operation, role, expected status). The permission column of ROLE_PERMISSIONS
-# in services/console/src/as_console/access.py, read as an HTTP status.
+# in src/services/console/src/as_console/access.py, read as an HTTP status.
 _MATRIX: tuple[tuple[str, str, int], ...] = (
     ("read", "viewer", 200),
     ("read", "operator", 200),

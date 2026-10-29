@@ -10,7 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
-"""Real-PostgreSQL coverage for durable managed-rule snapshots. REQ-F-12."""
+"""Real-PostgreSQL tests for the append-only change-order journal. ADR-0006, REQ-F-14."""
 
 from __future__ import annotations
 
@@ -26,14 +26,15 @@ from urllib.parse import urlparse
 
 import pytest
 
-from as_config_service.managed_rule import ManagedRule, MatchField, MatchMode, TargetService
-from as_config_service.managed_rule_store import (
-    DuplicateManagedRuleError,
-    InvalidManagedRuleSnapshotError,
-    PostgresManagedRuleStore,
-    StaleManagedRuleRevisionError,
-    serialize_managed_rule,
+from as_config_service.change_order import AuditEntry, ChangeOrder, ChangeState, approve, submit
+from as_config_service.change_order_store import (
+    DuplicateChangeOrderError,
+    PostgresChangeOrderStore,
+    StaleChangeOrderRevisionError,
+    deserialize_order,
+    serialize_order,
 )
+from as_platform.api.contract import ConfigBundle, RuleDTO, ToggleDTO
 
 pytestmark = pytest.mark.integration
 
@@ -49,12 +50,13 @@ _NETWORK_UNAVAILABLE_MESSAGES = (
     "operation timed out",
     "no route to host",
     "network is unreachable",
+    "server closed the connection unexpectedly",
 )
 
 
 @dataclass(frozen=True)
 class PgHarness:
-    store: PostgresManagedRuleStore
+    store: PostgresChangeOrderStore
     connection: Any
     prefix: str
     table_schema: str
@@ -74,7 +76,7 @@ def pg() -> Iterator[PgHarness]:
     parsed = urlparse(TEST_DSN)
     connection = None
     store = None
-    prefix = f"managed_rules_test_{uuid.uuid4().hex[:10]}"
+    prefix = f"change_orders_test_{uuid.uuid4().hex[:10]}"
     shadow_schema = f"{prefix}_shadow"
     try:
         try:
@@ -94,7 +96,7 @@ def pg() -> Iterator[PgHarness]:
             "PostgreSQL 12 or newer is required"
         )
 
-        store = PostgresManagedRuleStore(connection, prefix=prefix, schema="public")
+        store = PostgresChangeOrderStore(connection, prefix=prefix, schema="public")
         store.ensure_schema()
         cursor.execute(
             "SELECT n.nspname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
@@ -153,7 +155,6 @@ def pg() -> Iterator[PgHarness]:
                     attempt_cleanup_statement(
                         f"DROP FUNCTION IF EXISTS {store.event_head_function}()", cursor
                     )
-                attempt_cleanup(getattr(cursor, "close", lambda: None))
             attempt_cleanup(connection.close)
 
         if cleanup_errors:
@@ -189,78 +190,84 @@ def test_postgres_skip_requires_network_operational_error(
     assert _is_network_unavailable(exc, _OperationalError) is expected
 
 
-def _rule(rule_id: str = "rule-1", **overrides: object) -> ManagedRule:
-    fields: dict[str, object] = {
-        "rule_id": rule_id,
-        "name": "International callers",
-        "match_field": MatchField.CALLING,
-        "match_mode": MatchMode.PREFIX,
-        "match_value": "+8613",
-        "target_service": TargetService.TRANSLATION,
-        "enabled": True,
-        "target_detail": None,
-    }
-    fields.update(overrides)
-    return ManagedRule(**fields)  # type: ignore[arg-type]
+def _draft(change_id: str = "co-pg-1") -> ChangeOrder:
+    return ChangeOrder(
+        change_id=change_id,
+        state=ChangeState.DRAFT,
+        bundle=ConfigBundle(
+            version="v1",
+            rules=(RuleDTO("rule-1", "+8613", "translate", "return-uas"),),
+            toggles=(ToggleDTO("translation.v2", False, "remove after M6"),),
+        ),
+        created_by="ops-alice",
+        created_at=_NOW,
+    )
 
 
-def test_postgres_snapshots_are_durable_append_only_and_revision_checked(pg: PgHarness) -> None:
+def test_postgres_journal_is_durable_append_only_and_revision_checked(pg: PgHarness) -> None:
     pg.store.ensure_schema()
     pg.store.ensure_schema()
 
-    first = pg.store.create(_rule(), "change-create", "ops-alice", _NOW)
+    draft = _draft()
+    first = pg.store.create(draft)
     assert first.revision == 1
-    assert pg.store.get("rule-1") == first
+    assert pg.store.get(draft.change_id) == first
     assert pg.store.get("missing") is None
-    assert pg.store.history("missing") == ()
-    assert pg.store.list_latest() == (first,)
 
-    second_rule = replace(first.rule, name="Updated callers")
-    second = pg.store.append(
-        "rule-1", second_rule, "change-update", "ops-bob", _NOW + 1.0, expected_revision=1
+    cursor = pg.connection.cursor()
+    cursor.execute(
+        f"SELECT snapshot_json FROM {pg.prefix}_events WHERE change_id = %s AND revision = 1",
+        (draft.change_id,),
     )
-    deleted = pg.store.append(
-        "rule-1", None, "change-delete", "ops-carol", _NOW + 2.0, expected_revision=2
+    first_snapshot = cursor.fetchone()[0]
+
+    submitted = submit(draft, "ops-alice", _NOW + 1.0)
+    second = pg.store.append_transition(submitted, expected_revision=1)
+    approved = approve(submitted, "mgr-bob", _NOW + 2.0)
+    third = pg.store.append_transition(approved, expected_revision=2)
+
+    assert [stored.revision for stored in pg.store.history(draft.change_id)] == [1, 2, 3]
+    assert pg.store.history(draft.change_id) == (first, second, third)
+    assert pg.store.list_latest() == (third,)
+    assert PostgresChangeOrderStore(pg.connection, prefix=pg.prefix).get(draft.change_id) == third
+
+    with pytest.raises(StaleChangeOrderRevisionError):
+        pg.store.append_transition(submitted, expected_revision=1)
+
+    cursor.execute(f"SELECT COUNT(*) FROM {pg.prefix}_events")
+    assert cursor.fetchone()[0] == 3
+    cursor.execute(
+        f"SELECT snapshot_json FROM {pg.prefix}_events WHERE change_id = %s AND revision = 1",
+        (draft.change_id,),
     )
+    assert cursor.fetchone()[0] == first_snapshot
+    cursor.execute(f"SELECT COUNT(*) FROM {pg.prefix}_events WHERE audit_entry_json IS NOT NULL")
+    assert cursor.fetchone()[0] == 2
 
-    assert [stored.revision for stored in pg.store.history("rule-1")] == [1, 2, 3]
-    assert pg.store.history("rule-1") == (first, second, deleted)
-    assert pg.store.get("rule-1") == deleted
-    assert deleted.rule is None
-    assert pg.store.list_latest() == (deleted,)
-
-    with pytest.raises(StaleManagedRuleRevisionError):
-        pg.store.append(
-            "rule-1", second_rule, "change-stale", "ops-alice", _NOW + 3.0, expected_revision=2
-        )
-    with pytest.raises(InvalidManagedRuleSnapshotError, match="cannot be recreated"):
-        pg.store.append(
-            "rule-1", second_rule, "change-revive", "ops-alice", _NOW + 3.0, expected_revision=3
-        )
-
-    with pytest.raises(DuplicateManagedRuleError):
-        pg.store.create(_rule(), "change-duplicate", "ops-alice", _NOW + 4.0)
-    assert pg.store.history("rule-1") == (first, second, deleted)
+    with pytest.raises(DuplicateChangeOrderError, match="already exists"):
+        pg.store.create(draft)
 
 
 def test_postgres_rejects_event_mutations_and_missing_deferred_head_revision(
     pg: PgHarness,
 ) -> None:
     psycopg = pytest.importorskip("psycopg")
-    first = pg.store.create(_rule(), "change-create", "ops-alice", _NOW)
+    draft = _draft()
+    first = pg.store.create(draft)
     cursor = pg.connection.cursor()
 
     with pytest.raises(psycopg.errors.CheckViolation):
         cursor.execute(
-            f"UPDATE {pg.prefix}_events SET snapshot_json = %s WHERE rule_id = %s AND revision = 1",
-            ("{}", first.rule_id),
+            f"UPDATE {pg.prefix}_events SET snapshot_json = %s "
+            "WHERE change_id = %s AND revision = 1",
+            ("{}", draft.change_id),
         )
     pg.connection.rollback()
 
     with pytest.raises(psycopg.errors.CheckViolation):
         cursor.execute(
-            f"DELETE FROM {pg.prefix}_events WHERE rule_id = %s AND revision = 1",
-            (first.rule_id,),
+            f"DELETE FROM {pg.prefix}_events WHERE change_id = %s AND revision = 1",
+            (draft.change_id,),
         )
     pg.connection.rollback()
 
@@ -271,70 +278,59 @@ def test_postgres_rejects_event_mutations_and_missing_deferred_head_revision(
     for invalid_revision in (1, 2, 3):
         with pytest.raises(psycopg.errors.CheckViolation):
             cursor.execute(
-                f"UPDATE {pg.prefix}_heads SET current_revision = %s WHERE rule_id = %s",
-                (invalid_revision, first.rule_id),
+                f"UPDATE {pg.prefix}_heads SET latest_revision = %s WHERE change_id = %s",
+                (invalid_revision, draft.change_id),
             )
         pg.connection.rollback()
 
     cursor.execute(
-        f"INSERT INTO {pg.prefix}_heads (rule_id, current_revision) VALUES (%s, 1)",
+        f"INSERT INTO {pg.prefix}_heads (change_id, latest_revision) VALUES (%s, 1)",
         ("missing-event-head",),
     )
     with pytest.raises(psycopg.errors.ForeignKeyViolation):
         pg.connection.commit()
     pg.connection.rollback()
 
-    assert pg.store.get(first.rule_id) == first
-    assert pg.store.history(first.rule_id) == (first,)
+    assert pg.store.get(draft.change_id) == first
+    assert pg.store.history(draft.change_id) == (first,)
 
 
 def test_postgres_rejects_head_rewind_and_unmatched_event_insert(pg: PgHarness) -> None:
     psycopg = pytest.importorskip("psycopg")
-    first = pg.store.create(_rule(), "change-create", "ops-alice", _NOW)
-    latest_rule = replace(first.rule, name="Updated callers")
-    latest = pg.store.append(
-        first.rule_id,
-        latest_rule,
-        "change-update",
-        "ops-bob",
-        _NOW + 1.0,
-        expected_revision=1,
-    )
+    draft = _draft()
+    first = pg.store.create(draft)
+    latest = pg.store.append_transition(submit(draft, "ops-alice", _NOW + 1.0), expected_revision=1)
     cursor = pg.connection.cursor()
 
     with pytest.raises(psycopg.errors.CheckViolation):
         cursor.execute(
-            f"UPDATE {pg.prefix}_heads SET current_revision = 1 WHERE rule_id = %s",
-            (first.rule_id,),
+            f"UPDATE {pg.prefix}_heads SET latest_revision = 1 WHERE change_id = %s",
+            (draft.change_id,),
         )
     pg.connection.rollback()
-    assert pg.store.get(first.rule_id) == latest
+    assert pg.store.get(draft.change_id) == latest
 
     cursor.execute(
-        f"SELECT change_id, actor, created_at FROM {pg.prefix}_events "
-        "WHERE rule_id = %s AND revision = %s",
-        (first.rule_id, latest.revision),
+        f"SELECT audit_entry_json FROM {pg.prefix}_events WHERE change_id = %s AND revision = %s",
+        (draft.change_id, latest.revision),
     )
-    change_id, actor, created_at = cursor.fetchone()
+    audit_entry_json = cursor.fetchone()[0]
     cursor.execute(
         f"INSERT INTO {pg.prefix}_events "
-        "(rule_id, revision, snapshot_json, change_id, actor, created_at) "
-        "VALUES (%s, %s, %s, %s, %s, %s)",
+        "(change_id, revision, snapshot_json, audit_entry_json) VALUES (%s, %s, %s, %s)",
         (
-            first.rule_id,
+            draft.change_id,
             latest.revision + 1,
-            serialize_managed_rule(latest.rule),
-            change_id,
-            actor,
-            created_at,
+            serialize_order(latest.order),
+            audit_entry_json,
         ),
     )
     with pytest.raises(psycopg.errors.CheckViolation):
         pg.connection.commit()
     pg.connection.rollback()
 
-    assert pg.store.get(first.rule_id) == latest
-    assert pg.store.history(first.rule_id) == (first, latest)
+    assert pg.store.get(draft.change_id) == latest
+    assert pg.store.history(draft.change_id) == (first, latest)
 
 
 def test_postgres_trigger_checks_use_the_trigger_tables_schema(pg: PgHarness) -> None:
@@ -342,104 +338,125 @@ def test_postgres_trigger_checks_use_the_trigger_tables_schema(pg: PgHarness) ->
     cursor = pg.connection.cursor()
     cursor.execute(
         f"CREATE TABLE {pg.shadow_schema}.{pg.prefix}_heads "
-        "(rule_id TEXT, current_revision INTEGER)"
+        "(change_id TEXT, latest_revision INTEGER)"
     )
     cursor.execute(
         f"CREATE TABLE {pg.shadow_schema}.{pg.prefix}_events "
-        "(rule_id TEXT, revision INTEGER, snapshot_json TEXT, change_id TEXT, "
-        "actor TEXT, created_at DOUBLE PRECISION)"
+        "(change_id TEXT, revision INTEGER, snapshot_json TEXT, audit_entry_json TEXT)"
     )
     pg.connection.commit()
 
-    head_rule = pg.store.create(_rule("search-path-head"), "create", "ops-alice", _NOW)
+    head_order = pg.store.create(_draft("search-path-head"))
     cursor.execute(
-        f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_events (rule_id, revision) VALUES (%s, 2)",
-        (head_rule.rule_id,),
+        f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_events "
+        "(change_id, revision, snapshot_json) VALUES (%s, 2, '{}')",
+        (head_order.order.change_id,),
     )
     cursor.execute(f"SET LOCAL search_path TO {pg.shadow_schema}, {pg.table_schema}")
     with pytest.raises(psycopg.errors.CheckViolation):
         cursor.execute(
-            f"UPDATE {pg.table_schema}.{pg.prefix}_heads SET current_revision = 2 "
-            "WHERE rule_id = %s",
-            (head_rule.rule_id,),
+            f"UPDATE {pg.table_schema}.{pg.prefix}_heads SET latest_revision = 2 "
+            "WHERE change_id = %s",
+            (head_order.order.change_id,),
         )
     pg.connection.rollback()
 
-    event_rule = pg.store.create(_rule("search-path-event"), "create", "ops-alice", _NOW)
+    event_order = pg.store.create(_draft("search-path-event"))
     cursor.execute(
         f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_heads "
-        "(rule_id, current_revision) VALUES (%s, 2)",
-        (event_rule.rule_id,),
+        "(change_id, latest_revision) VALUES (%s, 2)",
+        (event_order.order.change_id,),
     )
     cursor.execute(
-        f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_events (rule_id, revision) VALUES (%s, 2)",
-        (event_rule.rule_id,),
+        f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_events "
+        "(change_id, revision, snapshot_json) VALUES (%s, 2, '{}')",
+        (event_order.order.change_id,),
     )
     cursor.execute(f"SET LOCAL search_path TO {pg.shadow_schema}, {pg.table_schema}")
     cursor.execute(
         f"INSERT INTO {pg.table_schema}.{pg.prefix}_events "
-        "(rule_id, revision, snapshot_json, change_id, actor, created_at) "
-        "VALUES (%s, 2, %s, %s, %s, %s)",
-        (
-            event_rule.rule_id,
-            serialize_managed_rule(event_rule.rule),
-            "change-update",
-            "ops-bob",
-            _NOW + 1.0,
-        ),
+        "(change_id, revision, snapshot_json, audit_entry_json) VALUES (%s, 2, %s, NULL)",
+        (event_order.order.change_id, serialize_order(event_order.order)),
     )
     with pytest.raises(psycopg.errors.CheckViolation):
         pg.connection.commit()
     pg.connection.rollback()
 
-    real_rule = pg.store.create(_rule("search-path-read"), "change-create", "ops-alice", _NOW)
-    shadow_rule = replace(real_rule.rule, name="Shadow callers")
+    real_order = pg.store.create(_draft("search-path-read"))
+    shadow_order = replace(real_order.order, created_by="shadow-user")
     cursor.execute(
-        f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_heads (rule_id, current_revision) "
+        f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_heads (change_id, latest_revision) "
         "VALUES (%s, 1)",
-        (real_rule.rule_id,),
+        (real_order.order.change_id,),
     )
     cursor.execute(
         f"INSERT INTO {pg.shadow_schema}.{pg.prefix}_events "
-        "(rule_id, revision, snapshot_json, change_id, actor, created_at) "
-        "VALUES (%s, 1, %s, %s, %s, %s)",
-        (
-            real_rule.rule_id,
-            serialize_managed_rule(shadow_rule),
-            real_rule.change_id,
-            "shadow-user",
-            _NOW,
-        ),
+        "(change_id, revision, snapshot_json, audit_entry_json) VALUES (%s, 1, %s, NULL)",
+        (real_order.order.change_id, serialize_order(shadow_order)),
     )
     pg.connection.commit()
     cursor.execute(f"SET LOCAL search_path TO {pg.shadow_schema}, {pg.table_schema}")
-    assert pg.store.get(real_rule.rule_id) == real_rule
+    assert pg.store.get(real_order.order.change_id) == real_order
     pg.connection.rollback()
 
 
-@pytest.mark.parametrize("unsafe_text", ["ops\nalice", "ops\u202ealice"])
-@pytest.mark.parametrize("field", ["change_id", "actor"])
-def test_postgres_store_rejects_unsafe_metadata_before_database_access(
-    unsafe_text: str, field: str
+def test_postgres_reads_reject_snapshot_with_a_different_relational_change_id(
+    pg: PgHarness,
 ) -> None:
-    store = PostgresManagedRuleStore(None)  # type: ignore[arg-type]
-    metadata = {"change_id": "change-1", "actor": "ops-alice"}
-    metadata[field] = unsafe_text
+    stored_key = "relational-change-id"
+    snapshot_order = _draft("snapshot-change-id")
+    cursor = pg.connection.cursor()
+    cursor.execute(
+        f"INSERT INTO {pg.table_schema}.{pg.prefix}_heads (change_id, latest_revision) "
+        "VALUES (%s, 1)",
+        (stored_key,),
+    )
+    cursor.execute(
+        f"INSERT INTO {pg.table_schema}.{pg.prefix}_events "
+        "(change_id, revision, snapshot_json, audit_entry_json) VALUES (%s, 1, %s, NULL)",
+        (stored_key, serialize_order(snapshot_order)),
+    )
+    pg.connection.commit()
+
+    with pytest.raises(ValueError, match="relational change_id"):
+        pg.store.get(stored_key)
+    with pytest.raises(ValueError, match="relational change_id"):
+        pg.store.list_latest()
+    with pytest.raises(ValueError, match="relational change_id"):
+        pg.store.history(stored_key)
+
+
+@pytest.mark.parametrize("unsafe_text", ["ops\nalice", "ops\u202ealice"])
+def test_postgres_journal_rejects_unsafe_audit_metadata_before_database_access(
+    unsafe_text: str,
+) -> None:
+    store = PostgresChangeOrderStore(None)  # type: ignore[arg-type]
+    draft = _draft()
 
     with pytest.raises(ValueError):
-        store.create(_rule(), created_at=_NOW, **metadata)
+        store.create(replace(draft, change_id=unsafe_text))
+    with pytest.raises(ValueError):
+        store.create(replace(draft, audit=(AuditEntry(unsafe_text, "submit", _NOW),)))
+    with pytest.raises(ValueError):
+        store.create(replace(draft, audit=(AuditEntry("ops-alice", unsafe_text, _NOW),)))
 
 
-def test_postgres_rolls_back_invalid_create_and_append_inputs(pg: PgHarness) -> None:
-    first = pg.store.create(_rule(), "change-create", "ops-alice", _NOW)
+@pytest.mark.parametrize("unsafe_text", ["ops\nalice", "ops\u202ealice"])
+def test_change_order_decoder_rejects_unsafe_stored_audit_metadata(unsafe_text: str) -> None:
+    import json
 
-    with pytest.raises(DuplicateManagedRuleError):
-        pg.store.create(_rule(), "change-duplicate", "ops-bob", _NOW + 1.0)
-    with pytest.raises(InvalidManagedRuleSnapshotError, match="must match"):
-        pg.store.append("rule-1", _rule("rule-other"), "change-invalid", "ops-bob", _NOW + 1.0, 1)
+    submitted = submit(_draft(), "ops-alice", _NOW + 1.0)
+    payload = json.loads(serialize_order(submitted))
+    payload["order"]["change_id"] = unsafe_text
+    with pytest.raises(ValueError):
+        deserialize_order(json.dumps(payload))
 
-    assert pg.store.get(first.rule_id) == first
-    assert pg.store.history(first.rule_id) == (first,)
-    cursor = pg.connection.cursor()
-    cursor.execute(f"SELECT COUNT(*) FROM {pg.prefix}_events")
-    assert cursor.fetchone()[0] == 1
+    payload = json.loads(serialize_order(submitted))
+    payload["order"]["audit"][0]["actor"] = unsafe_text
+    with pytest.raises(ValueError):
+        deserialize_order(json.dumps(payload))
+
+    payload = json.loads(serialize_order(submitted))
+    payload["order"]["audit"][0]["action"] = unsafe_text
+    with pytest.raises(ValueError):
+        deserialize_order(json.dumps(payload))
