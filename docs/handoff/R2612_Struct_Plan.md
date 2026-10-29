@@ -217,7 +217,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | .env.example | 环境变量示例（真实 .env 已忽略） | 是 | 是 |
 | .trae/rules/ | 编辑器 agent 规则（2 个文件，有意跟踪） | 是 | 可接受（与 .codebuddy/rules 平行） |
 | .codebuddy/ | CodeBuddy 编辑器配置 | 部分是 | **有问题**：rules/hard-rules.md 有意跟踪（对）；但 teams/\<hash\>/\_auto_\*/ 下自动生成的 JSON 也被跟踪了——应 gitignore 掉 teams/ 子树，只留 rules/ |
-| R2612_Cont.md | R2612 剩余项规划 | 是（R2612 期间） | 暂留（维护者指示）；闭环后移入 docs/ |
+| R2612_Cont.md | R2612 剩余项规划 | 是（R2612 期间） | 已移至 docs/handoff/（2026-10-29，维护者移动） |
 | R2612_Struct_Plan.md | 本文件 | 是（review 期） | 已移至 docs/handoff/（2026-10-29） |
 | .venv/ 等五个缓存目录 | 本地产物 | 否 | — 均已 gitignore，正确 |
 

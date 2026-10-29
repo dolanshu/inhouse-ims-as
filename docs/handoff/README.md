@@ -20,6 +20,7 @@ This directory holds handoff records: the plans, execution records and completio
 |---|---|---|
 | — | [`pre-m8-demo-review-plan.md`](./pre-m8-demo-review-plan.md) | Pre-M8 Product Demo / Review Plan |
 | — | [`R2612_Struct_Plan.md`](./R2612_Struct_Plan.md) | R2612 目录结构评审 v3（逐目录：干什么用 / 里面有什么 / 是否该在根目录） |
+| — | [`R2612_Cont.md`](./R2612_Cont.md) | R2612 后续规划（不含外部硬依赖） |
 | 2026-09-30 | [`2026-09-30.md`](./2026-09-30.md) | Handoff Record — 3rdparty-as |
 | 2026-10-04 | [`2026-10-04-m2.md`](./2026-10-04-m2.md) | M2 Handoff: reSIProcate Native Stack and Transport |
 | 2026-10-05 | [`2026-10-05-callload-review-response-plan.md`](./2026-10-05-callload-review-response-plan.md) | callload branch review — assessment of findings and remediation plan (2026-10-05) |
