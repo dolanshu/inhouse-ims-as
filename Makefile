@@ -34,6 +34,15 @@ ifeq ($(UV),)
 endif
 export UV
 
+# Trae's server shell injects its bundled libstdc++ (GLIBCXX <= 3.4.25) via
+# LD_LIBRARY_PATH; the native resip extension needs 3.4.29+. Drop those dirs
+# so the dynamic linker resolves the system libstdc++ (2026-10-29).
+space := $(empty) $(empty)
+_agent_dirs := $(foreach w,$(subst :, ,$(LD_LIBRARY_PATH)),$(if $(findstring ai-agent,$(w)),$(w)))
+ifneq ($(_agent_dirs),)
+export LD_LIBRARY_PATH := $(subst $(space),:,$(filter-out $(_agent_dirs),$(subst :, ,$(LD_LIBRARY_PATH))))
+endif
+
 help: ## list the targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  %-18s %s\n", $$1, $$2}'
 

@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 > **v3.1 增补（2026-10-28）**：新增 §1——维护者追问"apps/、services/、platform/ 都是产品源码，docs/ 是文档入口，为什么四个目录在同一级"，§1 是该问题的书面回答，并新增发现 F-9 与裁决项 Q6。
 > **v3.2 增补（2026-10-29）**：新增 §3——对其余五个目录（testbed / tests / deploy / scripts / tools）做同等力度判断，含三组组织张力与两处 v3 结论修正；新增发现 F-10、裁决项 Q7。
 > 证据采集：2026-10-28，全部来自对仓库文件系统、git 索引和 README/AGENT.md/plan.md 原文的直接检查。
-> 关联：[R2612_Cont.md](R2612_Cont.md)（剩余项规划）。
+> 关联：[R2612_Cont.md](../../R2612_Cont.md)（剩余项规划）。
 
 ---
 
@@ -218,7 +218,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | .trae/rules/ | 编辑器 agent 规则（2 个文件，有意跟踪） | 是 | 可接受（与 .codebuddy/rules 平行） |
 | .codebuddy/ | CodeBuddy 编辑器配置 | 部分是 | **有问题**：rules/hard-rules.md 有意跟踪（对）；但 teams/\<hash\>/\_auto_\*/ 下自动生成的 JSON 也被跟踪了——应 gitignore 掉 teams/ 子树，只留 rules/ |
 | R2612_Cont.md | R2612 剩余项规划 | 是（R2612 期间） | 暂留（维护者指示）；闭环后移入 docs/ |
-| R2612_Struct_Plan.md | 本文件 | 是（review 期） | 暂留（同上） |
+| R2612_Struct_Plan.md | 本文件 | 是（review 期） | 已移至 docs/handoff/（2026-10-29） |
 | .venv/ 等五个缓存目录 | 本地产物 | 否 | — 均已 gitignore，正确 |
 
 **根目录总裁决**：正式文件没有一个不该在；唯一实际问题是 .codebuddy/teams/ 误跟踪。
@@ -339,10 +339,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | make gate | **1181 passed / 249 deselected / 0 failed**（2026-10-29）；`tests/test_evidence_discipline.py` 137 passed 先行单验，environments.md 追加小节未触发任何守卫 |
 | 备注 | distribution_store 的 `_is_network_unavailable(exc)` 为内联 `psycopg.OperationalError` 判断（非其余 9 副本的参数化形态），但元组 marker 机制相同，追加签名同样生效，按 grep 为准一并修复 |
 
+### E8 Makefile LD_LIBRARY_PATH 消毒（提交后环境插曲）—— **已完成（2026-10-29）**
+
+| 项 | 记录 |
+|---|---|
+| 现象 | 六笔结构 commit 落盘后新开 shell 跑 `make gate` 假红：`test_recovery_coordinator` 失败（worker 异常被 executor 吞掉，表象为断言失败而非环境错误）；`env -u LD_LIBRARY_PATH make gate` 实测 1181 passed，定位到环境层 |
+| 根因 | Trae 服务端给新 shell 注入 LD_LIBRARY_PATH，含 `.../trae-cn-server/bin/stable-*/modules/ai-agent` 与 `.../ai-agent/bin`；其捆绑 libstdc++.so.6 最高仅 GLIBCXX_3.4.25，而 `src/platform/native/resip_recovery/build/_resip_recovery…so` 与 `.cache/m2-resiprocate` 下 reSIProcate 库需要 3.4.29/3.4.30 → 动态链接器命中捆绑旧库 → native 扩展 ImportError |
+| 修复 | `Makefile` 顶部变量区新增消毒段：LD_LIBRARY_PATH 按 `:` 拆词、剔除含 `ai-agent` 的目录后重新 `export`；`lib/nss` 等其余条目保留；未污染环境（过滤结果为空）走 `ifneq` 守卫零改动；除该段外 Makefile 其余内容一个字符未改。与批准文本的唯一偏离：命中行改用 `foreach + if + findstring`（子串匹配）——实测 GNU make `filter` 模式仅允许单个 `%` 通配符、第二个 `%` 按字面处理，批准稿的 `$(filter %ai-agent%,…)` 为静默 no-op（最小用例 `$(filter %ai-agent%,/x/modules/ai-agent /y/lib/nss /z/ai-agent/bin)` 返回空、`$(filter %.c,a.c b.h)` 正常返回 `a.c`，污染与干净环境结果一致） |
+| 验证 | 污染 shell 下直接 `make gate` 全绿 **1181 passed / 249 deselected / 0 failed**（2026-10-29，不再需要 `env -u LD_LIBRARY_PATH`）；过滤逻辑经 `make --eval` 注入临时 rule 的子进程 `echo $$LD_LIBRARY_PATH` 复核：真实 Trae 污染输出仅余 `…/lib/nss` 条目，模拟串 `…/modules/ai-agent:…/lib/nss:…/ai-agent/bin` 输出仅余 `/y/lib/nss`，未污染环境（LD_LIBRARY_PATH 空）`DIRS=[]` 守卫零改动 |
+
 ### 暂缓项
 
 - Q5（v2 文档批次：docs/README 导航补全 + reviews/handoff 索引）已裁决（2026-10-29 维护者补答 go），已作为 E4 执行完成。
 
 ---
 
-Written to disk: 2026-10-28; v3.2 2026-10-29; rulings recorded 2026-10-29 (Q1=A Q2=A Q3=B Q4=A Q6=B Q7=B). Status per §7: **E1 done, E2 done (docs batch, 2026-10-29), E3 done (src/ consolidation migration executed and verified, 2026-10-29), E4 done (docs navigation + reviews/handoff index, 2026-10-29), E5 done (REQ-G-3 scanner repo-root fix; gate-strict honestly red with 21 pre-existing violations pending E6 triage, 2026-10-29), E6 done (REQ-G-3 header-window artifact fixed — 21 items pass via module-docstring citations, zero annotations, zero allowlist growth, 2026-10-29), E7 done (test-container governance + PG-unreachable skip signature, 2026-10-29)**. Nothing committed.
+Written to disk: 2026-10-28; v3.2 2026-10-29; rulings recorded 2026-10-29 (Q1=A Q2=A Q3=B Q4=A Q6=B Q7=B). Status per §7: **E1 done, E2 done (docs batch, 2026-10-29), E3 done (src/ consolidation migration executed and verified, 2026-10-29), E4 done (docs navigation + reviews/handoff index, 2026-10-29), E5 done (REQ-G-3 scanner repo-root fix; gate-strict honestly red with 21 pre-existing violations pending E6 triage, 2026-10-29), E6 done (REQ-G-3 header-window artifact fixed — 21 items pass via module-docstring citations, zero annotations, zero allowlist growth, 2026-10-29), E7 done (test-container governance + PG-unreachable skip signature, 2026-10-29), E8 done (Makefile LD_LIBRARY_PATH sanitization, 2026-10-29)**. Six structural commits a81e13d/d32ff79/2e259c9/3b1c873/3f035af/4530d05 landed on branch R2612, not pushed; the E8 changes await the 7th commit, to be cut after the maintainer approves committing.
