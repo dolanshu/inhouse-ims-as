@@ -23,6 +23,8 @@ to the ADR that carries its context, consequences, and accepted gaps.
 
 ADRs are written **together with** the change they authorize, never retroactively or in a final bulk catch-up. A decision without an ADR is a decision that must be re-argued.
 
+> **Note (2026-10-29)**: the product source layout now lives under `src/` (`platform/`, `apps/`, `services/` moved one level down to `src/platform/`, `src/apps/`, `src/services/`); ADR body directory references predate this move and are preserved verbatim as accepted records.
+
 ## Register
 
 | ADR | Decision | §0 | Status |

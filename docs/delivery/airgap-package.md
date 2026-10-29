@@ -169,7 +169,7 @@ flowchart LR
 
 ## 5. Checksums and supply chain
 
-The verification style follows the `m5_verify_ingress_manifest` guard in [`../../deploy/kind/m5-lib.sh`](../../deploy/kind/m5-lib.sh): the verification manifest (`SHA256SUMS`) is kept separate from the objects being verified, a mismatch is `exit 1`, and there is no "warn and continue".
+The verification style follows the `m5_verify_ingress_manifest` guard in [`../../deploy/kind/scripts/m5-lib.sh`](../../deploy/kind/scripts/m5-lib.sh): the verification manifest (`SHA256SUMS`) is kept separate from the objects being verified, a mismatch is `exit 1`, and there is no "warn and continue".
 
 | Step | What is verified | Consequence of not verifying |
 |---|---|---|

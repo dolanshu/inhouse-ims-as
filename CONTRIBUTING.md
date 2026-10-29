@@ -55,7 +55,7 @@ Nothing may be committed while the local gate is red. Never present a local re-r
 4. Add its `src/` to `[tool.ruff].src`.
 5. Add its `src/` to `[tool.mypy].files` and `mypy_path`.
 6. If it is not the core, add its import root to `FORBIDDEN_ROOTS` in
-   `platform/tests/test_library_independence.py`.
+   `src/platform/tests/test_library_independence.py`.
 
 Steps 3–6 are asserted by guards in `tests/`; you cannot quietly skip them.
 

@@ -57,6 +57,8 @@ type: ## mypy, strict, src only
 # policy）同为维护者裁决事项，而该裁决明确「不构成任何配置变更授权」；故此处保持 S1 第一批的
 # 原样，e2e 仍由 `make test-e2e` 显式运行。执行记录见
 # docs/handoff/2026-10-11-w0-native-and-e2e-execution-record.md §7.3。
+# 2026-10-29 追加（保史注记，原文未改）：上述 e2e 用例已随结构批次 E1 从 testbed/e2e/ 移至
+# tests/e2e/，收集路径与 `-m e2e` marker 行为不变。
 test: ## every layer below ④ (e2e 用例尚未落地，落地方案见 docs/acceptance/2026-10-09-e2e-test-plan.md)
 	$(UV) run pytest -m "unit or contract" -q
 	$(UV) run pytest -m integration -q
@@ -78,16 +80,16 @@ alert-check: ## promtool check rules on deploy/alerts/as-alerts.yaml
 	promtool check rules deploy/alerts/as-alerts.yaml
 
 m5-cluster-evidence: ## kind cluster M5 rollout/ingress evidence (needs docker+kind)
-	bash deploy/kind/m5-cluster-evidence.sh
+	bash deploy/kind/scripts/m5-cluster-evidence.sh
 
 m5-kind-verify: ## gate + chart-check + kind smoke (existing as-m5)
-	bash deploy/kind/m5-verify.sh
+	bash deploy/kind/scripts/m5-verify.sh
 
 m5-issu-scale-evidence: ## §217①② + H10 on existing kind-as-m5 (needs cluster)
-	bash deploy/kind/m5-issu-scale-evidence.sh
+	bash deploy/kind/scripts/m5-issu-scale-evidence.sh
 
 m5-7.2d-evidence: ## 7.2d ingress L7 + browser HTTPS (needs M5_7_2D_E2E_PASSWORD)
-	bash deploy/kind/m5-7.2d-evidence.sh
+	bash deploy/kind/scripts/m5-7.2d-evidence.sh
 
 test-e2e: ## ③ end-to-end call flows
 	$(UV) run pytest -m e2e -q
@@ -126,7 +128,7 @@ m7-platform-recovery-build: ## M7 slice: cmake-build platform _resip_recovery ex
 	bash testbed/simulators/resip-probe/scripts/m2-native.sh build-platform-recovery
 
 m71-sim: ## M7.1 local SIP path, load scenarios, and chart policy text
-	$(UV) run pytest platform/tests/test_udp_retransmission_contract.py testbed/load/tests/test_scenarios.py testbed/load/tests/test_no_retransmit.py testbed/load/tests/test_harness.py testbed/simulators/tests -q
+	$(UV) run pytest src/platform/tests/test_udp_retransmission_contract.py testbed/load/tests/test_scenarios.py testbed/load/tests/test_no_retransmit.py testbed/load/tests/test_harness.py testbed/simulators/tests -q
 
 demo-story-a: ## pre-M8 demo story A (translation + control plane); see scripts/demo-review/README.md
 	bash scripts/demo-review/story-a.sh

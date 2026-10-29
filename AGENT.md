@@ -128,16 +128,16 @@ Corresponding to the §3 documentation chain, each new feature advances phase by
 ## 4. Layering
 
 ```text
-apps/  ──uses──▶  platform/          one process per use case
-services/ ─────────────────────────▶  PostgreSQL, AS internal API
-testbed/ ──may use──▶ platform/       R&D asset, never a runtime dependency
+src/apps/  ──uses──▶  src/platform/          one process per use case
+src/services/ ─────────────────────────▶  PostgreSQL, AS internal API
+testbed/ ──may use──▶ src/platform/       R&D asset, never a runtime dependency
 ```
 
-**The core must never import apps, services, or testbed.** The repo boundary does not enforce this — in a monorepo any import resolves. It is enforced by [`platform/tests/test_library_independence.py`](platform/tests/test_library_independence.py) and [`tests/test_workspace_layout.py`](tests/test_workspace_layout.py).
+**The core must never import apps, services, or testbed.** The repo boundary does not enforce this — in a monorepo any import resolves. It is enforced by [`src/platform/tests/test_library_independence.py`](src/platform/tests/test_library_independence.py) and [`tests/test_workspace_layout.py`](tests/test_workspace_layout.py).
 
 An app must never import another app. A use case is one process, one fault domain, one canary unit.
 
-**Internal dependency among services (added note 2026-10-11, pending maintainer review)**: the layering diagram above does not forbid dependencies between members of the services layer along the "internal API" direction. The only existing example: `services/config-service` (imports root `as_config_service`) depends on `services/console` (imports root `as_console`, using its session / auth internal API). That dependency is explicitly declared in `services/config-service/pyproject.toml` (the `as-console` in `[project].dependencies` and the workspace source in `[tool.uv.sources]`); `services/console/pyproject.toml`'s dependencies are empty, and console does not depend back on config-service, so no cycle is formed. Rule: such dependencies **must** be explicitly declared in the dependent party's `pyproject.toml`, and the declared internal dependency graph must be acyclic; "used but not declared" is machine-guarded by [`tests/test_layer_boundaries.py`](tests/test_layer_boundaries.py)'s `test_internal_imports_are_declared_dependencies`, and cycles by the same file's `test_internal_dependencies_do_not_form_a_cycle`; undeclared or cyclic is a violation. **This paragraph does not relax the app-mutual-exclusion rule above nor the testbed ban**: apps still must never import another app, and the product package still must never depend on testbed.
+**Internal dependency among services (added note 2026-10-11, pending maintainer review)**: the layering diagram above does not forbid dependencies between members of the services layer along the "internal API" direction. The only existing example: `src/services/config-service` (imports root `as_config_service`) depends on `src/services/console` (imports root `as_console`, using its session / auth internal API). That dependency is explicitly declared in `src/services/config-service/pyproject.toml` (the `as-console` in `[project].dependencies` and the workspace source in `[tool.uv.sources]`); `src/services/console/pyproject.toml`'s dependencies are empty, and console does not depend back on config-service, so no cycle is formed. Rule: such dependencies **must** be explicitly declared in the dependent party's `pyproject.toml`, and the declared internal dependency graph must be acyclic; "used but not declared" is machine-guarded by [`tests/test_layer_boundaries.py`](tests/test_layer_boundaries.py)'s `test_internal_imports_are_declared_dependencies`, and cycles by the same file's `test_internal_dependencies_do_not_form_a_cycle`; undeclared or cyclic is a violation. **This paragraph does not relax the app-mutual-exclusion rule above nor the testbed ban**: apps still must never import another app, and the product package still must never depend on testbed.
 
 Directory structure and member list are in [`docs/plan.md`](docs/plan.md) §2.
 

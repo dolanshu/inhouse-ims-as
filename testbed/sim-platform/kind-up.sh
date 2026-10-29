@@ -86,7 +86,7 @@ kind load docker-image ims-sim:dev --name "$CLUSTER"
 
 NATIVE="$ROOT/testbed/sim-platform/.image-native"
 mkdir -p "$NATIVE"
-cp -f "$ROOT"/platform/native/resip_runtime/build/_resip_runtime*.so "$NATIVE"/
+cp -f "$ROOT"/src/platform/native/resip_runtime/build/_resip_runtime*.so "$NATIVE"/
 cp -f "$ROOT"/.cache/m2-resiprocate/build/resip/dum/libdum-1.14.so "$NATIVE"/
 cp -f "$ROOT"/.cache/m2-resiprocate/build/resip/stack/libresip-1.14.so "$NATIVE"/
 cp -f "$ROOT"/.cache/m2-resiprocate/build/rutil/librutil-1.14.so "$NATIVE"/

@@ -61,11 +61,11 @@ The component interface version is **each member's `pyproject.toml` `version` fi
 
 | Member | `[project] name` | `version` | Location |
 |---|---|---|---|
-| `platform/` | `as-platform` | `0.1.0` | `platform/pyproject.toml:3` |
-| `apps/anti-fraud/` | `as-anti-fraud` | `0.1.0` | `apps/anti-fraud/pyproject.toml:3` |
-| `apps/translation/` | `as-translation` | `0.1.0` | `apps/translation/pyproject.toml:3` |
-| `services/config-service/` | `as-config-service` | `0.1.0` | `services/config-service/pyproject.toml:3` |
-| `services/console/` | `as-console` | `0.1.0` | `services/console/pyproject.toml:3` |
+| `src/platform/` | `as-platform` | `0.1.0` | `src/platform/pyproject.toml:3` |
+| `src/apps/anti-fraud/` | `as-anti-fraud` | `0.1.0` | `src/apps/anti-fraud/pyproject.toml:3` |
+| `src/apps/translation/` | `as-translation` | `0.1.0` | `src/apps/translation/pyproject.toml:3` |
+| `src/services/config-service/` | `as-config-service` | `0.1.0` | `src/services/config-service/pyproject.toml:3` |
+| `src/services/console/` | `as-console` | `0.1.0` | `src/services/console/pyproject.toml:3` |
 | `testbed/load/` | `as-load` | `0.1.0` | `testbed/load/pyproject.toml:3` |
 | `testbed/simulators/` | `as-simulators` | `0.1.0` | `testbed/simulators/pyproject.toml:3` |
 
@@ -192,10 +192,10 @@ The durations in the diagram come from ADR-0027 (`0027:23`, `:25`, `:33`, `:35`)
 
 | Interface plane | Version-identification method | Current state (verified) | Compatibility risk point |
 |---|---|---|---|
-| AS-internal HTTP API (config-service / console shared) | **URL path prefix `/internal/v1`** | Routed registered with `prefix="/internal/v1"` (`services/config-service/src/as_config_service/api.py:682-714`); console serves static resources at `/` and API at the same prefix (`services/console/README.md:34`) | Version is only in the path; **no** deprecation-period mechanism, **no** old-prefix retention policy. Breaking changes are only passively discovered by contract tests (`contract` marker) |
+| AS-internal HTTP API (config-service / console shared) | **URL path prefix `/internal/v1`** | Routed registered with `prefix="/internal/v1"` (`src/services/config-service/src/as_config_service/api.py:682-714`); console serves static resources at `/` and API at the same prefix (`src/services/console/README.md:34`) | Version is only in the path; **no** deprecation-period mechanism, **no** old-prefix retention policy. Breaking changes are only passively discovered by contract tests (`contract` marker) |
 | SIP trunk (to S-SBC) | **no version number to version** | Standard ISC trigger, S-SBC transparent bridging (ADR-0003); behavior baseline `testbed/contracts/sip-baseline/` | Relies on **behavior-baseline contract** and peer compatibility, not version numbers; we cannot unilaterally upgrade peer capability |
 | Decision contract cases | Case filename + `case_id` | `testbed/contracts/decision/cases.json` + `README.md` (field table `README.md:31-44`) | Changing the case set = **interface change**, needs ADR and all implementations' gate re-run (`README.md:101-106`). This one already has a hard rule, **no new decision needed** |
-| PostgreSQL config / audit schema | **schema name + env var**, not numeric version | Default `as_config` / `console_audit` (`deploy/helm/values.yaml:122-123`; `AS_CONFIG_SCHEMA` / `AS_AUDIT_SCHEMA`, `services/config-service/src/as_config_service/migrate.py:119`, `:165`) | Schema **has no version number**; migration executed by the `as-config-migrate` one-time Job (`state-migrate-job.yaml:52`). When old and new versions coexist during rolling upgrade, the schema must be bidirectional-compatible (`system-architecture.md:361`, risk R4 `:615`) |
+| PostgreSQL config / audit schema | **schema name + env var**, not numeric version | Default `as_config` / `console_audit` (`deploy/helm/values.yaml:122-123`; `AS_CONFIG_SCHEMA` / `AS_AUDIT_SCHEMA`, `src/services/config-service/src/as_config_service/migrate.py:119`, `:165`) | Schema **has no version number**; migration executed by the `as-config-migrate` one-time Job (`state-migrate-job.yaml:52`). When old and new versions coexist during rolling upgrade, the schema must be bidirectional-compatible (`system-architecture.md:361`, risk R4 `:615`) |
 | Component interface version | Each member's `pyproject.toml` `version` | All `0.1.0` (see §2.2) | Only the SemVer format is guarded; **the semantics and backward-compatibility commitment are not yet defined** |
 | Alert / metric-label contract | **metric name + label name is the contract** | Naming rules (`as_` prefix, snake_case, counter with `_total`, second-class with base-unit suffix) and labels (`severity` + `component`, metrics carry `use_case`) in `deploy/alerts/README.md:39-40`; metric-contract table at `:45-62` | **rules depend on metric names: renaming silently disables them** (alerts stop firing with no error). The README explicitly requires updating the contract table and running `promtool check rules` when renaming (`:87-93`) |
 
@@ -273,5 +273,5 @@ Until then, no statement in §7 of this document may be written into an external
 | Review **G-P1-9** (§3.5 needs REQ + ADR first) | Same file `:365` —— **closed**: REQ-NF-16 (`prd.md:459-470`) + ADR-0027 (`adr/README.md:43` registered, accepted 2026-10-09) |
 | REQs referenced | REQ-NF-16 (version lifecycle and EOL), REQ-NF-11 (single version source) |
 | ADRs referenced (status per each file header) | ADR-0002 (state externalization / one process per use case, accepted), ADR-0003 (S-SBC transparent bridging, accepted), ADR-0009 (ISSU = draining, accepted), ADR-0010 (scale-down protection, accepted), ADR-0018 (version-number semantics, accepted), ADR-0026 (in-cluster state storage, accepted), ADR-0027 (version lifecycle and EOL, accepted). **ADR-0023 (Redis checkpoint) and ADR-0025 (managed rule-runtime bundle) are both draft, not yet passed**, and this document draws no conclusions from them (`docs/architecture/adr/README.md:39`, `:41`) |
-| Main code / config basis referenced in this document | `VERSION:1`; `tests/test_version_consistency.py:56-78`; `deploy/helm/Chart.yaml:5-6`; `deploy/helm/templates/_helpers.tpl:38-41`, `:53`, `:69`; `deploy/helm/values.yaml:76-82`, `:122-123`; `deploy/helm/templates/state-migrate-job.yaml:52`; `deploy/alerts/README.md:39-62`, `:87-93`; `services/config-service/src/as_config_service/api.py:682-714`; `services/config-service/src/as_config_service/migrate.py:119`, `:165`; `services/console/README.md:34`; `testbed/contracts/decision/README.md:31-44`, `:101-106` |
+| Main code / config basis referenced in this document | `VERSION:1`; `tests/test_version_consistency.py:56-78`; `deploy/helm/Chart.yaml:5-6`; `deploy/helm/templates/_helpers.tpl:38-41`, `:53`, `:69`; `deploy/helm/values.yaml:76-82`, `:122-123`; `deploy/helm/templates/state-migrate-job.yaml:52`; `deploy/alerts/README.md:39-62`, `:87-93`; `src/services/config-service/src/as_config_service/api.py:682-714`; `src/services/config-service/src/as_config_service/migrate.py:119`, `:165`; `src/services/console/README.md:34`; `testbed/contracts/decision/README.md:31-44`, `:101-106` |
 | What this document does not do | No capacity numbers published; no product formal-naming decision written; no tag / commit; no modification of `deploy/helm/Chart.yaml` or any code; no M8 RC or un-accepted item presented as released / accepted |

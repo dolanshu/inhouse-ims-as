@@ -77,7 +77,7 @@ The Postgres mapped port defaults to `55432`:
 ```sh
 AS_CONFIG_OWNER_DSN="postgresql://as_config_owner:as_config_owner_dev@127.0.0.1:55432/as_config" \
   AS_CONFIG_RUNTIME_ROLE=as_config_runtime \
-  uv run --directory services/config-service as-config-migrate
+  uv run --directory src/services/config-service as-config-migrate
 ```
 
 ## Limitations

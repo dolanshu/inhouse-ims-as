@@ -28,7 +28,7 @@ export AS_CONFIG_OWNER_DSN="${AS_CONFIG_OWNER_DSN:-postgresql://as_config_owner:
 export AS_CONFIG_SCHEMA="${AS_CONFIG_SCHEMA:-as_config}"
 
 echo "Seeding e2e console users (owner DSN)…"
-uv run --directory "${REPO}/services/config-service" python "${ROOT}/scripts/m4b-8-seed-users.py"
+uv run --directory "${REPO}/src/services/config-service" python "${ROOT}/scripts/m4b-8-seed-users.py"
 
 export AS_COMPOSE_HTTPS_URL="${AS_COMPOSE_HTTPS_URL:-https://localhost:8443}"
 export M4B8_ARTIFACT_DATE="${M4B8_ARTIFACT_DATE:-2026-10-03}"

@@ -23,11 +23,11 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /bin/uv
 
 WORKDIR /src
 COPY pyproject.toml uv.lock ./
-COPY platform platform
-COPY apps/translation apps/translation
-COPY apps/anti-fraud apps/anti-fraud
-COPY services/config-service services/config-service
-COPY services/console services/console
+COPY src/platform src/platform
+COPY src/apps/translation src/apps/translation
+COPY src/apps/anti-fraud src/apps/anti-fraud
+COPY src/services/config-service src/services/config-service
+COPY src/services/console src/services/console
 COPY testbed/simulators/pyproject.toml testbed/simulators/pyproject.toml
 COPY testbed/simulators/src testbed/simulators/src
 COPY testbed/simulators/README.md testbed/simulators/README.md

@@ -42,11 +42,11 @@ demo_step 3 "主叫取消 → 487（契约形状，不是本场呼叫类型）"
 demo_require_uv
 demo_require_native_runtime
 demo_show_customer "第一版呼叫类型没有主叫取消。下面只对契约形状，不在 as-m71 现场演示。"
-uv run pytest platform/tests/test_e1_contract_resip_runtime_full.py::test_e1_s4_caller_cancel_returns_487 -m contract -v \
+uv run pytest src/platform/tests/test_e1_contract_resip_runtime_full.py::test_e1_s4_caller_cancel_returns_487 -m contract -v \
   2>&1 | tee "${ART}/sip-487.log"
 
 demo_step 4 "反诈进程的 608（这条网上没有起）"
 demo_show_customer "608 属于单独的反诈进程。它会和翻译抢 5060，本场没有起。下面是判决单测，不是现场 SIP。"
-uv run pytest apps/anti-fraud/tests/test_decision.py -q 2>&1 | tee "${ART}/anti-fraud-decision.log"
+uv run pytest src/apps/anti-fraud/tests/test_decision.py -q 2>&1 | tee "${ART}/anti-fraud-decision.log"
 
 demo_log "Story B automated checks: OK (see ${ART})"

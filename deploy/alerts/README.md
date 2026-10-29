@@ -65,13 +65,13 @@ ADR-0005; if the exporter renames one, change it here in the same commit — a
 rule that silently stops matching is worse than no rule.
 
 The `as_*` set below is **exactly** the set defined in
-`platform/src/as_platform/telemetry/metrics.py` — six names, `MetricKind` is
+`src/platform/src/as_platform/telemetry/metrics.py` — six names, `MetricKind` is
 `COUNTER` or `GAUGE` only, and **there is no histogram anywhere in the
 repository**. If a metric you want is not in this table, it does not exist yet.
 
 | Metric | Type | Producer (verified by reading the write site) | Consumed by |
 |---|---|---|---|
-| `as_active_calls{use_case,pod}` | gauge | Always written every 15s by `_start_metrics_loop` in `platform/src/as_platform/__main__.py` (no OTLP dependency). Value comes from `ActiveCallSource`, i.e. real SIP dialog events — or from `AS_M5_SIMULATED_ACTIVE_CALLS`, which is **evidence-only, not production load**. | `ASActiveCallsSurge`, `ASDownscaleBlocked` |
+| `as_active_calls{use_case,pod}` | gauge | Always written every 15s by `_start_metrics_loop` in `src/platform/src/as_platform/__main__.py` (no OTLP dependency). Value comes from `ActiveCallSource`, i.e. real SIP dialog events — or from `AS_M5_SIMULATED_ACTIVE_CALLS`, which is **evidence-only, not production load**. | `ASActiveCallsSurge`, `ASDownscaleBlocked` |
 | `as_downscale_removable{use_case,pod}` | gauge | Always written every 15s by the same loop. Value = the ADR-0010 scale-down guard verdict: `0` when the instance still carries calls **or** is already draining. | `ASDownscaleBlocked` (had a writer but no reader until 2026-10-10) |
 | `as_state_store_available{use_case}` | gauge | **Conditional:** written only when `REDIS_URL` is non-empty, by a real `PING` (`__main__.py`). When `REDIS_URL` is unset the series is **absent, not 0**. | `ASCallStateStoreUnavailable` |
 | `as_sip_responses_total{use_case,status_class,status_code}` | counter | **No production producer.** The only start-up writer is the one-shot probe `AS_M5_PROBE_SIP_STATUS` (`__main__.py:_apply_m5_metrics_probes`), which production on-prem does not set; the real path is `respond_with_metrics` / `record_sip_status_code` and is not wired on every response yet (M7). | `ASHighErrorRatio` |
@@ -124,7 +124,7 @@ Verified 2026-10-10 by reading the chart:
 - The chart contains **no `ServiceMonitor` and no `PodMonitor`** — the strings
   do not appear anywhere under `deploy/helm/templates/`.
 - The `/metrics` endpoint exists and works
-  (`platform/src/as_platform/runtime/health.py`), and the `health-http` port is
+  (`src/platform/src/as_platform/runtime/health.py`), and the `health-http` port is
   declared on the container. Nothing is wired to it.
 
 So in a standard deployment the process produces a correct exposition on

@@ -164,7 +164,7 @@ Layering is not enforced by directory layout —— in a monorepo any import res
 
 | Guard | Assertion |
 |---|---|
-| `platform/tests/test_library_independence.py` | The kernel imports no app, service or testbed package; the forbidden list covers every other workspace member |
+| `src/platform/tests/test_library_independence.py` | The kernel imports no app, service or testbed package; the forbidden list covers every other workspace member |
 | `tests/test_workspace_layout.py` | All declared members exist, one package each under `src/`, distribution names are unique, ruff `src` is complete, members declare no tool configuration of their own, and no member owns a `VERSION` file |
 | `tests/test_version_consistency.py` | `VERSION` is SemVer, the latest CHANGELOG title equals it, and every component version is SemVer |
 
@@ -180,7 +180,7 @@ Layering is not enforced by directory layout —— in a monorepo any import res
 **Known skeleton exceptions**: layers ③ e2e and ④ performance have no corresponding cases yet, so they are not blocking. They must be turned into blocking items in the first milestone that introduces that class of tests.
 They are tracked as exit criteria of M2 / M3 / M6.
 
-**Progress (2026-09-28)**: the first case of the `integration` layer has been introduced (`platform/tests/test_telemetry_export_integration.py`, verifying with a real socket that telemetry export does not block), and layer ② has been changed to blocking accordingly; layers ③ e2e and ④ performance still have no cases and do not block.
+**Progress (2026-09-28)**: the first case of the `integration` layer has been introduced (`src/platform/tests/test_telemetry_export_integration.py`, verifying with a real socket that telemetry export does not block), and layer ② has been changed to blocking accordingly; layers ③ e2e and ④ performance still have no cases and do not block.
 
 ---
 

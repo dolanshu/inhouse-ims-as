@@ -48,7 +48,7 @@
 #   * Two of the five read `as_*` metrics that this repository really exports
 #     AND really writes from a production code path. `as_active_calls` and
 #     `as_downscale_removable` are written unconditionally every 15s by the
-#     metrics loop in `platform/src/as_platform/__main__.py`
+#     metrics loop in `src/platform/src/as_platform/__main__.py`
 #     (`_start_metrics_loop`), with no dependency on OTLP being configured.
 #     `as_downscale_removable` had a writer but no reader; ADR-0010 makes it a
 #     genuine operational signal (a drain that never completes), so it now has

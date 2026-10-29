@@ -25,7 +25,7 @@
 #   2  用法错误
 #
 # 依赖: bash, awk, grep, sed, sha256sum
-#   sha256sum（校验和，风格沿用 deploy/kind/m5-lib.sh 的供应链守卫）
+#   sha256sum（校验和，风格沿用 deploy/kind/scripts/m5-lib.sh 的供应链守卫）
 #   docker（--load 时；或按提示由客户在节点侧用 ctr / crictl 导入）
 #   helm 3.x、kubectl（离线安装前置检查）
 #

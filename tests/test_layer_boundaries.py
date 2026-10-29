@@ -18,10 +18,10 @@ resolves:
 
 1. **Apps are mutually exclusive.** One app must never import another app;
    each use case is one process, one failure domain and one canary unit.
-2. **Product packages never depend on the testbed.** ``apps/`` and
-   ``services/`` must not import any ``testbed/`` member at runtime. The
-   kernel-facing half of this rule (``platform/`` must not import consumers)
-   is guarded by ``platform/tests/test_library_independence.py``; this module
+2. **Product packages never depend on the testbed.** ``src/apps/`` and
+   ``src/services/`` must not import any ``testbed/`` member at runtime. The
+   kernel-facing half of this rule (``src/platform`` must not import consumers)
+   is guarded by ``src/platform/tests/test_library_independence.py``; this module
    guards the product-facing half.
 3. **Every internal import is a declared dependency.** An ``as_*`` package
    imported from a member's ``src/`` must either be that member's own package
@@ -33,8 +33,9 @@ resolves:
    between members is a layering violation.
 
 A last, structural test classifies every workspace member into exactly one
-of the four layers (kernel / apps / services / testbed) by its path prefix,
-so that a newly added member can never silently escape the boundary guards
+of the four layers (kernel / apps / services / testbed) by its path prefix
+(``src/platform``, ``src/apps/*``, ``src/services/*``, ``testbed/*``), so
+that a newly added member can never silently escape the boundary guards
 above.
 
 Everything is derived from repository files (the root workspace manifest and
@@ -43,13 +44,13 @@ root list is hard-coded here. Only ``<member>/src/`` is scanned, never test
 directories, and no product package is imported.
 
 Fixing a failure:
-* cross-app import: delete the import; shared logic belongs in ``platform/``;
+* cross-app import: delete the import; shared logic belongs in ``src/platform``;
 * product-to-testbed import: delete the import, the testbed is a dev asset;
 * undeclared internal dependency: either add the distribution name (hyphens,
   e.g. ``as-platform``) to the member's ``[project].dependencies`` (plus the
   ``[tool.uv.sources]`` workspace entry), or delete the import;
 * dependency cycle: remove one direction of the edge, or extract the shared
-  API into ``platform/``;
+  API into ``src/platform``;
 * unclassified member: extend ``_classify_layer`` in this guard.
 """
 
@@ -106,15 +107,20 @@ class Member:
 def _classify_layer(member_path: str) -> str | None:
     """Classify a member path into kernel/apps/services/testbed.
 
-    Returns None for any shape this guard does not know about, which makes the
-    structural test fail loudly instead of letting the member escape the
-    boundary checks.
+    Product members live under the root ``src/`` tree; testbed members stay at
+    the repository root. Returns None for any shape this guard does not know
+    about, which makes the structural test fail loudly instead of letting the
+    member escape the boundary checks.
     """
-    if member_path == "platform":
+    if member_path == "src/platform":
         return "kernel"
     first = member_path.split("/", 1)[0]
-    if first in {"apps", "services", "testbed"} and "/" in member_path:
-        return first
+    if first == "testbed" and "/" in member_path:
+        return "testbed"
+    if first == "src" and member_path.count("/") >= 2:
+        second = member_path.split("/", 2)[1]
+        if second in {"apps", "services"}:
+            return second
     return None
 
 
@@ -195,7 +201,7 @@ def test_apps_do_not_import_each_other(
     Violates AGENT.md §4: "one app must never import another app" — a use case
     is one process, one failure domain and one canary unit. Fix by removing
     the import; logic two apps genuinely share must move down to the kernel
-    (``platform/``), never sideways to a sibling app.
+    (``src/platform``), never sideways to a sibling app.
     """
     apps = [member for member in members if member.layer == "apps"]
     violations: list[str] = []
@@ -210,18 +216,18 @@ def test_apps_do_not_import_each_other(
         "AGENT.md §4 violation — one app must never import another app:\n  "
         + "\n  ".join(violations)
         + "\nFix: remove the cross-app import; if the logic is shared, move it "
-        "down into platform/ (the kernel). Do not couple app processes."
+        "down into src/platform (the kernel). Do not couple app processes."
     )
 
 
 def test_product_packages_never_import_testbed(
     members: list[Member], imports_by_member: dict[str, dict[str, set[str]]]
 ) -> None:
-    """An apps/ or services/ member must not import any testbed package.
+    """An src/apps/ or src/services/ member must not import any testbed package.
 
     Violates AGENT.md §4: the testbed is R&D asset and must never become a
     runtime dependency. The kernel-facing half is enforced by
-    ``platform/tests/test_library_independence.py``; this is the product-side
+    ``src/platform/tests/test_library_independence.py``; this is the product-side
     half. Fix by removing the import; product code must be shippable without
     the testbed.
     """
@@ -239,13 +245,13 @@ def test_product_packages_never_import_testbed(
         "no testbed-layer members found; the workspace manifest or this guard is broken"
     )
     assert product_members, (
-        "no apps/services members found; the workspace manifest or this guard is broken"
+        "no src/apps, src/services members found; the workspace manifest or this guard is broken"
     )
     assert not violations, (
-        "AGENT.md §4 violation — product packages (apps/, services/) must never "
+        "AGENT.md §4 violation — product packages (src/apps/, src/services/) must never "
         "depend on the testbed:\n  "
         + "\n  ".join(violations)
-        + "\nFix: remove the import and relocate any needed logic into platform/ "
+        + "\nFix: remove the import and relocate any needed logic into src/platform "
         "or the product member itself; testbed/ is a development-only asset."
     )
 
@@ -290,7 +296,7 @@ def test_internal_dependencies_do_not_form_a_cycle(members: list[Member]) -> Non
     AGENT.md §4 permits services to depend on each other along the
     internal-API direction but a cycle (A -> B -> A) couples release, failure
     domains and reasoning. Fix by removing one direction of the edge, or by
-    extracting the shared API into ``platform/``.
+    extracting the shared API into ``src/platform``.
     """
     root_to_path = {member.import_root: member.path for member in members}
     graph: dict[str, set[str]] = {
@@ -335,8 +341,8 @@ def test_internal_dependencies_do_not_form_a_cycle(members: list[Member]) -> Non
 def test_every_workspace_member_classifies_into_one_layer(members: list[Member]) -> None:
     """Members split, without remainder, into kernel/apps/services/testbed.
 
-    Classification is by path prefix (``platform``, ``apps/*``,
-    ``services/*``, ``testbed/*``) and is read from the workspace manifest,
+    Classification is by path prefix (``src/platform``, ``src/apps/*``,
+    ``src/services/*``, ``testbed/*``) and is read from the workspace manifest,
     not hard-coded. An unclassified member fails the gate so it cannot
     silently bypass the three boundary guards; all four layers must stay
     populated so none of the guards passes vacuously.
@@ -354,8 +360,8 @@ def test_every_workspace_member_classifies_into_one_layer(members: list[Member])
     assert not unclassified, (
         f"workspace member(s) {unclassified} cannot be classified into any of "
         "kernel/apps/services/testbed by path prefix; such a member silently "
-        "bypasses the boundary guards. Fix: place it under platform/, apps/*, "
-        "services/* or testbed/*, or extend _classify_layer in "
+        "bypasses the boundary guards. Fix: place it under src/platform, "
+        "src/apps/*, src/services/* or testbed/*, or extend _classify_layer in "
         "tests/test_layer_boundaries.py and the corresponding guard."
     )
 

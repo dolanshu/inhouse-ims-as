@@ -155,7 +155,7 @@ The authoritative table see [`../product/responsibility-matrix.md`](../product/r
 
 ### 4.2 AS-Side Log Field Contract (forensics wording)
 
-REQ-NF-13's forensics mounting point is JSON logs, with fields fixed as **`timestamp` / `level` / `trace_id` / `call_id` / `direction` / `method`** (`trace_id` is the Call-ID). The authoritative document is the **field contract** (not the runbook): [`../acceptance/m8-resip-runtime-log-contract.md`](../acceptance/m8-resip-runtime-log-contract.md). The parser is `platform/src/as_platform/sip/resip_runtime_log_contract.py`, guarded by `platform/tests/test_resip_runtime_log_contract.py` (`contract` marker) — **renaming or changing keys in C++ turns it red**.
+REQ-NF-13's forensics mounting point is JSON logs, with fields fixed as **`timestamp` / `level` / `trace_id` / `call_id` / `direction` / `method`** (`trace_id` is the Call-ID). The authoritative document is the **field contract** (not the runbook): [`../acceptance/m8-resip-runtime-log-contract.md`](../acceptance/m8-resip-runtime-log-contract.md). The parser is `src/platform/src/as_platform/sip/resip_runtime_log_contract.py`, guarded by `src/platform/tests/test_resip_runtime_log_contract.py` (`contract` marker) — **renaming or changing keys in C++ turns it red**.
 
 **Example lines (copied verbatim, directly usable for searching)**
 

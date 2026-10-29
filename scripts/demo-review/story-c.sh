@@ -94,7 +94,7 @@ fi
 
 demo_step 4 "指标与 draining 语义"
 demo_show_customer "/metrics 含 as_active_calls；draining 时 /health/ready → 503"
-uv run pytest platform/tests/test_health_server.py platform/tests/test_metrics.py -q \
+uv run pytest src/platform/tests/test_health_server.py src/platform/tests/test_metrics.py -q \
   2>&1 | tee "${ART}/health-metrics-unit.log"
 if demo_m71_present; then
   demo_m71_kubectl -n as-sut exec deploy/as-sut-translation -- python -c \
@@ -110,7 +110,7 @@ fi
 
 demo_step 5 "缩容保护与 ISSU runbook"
 demo_show_customer "缩容前 plan_scale_down 判据；ISSU = draining（见 m5-downscale-runbook.md）"
-uv run pytest platform/tests/test_downscale_guard.py -q 2>&1 | tee "${ART}/downscale-guard.log"
+uv run pytest src/platform/tests/test_downscale_guard.py -q 2>&1 | tee "${ART}/downscale-guard.log"
 head -n 40 "${REPO_ROOT}/docs/acceptance/m5-downscale-runbook.md" | tee "${ART}/downscale-runbook-head.txt"
 
 demo_step 6 "告警规则模板（无 CPS 绝对值）"

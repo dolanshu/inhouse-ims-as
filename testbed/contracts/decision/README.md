@@ -92,9 +92,9 @@ The Python implementation replays it under the `contract` marker:
 uv run pytest -m contract -q
 ```
 
-`apps/translation/tests/test_contract_replay.py` takes the cases whose
+`src/apps/translation/tests/test_contract_replay.py` takes the cases whose
 `applies_to` contains `translation` or `both`;
-`apps/anti-fraud/tests/test_contract_replay.py` takes `anti-fraud` or `both`. A
+`src/apps/anti-fraud/tests/test_contract_replay.py` takes `anti-fraud` or `both`. A
 missing `cases.json` fails the replay loudly — a contract that is not replayed is
 not enforced. A Go implementation adds a third replay against the same file.
 

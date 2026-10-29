@@ -31,13 +31,14 @@
 
 [tool.uv.workspace]
 members = [
-  "platform",
-  "apps/translation",
-  "apps/anti-fraud",
-  "services/config-service",
-  "services/console",
+  "src/platform",
+  "src/apps/translation",
+  "src/apps/anti-fraud",
+  "src/services/config-service",
+  "src/services/console",
   "testbed/simulators",
   "testbed/load",
+  "testbed/probe",
 ]
 
 [dependency-groups]
@@ -55,7 +56,7 @@ dev = [
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 minversion = "8.0"
-testpaths = ["tests", "platform", "apps", "services", "testbed"]
+testpaths = ["tests", "src/platform", "src/apps", "src/services", "testbed"]
 addopts = "-ra --strict-markers --strict-config"
 markers = [
   "unit: pure logic, no sockets",
@@ -74,13 +75,14 @@ markers = [
 line-length = 100
 target-version = "py310"
 src = [
-  "platform/src",
-  "apps/translation/src",
-  "apps/anti-fraud/src",
-  "services/config-service/src",
-  "services/console/src",
+  "src/platform/src",
+  "src/apps/translation/src",
+  "src/apps/anti-fraud/src",
+  "src/services/config-service/src",
+  "src/services/console/src",
   "testbed/simulators/src",
   "testbed/load/src",
+  "testbed/probe/src",
 ]
 extend-exclude = [
   ".venv",
@@ -127,15 +129,16 @@ docstring-code-format = true
 [tool.mypy]
 python_version = "3.10"
 files = [
-  "platform/src",
-  "apps/translation/src",
-  "apps/anti-fraud/src",
-  "services/config-service/src",
-  "services/console/src",
+  "src/platform/src",
+  "src/apps/translation/src",
+  "src/apps/anti-fraud/src",
+  "src/services/config-service/src",
+  "src/services/console/src",
   "testbed/simulators/src",
   "testbed/load/src",
+  "testbed/probe/src",
 ]
-mypy_path = "platform/src:apps/translation/src:apps/anti-fraud/src:services/config-service/src:services/console/src:testbed/simulators/src:testbed/load/src"
+mypy_path = "src/platform/src:src/apps/translation/src:src/apps/anti-fraud/src:src/services/config-service/src:src/services/console/src:testbed/simulators/src:testbed/load/src:testbed/probe/src"
 explicit_package_bases = true
 warn_unused_configs = false
 warn_redundant_casts = true

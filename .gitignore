@@ -53,5 +53,5 @@ deploy/compose/.env
 # Office temporary lock files
 ~$*
 
-/docs/product-packag*
-/docs/intro.md
+# CodeBuddy auto-generated team session state (rules/ stays tracked)
+.codebuddy/teams/

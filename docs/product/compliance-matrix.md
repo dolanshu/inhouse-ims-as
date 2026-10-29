@@ -54,7 +54,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 - **B** —— product code only (no corresponding test): capped at Partial. **C** —— documentation / ADR / paper evaluation only: capped at open.
 - **D** —— no evidence (spec text not retained in repo, or no line-by-line implementation): can only be open.
 
-**Specific evidence files cited in this document** (for review spot-checking): `platform/src/as_platform/sip/{adapter,call_controller,message,transport,ingress,resip_runtime}.py`, `platform/native/resip_runtime/runtime_module.cxx`, `platform/tests/{test_call_controller,test_call_controller_recovery,test_sip_message,test_transport_seam,test_transport_ingress,test_resip_runtime_integration,test_resip_runtime_tls_policy_integration,test_resip_two_leg_integration,test_m7_forward_two_leg_integration,test_req_f4_sdp_identity_integration,test_d10_req_nf1_redis_integration}.py`, `apps/translation/src/as_translation/{decision,outbound}.py`, `apps/anti-fraud/src/as_anti_fraud/decision.py`, `testbed/contracts/{sip-baseline,decision}/`, `testbed/simulators/src/as_simulators/{bridge,sut}.py`, `deploy/helm/values.yaml`.
+**Specific evidence files cited in this document** (for review spot-checking): `src/platform/src/as_platform/sip/{adapter,call_controller,message,transport,ingress,resip_runtime}.py`, `src/platform/native/resip_runtime/runtime_module.cxx`, `src/platform/tests/{test_call_controller,test_call_controller_recovery,test_sip_message,test_transport_seam,test_transport_ingress,test_resip_runtime_integration,test_resip_runtime_tls_policy_integration,test_resip_two_leg_integration,test_m7_forward_two_leg_integration,test_req_f4_sdp_identity_integration,test_d10_req_nf1_redis_integration}.py`, `src/apps/translation/src/as_translation/{decision,outbound}.py`, `src/apps/anti-fraud/src/as_anti_fraud/decision.py`, `testbed/contracts/{sip-baseline,decision}/`, `testbed/simulators/src/as_simulators/{bridge,sut}.py`, `deploy/helm/values.yaml`.
 
 > **Release-applicability discipline**: the specific Release of 3GPP specs such as TS 24.229 has **not** been checked line by line; every release-related judgment in this document is recorded as `open (not checked line by line)`, and **"compliant with Release X" is never written**.
 
@@ -86,11 +86,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Capability item (clause number not checked line by line) | Applicability | State | Implementation location (file:line) | Evidence | Notes and blockers |
 |---|---|---|---|---|---|
-| S-CSCF triggers AS with initial INVITE (ISC) | Applicable | **Partial** | `platform/src/as_platform/sip/resip_runtime.py:330`, `platform/native/resip_runtime/runtime_module.cxx:979` | A: `testbed/simulators/tests/test_product_path.py` (integration, across simulated S-SBC and **not** using accept-all) | Only the in-leg arrival and decision are verified; full two-side end-to-end diff is E1, un-accepted |
-| In-leg decision by business rules (FORWARD / TRANSLATE / DECLINE / NOT_FOUND) | Applicable | **Partial** | `platform/src/as_platform/sip/adapter.py:128-148`, `platform/src/as_platform/sip/call_controller.py:82-95` | A: `platform/tests/test_call_controller.py`, `apps/*/tests/test_contract_replay.py` | Decision is a pure function; the rule set comes from config, not SIP semantics |
-| No matching rule → `404 Not Found` | Applicable | **Partial** | `platform/src/as_platform/sip/adapter.py:25` | A: contract scenario `S2-no-match-404` (`testbed/contracts/sip-baseline/README.md:13`) | Product path implemented; baseline captured by sippy, diff is E1 |
-| Policy rejection → `603 Decline` | Applicable | **Partial** | `platform/src/as_platform/sip/adapter.py:24`; anti-fraud over-limit `apps/anti-fraud/src/as_anti_fraud/decision.py:152-156` | A: contract scenario `S3-policy-reject-603` (same README L14) | See §3.8 for the 603/608 divergence |
-| Two-leg B2BUA (two legs with independent Call-ID) | Applicable | **Partial** | `platform/native/resip_runtime/runtime_module.cxx:1057-1103` | A: `platform/tests/test_resip_two_leg_integration.py`, `test_m7_forward_two_leg_integration.py` | REQ-F-1 = automated subset covered / full text still open: Wave 2 normalized diff covers the two-leg skeleton sequence, C_in ≠ C_out, SDP offer byte-identical (`testbed/e2e/test_s1_replay_contract.py`); the 14-message line-by-line header diff is not done (2026-10-12 update, originally "14-message full-text replay not signed off") |
+| S-CSCF triggers AS with initial INVITE (ISC) | Applicable | **Partial** | `src/platform/src/as_platform/sip/resip_runtime.py:330`, `src/platform/native/resip_runtime/runtime_module.cxx:979` | A: `testbed/simulators/tests/test_product_path.py` (integration, across simulated S-SBC and **not** using accept-all) | Only the in-leg arrival and decision are verified; full two-side end-to-end diff is E1, un-accepted |
+| In-leg decision by business rules (FORWARD / TRANSLATE / DECLINE / NOT_FOUND) | Applicable | **Partial** | `src/platform/src/as_platform/sip/adapter.py:128-148`, `src/platform/src/as_platform/sip/call_controller.py:82-95` | A: `src/platform/tests/test_call_controller.py`, `src/apps/*/tests/test_contract_replay.py` | Decision is a pure function; the rule set comes from config, not SIP semantics |
+| No matching rule → `404 Not Found` | Applicable | **Partial** | `src/platform/src/as_platform/sip/adapter.py:25` | A: contract scenario `S2-no-match-404` (`testbed/contracts/sip-baseline/README.md:13`) | Product path implemented; baseline captured by sippy, diff is E1 |
+| Policy rejection → `603 Decline` | Applicable | **Partial** | `src/platform/src/as_platform/sip/adapter.py:24`; anti-fraud over-limit `src/apps/anti-fraud/src/as_anti_fraud/decision.py:152-156` | A: contract scenario `S3-policy-reject-603` (same README L14) | See §3.8 for the 603/608 divergence |
+| Two-leg B2BUA (two legs with independent Call-ID) | Applicable | **Partial** | `src/platform/native/resip_runtime/runtime_module.cxx:1057-1103` | A: `src/platform/tests/test_resip_two_leg_integration.py`, `test_m7_forward_two_leg_integration.py` | REQ-F-1 = automated subset covered / full text still open: Wave 2 normalized diff covers the two-leg skeleton sequence, C_in ≠ C_out, SDP offer byte-identical (`testbed/e2e/test_s1_replay_contract.py`); the 14-message line-by-line header diff is not done (2026-10-12 update, originally "14-message full-text replay not signed off") |
 | S-SBC transparent bridging | **Not applicable** (operator side) | **N/A** | — | Simulator `testbed/simulators/src/as_simulators/bridge.py:1-6` | Rationale: S-SBC is an operator network element, not our deliverable (ADR-0003) |
 | Release applicability | — | **open** | — | D: no text in repo | Fill in after manual retrieval and line-by-line check of the spec text |
 
@@ -119,7 +119,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Scope (typically covered, not a clause assertion) | Applicability | State | Indirectly referenceable repo facts | Blocker |
 |---|---|---|---|---|
-| IR.92: IMS profile / interoperability (IMS terminal and network-side interop behavior, parameter values) | Applicable | **open** | No direct implementation evidence; `platform/src/as_platform/sip/message.py:38-48` only implements RFC 3261 mandatory headers and magic cookie | Pending manual check of spec text |
+| IR.92: IMS profile / interoperability (IMS terminal and network-side interop behavior, parameter values) | Applicable | **open** | No direct implementation evidence; `src/platform/src/as_platform/sip/message.py:38-48` only implements RFC 3261 mandatory headers and magic cookie | Pending manual check of spec text |
 | IR.94: media and security baseline (including bearer and security requirements) | Partially applicable | **open** | This product does **no media** (`AGENT.md` §2, ADR-0004), so most of IR.94's media-side clauses are not applicable; the security side has only allowlist + end-to-end TLS (ADR-0016) | Pending manual check of spec text + need to first adjudicate which clauses become N/A with "no media" |
 
 ### 3.6 RFC 3261 —— SIP
@@ -128,15 +128,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Capability item | Applicability | State | Implementation location (file:line) | Evidence | Notes |
 |---|---|---|---|---|---|
-| Initial INVITE (UAS in-leg) | Applicable | **Partial** | `platform/native/resip_runtime/runtime_module.cxx:979-1055` | A: `platform/tests/test_resip_runtime_log_contract.py` etc. | REQ-F-1 = automated subset covered / full text still open (Wave 2 normalized diff; the 14-message line-by-line header diff not done, 2026-10-12 update, originally "14-message full text not signed off") |
-| ACK | Applicable | **Partial** | Handled by DUM; under the `accept_all_invites` harness, fixed 100/180/200/ACK (`platform/src/as_platform/sip/README.md:7-8`) | C: harness nature | `accept_all_invites` is testbed-only, **not the production path** |
-| BYE | Applicable | **Partial** | In-leg BYE → out-leg `end()`: `runtime_module.cxx:1117-1140` | A: `platform/tests/test_d10_req_nf1_redis_integration.py` (post-recovery in-dialog BYE) | The recovery path has an engineering implementation; the **product path is un-accepted** |
+| Initial INVITE (UAS in-leg) | Applicable | **Partial** | `src/platform/native/resip_runtime/runtime_module.cxx:979-1055` | A: `src/platform/tests/test_resip_runtime_log_contract.py` etc. | REQ-F-1 = automated subset covered / full text still open (Wave 2 normalized diff; the 14-message line-by-line header diff not done, 2026-10-12 update, originally "14-message full text not signed off") |
+| ACK | Applicable | **Partial** | Handled by DUM; under the `accept_all_invites` harness, fixed 100/180/200/ACK (`src/platform/src/as_platform/sip/README.md:7-8`) | C: harness nature | `accept_all_invites` is testbed-only, **not the production path** |
+| BYE | Applicable | **Partial** | In-leg BYE → out-leg `end()`: `runtime_module.cxx:1117-1140` | A: `src/platform/tests/test_d10_req_nf1_redis_integration.py` (post-recovery in-dialog BYE) | The recovery path has an engineering implementation; the **product path is un-accepted** |
 | CANCEL (caller abandons, including 487 branch) | Applicable | **Partial** | `runtime_module.cxx:1226-1242` (the `early_cancel_harness` keeps the early state); for B2BUA CANCEL see `README.md:19` | A (harness form only) + C | Race (S11) baseline missing, see §4 |
 | REFER / call transfer | Applicable | **open (not implemented)** | `runtime_module.cxx:1251-1260`: `onRefer` / `onReferNoSub` / `onReferRejected` / `onReferAccepted` are **all empty implementations** | A (empty implementation is itself evidence) | ADR-0019 §5.1 lists REFER as a non-threshold scenario to be filled in |
 | forking | Applicable | **open (not implemented)** | `runtime_module.cxx:1182`: `onForkDestroyed` empty | A (empty implementation is itself evidence) | ADR-0019 §5.1 |
 | 3xx redirect | Applicable | **open (not implemented)** | `runtime_module.cxx:1183`: `onRedirected` empty | A (empty implementation is itself evidence) | ADR-0019 §5.1 |
 | PRACK / UPDATE interleaving | Applicable | **open (not implemented)** | Product code has no corresponding handling branch | D: no hit | ADR-0019 §5.1 |
-| re-INVITE (hold / resume) | Applicable | **open (not implemented)** | `platform/src/` has no hold/resume business branch; only the D10 probe recovered an in-dialog re-INVITE (ADR-0022 Evidence) | C (probe, not product code) | ADR-0019 §5.1 |
+| re-INVITE (hold / resume) | Applicable | **open (not implemented)** | `src/platform/src/` has no hold/resume business branch; only the D10 probe recovered an in-dialog re-INVITE (ADR-0022 Evidence) | C (probe, not product code) | ADR-0019 §5.1 |
 
 #### 3.6.2 Status codes
 
@@ -144,10 +144,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 |---|---|---|---|---|---|
 | `404 Not Found` | Applicable | **Partial** | `adapter.py:25,145-146` | A: contract scenario S2 | — |
 | `603 Decline` | Applicable | **Partial** | `adapter.py:24,142-143` | A: contract scenario S3 | See the 603/608 divergence in §3.8 |
-| `403 Forbidden` (in-leg unauthorized) | Applicable | **Partial** | `platform/src/as_platform/sip/resip_runtime.py:39,334-346` | A: `platform/tests/test_resip_runtime_integration.py:151`, `test_resip_runtime_tls_policy_integration.py:175-196`, `test_resip_runtime_tls_integration.py:222` | Plaintext rejection and allowlist miss **share** 403 |
+| `403 Forbidden` (in-leg unauthorized) | Applicable | **Partial** | `src/platform/src/as_platform/sip/resip_runtime.py:39,334-346` | A: `src/platform/tests/test_resip_runtime_integration.py:151`, `test_resip_runtime_tls_policy_integration.py:175-196`, `test_resip_runtime_tls_integration.py:222` | Plaintext rejection and allowlist miss **share** 403 |
 | `500` (exception / no route) | Applicable | **Partial** | `runtime_module.cxx:1044,1051` | A | Two paths: callback throws exception and `statusCode == 0` |
-| Downstream non-2xx **pass-through set {408, 480, 486, 503, 504}** | Applicable | **Partial** | `platform/src/as_platform/sip/call_controller.py:19-21,98-104`; native same logic `runtime_module.cxx:466-484` | A (Python side) + A (native-side mapping function) | **The native product path has an end-to-end test only for `486`** (`test_resip_two_leg_integration.py`, `test_m7_forward_two_leg_integration.py`); the other four codes have no product-path evidence |
-| All other 4xx–6xx uniformly mapped to `502 Bad Gateway` | Applicable | **Partial** | `call_controller.py:20,100-104`; `runtime_module.cxx:479-483` | B | **Partial rationale**: the mapping rule is implemented and has a unit test, but the product path has no end-to-end verification for codes outside the pass-through set. Also note: the independent two-leg spike has a narrower scope (`platform/native/resip_two_leg/two_leg_module.cxx:358` maps only `486`, everything else 502) — **the spike is not the production adapter** |
+| Downstream non-2xx **pass-through set {408, 480, 486, 503, 504}** | Applicable | **Partial** | `src/platform/src/as_platform/sip/call_controller.py:19-21,98-104`; native same logic `runtime_module.cxx:466-484` | A (Python side) + A (native-side mapping function) | **The native product path has an end-to-end test only for `486`** (`test_resip_two_leg_integration.py`, `test_m7_forward_two_leg_integration.py`); the other four codes have no product-path evidence |
+| All other 4xx–6xx uniformly mapped to `502 Bad Gateway` | Applicable | **Partial** | `call_controller.py:20,100-104`; `runtime_module.cxx:479-483` | B | **Partial rationale**: the mapping rule is implemented and has a unit test, but the product path has no end-to-end verification for codes outside the pass-through set. Also note: the independent two-leg spike has a narrower scope (`src/platform/native/resip_two_leg/two_leg_module.cxx:358` maps only `486`, everything else 502) — **the spike is not the production adapter** |
 | `487 Request Terminated` | Applicable | **Partial** | `runtime_module.cxx:1226-1242` (harness keeps early state so DUM returns 487) | A (harness) + C | The full semantics of both branches on the product path await E1 |
 | Other 1xx/2xx/3xx codes | Applicable | **open** | — | D | Not checked line by line |
 
@@ -155,31 +155,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Capability item | Applicability | State | Implementation location (file:line) | Evidence | Notes |
 |---|---|---|---|---|---|
-| Request mandatory headers (To / From / CSeq / Call-ID / Max-Forwards / Via) | Applicable | **Partial** | `platform/src/as_platform/sip/message.py:44-45,369-378` | A: `platform/tests/test_sip_message.py` | Missing → `ValueError`, no incomplete request sent |
+| Request mandatory headers (To / From / CSeq / Call-ID / Max-Forwards / Via) | Applicable | **Partial** | `src/platform/src/as_platform/sip/message.py:44-45,369-378` | A: `src/platform/tests/test_sip_message.py` | Missing → `ValueError`, no incomplete request sent |
 | `Via` branch magic cookie `z9hG4bK` | Applicable | **Partial** | `message.py:47-48,381-388` | A | The module **does not generate** branches (forbidden to read the clock / take randomness, ADR-0002) |
 | `Content-Length` overwritten by body byte count | Applicable | **Partial** | `message.py:41-42,314-327` | A | Overwrite is in place, preserving caller field order |
-| Body byte-for-byte pass-through (SDP not re-encoded) | Applicable | **Partial** | `message.py:12-16,72-73,442-458`; native forward `runtime_module.cxx:1204-1205` | A: `platform/tests/test_req_f4_sdp_identity_integration.py` | REQ-F-4 **acceptance incomplete** ([`../plan.md`](../plan.md) §5.2 D11) |
+| Body byte-for-byte pass-through (SDP not re-encoded) | Applicable | **Partial** | `message.py:12-16,72-73,442-458`; native forward `runtime_module.cxx:1204-1205` | A: `src/platform/tests/test_req_f4_sdp_identity_integration.py` | REQ-F-4 **acceptance incomplete** ([`../plan.md`](../plan.md) §5.2 D11) |
 | Duplicate headers kept duplicate (not folded) | Applicable | **Partial** | `message.py:61-78,214-254` | A | Carried as a `(name, value)` sequence |
 | Route consumption / Record-Route route-set extraction | Applicable | **Partial** | `runtime_module.cxx:840-856` (`buildRouteSetList`), `:606,645,699` | A (extraction) + D (flip-leg behavior end-to-end) | Baseline S8 covered by the same S1 capture; S9 missing (§4) |
-| Out-leg `Request-URI`: only user changed, host/port from `AS_SIP_NEXT_HOP` | Applicable | **Partial** | `apps/translation/src/as_translation/outbound.py:43-52,63-88` | A: `apps/translation/tests/` | TLS uses `sips:`; user rewrite happens only on a TRANSLATE decision |
+| Out-leg `Request-URI`: only user changed, host/port from `AS_SIP_NEXT_HOP` | Applicable | **Partial** | `src/apps/translation/src/as_translation/outbound.py:43-52,63-88` | A: `src/apps/translation/tests/` | TLS uses `sips:`; user rewrite happens only on a TRANSLATE decision |
 | `Contact` rewritten to TLS port in TLS scenarios | Applicable | **Partial** | `runtime_module.cxx:51-91` (`TransportContactDecorator`), mount point `:1456` | B (code) + C (testbed A/B reload record) | Only rewrites the first Contact of the **response**: `scheme=sips` + `port`, and removes the `transport` parameter |
 | Whether the AS itself inserts Record-Route | Applicable | **open** | Product code does not explicitly set it (`runtime_module.cxx` has no Record-Route insertion point) | D | Behavior is decided by DUM default; needs manual check of the spec text to confirm expectedness |
 | `Diversion` / `History-Info` / `Replaces` / `Privacy` | Applicable | **N/A** | Code has no hit | D (grep no match) | **Rationale**: this product only does number translation and anti-fraud decisions; it does not process call Diversion / history-info / call-transfer replacement / privacy identity. These appear only in the POC capture-baseline text as operator-side fields; product code neither parses nor rewrites them |
-| `P-Asserted-Identity` | Applicable | **open** | Product runtime does not parse it; the simulated SUT reads it to get the caller (`testbed/simulators/src/as_simulators/sut.py:183-184`); the checkpoint header-extension mechanism uses it as a test sample (`platform/tests/test_call_state_checkpoint.py:82`) | B/C | **Not N/A**: ADR-0019 §5.1 lists "P-Asserted-Identity and trust-domain allowlist validation" as a **scenario to be filled in**; the product-path allowlist validation target is the **certificate fingerprint / IP**, not PAI |
+| `P-Asserted-Identity` | Applicable | **open** | Product runtime does not parse it; the simulated SUT reads it to get the caller (`testbed/simulators/src/as_simulators/sut.py:183-184`); the checkpoint header-extension mechanism uses it as a test sample (`src/platform/tests/test_call_state_checkpoint.py:82`) | B/C | **Not N/A**: ADR-0019 §5.1 lists "P-Asserted-Identity and trust-domain allowlist validation" as a **scenario to be filled in**; the product-path allowlist validation target is the **certificate fingerprint / IP**, not PAI |
 
 #### 3.6.4 Dialog and B2BUA
 
 | Capability item | Applicability | State | Implementation location (file:line) | Evidence | Notes |
 |---|---|---|---|---|---|
-| B2BUA: UAS leg and UAC leg independent, each with its own Call-ID | Applicable | **Partial** | `runtime_module.cxx:1057-1103`; `call_controller.py:31-49` | A: `platform/tests/test_resip_two_leg_integration.py` | After recovery the leg identifier is rebuilt from the checkpoint: `call_controller.py:236-255` |
-| Leg association and in-flight state cleanup | Applicable | **Partial** | `call_controller.py:115-120,170-230` | A: `platform/tests/test_call_controller.py` | The controller is **in-memory state**; the recoverable context is a single checkpoint |
+| B2BUA: UAS leg and UAC leg independent, each with its own Call-ID | Applicable | **Partial** | `runtime_module.cxx:1057-1103`; `call_controller.py:31-49` | A: `src/platform/tests/test_resip_two_leg_integration.py` | After recovery the leg identifier is rebuilt from the checkpoint: `call_controller.py:236-255` |
+| Leg association and in-flight state cleanup | Applicable | **Partial** | `call_controller.py:115-120,170-230` | A: `src/platform/tests/test_call_controller.py` | The controller is **in-memory state**; the recoverable context is a single checkpoint |
 | Independent Via / transaction timer per leg | Applicable | **Partial** | Owned by DUM / `SipStack` (ADR-0022 Decision) | C | The controller does not re-implement retransmission and timers |
 
 #### 3.6.5 CANCEL and 487
 
 | Capability item | Applicability | State | Implementation location (file:line) | Evidence | Notes |
 |---|---|---|---|---|---|
-| In-leg CANCEL → `200 OK`, and sends CANCEL downstream | Applicable | **Partial** | `platform/src/as_platform/sip/README.md:18-19`; `runtime_module.cxx:1226-1242` | A (harness form) | Product-path semantics depend on DUM behavior, no product-path end-to-end sign-off yet |
+| In-leg CANCEL → `200 OK`, and sends CANCEL downstream | Applicable | **Partial** | `src/platform/src/as_platform/sip/README.md:18-19`; `runtime_module.cxx:1226-1242` | A (harness form) | Product-path semantics depend on DUM behavior, no product-path end-to-end sign-off yet |
 | Caller abandons → `487` | Applicable | **Partial** | Same as above | A (harness) + C | ADR-0022 records DUM returning 200/487 to an in-leg initial INVITE CANCEL and reporting `RemoteCancel` |
 | CANCEL vs final-response race (S11) | Applicable | **open** | — | D | POC has no race test, baseline missing (§4) |
 
@@ -187,24 +187,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Capability item | Applicability | State | Implementation location (file:line) | Evidence | Notes |
 |---|---|---|---|---|---|
-| Post-recovery in-dialog BYE sent downstream per Route | Applicable | **Partial** | `call_controller.py:257-262`; `runtime_module.cxx:1117-1140` | A: `platform/tests/test_call_controller_recovery.py`, `test_d10_req_nf1_redis_integration.py` | **Engineering slice, not REQ-NF-1 sign-off** ([`../plan.md`](../plan.md) §5.2 D10) |
+| Post-recovery in-dialog BYE sent downstream per Route | Applicable | **Partial** | `call_controller.py:257-262`; `runtime_module.cxx:1117-1140` | A: `src/platform/tests/test_call_controller_recovery.py`, `test_d10_req_nf1_redis_integration.py` | **Engineering slice, not REQ-NF-1 sign-off** ([`../plan.md`](../plan.md) §5.2 D10) |
 | Other in-dialog requests (re-INVITE / UPDATE / INFO / MESSAGE / NOTIFY) | Applicable | **open** | `runtime_module.cxx:1244-1250` callbacks empty | A (empty implementation is itself evidence) | Consistent with the §3.6.1 methods table |
 
 #### 3.6.7 Transport and TLS
 
 | Capability item | Applicability | State | Implementation location (file:line) | Evidence | Notes |
 |---|---|---|---|---|---|
-| SIP over UDP `5060` | Applicable | **Partial** | `deploy/helm/values.yaml:150-153`; `platform/src/as_platform/runtime/sip_stack_service.py:168-169` | A (helm chart-check / values) | Port is a protocol constant, not a capacity number |
+| SIP over UDP `5060` | Applicable | **Partial** | `deploy/helm/values.yaml:150-153`; `src/platform/src/as_platform/runtime/sip_stack_service.py:168-169` | A (helm chart-check / values) | Port is a protocol constant, not a capacity number |
 | SIP over TLS `5061` | Applicable | **Partial** | `deploy/helm/values.yaml:153`; `sip_stack_service.py:171` | A | Same as above |
 | SIP over TCP | Applicable | **Partial** | `sip_stack_service.py:157-159,170` (`AS_SIP_ENABLE_TCP` on, port from `AS_SIP_TCP_PORT` / `SIP_LISTEN_PORT`, default `0` = do not listen) | A | **TCP off by default**. Also note: `deploy/docker/Dockerfile:37` exposes `5061/tcp` as a container port, inconsistent with the values.yaml criterion that `5061 = TLS` — a documentation/packaging scope open item |
-| When TLS required, plaintext rejected before parsing | Applicable | **Partial** | `platform/src/as_platform/sip/ingress.py:24,178-194`; call site `resip_runtime.py:296-298,334-335` | A | Plaintext rejection happens **before** `decide()` and message parsing |
+| When TLS required, plaintext rejected before parsing | Applicable | **Partial** | `src/platform/src/as_platform/sip/ingress.py:24,178-194`; call site `resip_runtime.py:296-298,334-335` | A | Plaintext rejection happens **before** `decide()` and message parsing |
 | Certificate hot-rotation (no restart, no dropped in-flight calls) | Applicable | **open** | Mechanism: `ingress.py:70-100` (overlap window), `runtime_module.cxx:1497-1501` (`SipStack::reloadCertificates()`), `runtime_module.cxx:1706-1720` (Python entry) | C (testbed-only smoke) | **E4 has no lab evidence → open** (ADR-0019 §6 step 5 item 2, §10; native TLS S1 once failed with 503 Certificate Validation Failure). **Do not** present it as having passed acceptance |
 
 #### 3.6.8 Security
 
 | Capability item | Applicability | State | Implementation location (file:line) | Evidence | Notes |
 |---|---|---|---|---|---|
-| Peer allowlist (IP / CIDR / `host:port` / certificate fingerprint) | Applicable | **Partial** | `platform/src/as_platform/sip/transport.py:48-63,249-298` | A: `platform/tests/test_transport_seam.py` | Certificate hit or address hit, **either** passes (ADR-0016) |
+| Peer allowlist (IP / CIDR / `host:port` / certificate fingerprint) | Applicable | **Partial** | `src/platform/src/as_platform/sip/transport.py:48-63,249-298` | A: `src/platform/tests/test_transport_seam.py` | Certificate hit or address hit, **either** passes (ADR-0016) |
 | Empty policy fail-closed | Applicable | **Partial** | `transport.py:257-273` | A | Helm side also has a render-time fail-closed switch `allowEmptyAllowlistForTest` (`values.yaml:162-165`), default `false` |
 | Client certificate required by default (mTLS) | Applicable | **Partial** | `transport.py:75-93` (`require_client_certificate: bool = True`, and empty `ca_path` errors) | A | Exception: harness / simulation chain may turn it off |
 | SRTP / media encryption | **Not applicable** | **N/A** | — | — | **Rationale**: no media, no SRTP (`AGENT.md` §2, ADR-0004: media needs are borne by the in-network MRF; the AS only gives decisions) |
@@ -213,7 +213,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Capability item | Applicability | State | Basis |
 |---|---|---|---|
-| RFC 4566 (SDP) | Applicable (pass-through only) | **Partial** | `platform/src/as_platform/sip/message.py:12-16` (body byte-for-byte pass-through, AS does not parse SDP); `NOTICE:34` registers it as pass-through only. Evidence A: `platform/tests/test_req_f4_sdp_identity_integration.py`. **REQ-F-4 acceptance incomplete** |
+| RFC 4566 (SDP) | Applicable (pass-through only) | **Partial** | `src/platform/src/as_platform/sip/message.py:12-16` (body byte-for-byte pass-through, AS does not parse SDP); `NOTICE:34` registers it as pass-through only. Evidence A: `src/platform/tests/test_req_f4_sdp_identity_integration.py`. **REQ-F-4 acceptance incomplete** |
 | RFC 3265 (`MIN-SE`) | Applicability TBD | **N/A** | **Rationale**: product code has no `MIN-SE` hit; session-timer capability belongs to DUM (ADR-0022 Decision), not implemented by the AS application layer |
 | RFC 3325 (RTP/RTCP) | **Not applicable** | **N/A** | **Rationale**: no media (ADR-0004); code has no RTP/RTCP hit |
 | RFC 3326 (RAck) | Applicability TBD | **N/A** | **Rationale**: reliable provisional responses are owned by the SIP stack's (`SipStack`) transaction layer; the AS application layer does not implement them (ADR-0022 Decision: the controller must not re-implement stack transactions and retransmission); code has no `RAck` hit |
@@ -225,15 +225,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 | Capability item | Applicability | State | Basis |
 |---|---|---|---|
-| HTTP Digest authentication (`WWW-Authenticate` / `Authorization` / nonce) | **Not applicable** | **N/A** | **Rationale**: the AS, as a signaling endpoint within the IMS trust domain, **does not implement digest authentication**; peer admission relies on the **TLS end-to-end + peer allowlist (IP/CIDR/certificate fingerprint)** combination (ADR-0016; `platform/src/as_platform/sip/transport.py:249-298`). The repo has **no digest / `WWW-Authenticate` / nonce handling hit** (the only `digest` in `platform/` appears in the FNV hash `platform/src/as_platform/gating/overrides.py:73` and certificate-fingerprint computation `runtime_module.cxx:224-232`, both unrelated to SIP digest auth). |
+| HTTP Digest authentication (`WWW-Authenticate` / `Authorization` / nonce) | **Not applicable** | **N/A** | **Rationale**: the AS, as a signaling endpoint within the IMS trust domain, **does not implement digest authentication**; peer admission relies on the **TLS end-to-end + peer allowlist (IP/CIDR/certificate fingerprint)** combination (ADR-0016; `src/platform/src/as_platform/sip/transport.py:249-298`). The repo has **no digest / `WWW-Authenticate` / nonce handling hit** (the only `digest` in `platform/` appears in the FNV hash `src/platform/src/as_platform/gating/overrides.py:73` and certificate-fingerprint computation `runtime_module.cxx:224-232`, both unrelated to SIP digest auth). |
 
 ### 3.8 RFC 8688 —— ToS-SIP / `608 Rejected`
 
 | Capability item | Applicability | State | Implementation location | Evidence | Notes |
 |---|---|---|---|---|---|
 | Capability declaration `+sip.608` | Applicable (passively appears) | **Partial** | Appears in the POC capture baseline's in-leg INVITE (`testbed/contracts/sip-baseline/S1-basic-call/01-in-invite-trunk.txt:19` etc.) | A (baseline text) | This is the **operator-side peer's** declaration; the AS itself does not emit this Feature-caps |
-| Respond to anti-fraud/blocking decision with `608 Rejected` | Applicable | **open (not implemented)** | The product path **emits `603 Decline`** (`adapter.py:24,142-143`; anti-fraud over-limit `apps/anti-fraud/src/as_anti_fraud/decision.py:152-156`) | A | The decision-module comment explicitly classifies 608 as "the adaptor's concern, **not this module's**" (`decision.py:22-25`) |
-| Documentation consistency | — | **open** | — | D | **Divergence note**: `608 Rejected (RFC 8688)` still appears in the descriptions of `apps/README.md:8`, `apps/anti-fraud/README.md:3`, `apps/anti-fraud/pyproject.toml:4`, and the POC-status description at [`../architecture/system-architecture.md`](../architecture/system-architecture.md) L80, inconsistent with the `603` the product code actually emits. **This matrix takes the code as authoritative**: the product path currently emits only `603`. Whether to add 608 requires a new ADR + contract change |
+| Respond to anti-fraud/blocking decision with `608 Rejected` | Applicable | **open (not implemented)** | The product path **emits `603 Decline`** (`adapter.py:24,142-143`; anti-fraud over-limit `src/apps/anti-fraud/src/as_anti_fraud/decision.py:152-156`) | A | The decision-module comment explicitly classifies 608 as "the adaptor's concern, **not this module's**" (`decision.py:22-25`) |
+| Documentation consistency | — | **open** | — | D | **Divergence note**: `608 Rejected (RFC 8688)` still appears in the descriptions of `src/apps/README.md:8`, `src/apps/anti-fraud/README.md:3`, `src/apps/anti-fraud/pyproject.toml:4`, and the POC-status description at [`../architecture/system-architecture.md`](../architecture/system-architecture.md) L80, inconsistent with the `603` the product code actually emits. **This matrix takes the code as authoritative**: the product path currently emits only `603`. Whether to add 608 requires a new ADR + contract change |
 
 ---
 
@@ -250,7 +250,7 @@ Per [`../../testbed/contracts/sip-baseline/README.md`](../../testbed/contracts/s
 | S3 | Policy rejection → `603` | ✅ captured | Goes through `decide()` | Partial |
 | S4 | Caller abandons → CANCEL → `200 OK` → `487` | ✅ captured | `early_cancel_harness` keeps early state | Partial (harness form) |
 | S5 | Two-leg B2BUA, two legs with different Call-ID | ✅ same S1 capture | `test_resip_two_leg_integration.py` | Partial |
-| S6 | Request-URI rewrite | ✅ same S1 capture | `apps/translation/src/as_translation/outbound.py:63-88` | Partial |
+| S6 | Request-URI rewrite | ✅ same S1 capture | `src/apps/translation/src/as_translation/outbound.py:63-88` | Partial |
 | S7a | SDP fully passed through | ✅ same S1 capture | `test_req_f4_sdp_identity_integration.py` | Partial (acceptance incomplete) |
 | S7b | SDP rewritten per contract | ❌ baseline missing (POC has no such function) | — | open |
 | S8 | Route / Record-Route handling | ✅ same S1 capture | `runtime_module.cxx:840-856` extracts route set | Partial |

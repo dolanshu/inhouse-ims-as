@@ -53,16 +53,16 @@ The S-SBC performs transparent bridging on both sides: to the S-CSCF the AS look
 
 ```mermaid
 flowchart TB
-    subgraph SIG["① Signaling plane · apps/ · stateless · one process per use case"]
+    subgraph SIG["① Signaling plane · src/apps/ · stateless · one process per use case"]
         direction LR
-        APP1["apps/translation<br/>number translation"]
-        APP2["apps/anti-fraud<br/>anti-fraud"]
-        APPN["apps/&lt;use case&gt;<br/>pluggable business engine"]
+        APP1["src/apps/translation<br/>number translation"]
+        APP2["src/apps/anti-fraud<br/>anti-fraud"]
+        APPN["src/apps/&lt;use case&gt;<br/>pluggable business engine"]
     end
-    subgraph CORE["② Core · platform/ · stateless"]
+    subgraph CORE["② Core · src/platform/ · stateless"]
         CORE1["process shell BaseAsStack<br/>decide() pure-function decision seam<br/>Transport seam · StateStore seam"]
     end
-    subgraph CTRL["③ Control plane · services/ · stateless"]
+    subgraph CTRL["③ Control plane · src/services/ · stateless"]
         direction LR
         CFG["config-service<br/>rule version store · change orders · canary distribution"]
         CON["console<br/>ops console · auth · audit"]
@@ -103,7 +103,7 @@ flowchart TB
 
 ## Key KPIs (definitional, no values)
 
-Metric names and semantics take `platform/src/as_platform/telemetry/metrics.py` as the single authority; the collection path is the process's `/metrics` endpoint (`HealthServer`, requires `AS_HEALTH_PORT`). **This page gives definitions only — no thresholds, no target values.**
+Metric names and semantics take `src/platform/src/as_platform/telemetry/metrics.py` as the single authority; the collection path is the process's `/metrics` endpoint (`HealthServer`, requires `AS_HEALTH_PORT`). **This page gives definitions only — no thresholds, no target values.**
 
 | KPI | Metric name | Current observability status (stated honestly) |
 |---|---|---|
@@ -195,10 +195,11 @@ The local gate runs the same four layers: **① fast (unit or contract) → ② 
 AGENT.md            ★ read this first: rules, layering, gate, git rules
 pyproject.toml      uv workspace root (virtual manifest): the only tool config
 VERSION              product release version number (single source of truth, ADR-0018)
-platform/           core library, includes "no reverse dependency" guard test
-apps/               translation/ · anti-fraud/
-services/           config-service/ · console/
-testbed/            contracts/ · simulators/ · load/
+src/                 product source tree:
+  platform/          core library, includes "no reverse dependency" guard test
+  apps/              translation/ · anti-fraud/
+  services/          config-service/ · console/
+testbed/             contracts/ · simulators/ · load/
 deploy/             helm/ (only production form) · compose/ (dev only) · alerts/ · kind/
 docs/               product/ (review) · operations/ (ops) · delivery/ (delivery)
                     architecture/ (incl. adr/) · requirements/ · acceptance/ · reviews/
@@ -207,15 +208,15 @@ tests/              cross-cutting structural guards: layout, version, dependency
 Makefile            make gate = gate layer ① (lint → type → unit/contract)
 ```
 
-**Layering is guaranteed not by directories but by tests**: in a monorepo any import resolves, so dependency direction is asserted by `platform/tests/test_library_independence.py` and `tests/test_workspace_layout.py`; the single source of version is guarded by `tests/test_version_consistency.py`. The ADR ledger has three states — `accepted` / `draft` / `skeleton` — check each file header before referencing.
+**Layering is guaranteed not by directories but by tests**: in a monorepo any import resolves, so dependency direction is asserted by `src/platform/tests/test_library_independence.py` and `tests/test_workspace_layout.py`; the single source of version is guarded by `tests/test_version_consistency.py`. The ADR ledger has three states — `accepted` / `draft` / `skeleton` — check each file header before referencing.
 
 ## System layering
 
 | Layer | Directory | Responsibility | Statefulness |
 |---|---|---|---|
-| ① Signaling plane | `apps/` | One process per use case, carries calls & business decisions | **Stateless** (state in Redis) |
-| ② Core | `platform/` | Process shell, B2BUA state machine, `decide()` decision seam, Transport/StateStore seams | Stateless |
-| ③ Control plane | `services/` | Rule version store & change orders, ops console | Stateless (state in PostgreSQL) |
+| ① Signaling plane | `src/apps/` | One process per use case, carries calls & business decisions | **Stateless** (state in Redis) |
+| ② Core | `src/platform/` | Process shell, B2BUA state machine, `decide()` decision seam, Transport/StateStore seams | Stateless |
+| ③ Control plane | `src/services/` | Rule version store & change orders, ops console | Stateless (state in PostgreSQL) |
 | ④ Data plane | — | Redis runtime, PostgreSQL governance | **Stateful**, redundant |
 | ⑤ Cross-cutting | — | Observability, security, operations | Stateless (except backends) |
 | ⑥ Testbed | `testbed/` | Contract case set, simulated NEs, real-socket load test | R&D asset |
@@ -230,7 +231,7 @@ The full design is in [`docs/architecture/system-architecture.md`](docs/architec
 - **M2 / M6 / M7 / M7.1**: **engineering complete / engineering closed**, but engineering closure **does not equal** REQ-level acceptance (`docs/plan.md` §2).
 - **Sign-off matrix** ([`docs/acceptance/report.md`](docs/acceptance/report.md) §0.10 current count, matrix "M8 batch 4 finalization countersigned"): pass **27** / fail 0 / **blocked 12** / n-a 4 / **open 24** —— **no claim of all-green** (M8 sign-off does not cover REQ-level acceptance, matrix count unchanged).
 - **E1 / E4 / E5 un-accepted**: reSIProcate production-path behavior, TLS certificate hot-rotation, state externalization & recovery. 7.2d production ingress still **blocked**, lacking a real operator S-SBC and customer K8s environment.
-- **e2e landed**: `testbed/e2e/` already has stable passing end-to-end cases (no longer zero; running on kind / self-signed-cert environment, not a real operator S-SBC).
+- **e2e landed**: `tests/e2e/` already has stable passing end-to-end cases (no longer zero; running on kind / self-signed-cert environment, not a real operator S-SBC).
 - **Capacity numbers unresolved**: O1 open; M6 dev-host measurements are internal references, **not for external use**, not cited here.
 - **testbed is an R&D asset**: ADR-0014 explicitly excludes testbed from v1 deliverables.
 

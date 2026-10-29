@@ -142,7 +142,7 @@ flowchart TB
 
 ## 5. Key KPIs (definitional, no values)
 
-Metric names and semantics take `platform/src/as_platform/telemetry/metrics.py` as the single authority; the collection path is the process's `/metrics` endpoint (Prometheus text format, `HealthServer`, requires `AS_HEALTH_PORT`). **This page gives definitions only — no thresholds, no target values.**
+Metric names and semantics take `src/platform/src/as_platform/telemetry/metrics.py` as the single authority; the collection path is the process's `/metrics` endpoint (Prometheus text format, `HealthServer`, requires `AS_HEALTH_PORT`). **This page gives definitions only — no thresholds, no target values.**
 
 | KPI | Definition | Data source | Current observability status (stated honestly) |
 |---|---|---|---|
@@ -153,7 +153,7 @@ Metric names and semantics take `platform/src/as_platform/telemetry/metrics.py` 
 | Rule-hit count | Number of decisions made by each rule | `as_rule_hits_total{rule}` | Definition and write interface exist, but **no production caller** (only unit tests call it), and it is not in `deploy/alerts/README.md`'s alert-contract table |
 | Telemetry-dropped count | Number of telemetry events dropped by the bounded queue | `as_telemetry_dropped_total{use_case}` | Bounded queue enabled only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured (when unconfigured the sink is `NoOpSink`, so no count is produced); and the queue's exporter currently defaults to `NoOpExporter`, **real OTLP backend wiring still incomplete** |
 
-> **Note: there are currently no latency / throughput / CPS metrics.** `MetricKind` has only `COUNTER` and `GAUGE` (`platform/src/as_platform/telemetry/metrics.py`), no histogram type, and the metric registry contains no latency or throughput series; the thresholds in `deploy/alerts/README.md` are all ratios, relative changes, or state conditions, with no absolute capacity values. Therefore this page **lists no latency KPI and no capacity KPI** —— the capacity model and measurement methodology will be written into [`docs/product/ne-datasheet.md`](ne-datasheet.md) after O1 is resolved.
+> **Note: there are currently no latency / throughput / CPS metrics.** `MetricKind` has only `COUNTER` and `GAUGE` (`src/platform/src/as_platform/telemetry/metrics.py`), no histogram type, and the metric registry contains no latency or throughput series; the thresholds in `deploy/alerts/README.md` are all ratios, relative changes, or state conditions, with no absolute capacity values. Therefore this page **lists no latency KPI and no capacity KPI** —— the capacity model and measurement methodology will be written into [`docs/product/ne-datasheet.md`](ne-datasheet.md) after O1 is resolved.
 
 ---
 

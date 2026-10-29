@@ -60,7 +60,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 During grayscale distribution, **a failed health check in any batch triggers automatic rollback**:
 
-- Distribution state machine: `pending` → `in_progress` → `completed`; on anomaly, `rolled_back` (`services/config-service/src/as_config_service/distributor.py`).
+- Distribution state machine: `pending` → `in_progress` → `completed`; on anomaly, `rolled_back` (`src/services/config-service/src/as_config_service/distributor.py`).
 - Automatic rollback reason constant: `_AUTOMATIC_ROLLBACK_REASON = "health check failed"` (`distributor.py`).
 - Rollback target: `rolled_back_to` must be **the version immediately preceding the planned version** (validated by `distribution_store.py`).
 - Change order side: `APPLIED | DISTRIBUTING --roll_back--> ROLLED_BACK` (`change_order.py`); `REJECTED` / `APPLIED` / `ROLLED_BACK` are **terminal states**.
@@ -69,7 +69,7 @@ During grayscale distribution, **a failed health check in any batch triggers aut
 ### 2.2 L2's Implementation Status (stated factually, not overstated)
 
 - **Deployment-level master switch (layer ①)**: ADR-0020 defines it as two layers, "deployment-level master switch + runtime fine-grained override". In implementation, the switch rides the **same bus as the configuration change order** in the form of `ToggleDTO` (`ConfigBundle.toggles` → `toggle_deployment()` → `gating.is_enabled`), **opening no new channel**; `is_enabled` is **fail-closed** (an unregistered switch name evaluates to `False`). Its "on / off states" are covered by the change order pipeline's end-to-end tests.
-- **Runtime fine-grained override (layer ②)**: the evaluation function `match_override` (`platform/src/as_platform/gating/overrides.py`) is implemented as a **pure function**, with granularity of number range + stable-hash percentage, longest-prefix-first, explicit `enabled=false` above percentage, and returning `None` (fail-closed) when not covered. ⚠️ **The current production path has no caller of this module** (unit test coverage only), and the console's live scope is also only **called party + prefix rules**.
+- **Runtime fine-grained override (layer ②)**: the evaluation function `match_override` (`src/platform/src/as_platform/gating/overrides.py`) is implemented as a **pure function**, with granularity of number range + stable-hash percentage, longest-prefix-first, explicit `enabled=false` above percentage, and returning `None` (fail-closed) when not covered. ⚠️ **The current production path has no caller of this module** (unit test coverage only), and the console's live scope is also only **called party + prefix rules**.
 - **Therefore**: the **mechanism and evaluation semantics of L0 and L2 hold, and the governance channel holds**, but **"turn off AS business logic in one click in seconds and pass through to the next stage" is wording in the product packaging plan, not a delivered, accepted operations action**. Before it lands, the following must be added first: a switch and override management entry on the console / API, production path wiring, and acceptance evidence for the on / off states. **Must not** write it in this document as a button executable on the spot.
 - **L2's boundary**: turning off AS business logic only changes **AS-side behavior**; **diverting calls away from this AS still requires S-SBC / S-CSCF-side cooperation** (G-P1-10).
 

@@ -63,7 +63,7 @@ fi
 
 demo_step 5 "补充集成测（可选，同 Redis）"
 if [[ "${SKIP_REDIS}" -eq 0 ]]; then
-  uv run pytest platform/tests/test_d10_req_nf1_redis_integration.py -m integration -q \
+  uv run pytest src/platform/tests/test_d10_req_nf1_redis_integration.py -m integration -q \
     2>&1 | tee "${ART}/d10-redis-integration.log" || demo_log "WARN: redis integration skipped/failed"
 fi
 

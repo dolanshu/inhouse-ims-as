@@ -9,6 +9,7 @@ members = [
     "as-console",
     "as-load",
     "as-platform",
+    "as-probe",
     "as-simulators",
     "as-translation",
 ]
@@ -56,18 +57,18 @@ wheels = [
 [[package]]
 name = "as-anti-fraud"
 version = "0.1.0"
-source = { editable = "apps/anti-fraud" }
+source = { editable = "src/apps/anti-fraud" }
 dependencies = [
     { name = "as-platform" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "as-platform", editable = "platform" }]
+requires-dist = [{ name = "as-platform", editable = "src/platform" }]
 
 [[package]]
 name = "as-config-service"
 version = "0.1.0"
-source = { editable = "services/config-service" }
+source = { editable = "src/services/config-service" }
 dependencies = [
     { name = "as-console" },
     { name = "as-platform" },
@@ -83,8 +84,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "as-console", editable = "services/console" },
-    { name = "as-platform", editable = "platform" },
+    { name = "as-console", editable = "src/services/console" },
+    { name = "as-platform", editable = "src/platform" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1" },
     { name = "uvicorn", specifier = ">=0.30" },
@@ -96,7 +97,7 @@ dev = [{ name = "httpx", specifier = ">=0.27" }]
 [[package]]
 name = "as-console"
 version = "0.1.0"
-source = { editable = "services/console" }
+source = { editable = "src/services/console" }
 
 [[package]]
 name = "as-load"
@@ -106,13 +107,24 @@ source = { editable = "testbed/load" }
 [[package]]
 name = "as-platform"
 version = "0.1.0"
-source = { editable = "platform" }
+source = { editable = "src/platform" }
 dependencies = [
     { name = "redis" },
 ]
 
 [package.metadata]
 requires-dist = [{ name = "redis", specifier = ">=5.0" }]
+
+[[package]]
+name = "as-probe"
+version = "0.1.0"
+source = { editable = "testbed/probe" }
+dependencies = [
+    { name = "as-platform" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "as-platform", editable = "src/platform" }]
 
 [[package]]
 name = "as-simulators"
@@ -127,20 +139,20 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "as-load", editable = "testbed/load" },
-    { name = "as-platform", editable = "platform" },
-    { name = "as-translation", editable = "apps/translation" },
+    { name = "as-platform", editable = "src/platform" },
+    { name = "as-translation", editable = "src/apps/translation" },
 ]
 
 [[package]]
 name = "as-translation"
 version = "0.1.0"
-source = { editable = "apps/translation" }
+source = { editable = "src/apps/translation" }
 dependencies = [
     { name = "as-platform" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "as-platform", editable = "platform" }]
+requires-dist = [{ name = "as-platform", editable = "src/platform" }]
 
 [[package]]
 name = "ast-serialize"

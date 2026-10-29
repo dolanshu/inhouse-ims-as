@@ -71,9 +71,9 @@ RUN cd /build/resip-build \
     && ldconfig
 
 # Copy platform native extension source trees
-COPY platform/native/resip_runtime /build/native/resip_runtime
-COPY platform/native/resip_two_leg /build/native/resip_two_leg
-COPY platform/native/resip_recovery /build/native/resip_recovery
+COPY src/platform/native/resip_runtime /build/native/resip_runtime
+COPY src/platform/native/resip_two_leg /build/native/resip_two_leg
+COPY src/platform/native/resip_recovery /build/native/resip_recovery
 
 # Build _resip_runtime extension
 RUN RESIP_RPATH="/build/resip-build/rutil:/build/resip-build/resip/stack:/build/resip-build/resip/dum" \
@@ -131,17 +131,17 @@ ENV UV_COMPILE_BYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-COPY platform/pyproject.toml platform/README.md platform/
-COPY apps/translation/pyproject.toml apps/translation/README.md apps/translation/
-COPY apps/anti-fraud/pyproject.toml apps/anti-fraud/README.md apps/anti-fraud/
-COPY services/config-service/pyproject.toml services/config-service/README.md services/config-service/
-COPY services/console/pyproject.toml services/console/README.md services/console/
+COPY src/platform/pyproject.toml src/platform/README.md src/platform/
+COPY src/apps/translation/pyproject.toml src/apps/translation/README.md src/apps/translation/
+COPY src/apps/anti-fraud/pyproject.toml src/apps/anti-fraud/README.md src/apps/anti-fraud/
+COPY src/services/config-service/pyproject.toml src/services/config-service/README.md src/services/config-service/
+COPY src/services/console/pyproject.toml src/services/console/README.md src/services/console/
 COPY testbed/simulators/pyproject.toml testbed/simulators/README.md testbed/simulators/
 COPY testbed/load/pyproject.toml testbed/load/README.md testbed/load/
 
 RUN uv sync --frozen --no-dev --package as-platform --no-install-workspace
 
-COPY platform/src platform/src
+COPY src/platform/src src/platform/src
 RUN uv sync --frozen --no-dev --package as-platform --no-editable
 
 # ---- Stage 2: final runtime image ----

@@ -25,9 +25,9 @@ AS_RESIP_CACHE_ROOT="${AS_RESIP_CACHE_ROOT:-${REPO_ROOT}/.cache/m2-resiprocate}"
 AS_RESIP_HOME="${AS_RESIP_HOME:-${AS_RESIP_CACHE_ROOT}/source}"
 AS_RESIP_BUILD="${AS_RESIP_BUILD:-${AS_RESIP_CACHE_ROOT}/build}"
 AS_RESIP_PROBE_BUILD="${AS_RESIP_PROBE_BUILD:-${AS_RESIP_CACHE_ROOT}/probe-build}"
-PLATFORM_RESIP_RUNTIME_BUILD="${AS_RESIP_RUNTIME_BUILD:-${REPO_ROOT}/platform/native/resip_runtime/build}"
-PLATFORM_RESIP_TWO_LEG_BUILD="${AS_RESIP_TWO_LEG_BUILD:-${REPO_ROOT}/platform/native/resip_two_leg/build}"
-PLATFORM_RESIP_RECOVERY_BUILD="${AS_RESIP_RECOVERY_BUILD:-${REPO_ROOT}/platform/native/resip_recovery/build}"
+PLATFORM_RESIP_RUNTIME_BUILD="${AS_RESIP_RUNTIME_BUILD:-${REPO_ROOT}/src/platform/native/resip_runtime/build}"
+PLATFORM_RESIP_TWO_LEG_BUILD="${AS_RESIP_TWO_LEG_BUILD:-${REPO_ROOT}/src/platform/native/resip_two_leg/build}"
+PLATFORM_RESIP_RECOVERY_BUILD="${AS_RESIP_RECOVERY_BUILD:-${REPO_ROOT}/src/platform/native/resip_recovery/build}"
 
 SOURCE_TARBALL="resiprocate-1.14.0-632e215c-source.tar.gz"
 PREBUILT_TARBALL="resiprocate-m2-ubuntu20.04-x86_64-prebuilt-20261004.tar.gz"
@@ -217,7 +217,7 @@ cmd_build_platform_resip() {
     python_bin="$(command -v python3)"
   fi
   log "cmake configure platform resip_runtime -> ${PLATFORM_RESIP_RUNTIME_BUILD}"
-  cmake -S "${REPO_ROOT}/platform/native/resip_runtime" -B "${PLATFORM_RESIP_RUNTIME_BUILD}" \
+  cmake -S "${REPO_ROOT}/src/platform/native/resip_runtime" -B "${PLATFORM_RESIP_RUNTIME_BUILD}" \
     -DRESIP_HOME="${AS_RESIP_HOME}" \
     -DRESIP_BUILD="${AS_RESIP_BUILD}" \
     -DPython3_EXECUTABLE="${python_bin}" \
@@ -249,7 +249,7 @@ cmd_build_platform_recovery() {
     python_bin="$(command -v python3)"
   fi
   log "cmake configure platform resip_recovery -> ${PLATFORM_RESIP_RECOVERY_BUILD}"
-  cmake -S "${REPO_ROOT}/platform/native/resip_recovery" -B "${PLATFORM_RESIP_RECOVERY_BUILD}" \
+  cmake -S "${REPO_ROOT}/src/platform/native/resip_recovery" -B "${PLATFORM_RESIP_RECOVERY_BUILD}" \
     -DRESIP_HOME="${AS_RESIP_HOME}" \
     -DRESIP_BUILD="${AS_RESIP_BUILD}" \
     -DPython3_EXECUTABLE="${python_bin}" \
@@ -281,7 +281,7 @@ cmd_build_platform_two_leg() {
     python_bin="$(command -v python3)"
   fi
   log "cmake configure platform resip_two_leg -> ${PLATFORM_RESIP_TWO_LEG_BUILD}"
-  cmake -S "${REPO_ROOT}/platform/native/resip_two_leg" -B "${PLATFORM_RESIP_TWO_LEG_BUILD}" \
+  cmake -S "${REPO_ROOT}/src/platform/native/resip_two_leg" -B "${PLATFORM_RESIP_TWO_LEG_BUILD}" \
     -DRESIP_HOME="${AS_RESIP_HOME}" \
     -DRESIP_BUILD="${AS_RESIP_BUILD}" \
     -DPython3_EXECUTABLE="${python_bin}" \
@@ -375,7 +375,7 @@ cmd_smoke_tcp_runtime() {
   cmd_build_platform_resip
   log "smoke: platform TCP resip_runtime integration (pytest)"
   (cd "${REPO_ROOT}" && "${python_bin}" -m pytest \
-    platform/tests/test_resip_runtime_tcp_integration.py -m integration -q)
+    src/platform/tests/test_resip_runtime_tcp_integration.py -m integration -q)
   log "smoke passed (TCP resip_runtime integration)"
 }
 
@@ -390,7 +390,7 @@ cmd_smoke_tls_runtime() {
   cmd_build_platform_resip
   log "smoke: platform TLS resip_runtime integration (pytest)"
   (cd "${REPO_ROOT}" && "${python_bin}" -m pytest \
-    platform/tests/test_resip_runtime_tls_integration.py -m integration -q)
+    src/platform/tests/test_resip_runtime_tls_integration.py -m integration -q)
   log "smoke passed (TLS resip_runtime integration)"
 }
 

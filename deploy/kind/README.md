@@ -27,7 +27,7 @@ Create a [kind](https://kind.sigs.k8s.io/) cluster on local Docker, load the AS 
 ## One-shot evidence
 
 ```sh
-./deploy/kind/m5-cluster-evidence.sh
+./deploy/kind/scripts/m5-cluster-evidence.sh
 ```
 
 Artifacts: `artifacts/m5/<UTC-date>/cluster-evidence.log` (plus ingress check summary).

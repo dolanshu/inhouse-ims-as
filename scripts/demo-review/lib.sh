@@ -65,7 +65,7 @@ demo_require_uv() {
 }
 
 demo_require_native_runtime() {
-  local build_dir="${AS_RESIP_RUNTIME_BUILD:-${REPO_ROOT}/platform/native/resip_runtime/build}"
+  local build_dir="${AS_RESIP_RUNTIME_BUILD:-${REPO_ROOT}/src/platform/native/resip_runtime/build}"
   if ! compgen -G "${build_dir}/_resip_runtime"*.so >/dev/null; then
     demo_log "building _resip_runtime..."
     make -C "${REPO_ROOT}" m2-platform-resip-build

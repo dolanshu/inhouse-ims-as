@@ -65,7 +65,7 @@ else
     demo_log "running test_postgres_managed_rule_pipeline_integration.py"
     AS_PG_TEST_DSN="${AS_PG_TEST_DSN:-postgresql://postgres:postgres@127.0.0.1:55432/as_config}" \
       uv run pytest \
-      services/config-service/tests/test_postgres_managed_rule_pipeline_integration.py::test_managed_rule_proposal_submit_approve_distribute_and_activate_compiled_bundle \
+      src/services/config-service/tests/test_postgres_managed_rule_pipeline_integration.py::test_managed_rule_proposal_submit_approve_distribute_and_activate_compiled_bundle \
       -m integration -v 2>&1 | tee "${ART}/pipeline-integration.log"
   else
     demo_log "SKIP PG integration (start compose postgres or set AS_PG_TEST_DSN)"
@@ -75,7 +75,7 @@ fi
 
 demo_step 3 "规则编译（runtime_bundle）"
 demo_show_customer "展示：控制台规则如何变成运行时可消费的 JSON（ADR-0025）"
-uv run pytest services/config-service/tests/test_runtime_bundle.py -m unit -q 2>&1 | tee "${ART}/runtime-bundle-unit.log"
+uv run pytest src/services/config-service/tests/test_runtime_bundle.py -m unit -q 2>&1 | tee "${ART}/runtime-bundle-unit.log"
 cp "${FIXTURES_DIR}/bundle-forward-86755.json" "${ART}/bundle-forward-86755.json"
 demo_log "sample bundle written: ${ART}/bundle-forward-86755.json"
 head -n 20 "${ART}/bundle-forward-86755.json"

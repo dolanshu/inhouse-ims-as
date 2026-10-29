@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 >
 > **Evidence wording (must read)**: **all conclusions on this page are based on engineering slice evidence**.
 > - **M5 engineering closure ≠ REQ acceptance**; **M8 RC readiness ≠ closure** ([`../acceptance/report.md`](../acceptance/report.md) §0).
-> - **Current e2e state**: `pytest -m e2e` **8 tests pass stably** (Wave 1 five tests `testbed/e2e/test_sip_first_edition.py` + Wave 2 three tests `testbed/e2e/test_s1_replay_contract.py`; **fail, not skip**, when the native extension is missing), REQ-F-1 = **automated subset covered / full text still open** (covered: two-leg normalized message sequence differential comparison, C_in ≠ C_out, byte-identical SDP offer; **per-message header differential comparison of the 14 messages is still not covered**); performance is accept-all harness only, **not the business decision path** (G-P1-2).
+> - **Current e2e state**: `pytest -m e2e` **8 tests pass stably** (Wave 1 five tests `tests/e2e/test_sip_first_edition.py` + Wave 2 three tests `tests/e2e/test_s1_replay_contract.py`; **fail, not skip**, when the native extension is missing), REQ-F-1 = **automated subset covered / full text still open** (covered: two-leg normalized message sequence differential comparison, C_in ≠ C_out, byte-identical SDP offer; **per-message header differential comparison of the 14 messages is still not covered**); performance is accept-all harness only, **not the business decision path** (G-P1-2).
 > - **Evidence boundary for simulated `active_calls`**: no-dropped-call evidence for downscale / draining / rolling upgrade comes from `AS_M5_SIMULATED_ACTIVE_CALLS` simulation on kind; **not dropping calls under real SIP load awaits M7 / M8 acceptance** (G-P1-1).
 > - **Zero capacity numbers**: this page has no CPS / CAPS / BHCA / concurrency / throughput / latency / percentage capacity (O1 undecided). Percentages and fixed-window counts appearing in the table are **pre-existing alert thresholds**, not capacity metrics.
 > - **Originals preserved**: this page is a **collection and reorganization** of existing runbooks under [`../acceptance/`](../acceptance/); the original files are **not deleted, not moved, not rewritten**. Source links are given at the end of each section; the evidence originals are there.
@@ -36,7 +36,7 @@ Prerequisites: kubeconfig points at the target cluster; namespace per the site (
 | 1 | Pod status and ready | `kubectl -n as-prod get pods -l app.kubernetes.io/part-of=3rdparty-as` | Every use-case Pod `Running` with all READY true; no CrashLoop / no Pending | READY not true → §4; restarts → §2 `ASRestartLoop` | Label definitions `deploy/helm/templates/_helpers.tpl:55,71` |
 | 2 | Health endpoints | In-container probes are configured; for manual checking use `kubectl -n as-prod port-forward deploy/<release>-<use-case> 8080:8080` then access `/health/live`, `/health/ready` | `/health/live` 200; `/health/ready` 200 | `/health/ready` **503** = draining (normal traffic removal in progress), see §3.1; persistent 503 → §4 | The port comes from Helm `health.port` (`deploy/helm/values.yaml:281-282`) → ConfigMap `AS_HEALTH_PORT` (`templates/configmap.yaml:58`); paths from `values.yaml:286-303` |
 | 3 | Configuration version consistency | `kubectl -n as-prod exec deploy/<release>-<use-case> -- printenv CONFIG_VERSION` | All replicas' `CONFIG_VERSION` are identical and equal to the console's currently effective version | Inconsistent → §3.3; empty value = instance has not reported yet → §4 | Commands as written see `deploy/helm/templates/NOTES.txt:47-51` (injected by config-service grayscale distribution, ADR-0006) |
-| 4 | Metric availability | `kubectl -n as-prod exec deploy/<release>-<use-case> -- curl -s :8080/metrics \| grep '^as_'` (the port comes from `health.port`; when `curl` is not in the image, use `kubectl -n as-prod port-forward deploy/<release>-<use-case> 8080:8080` then locally `curl -s localhost:8080/metrics \| grep '^as_'`) | Can list session / decision related `as_*` series | Cannot list → §4. **Note: the chart has not wired scraping** (no scrape annotation, no ServiceMonitor), so "absent in Prometheus" does not equal "the process produced nothing" | Endpoint implementation `platform/src/as_platform/runtime/health.py`; ⚠️ gap see L2 §8 |
+| 4 | Metric availability | `kubectl -n as-prod exec deploy/<release>-<use-case> -- curl -s :8080/metrics \| grep '^as_'` (the port comes from `health.port`; when `curl` is not in the image, use `kubectl -n as-prod port-forward deploy/<release>-<use-case> 8080:8080` then locally `curl -s localhost:8080/metrics \| grep '^as_'`) | Can list session / decision related `as_*` series | Cannot list → §4. **Note: the chart has not wired scraping** (no scrape annotation, no ServiceMonitor), so "absent in Prometheus" does not equal "the process produced nothing" | Endpoint implementation `src/platform/src/as_platform/runtime/health.py`; ⚠️ gap see L2 §8 |
 | 5 | ingress HTTPS redirect | `curl -I -H 'Host: <ingress-host>' http://ingress-nginx-controller.ingress-nginx.svc/` | **301 / 308** (HTTP via the ingress is redirected or rejected) | Not 301/308 → §4; **empty reply (curl 52) is treated as not passed**, the environment must be fixed or the evidence path changed | [`../acceptance/m5-7.2d-ingress-runbook.md`](../acceptance/m5-7.2d-ingress-runbook.md) check item 4; **port-forward HTTP 200 cannot substitute for this item** |
 | 6 | Redis availability | Metric `as_state_store_available{use_case}` (method same as #4) | `1` | `0` → §2 `ASCallStateStoreUnavailable` + §4; **series absent ≠ 0** (not produced when `REDIS_URL` is not configured) | `deploy/alerts/README.md` §Metric contract |
 | 7 | PostgreSQL availability | Executed by the platform side on the governance database host with `pg_isready` (owner / operations account, not the application role) | Accepts connections | Failure → §4 | Role and DSN wording see §3.5 and L2 §6 |
@@ -75,7 +75,7 @@ Each section is structured: prerequisites → commands as written → expected o
 
 ### 3.1 Manual Downscale and Traffic Removal
 
-Source: [`../acceptance/m5-downscale-runbook.md`](../acceptance/m5-downscale-runbook.md) (criteria implementation `platform/src/as_platform/ops/downscale_guard.py`, ADR-0010; ISSU = draining, ADR-0009).
+Source: [`../acceptance/m5-downscale-runbook.md`](../acceptance/m5-downscale-runbook.md) (criteria implementation `src/platform/src/as_platform/ops/downscale_guard.py`, ADR-0010; ISSU = draining, ADR-0009).
 
 **Prerequisites**: each Pod can query **`as_active_calls`** (`GET :8080/metrics` or telemetry export); `AS_DOWNSCALE_GUARD_ENABLED` / `AS_DOWNSCALE_GUARD_PROTECT_ABOVE` are injected by the Helm ConfigMap (enabled by default + threshold 0); HPA **need not be enabled** (no thresholds before O1 / M6); downscaling may be manual or a cluster autoscaler proposed replica count.
 
@@ -143,7 +143,7 @@ kubectl -n <ns> rollout status deploy --selector app.kubernetes.io/part-of=3rdpa
 
 ### 3.3 Console Daily Operations (Rule Change Orders)
 
-Source: [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) (browser acceptance 5-step path); governance semantics ADR-0006; state machine implementation `services/config-service/src/as_config_service/change_order.py`.
+Source: [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) (browser acceptance 5-step path); governance semantics ADR-0006; state machine implementation `src/services/config-service/src/as_config_service/change_order.py`.
 
 **Path**: edit draft → submit → approval → grayscale distribution → rollback. Configuration **does not go through GitOps**, and is **not** operations staff directly UPDATE-ing the database (`AGENT.md` §2).
 
@@ -156,7 +156,7 @@ DISTRIBUTING --roll_back--> ROLLED_BACK
 APPLIED --roll_back--> ROLLED_BACK
 ```
 
-`REJECTED` / `APPLIED` / `ROLLED_BACK` are terminal states. Distribution status (`services/config-service/src/as_config_service/distributor.py`): `pending` → `in_progress` → `completed`, and `rolled_back` on anomaly.
+`REJECTED` / `APPLIED` / `ROLLED_BACK` are terminal states. Distribution status (`src/services/config-service/src/as_config_service/distributor.py`): `pending` → `in_progress` → `completed`, and `rolled_back` on anomaly.
 
 **Scope (be sure to answer users per this wording)**
 
@@ -176,7 +176,7 @@ APPLIED --roll_back--> ROLLED_BACK
 
 ### 3.4 Configuration Hot Update for Certificate Rotation
 
-Source: `AGENT.md` §13; `deploy/helm/templates/NOTES.txt` §1; ADR-0016; implementation semantics `platform/src/as_platform/sip/tls_rotation.py`.
+Source: `AGENT.md` §13; `deploy/helm/templates/NOTES.txt` §1; ADR-0016; implementation semantics `src/platform/src/as_platform/sip/tls_rotation.py`.
 
 **Prerequisites**: the customer PKI Secret is ready (`tls.secretName` points to `tls.crt` / `tls.key` / `ca.crt`) — if `tls.enabled=true` but `tls.secretName` is empty, the chart **mounts no certificate** and the SIP TLS path points to a non-existent file, which must be supplied before going live (NOTES.txt §1); the dual-certificate overlap window policy is decided (`retiring` + `overlap_deadline_monotonic`).
 
@@ -259,16 +259,16 @@ Source: `AGENT.md` §11 / §13; [`../acceptance/m4b-8-runbook.md`](../acceptance
 | Section on this page | Original file and location | Collection method |
 |---|---|---|
 | Status block | [`../acceptance/report.md`](../acceptance/report.md) §0.1/§0.4/§0.5; [`../plan.md`](../plan.md) §0 | Summary |
-| §1 #1–#3 Pod / health endpoints / configuration version | `deploy/helm/templates/_helpers.tpl:55,71`; `templates/NOTES.txt:37-51`; `deploy/helm/values.yaml:281-303`; `templates/configmap.yaml:58`; `platform/src/as_platform/runtime/health.py` | Index links (self-verified) |
+| §1 #1–#3 Pod / health endpoints / configuration version | `deploy/helm/templates/_helpers.tpl:55,71`; `templates/NOTES.txt:37-51`; `deploy/helm/values.yaml:281-303`; `templates/configmap.yaml:58`; `src/platform/src/as_platform/runtime/health.py` | Index links (self-verified) |
 | §1 #4/#6 metrics and Redis availability | `deploy/alerts/README.md` §Metric contract; scraping gap self-verified (no `prometheus.io/scrape` / ServiceMonitor / PodMonitor across the entire `deploy/helm/templates/` directory) | Summary + self-verified |
 | §1 #5 ingress 301/308 | [`../acceptance/m5-7.2d-ingress-runbook.md`](../acceptance/m5-7.2d-ingress-runbook.md) check item 4, §"host 80/443 and in-cluster ingress curl" | Summary |
 | §1 #6 Redis availability | `deploy/alerts/README.md` §Metric contract | Index links |
 | §1 #8 console | [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §8 | Index links |
-| §2 full table | [`../../deploy/alerts/as-alerts.yaml`](../../deploy/alerts/as-alerts.yaml) **10 rules / 3 groups**; [`../../deploy/alerts/README.md`](../../deploy/alerts/README.md); triggerability taken from [`alert-response-matrix.md`](alert-response-matrix.md) §2 and [`../product/ne-datasheet.md`](../product/ne-datasheet.md) §6, and self-verified via `platform/src/as_platform/__main__.py` | Summary (the rule file is the sole authority for thresholds) |
+| §2 full table | [`../../deploy/alerts/as-alerts.yaml`](../../deploy/alerts/as-alerts.yaml) **10 rules / 3 groups**; [`../../deploy/alerts/README.md`](../../deploy/alerts/README.md); triggerability taken from [`alert-response-matrix.md`](alert-response-matrix.md) §2 and [`../product/ne-datasheet.md`](../product/ne-datasheet.md) §6, and self-verified via `src/platform/src/as_platform/__main__.py` | Summary (the rule file is the sole authority for thresholds) |
 | §3.1 downscale | [`../acceptance/m5-downscale-runbook.md`](../acceptance/m5-downscale-runbook.md) §1–§5 (**commands and order copied verbatim in full**) | Rewritten operation body |
 | §3.2 rolling upgrade | [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) §Upgrade discipline; `templates/NOTES.txt` §3 | Rewritten operation body |
-| §3.3 console | [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §1/§2/§4/§7; `services/config-service/src/as_config_service/change_order.py:17-23`; `distributor.py:49-55` | Summary + index links |
-| §3.4 certificate hot update | `AGENT.md` §13; `templates/NOTES.txt` §1; `platform/src/as_platform/sip/tls_rotation.py:1-18` | Summary |
+| §3.3 console | [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §1/§2/§4/§7; `src/services/config-service/src/as_config_service/change_order.py:17-23`; `distributor.py:49-55` | Summary + index links |
+| §3.4 certificate hot update | `AGENT.md` §13; `templates/NOTES.txt` §1; `src/platform/src/as_platform/sip/tls_rotation.py:1-18` | Summary |
 | §3.5 backup and restore | [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) §Backup & restore, §PostgreSQL HA / PITR (**two commands copied verbatim**) | Rewritten operation body + summary |
 | §4 escalation path | [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §4 | Summary |
 | §5 redaction | `AGENT.md` §11 / §13; [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §5/§8 | Summary |

@@ -19,9 +19,9 @@
 #   helm     3.16.4  —— chart 为 apiVersion: v2，需 Helm 3.x（docs/delivery/install-guide.md 前置 2）
 #   kubectl  1.31.4  —— 与 kind v0.24.0 默认节点镜像 kindest/node:v1.31.0 同 minor，
 #                        满足 kubectl 与集群 ±1 minor 的版本偏移要求
-#   kind     0.24.0  —— 首个默认提供 1.31 节点镜像的版本；deploy/kind/m5-kind-up.sh 未固定
+#   kind     0.24.0  —— 首个默认提供 1.31 节点镜像的版本；deploy/kind/scripts/m5-kind-up.sh 未固定
 #                        节点镜像，故 kind 版本即节点版本来源
-#   prometheus 2.55.1 —— **与 deploy/kind/m5-record-artifacts.sh 的历史 /tmp 兜底路径一致**，
+#   prometheus 2.55.1 —— **与 deploy/kind/scripts/m5-record-artifacts.sh 的历史 /tmp 兜底路径一致**，
 #                        不升级以免同一份告警规则被两个 promtool 版本校验出不同结果
 #
 # 可选：填入官方公布的 sha256 后，bootstrap-infra.sh 会强制校验；留空则只打印警告。
