@@ -20,6 +20,7 @@ list on violation and 0 when clean.
 
 from __future__ import annotations
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -46,9 +47,11 @@ _ADR_PATTERN = re.compile(r"ADR-\d+")
 
 # See ADR-0015: the scan window is the 5 lines preceding the definition plus
 # the definition line itself (a trailing ``# See ADR-00NN`` belongs to it).
-# The same-file header is the leading lines holding the module docstring.
 # Both live conventions count: ``# See ADR-00NN`` comments and ``(ADR-00NN)``
-# doc references.
+# doc references. The file-wide header is matched in two windows: the first
+# HEADER_LINE_COUNT raw lines, and the module docstring (ast-extracted — the
+# 12-line license header pushes docstring ADR citations past line 15). Either
+# hit exempts the whole file.
 HEADER_LINE_COUNT = 15
 PRECEDING_LINE_COUNT = 5
 
@@ -64,48 +67,56 @@ _PRIVATE_PREFIX = "_"
 GRANDFATHERED: frozenset[str] = frozenset(
     {
         # Thin wiring accessors in the management-plane API (ADR-0006).
-        "services/config-service/src/as_config_service/api.py:require_auth_store",
-        "services/config-service/src/as_config_service/api.py:require_distribution_store",
-        "services/config-service/src/as_config_service/api.py:require_activation_stores",
-        "services/config-service/src/as_config_service/api.py:require_as_instance_store",
-        "services/config-service/src/as_config_service/api.py:get_session",
+        "src/services/config-service/src/as_config_service/api.py:require_auth_store",
+        "src/services/config-service/src/as_config_service/api.py:require_distribution_store",
+        "src/services/config-service/src/as_config_service/api.py:require_activation_stores",
+        "src/services/config-service/src/as_config_service/api.py:require_as_instance_store",
+        "src/services/config-service/src/as_config_service/api.py:get_session",
         # Row types and stores awaiting their ADR pointer (REQ-F-12/REQ-F-15).
-        "services/config-service/src/as_config_service/as_instance_store.py:StoredAsInstance",
-        "services/config-service/src/as_config_service/as_instance_store.py:AsInstanceStore",
-        "services/config-service/src/as_config_service/as_instance_store.py:PostgresAsInstanceStore",
-        "services/config-service/src/as_config_service/managed_rule_store.py:StoredManagedRule",
-        "services/config-service/src/as_config_service/managed_rule_store.py:ManagedRuleStore",
-        "services/config-service/src/as_config_service/managed_rule_store.py:PostgresManagedRuleStore",
+        "src/services/config-service/src/as_config_service/as_instance_store.py:StoredAsInstance",
+        "src/services/config-service/src/as_config_service/as_instance_store.py:AsInstanceStore",
+        "src/services/config-service/src/as_config_service/as_instance_store.py:PostgresAsInstanceStore",
+        "src/services/config-service/src/as_config_service/managed_rule_store.py:StoredManagedRule",
+        "src/services/config-service/src/as_config_service/managed_rule_store.py:ManagedRuleStore",
+        "src/services/config-service/src/as_config_service/managed_rule_store.py:PostgresManagedRuleStore",
         # SIP adapter helpers and recovery surface (ADR-0016, D10).
-        "platform/src/as_platform/runtime/sip_stack_service.py:call_controller",
-        "platform/src/as_platform/runtime/transport_env.py:load_transport_seam_from_env",
-        "platform/src/as_platform/sip/recovery.py:ProcessStartRestoreResult",
-        "platform/src/as_platform/sip/recovery.py:stop_native_recovery_sessions",
-        "platform/src/as_platform/sip/recovery.py:on_process_start_restore",
-        "platform/src/as_platform/sip/recovery_coordinator.py:ScheduledRestoreHandle",
-        "platform/src/as_platform/sip/recovery_coordinator.py:schedule_restore",
-        "platform/src/as_platform/sip/resip_recovery.py:RecoveryStackSession",
-        "platform/src/as_platform/sip/resip_recovery.py:drain",
-        "platform/src/as_platform/sip/resip_runtime.py:status_code_from_controller_effects",
-        "platform/src/as_platform/sip/resip_runtime.py:controller_effects_for_inbound_invite",
-        "platform/src/as_platform/sip/resip_runtime.py:call_controller",
+        "src/platform/src/as_platform/runtime/sip_stack_service.py:call_controller",
+        "src/platform/src/as_platform/runtime/transport_env.py:load_transport_seam_from_env",
+        "src/platform/src/as_platform/sip/recovery.py:ProcessStartRestoreResult",
+        "src/platform/src/as_platform/sip/recovery.py:stop_native_recovery_sessions",
+        "src/platform/src/as_platform/sip/recovery.py:on_process_start_restore",
+        "src/platform/src/as_platform/sip/recovery_coordinator.py:ScheduledRestoreHandle",
+        "src/platform/src/as_platform/sip/recovery_coordinator.py:schedule_restore",
+        "src/platform/src/as_platform/sip/resip_recovery.py:RecoveryStackSession",
+        "src/platform/src/as_platform/sip/resip_recovery.py:drain",
+        "src/platform/src/as_platform/sip/resip_runtime.py:status_code_from_controller_effects",
+        "src/platform/src/as_platform/sip/resip_runtime.py:controller_effects_for_inbound_invite",
+        "src/platform/src/as_platform/sip/resip_runtime.py:call_controller",
     }
 )
 
 
 def _repo_root() -> Path:
     """Return the repository root derived from this script location."""
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[1]
 
 
 def _scan_roots(root: Path) -> list[Path]:
     """Return the product source roots subject to REQ-G-3."""
-    roots = [root / "platform" / "src"]
+    roots = [root / "src" / "platform" / "src"]
     for member in ("apps", "services"):
-        base = root / member
+        base = root / "src" / member
         if base.is_dir():
             roots.extend(sorted(p for p in base.glob("*/src") if p.is_dir()))
     return roots
+
+
+def _module_docstring(text: str) -> str:
+    """Return the module docstring of ``text`` via AST, or "" when absent."""
+    try:
+        return ast.get_docstring(ast.parse(text)) or ""
+    except SyntaxError:
+        return ""
 
 
 def _mentions_marker(name: str) -> bool:
@@ -121,9 +132,13 @@ def _definition_key(path: Path, root: Path, name: str) -> str:
 
 def _scan_file(path: Path, root: Path, used: set[str]) -> list[str]:
     """Scan one file; return ``path:line: kind name`` entries for violations."""
-    lines = path.read_text(encoding="utf-8").splitlines()
+    text = path.read_text(encoding="utf-8")
+    docstring = _module_docstring(text)
+    lines = text.splitlines()
     header = "\n".join(lines[:HEADER_LINE_COUNT])
-    header_ok = _ADR_PATTERN.search(header) is not None
+    header_ok = (
+        _ADR_PATTERN.search(header) is not None or _ADR_PATTERN.search(docstring) is not None
+    )
     violations: list[str] = []
     for index, line in enumerate(lines):
         match = _DEFINITION_PATTERN.match(line)
