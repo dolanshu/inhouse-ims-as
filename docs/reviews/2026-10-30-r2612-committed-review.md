@@ -24,7 +24,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ---
 
-## 0. 需要维护者做的事（按建议值，共 3 项阻塞 + 5 项建议）
+## 0. 需要维护者做的事（按建议值，共 3 项阻塞 + 5 项建议；处置状态见下方注与 §9）
 
 > **2026-10-30 更新**：R-1 / R-3 / R-4 / R-5 / R-7 / R-8 / R-9 / R-10 / R-11 / R-12 / R-14 / R-15 / R-16 已按建议值落地（补漏 commit，见 §9）；
 > B2 已由维护者裁决打回（`AGENT.md` 不动）；R-6 与 R-2 的引用 follow-up 也已按建议值落地（§9）。
@@ -32,7 +32,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | # | 事项 | 建议值 |
 |---|---|---|
 | **B1** | E3 漏改的**可执行路径**残留，6 个文件 12 处（R-1） | 补一个"E3 补漏"commit，全部加 `src/` 前缀；建议并入下一次已提交批次，**修完再 push** |
-| ~~**B2**~~ | `AGENT.md` §11 三条硬规则在 `2d8bfaa` 被静默删除（R-2） | **已裁决（维护者 2026-10-30）：打回，「AGENT.md 不动」** —— 不恢复三条规则；四处对 `AGENT.md §11` 的引用（`CONTRIBUTING.md` L69、`responsibility-matrix.md` L42、`security-privacy.md` L131/L206）维持现状，另立 follow-up 登记（见 §8 R-2） |
+| ~~**B2**~~ | `AGENT.md` §11 三条硬规则在 `2d8bfaa` 被静默删除（R-2） | **已修（2026-10-30）**：引用 follow-up 已落地 —— 8 个活文档 **16 处** 对 `AGENT.md` §11 的引用改指 **§13（Security）**（评审件原记"四处"为计数偏少）。剩余 §11 引用（ADR 正文 / 历史记录 / 两个已脏文件）按裁决未动，见 §9 |
 | **B3** | 活文档断链 8 处（R-3），其中 4 处是 E3 造成、2 处是新建即错 | 与 B1 同批一次修完；`R2612_Struct_Plan.md` L21 改 `./R2612_Cont.md`（1 行，保史边界内） |
 | P2-1 | 账本 rename 计数 225 与 git 实测 191 不符（R-4） | 订正 `R2612_Struct_Plan.md` L284 为 **191（170 纯 + 21 带改）**，或注明计数口径 |
 | P2-2 | 账本收尾行自相矛盾（R-5） | 删 "the E8 changes await the 7th commit"，并把 `c626031`/`d48785b` 补进 commit 枚举 |
@@ -139,6 +139,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 2. R-4 / R-5 属账本诚实性修正，建议与 B1 同批，避免账本与 git 长期背离。
 3. R-6 的口径若改动，会触发 `check_adr_annotations.py` 行为变化 → 需重跑 `make gate-strict` 并如实记录。
 
+**2026-10-30 状态**：① B1 / B3 已落地（`426d17f`），B2 经维护者裁决打回（`AGENT.md` 不动）；**push 与 commit 切分仍是维护者的决定** —— 本地 14 个 commit 未 push。② R-4 / R-5 已与 B1 同批订正（`426d17f`）。③ R-6 已按建议改口径（`861cad7`，豁免但计数告警），`make gate-strict` 复跑 **clean / exit 0**，21 条 docstring-only 浮出并记于 §8 / §9。
+
 ## 8. Adjudication
 
 | ID | 来源 | 问题摘要 | 裁决 | 修改方案 | 状态 | 验证方式 | 备注 |
@@ -184,12 +186,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | R-15（三处数字） | `docs/handoff/2026-10-30-r2612-committed-summary.md`（未跟踪） | 属"现有未提交内容"；已在工作树订正，随后与评审件一并单独 commit |
 | R-2 裁决标记 | 本评审件（未跟踪） | 同上 |
 
-### 后续两个 commit（2026-10-30，同批）
+### 后续 commit（2026-10-30，同批；评审件本身随 `8a48b61` 入库）
 
 | commit | 内容 | 验证 |
 |---|---|---|
-| R-6 | `scripts/check_adr_annotations.py`：模块 docstring 仍豁免，但"只靠 docstring 通过"的名字逐条打印非致命 warning；口径说明写入脚本 docstring | `make gate-strict` 复跑：**clean / exit 0**，21 条 docstring-only 全部浮出（`downscale_guard`、`adapter`、`call_controller`×2、`ingress`、`in_memory`、`redis_store`×2、`telemetry/*`×8、`auth.py`×6 分布） |
-| R-2 follow-up | 8 个活文档 16 处 `AGENT.md §11` 引用改指 §13（Security）| `grep` 复扫 |
+| `861cad7` · R-6 | `scripts/check_adr_annotations.py`：模块 docstring 仍豁免，但"只靠 docstring 通过"的名字逐条打印非致命 warning；口径说明写入脚本 docstring | `make gate-strict` 复跑：**clean / exit 0**，21 条 docstring-only 全部浮出（`downscale_guard`、`adapter`、`call_controller`×2、`ingress`、`in_memory`、`redis_store`×2、`telemetry/*`×8、`auth.py`×6 分布） |
+| `f8c2bbf` · R-2 follow-up | 8 个活文档 16 处 `AGENT.md §11` 引用改指 §13（Security）| `grep` 复扫 |
 
 **仍未随任何 commit**（工作树）：
 
