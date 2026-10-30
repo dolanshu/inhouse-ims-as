@@ -99,7 +99,7 @@ The following files belong to this plan's operations-document deliverables, **al
 8. **testbed / kind / compose captures are not live-network evidence.** ADR-0014 explicitly excludes testbed from v1 deliverables.
 9. **Terminology discipline.** "v1" / "v1.1" **are not release versions** (`docs/plan.md` §0, 2026-10-07 maintainer wording); the product version number only looks at the root `VERSION`. Any calling-party / regex rules in the docs are marked **v1.1 (not a release version)**.
 10. **Naming discipline.** The product name is **In-house IMS Application Server**, **formally adopted as the product / documentation descriptor name** (G8-2; **not a trademark / not a brand claim**); chart name / image name / OTel service name remain `3rdparty-as` unchanged.
-11. **Keys and captures.** Storing passwords / tokens / cookies / private keys is forbidden; **never commit real captures** (`AGENT.md` §11 / §13).
+11. **Keys and captures.** Storing passwords / tokens / cookies / private keys is forbidden; **never commit real captures** (`AGENT.md` §13).
 
 ---
 

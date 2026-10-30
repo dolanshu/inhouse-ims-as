@@ -79,7 +79,7 @@ Per-segment responsibility table see [`../product/responsibility-matrix.md`](../
 1. Both sides capture on **their own side** against their own processes / network elements. **Decryption under TLS is each party's responsibility, and keys are not shared across parties**; the AS side **does not accept** copying peer private keys for decryption.
 2. Correlation key: the AS side uses §2's `inbound_call_id` / `outgoing_call_id`. **The two legs of the two-legged B2BUA have different Call-IDs** — cross-leg correlation uses "**timestamp + Route / Record-Route**": starting from the inbound leg's `inbound_call_id`, following `route_uri` and the `Record-Route` returned by the downstream, then aligning the outgoing leg's `outgoing_call_id`.
 3. Align the time base before comparison; when the window is insufficient, **do not** use "appears simultaneous" as evidence.
-4. **Never commit real packet captures** (`AGENT.md` §11 / §13). Only commit redacted fields / text lines — §2's `key=value` lines are themselves a committable form.
+4. **Never commit real packet captures** (`AGENT.md` §13). Only commit redacted fields / text lines — §2's `key=value` lines are themselves a committable form.
 
 ## 4. Layered Fault Tree
 

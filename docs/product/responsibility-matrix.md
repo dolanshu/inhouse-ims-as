@@ -39,7 +39,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 | **OP-BILL** | Charging domain (OCS / charging NE) | Customer | **N/A** —— no interface with this product. No CDR / charging / rating (ADR-0017) |
 | **OP-NOC** | NMS / NOC | Customer | Handles alert response, daily inspection, change-window execution; operates with our-side rollback decisions |
 | **OP-SEC** | Security and compliance | Customer | The **responsible party** for PDPO and data-residency; the confirmer of retention period and cross-border arrangements (O4 value resolved: default 10 days, deploy-configurable; scope and cross-border arrangement still pending OP-SEC confirmation); the commissioning party for and the exporter-standard adjudicator of penetration testing |
-| **3P** | Third-party interoperability party (e.g., integrator, S-SBC vendor) | Designated by customer | Participates in interoperability testing and joint debugging under customer authorization; **does not directly hold any credentials of this product** (`AGENT.md` §11: never commit keys / certificates / real captures) |
+| **3P** | Third-party interoperability party (e.g., integrator, S-SBC vendor) | Designated by customer | Participates in interoperability testing and joint debugging under customer authorization; **does not directly hold any credentials of this product** (`AGENT.md` §13: never commit keys / certificates / real captures) |
 
 **One-line boundary**: the AS side only owns "the decision after the ISC trigger, drain, and rollback"; all access decisions before the trigger (iFC subscription, triggering, canary) are on the OP-NET / OP-HSS / OP-SBC side.
 
@@ -121,7 +121,7 @@ flowchart TB
 | Link segment | Who captures | What is captured | What we can provide | Limits |
 |---|---|---|---|---|
 | **S-CSCF → S-SBC** (ISC trigger) | **Other party** (OP-NET / OP-SBC) | iFC trigger context and trigger result | **Not provided** | This segment does not pass through the AS at all. The AS side has no capture of this segment and holds no iFC trigger logs |
-| **S-SBC → AS trunk** (SIP over TLS `5061`) | **Each side captures its own side** | The signaling flow on each side's process/NE | ① **Call-ID-correlated JSON log-field contract** (see below); ② the `as_*` series at the `/metrics` endpoint | **Under TLS, capture decryption is each party's own responsibility; keys are not shared across parties**. The AS side **does not accept** copying the peer's private key for decryption; **never commit real captures** (`AGENT.md` §11 / §13; `SECURITY.md`) |
+| **S-SBC → AS trunk** (SIP over TLS `5061`) | **Each side captures its own side** | The signaling flow on each side's process/NE | ① **Call-ID-correlated JSON log-field contract** (see below); ② the `as_*` series at the `/metrics` endpoint | **Under TLS, capture decryption is each party's own responsibility; keys are not shared across parties**. The AS side **does not accept** copying the peer's private key for decryption; **never commit real captures** (`AGENT.md` §13; `SECURITY.md`) |
 | **AS → downstream** (`AS_SIP_NEXT_HOP` outbound leg) | **Other party** (downstream NE / OP-NET side) | The request received on the downstream side | The AS side provides the inbound / outbound two-leg Call-ID correlation fields (`outgoing_call_id` / `inbound_call_id`) | The landing result of the outbound signaling can only be evidenced by the downstream side |
 | **AS internal** (`apps/` → `platform/` → Redis / PostgreSQL) | **Our side** | Decision result, state-store interaction, config version | All provided by the AS side | Internal network; PG password and audit HMAC key go through Secret, **not into logs** |
 | **`testbed/` simulated link** | **Our side** (R&D) | All | All | ⚠️ **Not live-network evidence**. Simulation results (incl. callload, M7.1 simulation platform, dev-host harness) are R&D / demo assets; ADR-0014 explicitly excludes testbed from v1 deliverables |
@@ -142,7 +142,7 @@ flowchart TB
 |---|---|---|
 | **IRI / LI** | Belongs to on-net NE functions; a third-party AS intervening introduces cross-subject / cross-jurisdiction exposure. This ADR **reserves no collection point for it** —— reserving a collection point equals reserving the possibility of being required to enable it | ADR-0016 accepted |
 | **CDR / billing record** | No collection, no delivery, no archiving, no rating. Replaced by a Call-ID-based call trace, and **explicitly declared that the trace is not a billing record** | ADR-0017 accepted (decisions ①③) |
-| **cross-side decrypted capture** | Keys not shared across parties | `AGENT.md` §11 |
+| **cross-side decrypted capture** | Keys not shared across parties | `AGENT.md` §13 |
 | **payload logs** (off by default) | `AS_PAYLOAD_LOGS_ENABLED` / `telemetry.payloadLogsEnabled` default `false` (`deploy/helm/values.yaml:319`; `deploy/helm/templates/configmap.yaml:65`). Enabling is an explicit, auditable action | ADR-0016; `AGENT.md` §13 |
 
 ---

@@ -202,7 +202,7 @@ Supplementary conventions:
 
 ## 5. Security boundary
 
-**This document contains no credentials, tokens, or addresses** (`AGENT.md` §11 / §13): no passwords, certificate private keys, tokens, DSNs,
+**This document contains no credentials, tokens, or addresses** (`AGENT.md` §13): no passwords, certificate private keys, tokens, DSNs,
 cookies, and no real IPs / domain names / registry addresses. Tool paths are recorded only to the extent needed to explain capability;
 the output of `tools/env-probe.sh` is bound by the same constraint — it prints only tool paths, versions, and machine identifiers, and
 **prints no environment variables**. Evidence files are bound by the same constraint; see the last line of `acceptance/artifacts/m5/README.md`.

@@ -77,7 +77,7 @@ kubectl -n <ns> cp as-3rdparty-as-postgres-0:/tmp/as_config.dump ./as_config.dum
 |---|---|
 | **CDR / call records** | Not collected, not delivered, not archived (ADR-0017). Call traces **are not** call records |
 | **Media / RTP** | No media (ADR-0004): no RTP, no transcoding, no DTMF, no MRF |
-| **Secret contents** (private keys, `AS_CONFIG_DSN`, audit HMAC key) | Re-issued by the customer PKI / Secret management process; `AGENT.md` §11/ §13 prohibit committing secrets |
+| **Secret contents** (private keys, `AS_CONFIG_DSN`, audit HMAC key) | Re-issued by the customer PKI / Secret management process; `AGENT.md` §13/ §13 prohibit committing secrets |
 | **Diameter Sh side data** | No Sh (`AGENT.md` §2); no such data |
 | **LI / IRI materials** | No LI (ADR-0016), **no collection point reserved for it** |
 

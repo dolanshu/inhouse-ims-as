@@ -22,7 +22,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 >
 > **⚠️ iFC triggering is on the S-CSCF / HSS side (review G-P0-5 adjudicated)**. This product **only implements the business decision, traffic removal, and rollback after ISC triggering**, and **does not implement iFC**. The AS side holds neither the iFC trigger context nor iFC trigger logs. For all "why didn't the call reach the AS" questions, the **trigger-side** evidence can only be provided by OP-NET / OP-HSS / OP-SBC.
 >
-> **This document provides no LI / IRI** (ADR-0016: **no collection point reserved for it**; IRI is an in-network network element function, and third-party AS involvement would introduce cross-jurisdiction exposure). **TLS decryption is each party's own responsibility, and keys are not shared across parties** — the AS side **does not accept** copying peer private keys for decryption (`AGENT.md` §11 / §13).
+> **This document provides no LI / IRI** (ADR-0016: **no collection point reserved for it**; IRI is an in-network network element function, and third-party AS involvement would introduce cross-jurisdiction exposure). **TLS decryption is each party's own responsibility, and keys are not shared across parties** — the AS side **does not accept** copying peer private keys for decryption (`AGENT.md` §13).
 >
 > **testbed simulation is not production evidence**. `testbed/` is an R&D / demo asset, and ADR-0014 explicitly makes the testbed not a v1 deliverable; packet captures and logs on kind / compose **must not** serve as operator IOT or production evidence.
 >
@@ -151,7 +151,7 @@ The authoritative table see [`../product/responsibility-matrix.md`](../product/r
 | AS internal | **Ours** | Decision results, state store interactions, configuration version |
 | `testbed/` simulated link | **Ours** | All — ⚠️ **not production evidence** |
 
-**Method**: ① both sides capture on **their own side**, and **decryption under TLS is each party's responsibility, with keys not shared across parties**; ② **the two legs' Call-IDs differ** (B2BUA sides are independent, REQ-F-2), so cross-leg correlation uses "**timestamp + Route / Record-Route**" — starting from the inbound leg's `inbound_call_id`, following `route_uri` and the `Record-Route` returned by the downstream, then aligning the outgoing leg's `outgoing_call_id`; ③ align the time base before comparison, and when the window is insufficient **do not** use "appears simultaneous" as evidence; ④ **never commit real packet captures** (`AGENT.md` §11 / §13); only commit redacted fields / text lines.
+**Method**: ① both sides capture on **their own side**, and **decryption under TLS is each party's responsibility, with keys not shared across parties**; ② **the two legs' Call-IDs differ** (B2BUA sides are independent, REQ-F-2), so cross-leg correlation uses "**timestamp + Route / Record-Route**" — starting from the inbound leg's `inbound_call_id`, following `route_uri` and the `Record-Route` returned by the downstream, then aligning the outgoing leg's `outgoing_call_id`; ③ align the time base before comparison, and when the window is insufficient **do not** use "appears simultaneous" as evidence; ④ **never commit real packet captures** (`AGENT.md` §13); only commit redacted fields / text lines.
 
 ### 4.2 AS-Side Log Field Contract (forensics wording)
 
@@ -279,7 +279,7 @@ Each is structured: **trigger observation → judgment steps → handling → ro
 
 **Required fields for evidence request tickets** (missing one and the peer cannot locate it): time window (including time zone, first occurrence / persistent / most recent), Call-ID (**both cross-leg B2BUA Call-IDs**), our side's already-checked items and results, AS-side namespace / Pod names / `use_case`, AS-side `CONFIG_VERSION`, the segment hoped to be provided by the peer (S-CSCF→S-SBC trigger segment / S-SBC→AS trunk segment peer side / downstream side).
 
-**Discipline**: request tickets and replies are filed together; **do not save** passwords / tokens / cookies / private keys, and **do not commit real packet captures** (`AGENT.md` §11 / §13).
+**Discipline**: request tickets and replies are filed together; **do not save** passwords / tokens / cookies / private keys, and **do not commit real packet captures** (`AGENT.md` §13).
 
 ---
 

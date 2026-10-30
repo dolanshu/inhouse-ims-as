@@ -238,7 +238,7 @@ kubectl -n <ns> cp as-3rdparty-as-postgres-0:/tmp/as_config.dump ./as_config.dum
 
 ## 5. Evidence and Redaction Rules
 
-Source: `AGENT.md` §11 / §13; [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §5/§8.
+Source: `AGENT.md` §13; [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §5/§8.
 
 **Prohibited (no exceptions)**
 
@@ -271,4 +271,4 @@ Source: `AGENT.md` §11 / §13; [`../acceptance/m4b-8-runbook.md`](../acceptance
 | §3.4 certificate hot update | `AGENT.md` §13; `templates/NOTES.txt` §1; `src/platform/src/as_platform/sip/tls_rotation.py:1-18` | Summary |
 | §3.5 backup and restore | [`../acceptance/m5-state-stores-runbook.md`](../acceptance/m5-state-stores-runbook.md) §Backup & restore, §PostgreSQL HA / PITR (**two commands copied verbatim**) | Rewritten operation body + summary |
 | §4 escalation path | [`../product/responsibility-matrix.md`](../product/responsibility-matrix.md) §4 | Summary |
-| §5 redaction | `AGENT.md` §11 / §13; [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §5/§8 | Summary |
+| §5 redaction | `AGENT.md` §13; [`../acceptance/m4b-8-runbook.md`](../acceptance/m4b-8-runbook.md) §5/§8 | Summary |
