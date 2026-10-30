@@ -98,7 +98,7 @@ Read by reader role. Everything is plain text — Mermaid or ASCII diagrams, nev
 |---|---|
 | [`../tools/env-probe.sh`](../tools/env-probe.sh) | **Environment probe (read-only).** Probes hostname / OS / architecture plus docker / uv / python3.10 / helm / kubectl / kind / promtool / make / git, distinguishing three states: "✅ present / ❌ missing / ⚠ installed but unusable". `--markdown` emits rows that can be pasted straight into the table in [`environments.md`](environments.md), `--json` is for machines. It installs nothing, changes no system state and needs no root, and still exits 0 when tools are missing |
 | [`../tools/bootstrap-infra.sh`](../tools/bootstrap-infra.sh) | **infra tooling installation (no root, idempotent).** Unpacks helm / kubectl / kind / promtool into `tools/bin/`, with versions pinned in [`../tools/VERSIONS`](../tools/VERSIONS); supports `--dry-run`, `--only <tool>`, `--force`, and automatically invokes `env-probe.sh` to verify afterwards. **Any path that needs root reports an explicit error and never sneaks in a sudo** |
-| [`handoff/README.md`](handoff/README.md) | **Handoff record index.** Every session handoff record in `handoff/` (36 files) with its topic |
+| [`handoff/README.md`](handoff/README.md) | **Handoff record index.** Every session handoff record in `handoff/` (38 files) with its topic |
 | [`handoff/2026-10-11-local-infra-bootstrap-plan.md`](handoff/2026-10-11-local-infra-bootstrap-plan.md) | **The execution plan for filling in the four missing tools locally** (prerequisite checks, installation inventory, pinned versions, falsifiable verification steps, rollback, stop line). Executors should start from that document, not from this one |
 
 ## References

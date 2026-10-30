@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ## 1. Value proposition
 
-in-house AS is a **multi-service hosting platform**: each business use case is an independent process (`apps/`, one process per use case, one fault domain, one canary unit), business engines are pluggable, and adding a service requires no core-network change. Bringing a new service online only needs "add an app + a config change order" — **no change to the IMS core network** —— the S-CSCF triggers ISC based on the iFC subscription in the HSS, and the S-SBC does transparent bridging to deliver the call off-net. The platform is therefore **not bound by any core-network vendor's service release version**: business logic runs in our own processes, and the core-network side only sees a standard ISC trigger. The delivery form is **single-tenant, on-premises**, with data (runtime and governance state) all remaining in the customer's data center, never leaving the customer boundary.
+in-house AS is a **multi-service hosting platform**: each business use case is an independent process (`src/apps/`, one process per use case, one fault domain, one canary unit), business engines are pluggable, and adding a service requires no core-network change. Bringing a new service online only needs "add an app + a config change order" — **no change to the IMS core network** —— the S-CSCF triggers ISC based on the iFC subscription in the HSS, and the S-SBC does transparent bridging to deliver the call off-net. The platform is therefore **not bound by any core-network vendor's service release version**: business logic runs in our own processes, and the core-network side only sees a standard ISC trigger. The delivery form is **single-tenant, on-premises**, with data (runtime and governance state) all remaining in the customer's data center, never leaving the customer boundary.
 
 ---
 
@@ -81,16 +81,16 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    subgraph SIG["① Signaling plane · apps/ · stateless · one process per use case"]
+    subgraph SIG["① Signaling plane · src/apps/ · stateless · one process per use case"]
         direction LR
-        APP1["apps/translation<br/>number translation"]
-        APP2["apps/anti-fraud<br/>anti-fraud"]
-        APPN["apps/&lt;use case&gt;<br/>pluggable business engine"]
+        APP1["src/apps/translation<br/>number translation"]
+        APP2["src/apps/anti-fraud<br/>anti-fraud"]
+        APPN["src/apps/&lt;use case&gt;<br/>pluggable business engine"]
     end
-    subgraph CORE["② Core · platform/ · stateless"]
+    subgraph CORE["② Core · src/platform/ · stateless"]
         CORE1["process shell BaseAsStack<br/>decide() pure-function decision seam<br/>Transport seam · StateStore seam"]
     end
-    subgraph CTRL["③ Control plane · services/ · stateless"]
+    subgraph CTRL["③ Control plane · src/services/ · stateless"]
         direction LR
         CFG["config-service<br/>rule version store · change orders · canary distribution"]
         CON["console<br/>ops console · auth · audit"]
@@ -131,10 +131,10 @@ flowchart TB
 
 | Decision seam | Location | Nature | Basis |
 |---|---|---|---|
-| `decide()` pure function | Core | The decision module has no socket, no clock, no global state → TDD can be forced | `AGENT.md` §5; `apps/` business decisions are pure functions |
+| `decide()` pure function | Core | The decision module has no socket, no clock, no global state → TDD can be forced | `AGENT.md` §5; `src/apps/` business decisions are pure functions |
 | Transport seam | Core | Peer admission and transport policy are replaceable (allowlist, certificate, listen) | ADR-0016 accepted |
 | StateStore seam | Core | Runtime store is replaceable (memory / Redis); single data-plane responsibility | ADR-0007 accepted |
-| One process per use case | `apps/` | Each use case has an independent Deployment, independent Service, independent scale unit | ADR-0002 accepted; the chart renders one Deployment per `useCases` entry |
+| One process per use case | `src/apps/` | Each use case has an independent Deployment, independent Service, independent scale unit | ADR-0002 accepted; the chart renders one Deployment per `useCases` entry |
 | ISSU = draining | Core + ops | Drain traffic → draining → exit only at zero; no in-flight call migration | ADR-0009 accepted |
 | ISC trigger unavailable | Network boundary | Call does not route through this AS; AS side does not intervene (no iFC logic on the AS side) | ADR-0003 accepted; REQ-NF-5 |
 

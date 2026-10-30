@@ -32,7 +32,7 @@ import redis
 
 ROOT = Path(__file__).resolve().parent
 REPO = Path(os.environ.get("AS_REPO", str(ROOT.parents[3]))).resolve()
-sys.path.insert(0, str(REPO / "platform" / "src"))
+sys.path.insert(0, str(REPO / "src" / "platform" / "src"))
 
 from as_platform.state.call_checkpoint import (  # noqa: E402
     CallStateCheckpoint,

@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 REPO = Path("/home/shudong/project/3rdparty-as")
 WIRE_DIR = ROOT / "wire"
-sys.path.insert(0, str(REPO / "platform" / "src"))
+sys.path.insert(0, str(REPO / "src" / "platform" / "src"))
 sys.path.insert(0, str(ROOT))
 
 import _resip_dum

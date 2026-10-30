@@ -66,7 +66,7 @@ else
   echo "ERROR: bootstrap-admin failed (exit ${BOOTSTRAP_RC})" >&2
   exit 1
 fi
-uv run --directory "${ROOT}/services/config-service" python "${ROOT}/deploy/compose/scripts/m4b-8-seed-users.py"
+uv run --directory "${ROOT}/src/services/config-service" python "${ROOT}/deploy/compose/scripts/m4b-8-seed-users.py"
 kill "${PG_PF}" 2>/dev/null || true
 wait "${PG_PF}" 2>/dev/null || true
 

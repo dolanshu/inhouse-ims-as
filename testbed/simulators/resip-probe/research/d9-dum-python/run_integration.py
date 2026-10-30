@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 REPO = Path("/home/shudong/project/3rdparty-as")
 sys.path.insert(0, str(ROOT / "build"))
-sys.path.insert(0, str(REPO / "platform" / "src"))
+sys.path.insert(0, str(REPO / "src" / "platform" / "src"))
 
 import _resip_dum
 from as_platform.decision import DecisionAction, DecisionRequest, RuleSet, decide

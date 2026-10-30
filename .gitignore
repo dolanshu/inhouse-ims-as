@@ -49,9 +49,8 @@ deploy/compose/.env
 *.swp
 .DS_Store
 .workbuddy/
+# CodeBuddy auto-generated team session state (rules/ stays tracked)
+.codebuddy/teams/
 
 # Office temporary lock files
 ~$*
-
-# CodeBuddy auto-generated team session state (rules/ stays tracked)
-.codebuddy/teams/

@@ -18,7 +18,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 > **v3.1 增补（2026-10-28）**：新增 §1——维护者追问"apps/、services/、platform/ 都是产品源码，docs/ 是文档入口，为什么四个目录在同一级"，§1 是该问题的书面回答，并新增发现 F-9 与裁决项 Q6。
 > **v3.2 增补（2026-10-29）**：新增 §3——对其余五个目录（testbed / tests / deploy / scripts / tools）做同等力度判断，含三组组织张力与两处 v3 结论修正；新增发现 F-10、裁决项 Q7。
 > 证据采集：2026-10-28，全部来自对仓库文件系统、git 索引和 README/AGENT.md/plan.md 原文的直接检查。
-> 关联：[R2612_Cont.md](../../R2612_Cont.md)（剩余项规划）。
+> **编号命名空间声明**：本文的 **F-1…F-10 是"结构发现"编号**（本文件局部使用），与 `docs/plan.md` §0 / `R2612_Cont.md` 的需求编号 **REQ-F-9 等同名不同义**，互不引用。
+> 关联：[R2612_Cont.md](./R2612_Cont.md)（剩余项规划）。
 
 ---
 
@@ -281,7 +282,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 **执行记录（清单 §3 七步；步骤 1–6 为先行批次，步骤 7 最终验证与本文记录为收尾批次，2026-10-29）**：
 
-- **步骤 1–2（基线 + 搬移）**：三目录 `git mv` 至 `src/`，共 **225 处 rename**（186 纯 rename + 39 rename 后又有修改）；**10 个文件深度修复**——6 处直接 `parents[2]→[3]`（gen-cert 解析三处、test_m2_native_probe_smoke、test_m5_verify_strict、test_e1_contract_resip_runtime_full）、3 处 walk-up **fallback**（`test_sip_message.py` L418 与两处 `test_contract_replay.py`——**实际为 parents[3]→[4]，计划原文统一写 parents[2]→[3] 对这两个文件有误，按文件实际内容修正**）、`test_library_independence.py` 3 处（REPOSITORY_ROOT 深度、KERNEL_SOURCE 插 `src` 段、成员判定改 `src/platform`）；
+- **步骤 1–2（基线 + 搬移）**：三目录 `git mv` 至 `src/`，本笔共 **191 处 rename**（170 纯 rename + 21 rename 后又有修改；git 实测 `git show --name-status --diff-filter=R 2e259c9`）；口径说明：汇总文档里的"224"= 本笔 191 + `a81e13d` 22 + `4530d05` 11，若再计入 `c626031`/`d48785b` 两次文档归位则范围总数为 226；**10 个文件深度修复**——6 处直接 `parents[2]→[3]`（gen-cert 解析三处、test_m2_native_probe_smoke、test_m5_verify_strict、test_e1_contract_resip_runtime_full）、3 处 walk-up **fallback**（`test_sip_message.py` L418 与两处 `test_contract_replay.py`——**实际为 parents[3]→[4]，计划原文统一写 parents[2]→[3] 对这两个文件有误，按文件实际内容修正**）、`test_library_independence.py` 3 处（REPOSITORY_ROOT 深度、KERNEL_SOURCE 插 `src` 段、成员判定改 `src/platform`）；
 - **步骤 3（manifest + 锁）**：根 pyproject **六键**按计划同步（`[tool.uv.workspace].members`、`[tool.pytest.ini_options].testpaths`、`[tool.ruff].src`、`[tool.ruff].extend-exclude`（计划即标注无需改动）、`[tool.mypy].files`、`[tool.mypy].mypy_path`）；`uv.lock` 未按计划字面全量重建，改用"**恢复 HEAD 锁 + 增量 uv lock**"避免全量重建的版本漂移——16 条 editable 全部指向 `src/…`，testbed 三条不变，E1/E2 未暂存的锁改动由 uv 重新解析语义等价复原；
 - **步骤 4（门禁测试）**：`tests/test_layer_boundaries.py` 四层分类逻辑与断言/提示文本同步；
 - **步骤 5（构建/部署/工具，17 处编辑）**：`.dockerignore`、`deploy/docker/` 两个 Dockerfile、`testbed/sim-platform/` 两个 Dockerfile*、`kind-up.sh`、Makefile `m71-sim`、`m2-native.sh` 6 处、`scripts/check_adr_annotations.py`（`_scan_roots` + GRANDFATHERED 键）、`scripts/demo-review/` 5 文件、`d10-req-nf1-harness.sh`、`deploy/compose/` README + 脚本；
@@ -354,4 +355,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 ---
 
-Written to disk: 2026-10-28; v3.2 2026-10-29; rulings recorded 2026-10-29 (Q1=A Q2=A Q3=B Q4=A Q6=B Q7=B). Status per §7: **E1 done, E2 done (docs batch, 2026-10-29), E3 done (src/ consolidation migration executed and verified, 2026-10-29), E4 done (docs navigation + reviews/handoff index, 2026-10-29), E5 done (REQ-G-3 scanner repo-root fix; gate-strict honestly red with 21 pre-existing violations pending E6 triage, 2026-10-29), E6 done (REQ-G-3 header-window artifact fixed — 21 items pass via module-docstring citations, zero annotations, zero allowlist growth, 2026-10-29), E7 done (test-container governance + PG-unreachable skip signature, 2026-10-29), E8 done (Makefile LD_LIBRARY_PATH sanitization, 2026-10-29)**. Six structural commits a81e13d/d32ff79/2e259c9/3b1c873/3f035af/4530d05 landed on branch R2612, not pushed; the E8 changes await the 7th commit, to be cut after the maintainer approves committing.
+Written to disk: 2026-10-28; v3.2 2026-10-29; rulings recorded 2026-10-29 (Q1=A Q2=A Q3=B Q4=A Q6=B Q7=B). Status per §7: **E1 done, E2 done (docs batch, 2026-10-29), E3 done (src/ consolidation migration executed and verified, 2026-10-29), E4 done (docs navigation + reviews/handoff index, 2026-10-29), E5 done (REQ-G-3 scanner repo-root fix; gate-strict honestly red with 21 pre-existing violations pending E6 triage, 2026-10-29), E6 done (REQ-G-3 header-window artifact fixed — 21 items pass via module-docstring citations, zero annotations, zero allowlist growth, 2026-10-29), E7 done (test-container governance + PG-unreachable skip signature, 2026-10-29), E8 done (Makefile LD_LIBRARY_PATH sanitization, 2026-10-29)**. Six structural commits a81e13d/d32ff79/2e259c9/3b1c873/3f035af/4530d05, plus c626031 (E8 Makefile 消毒 + 结构计划归位) and d48785b (C 延续计划归位), landed on branch R2612, not pushed; commit 切分归维护者。

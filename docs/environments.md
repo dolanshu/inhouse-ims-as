@@ -251,7 +251,27 @@ Operational notes:
 
 - **Restart policy `unless-stopped` (effective 2026-10-29).** Before that the containers ran with
   restart=no, so a host reboot silently took them off the network — this happened on 2026-10-12 and went
-  unnoticed for two weeks.
+  unnoticed for two weeks. **How it is applied**: `as-m4b8-dev-postgres-1` is the only container declared
+  in the repo — `deploy/compose/compose.yml` carries `restart: unless-stopped` since 2026-10-30, so a
+  `docker compose up` reproduces it. The other three are ad-hoc containers with no repo definition; the
+  policy was applied out-of-band with
+  `docker update --restart unless-stopped as-redis-test as-pg-logical-test as-pg15-test`, and their
+  creation commands (**reconstructed from `docker inspect` on 2026-10-30, not the original verbatim
+  commands**) are registered here so the containers can be re-created:
+
+  ```sh
+  docker run -d --name as-redis-test   --restart unless-stopped -p 6379:6379  redis:7-alpine
+  docker run -d --name as-pg-logical-test --restart unless-stopped -p 55433:5432 \
+    -e POSTGRES_PASSWORD=<dev only> \
+    -v as-pg-logical-test-data:/var/lib/postgresql/data \
+    -v "$PWD/deploy/compose/postgres/init:/docker-entrypoint-initdb.d" \
+    postgres:12.22 -c wal_level=logical
+  docker run -d --name as-pg15-test    --restart unless-stopped -p 55434:5432 \
+    -e POSTGRES_PASSWORD=<dev only> \
+    -v as-pg15-test-data:/var/lib/postgresql/data \
+    -v "$PWD/deploy/compose/postgres/init:/docker-entrypoint-initdb.d" \
+    postgres:15-alpine -c wal_level=logical
+  ```
 - **Never run a PG ≥ 13 container on the same port.** The integration schema is written against PG 12; on
   PG 16 it fails with `operator is not unique: "char" || unknown`, which has misled debugging before.
 - `as-pg-test` (PG 16 on 55432 — the port-collision source) was removed on 2026-10-29.

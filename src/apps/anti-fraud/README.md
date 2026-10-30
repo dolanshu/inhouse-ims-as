@@ -24,7 +24,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ## 塑造本用例的约束
 
 判决必须能在 Redis 脑裂窗口下**保持可接受**：Sentinel 故障切换期间速率窗口可能重复计数。设计接受
-一个有界的不精确，而非一次硬失败 —— 见 [`../../docs/architecture/system-architecture.md`](../../docs/architecture/system-architecture.md)
+一个有界的不精确，而非一次硬失败 —— 见 [`../../docs/architecture/system-architecture.md`](../../../docs/architecture/system-architecture.md)
 中的风险 R5。
 
 ## 状态

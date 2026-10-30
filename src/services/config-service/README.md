@@ -26,7 +26,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 不能要求运营商运维人员为了改一个号段去学 Git。自托管的 Git 服务器还会把规则变更的可用性，押在另一个
 分布式系统的可用性之后 —— 对于一个必须在凌晨 03:00 改号网的网元来说不行。理由在
-[`../../docs/architecture/system-architecture.md`](../../docs/architecture/system-architecture.md) §5.1，
+[`../../docs/architecture/system-architecture.md`](../../../docs/architecture/system-architecture.md) §5.1，
 记为 ADR-0006。
 
 ## 边界

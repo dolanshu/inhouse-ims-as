@@ -15,7 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # `src/services/console/` — 运维控制台
 
 运营商运维界面：经变更单治理规则、按 Call-ID 查询呼叫轨迹、查看运行指标。正式控制台须满足
-[`../../docs/acceptance/test-plan.md`](../../docs/acceptance/test-plan.md) 中 REQ-F-12/13/14/15 与 REQ-S-4 的验收要求。
+[`../../docs/acceptance/test-plan.md`](../../../docs/acceptance/test-plan.md) 中 REQ-F-12/13/14/15 与 REQ-S-4 的验收要求。
 
 ## D4 决策（2026-10-01）
 
@@ -56,7 +56,7 @@ fixture，状态只保留在当前页面内，不使用 localStorage 或网络�
 - 完成 M4b-7 剩余 API/UI 工作流：解决 lossless runtime rule mapping/compiler 与 regex semantics 后实现 ManagedRule CRUD/规则审批；接入 live Call-ID 查询，以及 AS inventory、notification 与 health 后端后实现真实灰度分发/回滚。当前既有 ChangeOrder submit/approve/reject UI 仅为 engineering slice，不表示这些需求已满足。
 - 集成 REQ-S-4 鉴权与审计：写操作先鉴权；审计记录操作者、时间、操作类型及变更前后值，并满足不可篡改要求。预览不模拟登录，也不声称审计已持久化。
 - 接入 PostgreSQL 持久化和真实轨迹/运行数据，并完成 UI 与后端 workflow integration。
-- 按 [`../../docs/acceptance/test-plan.md`](../../docs/acceptance/test-plan.md) 完成真实集成及 browser acceptance，记录验收证据。
+- 按 [`../../docs/acceptance/test-plan.md`](../../../docs/acceptance/test-plan.md) 完成真实集成及 browser acceptance，记录验收证据。
 
 ## 正式产品边界与依赖
 

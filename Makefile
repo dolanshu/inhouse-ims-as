@@ -37,8 +37,17 @@ export UV
 # Trae's server shell injects its bundled libstdc++ (GLIBCXX <= 3.4.25) via
 # LD_LIBRARY_PATH; the native resip extension needs 3.4.29+. Drop those dirs
 # so the dynamic linker resolves the system libstdc++ (2026-10-29).
+empty :=
 space := $(empty) $(empty)
+# A path containing a space cannot survive the $(subst) word splitting below, so
+# leave LD_LIBRARY_PATH untouched in that case (sanitization is skipped, not half
+# applied). Leading/trailing/repeated ':' collapse to a single entry, which drops
+# the empty (cwd) search entry — accepted: no ai-agent dir is ever the cwd entry.
+ifneq ($(findstring $(space),$(LD_LIBRARY_PATH)),)
+_agent_dirs :=
+else
 _agent_dirs := $(foreach w,$(subst :, ,$(LD_LIBRARY_PATH)),$(if $(findstring ai-agent,$(w)),$(w)))
+endif
 ifneq ($(_agent_dirs),)
 export LD_LIBRARY_PATH := $(subst $(space),:,$(filter-out $(_agent_dirs),$(subst :, ,$(LD_LIBRARY_PATH))))
 endif

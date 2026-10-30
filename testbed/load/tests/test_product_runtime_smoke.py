@@ -29,8 +29,8 @@ import pytest
 pytestmark = pytest.mark.integration
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_LOAD_UAS = _REPO_ROOT / "platform/tests/fixtures/load_uas_runtime.py"
-_DEFAULT_BUILD = _REPO_ROOT / "platform/native/resip_runtime/build"
+_LOAD_UAS = _REPO_ROOT / "src/platform/tests/fixtures/load_uas_runtime.py"
+_DEFAULT_BUILD = _REPO_ROOT / "src/platform/native/resip_runtime/build"
 # The native worker emits `address=... advertised=... udp_port=...`; see the contract in
 # docs/acceptance/m8-resip-runtime-log-contract.md §3. `advertised=` is optional here so
 # the regex also matches pre-`advertised` lines instead of silently timing out.

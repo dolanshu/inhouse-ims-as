@@ -20,7 +20,7 @@ that means one directory per use case.
 
 **Not the web meaning of "app".** In a web monorepo `apps/` means "independently
 deployable applications". Here an app has no process entry point of its own. Per
-[ADR-0002](../docs/architecture/adr/0002-per-usecase-process-state-redis.md):
+[ADR-0002](../../docs/architecture/adr/0002-per-usecase-process-state-redis.md):
 one use case = one process = one K8s Deployment, and the process shell is
 provided by the kernel (`src/platform/src/as_platform/__main__.py`) — the app is
 loaded as a business module, and its decisions enter the engine through the
@@ -41,7 +41,7 @@ apps/ ──uses──▶ platform/     (platform never imports apps)
 
 In a monorepo any import resolves, so the direction is asserted by
 [`src/platform/tests/test_library_independence.py`](../platform/tests/test_library_independence.py)
-and [`tests/test_layer_boundaries.py`](../tests/test_layer_boundaries.py).
+and [`tests/test_layer_boundaries.py`](../../tests/test_layer_boundaries.py).
 
 ## Not `services/`
 

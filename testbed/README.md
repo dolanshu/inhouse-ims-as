@@ -36,8 +36,27 @@ A subdirectory is a uv workspace member **only if it carries its own
 Membership governs installability via uv — it is a separate mechanism from pytest
 collection. Instrumentation directories without a `pyproject.toml` stay
 non-members and are still collected by the root pytest `testpaths`
-(`tests, platform, apps, services, testbed`). `probe/` became member `as-probe`
+(`tests, src/platform, src/apps, src/services, testbed` — root `pyproject.toml`
+`[tool.pytest.ini_options].testpaths`). `probe/` became member `as-probe`
 in R2612 (previously a flat script directory with no `pyproject.toml`).
+
+## Three layers (ADR-0014 evidence)
+
+| Layer | Where | What it answers |
+|---|---|---|
+| ① Contracts / unit | `contracts/` + each package's `tests/` | the decision is correct, and every implementation is consistent |
+| ② Simulated integration | `simulators/` | AS can work against something that behaves like the operator's peer |
+| ③ Performance | `load/` | where exactly the capacity boundary lies |
+
+Three rules, quoted verbatim by [`ADR-0014`](../docs/architecture/adr/0014-three-layer-testbed.md)
+§Evidence — keep the wording stable so the ADR citation stays checkable:
+
+- **Load testing must go through real sockets.** A harness that drives callbacks
+  directly measures business logic, not capacity.
+- v1 does not deliver the testbed as a deliverable. **It is an R&D asset;
+  customer acceptance testing capability is left to v1.1.**
+- SIPp may be used here. It is GPL, for **internal use only, never distributed
+  with the product**.
 
 ## Two probes, on purpose (ruling Q7=B: keep both)
 

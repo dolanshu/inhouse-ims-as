@@ -18,7 +18,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 _UAS_UDP_RE='RESIP_RUNTIME_LISTENING address=127\.0\.0\.1 (advertised=[^ ]+ )?udp_port=([0-9]+)'
-_LOAD_UAS="${REPO_ROOT}/platform/tests/fixtures/load_uas_runtime.py"
+_LOAD_UAS="${REPO_ROOT}/src/platform/tests/fixtures/load_uas_runtime.py"
 
 log() {
   echo "[m6-product-runtime-micro-measure] $*"
@@ -30,7 +30,7 @@ die() {
 }
 
 require_runtime_extension() {
-  local build_dir="${AS_RESIP_RUNTIME_BUILD:-${REPO_ROOT}/platform/native/resip_runtime/build}"
+  local build_dir="${AS_RESIP_RUNTIME_BUILD:-${REPO_ROOT}/src/platform/native/resip_runtime/build}"
   if compgen -G "${build_dir}/_resip_runtime"*.so >/dev/null; then
     return 0
   fi

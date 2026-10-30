@@ -15,9 +15,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # `scripts/` — repository workflow automation
 
 Everything here is **part of the repository's logic**: automation invoked
-directly by the Makefile, the gate, or the release flow. It is tracked in git
-and reviewed like source code. The boundary with [`tools/`](../tools/README.md):
-`scripts/` makes the **repo** work; `tools/` makes the **machine** ready.
+directly by the Makefile, the gate, or the release flow — **or run manually as
+engineering capability** (not every entry is wired to a Makefile target today;
+see the table below). It is tracked in git and reviewed like source code. The
+boundary with [`tools/`](../tools/README.md): `scripts/` makes the **repo**
+work; `tools/` makes the **machine** ready.
 
 ## Contents
 

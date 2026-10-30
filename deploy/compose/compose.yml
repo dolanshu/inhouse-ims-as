@@ -18,6 +18,9 @@ name: as-m4b8-dev
 services:
   postgres:
     image: postgres:12.22
+    # Matches the restart policy registered in docs/environments.md §7 (a host
+    # reboot must not silently take the integration PG off the network).
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:-postgres}
