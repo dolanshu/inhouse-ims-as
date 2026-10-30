@@ -16,6 +16,17 @@ REQ-G-3 requires non-obvious code to point at its ADR; ADR-0015 places this
 scan outside ``make gate``, to be triggered on demand via ``make
 gate-strict``. This script is that scan: it exits 1 with a ``file:line``
 list on violation and 0 when clean.
+
+Header-window ruling (2026-10-30, review finding R-6): a citation found in
+the **module docstring** still exempts the file, but it is no longer silent —
+every name that only passes that way is counted and printed as a non-fatal
+``warning``. ADR-0015 §④ wants a reviewer to reach the rationale in one hop; a
+module-level citation is one hop from the top of the file but not from the
+definition itself, so the exemption stays admissible and visible. The
+preferred form remains a citation inside the definition's own window; the
+per-definition window deliberately does **not** cover a definition's own
+docstring, so a citation placed there is counted too rather than passing
+silently.
 """
 
 from __future__ import annotations
@@ -130,16 +141,23 @@ def _definition_key(path: Path, root: Path, name: str) -> str:
     return f"{path.relative_to(root)}:{name}"
 
 
-def _scan_file(path: Path, root: Path, used: set[str]) -> list[str]:
-    """Scan one file; return ``path:line: kind name`` entries for violations."""
+def _scan_file(path: Path, root: Path, used: set[str]) -> tuple[list[str], list[str]]:
+    """Scan one file.
+
+    Return (violations, docstring-only passes), both as ``path:line: kind name``
+    entries. A "docstring-only pass" is a name whose own window carries no ADR
+    citation and which is exempted only by the module docstring — admissible per
+    ADR-0015 §④ but counted, so the exemption is visible instead of silent.
+    """
     text = path.read_text(encoding="utf-8")
     docstring = _module_docstring(text)
     lines = text.splitlines()
     header = "\n".join(lines[:HEADER_LINE_COUNT])
-    header_ok = (
-        _ADR_PATTERN.search(header) is not None or _ADR_PATTERN.search(docstring) is not None
-    )
+    raw_header_ok = _ADR_PATTERN.search(header) is not None
+    docstring_ok = _ADR_PATTERN.search(docstring) is not None
+    header_ok = raw_header_ok or docstring_ok
     violations: list[str] = []
+    docstring_only: list[str] = []
     for index, line in enumerate(lines):
         match = _DEFINITION_PATTERN.match(line)
         if match is None:
@@ -149,37 +167,55 @@ def _scan_file(path: Path, root: Path, used: set[str]) -> list[str]:
             continue
         start = max(0, index - PRECEDING_LINE_COUNT)
         window = "\n".join(lines[start : index + 1])
-        if _ADR_PATTERN.search(window) is not None or header_ok:
-            continue
-        key = _definition_key(path, root, name)
-        if key in GRANDFATHERED:
-            used.add(key)
-            continue
-        violations.append(f"{path.relative_to(root)}:{index + 1}: {match.group('kind')} {name}")
-    return violations
+        entry = f"{path.relative_to(root)}:{index + 1}: {match.group('kind')} {name}"
+        if _ADR_PATTERN.search(window) is None:
+            if not header_ok:
+                key = _definition_key(path, root, name)
+                if key in GRANDFATHERED:
+                    used.add(key)
+                    continue
+                violations.append(entry)
+            elif not raw_header_ok and docstring_ok:
+                # Exempted, but only by the module docstring: count it.
+                docstring_only.append(entry)
+        continue
+    return violations, docstring_only
 
 
-def find_violations() -> tuple[list[str], list[str]]:
-    """Scan all roots; return (violations, stale-allowlist-keys)."""
+def find_violations() -> tuple[list[str], list[str], list[str]]:
+    """Scan all roots; return (violations, stale-allowlist-keys, docstring-only)."""
     root = _repo_root()
     violations: list[str] = []
+    docstring_only: list[str] = []
     used: set[str] = set()
     checked = 0
     for scan_root in _scan_roots(root):
         for path in sorted(scan_root.rglob("*.py")):
             checked += 1
-            violations.extend(_scan_file(path, root, used))
+            found, deferred = _scan_file(path, root, used)
+            violations.extend(found)
+            docstring_only.extend(deferred)
     stale = sorted(GRANDFATHERED - used)
     violations.sort()
+    docstring_only.sort()
     print(f"checked {checked} files", file=sys.stderr)
-    return violations, stale
+    return violations, stale, docstring_only
 
 
 def main() -> int:
     """Run the scan; exit 1 with a file:line list on violation, 0 when clean."""
-    violations, stale = find_violations()
+    violations, stale, docstring_only = find_violations()
     for key in stale:
         print(f"warning: allowlist entry no longer needed: {key}", file=sys.stderr)
+    if docstring_only:
+        print(
+            f"warning: {len(docstring_only)} REQ-G-3 name(s) pass only via a module-docstring "
+            "citation (no citation in the definition's own window); admissible per ADR-0015 "
+            "§④ but the preferred form is a citation next to the definition:",
+            file=sys.stderr,
+        )
+        for entry in docstring_only:
+            print(f"  docstring-only: {entry}", file=sys.stderr)
     if violations:
         for violation in violations:
             print(f"{violation} lacks an ADR annotation (REQ-G-3)")
